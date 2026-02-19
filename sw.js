@@ -1,4 +1,4 @@
-const CACHE_NAME = 'workout-tracker-v9';
+const CACHE_NAME = 'workout-tracker-v10';
 const ASSETS = [
     './',
     './index.html',
@@ -32,9 +32,16 @@ self.addEventListener('activate', event => {
     );
 });
 
+// Network-first: always try fresh files, fall back to cache for offline
 self.addEventListener('fetch', event => {
     event.respondWith(
-        caches.match(event.request)
-            .then(cached => cached || fetch(event.request))
+        fetch(event.request)
+            .then(response => {
+                // Update cache with fresh response
+                const clone = response.clone();
+                caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                return response;
+            })
+            .catch(() => caches.match(event.request))
     );
 });
