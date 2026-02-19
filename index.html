@@ -33,9 +33,12 @@
 
     <script>
         if ('serviceWorker' in navigator) {
-            // Unregister old SW to clear cache issues
+            // Unregister all SWs and clear all caches
             navigator.serviceWorker.getRegistrations().then(function(regs) {
                 for (var r of regs) { r.unregister(); }
+            });
+            caches.keys().then(function(names) {
+                for (var name of names) { caches.delete(name); }
             });
         }
     </script>
