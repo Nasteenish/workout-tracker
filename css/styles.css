@@ -78,7 +78,18 @@ body {
     overscroll-behavior: none;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Safe area for notch/dynamic island */
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    /* Hide scrollbar on iOS */
+    -webkit-overflow-scrolling: touch;
 }
+
+/* Hide scrollbar */
+body::-webkit-scrollbar { display: none; }
+body { scrollbar-width: none; }
 
 input, button, select {
     font-family: inherit;
@@ -87,7 +98,7 @@ input, button, select {
 
 /* ===== App Container ===== */
 #app {
-    max-width: 480px;
+    max-width: 500px;
     margin: 0 auto;
     min-height: 100vh;
     position: relative;
@@ -731,7 +742,8 @@ input, button, select {
     background: var(--bg-secondary);
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     padding: var(--spacing-lg);
-    max-width: 480px;
+    padding-bottom: calc(var(--spacing-lg) + env(safe-area-inset-bottom, 0px));
+    max-width: 500px;
     margin: 0 auto;
     width: 100%;
 }
@@ -961,7 +973,8 @@ input, button, select {
     background: var(--bg-secondary);
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     padding: var(--spacing-md);
-    max-width: 480px;
+    padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom, 0px));
+    max-width: 500px;
     margin: 0 auto;
     width: 100%;
     max-height: 70vh;
@@ -1126,18 +1139,13 @@ input, button, select {
     border-bottom: 1px solid var(--border-color);
 }
 
-/* ===== Scrollbar ===== */
+/* ===== Scrollbar — hidden for clean iOS look ===== */
 ::-webkit-scrollbar {
-    width: 4px;
+    display: none;
 }
 
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--bg-card-hover);
-    border-radius: 2px;
+* {
+    scrollbar-width: none;
 }
 
 /* ===== Animations ===== */
