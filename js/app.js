@@ -217,6 +217,21 @@ const App = {
             return;
         }
 
+        // Settings: edit equipment name
+        if (target.matches('.eq-edit-btn') || target.closest('.eq-edit-btn')) {
+            const btn = target.matches('.eq-edit-btn') ? target : target.closest('.eq-edit-btn');
+            const eqId = btn.dataset.eqId;
+            const eq = Storage.getEquipmentById(eqId);
+            if (eq) {
+                const newName = prompt('Новое название:', eq.name);
+                if (newName && newName.trim()) {
+                    Storage.renameEquipment(eqId, newName.trim());
+                    UI.renderSettings();
+                }
+            }
+            return;
+        }
+
         // Settings: remove equipment
         if (target.matches('.eq-remove-btn') || target.closest('.eq-remove-btn')) {
             const btn = target.matches('.eq-remove-btn') ? target : target.closest('.eq-remove-btn');
@@ -242,6 +257,17 @@ const App = {
             const btn = target.matches('.equipment-btn') ? target : target.closest('.equipment-btn');
             const exId = btn.dataset.exercise;
             UI.showEquipmentModal(exId);
+            return;
+        }
+
+        // Choice modal: select option (must be before eq-option handler)
+        if (target.matches('.eq-option[data-choice-key]') || target.closest('.eq-option[data-choice-key]')) {
+            const opt = target.matches('.eq-option[data-choice-key]') ? target : target.closest('.eq-option[data-choice-key]');
+            const choiceKey = opt.dataset.choiceKey;
+            const exerciseId = opt.dataset.exerciseId;
+            Storage.saveChoice(choiceKey, exerciseId);
+            UI.hideChoiceModal();
+            UI.renderDay(this._currentWeek, this._currentDay);
             return;
         }
 
@@ -318,16 +344,6 @@ const App = {
             const btn = target.matches('.choose-one-btn') ? target : target.closest('.choose-one-btn');
             const choiceKey = btn.dataset.choiceKey;
             UI.showChoiceModal(choiceKey);
-            return;
-        }
-
-        // Choice modal: select option (reuses .eq-option with data-exercise-id)
-        if (target.dataset.exerciseId && target.dataset.choiceKey) {
-            const choiceKey = target.dataset.choiceKey;
-            const exerciseId = target.dataset.exerciseId;
-            Storage.saveChoice(choiceKey, exerciseId);
-            UI.hideChoiceModal();
-            UI.renderDay(this._currentWeek, this._currentDay);
             return;
         }
 

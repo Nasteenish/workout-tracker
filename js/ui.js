@@ -583,7 +583,10 @@ const UI = {
             eqListHtml += `
                 <div class="settings-eq-item">
                     <span>${eq.name}</span>
-                    <button class="eq-remove-btn" data-eq-id="${eq.id}">&times;</button>
+                    <div class="eq-item-actions">
+                        <button class="eq-edit-btn" data-eq-id="${eq.id}">&#9998;</button>
+                        <button class="eq-remove-btn" data-eq-id="${eq.id}">&times;</button>
+                    </div>
                 </div>
             `;
         }

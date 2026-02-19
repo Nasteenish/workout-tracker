@@ -12,18 +12,18 @@
     --text-muted: #636366;
 
     --accent-primary: #A78BFA;
-    --accent-success: #34D399;
-    --accent-warning: #FF9F0A;
+    --accent-success: #92D050;
+    --accent-warning: #FFD60A;
     --accent-info: #7DD3FC;
-    --accent-red: #FF6B6B;
+    --accent-red: #FF3B30;
 
-    --set-S: #FF6B6B;
-    --set-SH: #FF9F0A;
-    --set-H: #34D399;
+    --set-S: #FF3B30;
+    --set-SH: #FFD60A;
+    --set-H: #92D050;
 
-    --tech-drop: #FF6B6B;
-    --tech-rp: #FF9F0A;
-    --tech-mp: #34D399;
+    --tech-drop: #FF3B30;
+    --tech-rp: #FFD60A;
+    --tech-mp: #92D050;
 
     --border-color: rgba(255, 255, 255, 0.08);
     --border-highlight: rgba(255, 255, 255, 0.15);
@@ -202,7 +202,7 @@ input, button, select {
 .setup-field {
     width: 100%;
     max-width: 320px;
-    margin-bottom: var(--spacing-lg);
+    margin: 0 auto var(--spacing-lg);
     text-align: left;
 }
 
@@ -269,7 +269,8 @@ input, button, select {
     font-weight: 700;
     cursor: pointer;
     transition: opacity 0.2s;
-    margin-top: var(--spacing-md);
+    margin: var(--spacing-md) auto 0;
+    display: block;
     letter-spacing: -0.2px;
 }
 
@@ -581,7 +582,7 @@ input, button, select {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 159, 10, 0.15);
+    background: rgba(255, 214, 10, 0.15);
     color: var(--accent-warning);
     white-space: nowrap;
 }
@@ -883,7 +884,8 @@ input, button, select {
 .data-actions {
     display: flex;
     gap: var(--spacing-sm);
-    margin-top: var(--spacing-lg);
+    max-width: 320px;
+    margin: var(--spacing-lg) auto 0;
     padding-top: var(--spacing-lg);
     border-top: 1px solid var(--border-color);
 }
@@ -974,6 +976,21 @@ input, button, select {
     color: var(--text-muted);
     font-size: var(--font-size-sm);
     padding: var(--spacing-sm) 0;
+}
+
+.eq-item-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.eq-edit-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
 }
 
 .eq-remove-btn {

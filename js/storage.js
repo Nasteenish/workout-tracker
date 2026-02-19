@@ -84,6 +84,15 @@ const Storage = {
         this._save();
     },
 
+    renameEquipment(id, newName) {
+        const data = this._load();
+        const eq = data.equipment.find(e => e.id === id);
+        if (eq) {
+            eq.name = newName;
+            this._save();
+        }
+    },
+
     getEquipmentById(id) {
         if (!id) return null;
         return this.getEquipmentList().find(e => e.id === id) || null;
