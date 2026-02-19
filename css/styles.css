@@ -1,31 +1,32 @@
-/* ===== CSS Variables ===== */
+/* ===== CSS Variables — Apple Fitness Style ===== */
 :root {
-    --bg-primary: #0f0f1a;
-    --bg-secondary: #1a1a2e;
-    --bg-card: #16213e;
-    --bg-card-hover: #1c2a4a;
-    --bg-input: #0a0a15;
-    --bg-modal: rgba(0, 0, 0, 0.85);
+    --bg-primary: #000000;
+    --bg-secondary: #1C1C1E;
+    --bg-card: #2C2C2E;
+    --bg-card-hover: #3A3A3C;
+    --bg-input: #1C1C1E;
+    --bg-modal: rgba(0, 0, 0, 0.88);
 
-    --text-primary: #e0e0e0;
-    --text-secondary: #8a8a9a;
-    --text-muted: #5a5a6a;
+    --text-primary: #FFFFFF;
+    --text-secondary: #AEAEB2;
+    --text-muted: #636366;
 
-    --accent-primary: #e94560;
-    --accent-success: #2ecc71;
-    --accent-warning: #f39c12;
-    --accent-info: #3498db;
+    --accent-primary: #BF5AF2;
+    --accent-success: #30D158;
+    --accent-warning: #FF9F0A;
+    --accent-info: #64D2FF;
+    --accent-red: #FF453A;
 
-    --set-S: #e03131;
-    --set-SH: #f08c00;
-    --set-H: #2f9e44;
+    --set-S: #FF453A;
+    --set-SH: #FF9F0A;
+    --set-H: #30D158;
 
-    --tech-drop: #ff6b6b;
-    --tech-rp: #ffa94d;
-    --tech-mp: #69db7c;
+    --tech-drop: #FF453A;
+    --tech-rp: #FF9F0A;
+    --tech-mp: #30D158;
 
-    --border-color: #2a2a3e;
-    --border-highlight: #3a3a5e;
+    --border-color: rgba(255, 255, 255, 0.08);
+    --border-highlight: rgba(255, 255, 255, 0.15);
 
     --spacing-xs: 4px;
     --spacing-sm: 8px;
@@ -37,20 +38,22 @@
     --input-height: 48px;
     --button-height: 52px;
 
-    --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
     --font-size-xs: 11px;
     --font-size-sm: 13px;
     --font-size-base: 15px;
-    --font-size-lg: 18px;
+    --font-size-lg: 17px;
     --font-size-xl: 22px;
     --font-size-xxl: 28px;
+    --font-size-title: 34px;
 
-    --radius-sm: 6px;
-    --radius-md: 10px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
     --radius-lg: 16px;
+    --radius-xl: 20px;
     --radius-pill: 999px;
 
-    --superset-border: #4a6fa5;
+    --superset-border: rgba(100, 210, 255, 0.4);
 }
 
 /* ===== Reset & Base ===== */
@@ -69,10 +72,12 @@ body {
     font-family: var(--font-family);
     background-color: var(--bg-primary);
     color: var(--text-primary);
-    line-height: 1.5;
+    line-height: 1.4;
     min-height: 100vh;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 input, button, select {
@@ -93,12 +98,13 @@ input, button, select {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
+    background: rgba(0, 0, 0, 0.85);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
     padding: var(--spacing-md);
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm);
 }
 
 .app-header .back-btn {
@@ -117,7 +123,7 @@ input, button, select {
 }
 
 .app-header .back-btn:active {
-    background: rgba(233, 69, 96, 0.15);
+    opacity: 0.6;
 }
 
 .app-header .header-title {
@@ -131,6 +137,7 @@ input, button, select {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    letter-spacing: -0.2px;
 }
 
 .app-header .header-title .header-subtitle {
@@ -158,23 +165,27 @@ input, button, select {
 .setup-screen .app-icon {
     width: 80px;
     height: 80px;
-    background: linear-gradient(135deg, var(--accent-primary), #c0392b);
-    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, var(--accent-primary), #8944C6);
+    border-radius: var(--radius-xl);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 40px;
     margin-bottom: var(--spacing-lg);
+    box-shadow: 0 8px 32px rgba(191, 90, 242, 0.3);
 }
 
 .setup-screen h1 {
-    font-size: var(--font-size-xxl);
+    font-size: var(--font-size-title);
+    font-weight: 700;
     margin-bottom: var(--spacing-xs);
+    letter-spacing: -0.5px;
 }
 
 .setup-screen .subtitle {
     color: var(--text-secondary);
     margin-bottom: var(--spacing-xl);
+    font-size: var(--font-size-base);
 }
 
 .setup-field {
@@ -189,6 +200,9 @@ input, button, select {
     font-size: var(--font-size-sm);
     color: var(--text-secondary);
     margin-bottom: var(--spacing-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
 }
 
 .cycle-toggle {
@@ -199,9 +213,9 @@ input, button, select {
 .cycle-toggle button {
     flex: 1;
     height: var(--button-height);
-    border: 2px solid var(--border-color);
+    border: none;
     background: var(--bg-card);
-    color: var(--text-primary);
+    color: var(--text-secondary);
     border-radius: var(--radius-md);
     font-size: var(--font-size-base);
     font-weight: 600;
@@ -210,16 +224,15 @@ input, button, select {
 }
 
 .cycle-toggle button.active {
-    border-color: var(--accent-primary);
-    background: rgba(233, 69, 96, 0.15);
-    color: var(--accent-primary);
+    background: var(--accent-primary);
+    color: white;
 }
 
 .setup-field input[type="date"] {
     width: 100%;
     height: var(--input-height);
     background: var(--bg-card);
-    border: 2px solid var(--border-color);
+    border: none;
     border-radius: var(--radius-md);
     color: var(--text-primary);
     padding: 0 var(--spacing-md);
@@ -228,7 +241,7 @@ input, button, select {
 
 .setup-field input[type="date"]:focus {
     outline: none;
-    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary);
 }
 
 .btn-primary {
@@ -237,7 +250,7 @@ input, button, select {
     height: var(--button-height);
     background: var(--accent-primary);
     color: white;
-    -webkit-tap-highlight-color: rgba(233, 69, 96, 0.3);
+    -webkit-tap-highlight-color: rgba(191, 90, 242, 0.3);
     touch-action: manipulation;
     border: none;
     border-radius: var(--radius-md);
@@ -246,10 +259,11 @@ input, button, select {
     cursor: pointer;
     transition: opacity 0.2s;
     margin-top: var(--spacing-md);
+    letter-spacing: -0.2px;
 }
 
 .btn-primary:active {
-    opacity: 0.8;
+    opacity: 0.7;
 }
 
 /* ===== Week View ===== */
@@ -264,8 +278,8 @@ input, button, select {
     width: var(--touch-min);
     height: var(--touch-min);
     background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
+    border: none;
+    border-radius: 50%;
     color: var(--text-primary);
     font-size: var(--font-size-lg);
     cursor: pointer;
@@ -275,7 +289,7 @@ input, button, select {
 }
 
 .week-nav button:disabled {
-    opacity: 0.3;
+    opacity: 0.2;
     cursor: default;
 }
 
@@ -290,6 +304,7 @@ input, button, select {
 .week-nav .week-label h2 {
     font-size: var(--font-size-xl);
     font-weight: 700;
+    letter-spacing: -0.3px;
 }
 
 .week-nav .week-label .week-dates {
@@ -299,11 +314,11 @@ input, button, select {
 
 /* Day Cards */
 .day-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    border: none;
     border-radius: var(--radius-md);
     padding: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
     cursor: pointer;
     transition: all 0.2s;
     text-decoration: none;
@@ -312,18 +327,17 @@ input, button, select {
 }
 
 .day-card:active {
-    background: var(--bg-card-hover);
+    background: var(--bg-card);
     transform: scale(0.98);
 }
 
 .day-card.today {
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 0 1px var(--accent-primary);
+    background: var(--bg-card);
+    box-shadow: inset 0 0 0 2px var(--accent-primary);
 }
 
 .day-card.done {
-    opacity: 0.6;
-    border-color: var(--accent-success);
+    opacity: 0.5;
 }
 
 .day-card.done .day-number {
@@ -334,31 +348,33 @@ input, button, select {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
 }
 
 .day-card .day-number {
     font-size: var(--font-size-sm);
     color: var(--accent-primary);
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
 }
 
 .day-card .day-date {
     font-size: var(--font-size-sm);
     color: var(--text-muted);
+    font-weight: 500;
 }
 
 .day-card .day-title {
     font-size: var(--font-size-base);
     font-weight: 600;
     margin-bottom: var(--spacing-sm);
+    letter-spacing: -0.2px;
 }
 
 .day-card .progress-bar {
-    height: 6px;
-    background: var(--bg-primary);
-    border-radius: 3px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
     overflow: hidden;
     margin-bottom: var(--spacing-xs);
 }
@@ -366,7 +382,7 @@ input, button, select {
 .day-card .progress-bar .progress-fill {
     height: 100%;
     background: var(--accent-success);
-    border-radius: 3px;
+    border-radius: 2px;
     transition: width 0.3s;
 }
 
@@ -377,19 +393,20 @@ input, button, select {
 
 /* ===== Day View ===== */
 .warmup-section {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    border: none;
     border-radius: var(--radius-md);
     padding: var(--spacing-md);
     margin-bottom: var(--spacing-lg);
 }
 
 .warmup-section .warmup-label {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-xs);
     color: var(--accent-warning);
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
     margin-bottom: var(--spacing-xs);
+    letter-spacing: 0.5px;
 }
 
 .warmup-section .warmup-text {
@@ -399,22 +416,21 @@ input, button, select {
 
 /* Section headers */
 .section-header {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-xs);
     color: var(--text-muted);
     text-transform: uppercase;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    margin: var(--spacing-lg) 0 var(--spacing-md);
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    margin: var(--spacing-lg) 0 var(--spacing-sm);
     padding-bottom: var(--spacing-xs);
-    border-bottom: 1px solid var(--border-color);
 }
 
 /* Exercise Card */
 .exercise-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    border: none;
     border-radius: var(--radius-md);
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
     overflow: hidden;
 }
 
@@ -430,25 +446,26 @@ input, button, select {
     font-size: var(--font-size-base);
     font-weight: 600;
     flex: 1;
+    letter-spacing: -0.2px;
 }
 
 .exercise-card .exercise-meta {
     font-size: var(--font-size-xs);
     color: var(--text-muted);
     display: flex;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-xs);
     flex-shrink: 0;
 }
 
 .exercise-card .exercise-meta span {
-    background: var(--bg-primary);
-    padding: 2px 8px;
+    background: var(--bg-card);
+    padding: 3px 8px;
     border-radius: var(--radius-pill);
 }
 
 /* Choose One Group */
 .choose-one-group {
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
 }
 
 .choose-one-label {
@@ -456,14 +473,12 @@ input, button, select {
     color: var(--accent-warning);
     font-weight: 600;
     padding: var(--spacing-sm) var(--spacing-md);
-    background: rgba(243, 156, 18, 0.1);
+    background: var(--bg-secondary);
     border-radius: var(--radius-md) var(--radius-md) 0 0;
-    border: 1px solid rgba(243, 156, 18, 0.2);
-    border-bottom: none;
 }
 
 .choose-one-options {
-    border: 1px solid rgba(243, 156, 18, 0.2);
+    background: var(--bg-secondary);
     border-radius: 0 0 var(--radius-md) var(--radius-md);
     overflow: hidden;
 }
@@ -474,8 +489,8 @@ input, button, select {
     align-items: center;
     gap: var(--spacing-sm);
     cursor: pointer;
-    background: var(--bg-card);
-    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
     min-height: var(--touch-min);
 }
 
@@ -484,12 +499,12 @@ input, button, select {
 }
 
 .choose-option.selected {
-    background: rgba(233, 69, 96, 0.1);
+    background: rgba(191, 90, 242, 0.1);
 }
 
 .choose-option .radio {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     border: 2px solid var(--text-muted);
     border-radius: 50%;
     flex-shrink: 0;
@@ -500,13 +515,14 @@ input, button, select {
 
 .choose-option.selected .radio {
     border-color: var(--accent-primary);
+    background: var(--accent-primary);
 }
 
 .choose-option.selected .radio::after {
     content: '';
-    width: 10px;
-    height: 10px;
-    background: var(--accent-primary);
+    width: 8px;
+    height: 8px;
+    background: white;
     border-radius: 50%;
 }
 
@@ -518,13 +534,13 @@ input, button, select {
 .superset-group {
     border: 2px solid var(--superset-border);
     border-radius: var(--radius-md);
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
     overflow: hidden;
 }
 
 .superset-label {
-    background: var(--superset-border);
-    color: white;
+    background: rgba(100, 210, 255, 0.15);
+    color: var(--accent-info);
     font-size: var(--font-size-xs);
     font-weight: 700;
     text-transform: uppercase;
@@ -546,15 +562,16 @@ input, button, select {
 .superset-arrow {
     text-align: center;
     padding: var(--spacing-xs) 0;
-    color: var(--superset-border);
-    font-size: var(--font-size-sm);
-    background: var(--bg-primary);
+    color: var(--accent-info);
+    font-size: var(--font-size-xs);
+    background: rgba(100, 210, 255, 0.05);
+    font-weight: 500;
 }
 
 /* Set Row */
 .set-row {
     padding: var(--spacing-sm) var(--spacing-md);
-    border-top: 1px solid var(--bg-primary);
+    border-top: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
@@ -563,19 +580,19 @@ input, button, select {
 .set-info {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: 6px;
     flex-wrap: wrap;
 }
 
 .set-number {
     font-size: var(--font-size-sm);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text-secondary);
     min-width: 28px;
 }
 
 .set-type-badge {
-    font-size: var(--font-size-xs);
+    font-size: 10px;
     font-weight: 700;
     padding: 2px 8px;
     border-radius: var(--radius-pill);
@@ -587,22 +604,21 @@ input, button, select {
 .set-type-badge.type-H { background: var(--set-H); }
 
 .rpe-badge {
-    font-size: var(--font-size-xs);
+    font-size: 10px;
     font-weight: 700;
-    padding: 2px 6px;
+    padding: 2px 8px;
     border-radius: var(--radius-pill);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg-primary);
-    border: 2px solid var(--accent-warning);
+    background: rgba(255, 159, 10, 0.15);
     color: var(--accent-warning);
     white-space: nowrap;
 }
 
 .set-reps {
     font-size: var(--font-size-sm);
-    color: var(--text-secondary);
+    color: var(--text-muted);
 }
 
 .set-rest {
@@ -619,7 +635,7 @@ input, button, select {
 }
 
 .tech-badge {
-    font-size: var(--font-size-xs);
+    font-size: 10px;
     font-weight: 700;
     padding: 2px 6px;
     border-radius: var(--radius-sm);
@@ -653,8 +669,8 @@ input, button, select {
 .input-group input {
     width: 100%;
     height: var(--touch-min);
-    background: var(--bg-input);
-    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    border: none;
     border-radius: var(--radius-sm);
     color: var(--text-primary);
     text-align: center;
@@ -665,7 +681,7 @@ input, button, select {
 
 .input-group input:focus {
     outline: none;
-    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary);
 }
 
 .input-group input::placeholder {
@@ -676,9 +692,9 @@ input, button, select {
 .complete-btn {
     width: var(--touch-min);
     height: var(--touch-min);
-    border: 2px solid var(--border-color);
-    background: none;
-    border-radius: var(--radius-sm);
+    border: none;
+    background: var(--bg-card);
+    border-radius: 50%;
     color: var(--text-muted);
     font-size: var(--font-size-lg);
     cursor: pointer;
@@ -686,11 +702,11 @@ input, button, select {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.2s;
 }
 
 .complete-btn.completed {
     background: var(--accent-success);
-    border-color: var(--accent-success);
     color: white;
 }
 
@@ -713,7 +729,7 @@ input, button, select {
 
 .weight-modal {
     background: var(--bg-secondary);
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     padding: var(--spacing-lg);
     max-width: 480px;
     margin: 0 auto;
@@ -725,32 +741,39 @@ input, button, select {
     justify-content: space-between;
     align-items: center;
     margin-bottom: var(--spacing-md);
+    gap: var(--spacing-sm);
 }
 
 .weight-modal .modal-header h3 {
     font-size: var(--font-size-lg);
+    font-weight: 600;
 }
 
 .weight-modal .modal-done {
     background: var(--accent-primary);
     color: white;
     border: none;
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: var(--radius-sm);
-    font-weight: 700;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--radius-pill);
+    font-weight: 600;
     cursor: pointer;
-    min-height: var(--touch-min);
-    font-size: var(--font-size-base);
+    min-height: 36px;
+    font-size: var(--font-size-sm);
+}
+
+.weight-modal .modal-done:active {
+    opacity: 0.7;
 }
 
 .weight-modal .modal-value {
     text-align: center;
-    font-size: 36px;
+    font-size: 40px;
     font-weight: 700;
     padding: var(--spacing-md);
-    background: var(--bg-input);
+    background: var(--bg-card);
     border-radius: var(--radius-md);
     margin-bottom: var(--spacing-md);
+    letter-spacing: -1px;
 }
 
 .quick-adjust {
@@ -763,7 +786,7 @@ input, button, select {
 .quick-adjust button {
     height: var(--touch-min);
     background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    border: none;
     border-radius: var(--radius-sm);
     color: var(--text-primary);
     font-size: var(--font-size-sm);
@@ -784,11 +807,11 @@ input, button, select {
 .numpad button {
     height: 56px;
     background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    border: none;
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-size: var(--font-size-xl);
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
 }
 
@@ -797,22 +820,22 @@ input, button, select {
 }
 
 .numpad button.numpad-clear {
-    color: var(--accent-primary);
+    color: var(--accent-red);
 }
 
 /* ===== History View ===== */
 .history-week {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    border: none;
     border-radius: var(--radius-md);
     padding: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
 }
 
 .history-week .history-week-title {
     font-size: var(--font-size-sm);
     color: var(--accent-primary);
-    font-weight: 700;
+    font-weight: 600;
     margin-bottom: var(--spacing-sm);
 }
 
@@ -838,8 +861,7 @@ input, button, select {
 .history-max {
     margin-top: var(--spacing-lg);
     padding: var(--spacing-md);
-    background: rgba(233, 69, 96, 0.1);
-    border: 1px solid rgba(233, 69, 96, 0.3);
+    background: rgba(191, 90, 242, 0.12);
     border-radius: var(--radius-md);
     text-align: center;
     font-weight: 700;
@@ -858,12 +880,13 @@ input, button, select {
     border: none;
     color: var(--accent-info);
     font-size: var(--font-size-xs);
+    font-weight: 500;
     cursor: pointer;
-    border-top: 1px solid var(--bg-primary);
+    border-top: 1px solid var(--border-color);
 }
 
 .history-btn:active {
-    background: rgba(52, 152, 219, 0.1);
+    background: rgba(100, 210, 255, 0.08);
 }
 
 /* ===== Settings button in header ===== */
@@ -875,7 +898,7 @@ input, button, select {
     color: var(--text-secondary);
     font-size: var(--font-size-xl);
     cursor: pointer;
-    border-radius: var(--radius-sm);
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -897,35 +920,36 @@ input, button, select {
 .data-actions button {
     flex: 1;
     height: var(--touch-min);
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    border: none;
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
     font-size: var(--font-size-sm);
     cursor: pointer;
+    font-weight: 500;
 }
 
 .data-actions button:active {
-    background: var(--bg-card-hover);
+    background: var(--bg-card);
 }
 
 /* ===== Equipment Row ===== */
 .equipment-row {
     padding: var(--spacing-xs) var(--spacing-md);
-    border-top: 1px solid var(--bg-primary);
 }
 
 .equipment-btn {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    border: none;
     border-radius: var(--radius-pill);
     color: var(--text-secondary);
     font-size: var(--font-size-xs);
-    padding: 4px 12px;
+    padding: 5px 12px;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 4px;
+    font-weight: 500;
 }
 
 .equipment-btn:active {
@@ -935,7 +959,7 @@ input, button, select {
 /* Equipment Modal */
 .equipment-modal {
     background: var(--bg-secondary);
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     padding: var(--spacing-md);
     max-width: 480px;
     margin: 0 auto;
@@ -944,9 +968,13 @@ input, button, select {
     overflow-y: auto;
 }
 
+.equipment-modal .modal-header {
+    padding-bottom: var(--spacing-sm);
+}
+
 .equipment-modal h3 {
     font-size: var(--font-size-lg);
-    margin-bottom: var(--spacing-md);
+    font-weight: 600;
 }
 
 /* Settings equipment list */
@@ -979,7 +1007,7 @@ input, button, select {
 .eq-remove-btn {
     background: none;
     border: none;
-    color: var(--accent-primary);
+    color: var(--accent-red);
     font-size: var(--font-size-lg);
     cursor: pointer;
     padding: 4px 8px;
@@ -994,16 +1022,17 @@ input, button, select {
     min-height: var(--touch-min);
     cursor: pointer;
     border-bottom: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
+    border-radius: 0;
 }
 
 .eq-option:active {
-    background: var(--bg-card-hover);
+    background: var(--bg-card);
 }
 
 .eq-option.selected {
-    background: rgba(233, 69, 96, 0.1);
+    background: rgba(191, 90, 242, 0.1);
     color: var(--accent-primary);
+    font-weight: 600;
 }
 
 .eq-option .eq-name {
@@ -1032,18 +1061,23 @@ input, button, select {
 .eq-add-row input {
     flex: 1;
     height: var(--touch-min);
-    background: var(--bg-input);
-    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    border: none;
     border-radius: var(--radius-sm);
     color: var(--text-primary);
     padding: 0 var(--spacing-sm);
     font-size: var(--font-size-sm);
 }
 
+.eq-add-row input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent-primary);
+}
+
 .eq-add-row select {
     height: var(--touch-min);
-    background: var(--bg-input);
-    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    border: none;
     border-radius: var(--radius-sm);
     color: var(--text-primary);
     padding: 0 var(--spacing-xs);
@@ -1062,14 +1096,18 @@ input, button, select {
     font-size: var(--font-size-sm);
 }
 
+.eq-add-row button:active {
+    opacity: 0.7;
+}
+
 /* Unit toggle in weight modal */
 .unit-toggle {
     background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    border: none;
     border-radius: var(--radius-pill);
     color: var(--text-secondary);
     font-size: var(--font-size-xs);
-    padding: 4px 10px;
+    padding: 5px 10px;
     cursor: pointer;
     font-weight: 600;
 }
@@ -1094,28 +1132,28 @@ input, button, select {
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--bg-primary);
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--border-color);
+    background: var(--bg-card-hover);
     border-radius: 2px;
 }
 
 /* ===== Animations ===== */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
+    from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
 .app-content > * {
-    animation: fadeIn 0.2s ease-out;
+    animation: fadeIn 0.15s ease-out;
 }
 
 /* ===== Rest day indicator ===== */
 .rest-day-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    border: none;
     border-radius: var(--radius-md);
     padding: var(--spacing-xl);
     text-align: center;
