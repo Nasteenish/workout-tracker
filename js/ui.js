@@ -290,17 +290,7 @@ const UI = {
             ? options.find(ex => ex.id === chosenId)
             : options[0];
 
-        let optionsHtml = '';
-        for (const ex of options) {
-            const isSelected = ex.id === (chosen ? chosen.id : '');
-            optionsHtml += `
-                <div class="choose-option ${isSelected ? 'selected' : ''}"
-                     data-choice-key="${choiceKey}" data-exercise-id="${ex.id}">
-                    <div class="radio"></div>
-                    <span class="option-name">${ex.nameRu || ex.name}</span>
-                </div>
-            `;
-        }
+        const chosenName = chosen ? (chosen.nameRu || chosen.name) : 'Выберите';
 
         let exerciseHtml = '';
         if (chosen) {
@@ -309,9 +299,10 @@ const UI = {
 
         return `
             <div class="choose-one-group">
-                <div class="choose-one-label">${group.sectionTitleRu || group.sectionTitle || 'Выберите упражнение'}</div>
-                <div class="choose-one-options">
-                    ${optionsHtml}
+                <div class="choose-one-header">
+                    <button class="choose-one-btn" data-choice-key="${choiceKey}">
+                        ${chosenName} &#9662;
+                    </button>
                 </div>
                 ${exerciseHtml}
             </div>
@@ -518,6 +509,66 @@ const UI = {
 
     hideEquipmentModal() {
         const modal = document.getElementById('equipment-modal');
+        if (modal) modal.remove();
+    },
+
+    // ===== CHOICE MODAL (choose one exercise) =====
+    showChoiceModal(choiceKey) {
+        // Find the group across all day templates
+        let group = null;
+        for (let d = 1; d <= 5; d++) {
+            const tmpl = PROGRAM.dayTemplates[d];
+            if (!tmpl) continue;
+            for (const g of tmpl.exerciseGroups) {
+                if (g.choiceKey === choiceKey) { group = g; break; }
+                // Also check inside supersets
+                if (g.type === 'superset' && g.exercises) {
+                    for (const item of g.exercises) {
+                        if (item._chooseOne && item.choiceKey === choiceKey) { group = item; break; }
+                    }
+                }
+                if (group) break;
+            }
+            if (group) break;
+        }
+        if (!group) return;
+
+        const options = group.options || [];
+        const chosenId = Storage.getChoice(choiceKey);
+
+        let optionsHtml = '';
+        for (const ex of options) {
+            const isSelected = ex.id === chosenId || (!chosenId && ex === options[0]);
+            optionsHtml += `
+                <div class="eq-option ${isSelected ? 'selected' : ''}"
+                     data-choice-key="${choiceKey}" data-exercise-id="${ex.id}">
+                    ${ex.nameRu || ex.name}
+                </div>
+            `;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.id = 'choice-modal';
+        overlay.innerHTML = `
+            <div class="equipment-modal">
+                <div class="modal-header">
+                    <h3>Выберите упражнение</h3>
+                </div>
+                <div class="eq-list">
+                    ${optionsHtml}
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        overlay.addEventListener('click', function(e) {
+            App.handleClick(e);
+        });
+    },
+
+    hideChoiceModal() {
+        const modal = document.getElementById('choice-modal');
         if (modal) modal.remove();
     },
 

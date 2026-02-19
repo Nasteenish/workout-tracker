@@ -265,14 +265,27 @@ const App = {
             return;
         }
 
-        // Choose one option
-        if (target.matches('.choose-option') || target.closest('.choose-option')) {
-            const option = target.matches('.choose-option') ? target : target.closest('.choose-option');
-            const choiceKey = option.dataset.choiceKey;
-            const exerciseId = option.dataset.exerciseId;
+        // Choose one: open dropdown modal
+        if (target.matches('.choose-one-btn') || target.closest('.choose-one-btn')) {
+            const btn = target.matches('.choose-one-btn') ? target : target.closest('.choose-one-btn');
+            const choiceKey = btn.dataset.choiceKey;
+            UI.showChoiceModal(choiceKey);
+            return;
+        }
+
+        // Choice modal: select option (reuses .eq-option with data-exercise-id)
+        if (target.dataset.exerciseId && target.dataset.choiceKey) {
+            const choiceKey = target.dataset.choiceKey;
+            const exerciseId = target.dataset.exerciseId;
             Storage.saveChoice(choiceKey, exerciseId);
-            // Re-render the day view
+            UI.hideChoiceModal();
             UI.renderDay(this._currentWeek, this._currentDay);
+            return;
+        }
+
+        // Choice modal: close on overlay
+        if (target.id === 'choice-modal') {
+            UI.hideChoiceModal();
             return;
         }
 
