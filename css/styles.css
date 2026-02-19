@@ -12,18 +12,18 @@
     --text-muted: #636366;
 
     --accent-primary: #A78BFA;
-    --accent-success: #30D158;
-    --accent-warning: #FF9F0A;
-    --accent-info: #64D2FF;
-    --accent-red: #FF453A;
+    --accent-success: #34D399;
+    --accent-warning: #FFD166;
+    --accent-info: #7DD3FC;
+    --accent-red: #FF6B6B;
 
-    --set-S: #FF453A;
-    --set-SH: #FF9F0A;
-    --set-H: #30D158;
+    --set-S: #FF6B6B;
+    --set-SH: #FFD166;
+    --set-H: #34D399;
 
-    --tech-drop: #FF453A;
-    --tech-rp: #FF9F0A;
-    --tech-mp: #30D158;
+    --tech-drop: #FF6B6B;
+    --tech-rp: #FFD166;
+    --tech-mp: #34D399;
 
     --border-color: rgba(255, 255, 255, 0.08);
     --border-highlight: rgba(255, 255, 255, 0.15);
@@ -53,7 +53,7 @@
     --radius-xl: 20px;
     --radius-pill: 999px;
 
-    --superset-border: rgba(100, 210, 255, 0.25);
+    --superset-border: rgba(125, 211, 252, 0.25);
 }
 
 /* ===== Reset & Base ===== */
@@ -176,7 +176,7 @@ input, button, select {
 .setup-screen .app-icon {
     width: 80px;
     height: 80px;
-    background: linear-gradient(135deg, var(--accent-primary), #8944C6);
+    background: linear-gradient(135deg, var(--accent-primary), #8B6FC0);
     border-radius: var(--radius-xl);
     display: flex;
     align-items: center;
@@ -509,7 +509,7 @@ input, button, select {
 }
 
 .superset-label {
-    background: rgba(100, 210, 255, 0.15);
+    background: rgba(125, 211, 252, 0.15);
     color: var(--accent-info);
     font-size: var(--font-size-xs);
     font-weight: 700;
@@ -534,7 +534,7 @@ input, button, select {
     padding: var(--spacing-xs) 0;
     color: var(--accent-info);
     font-size: var(--font-size-xs);
-    background: rgba(100, 210, 255, 0.05);
+    background: rgba(125, 211, 252, 0.05);
     font-weight: 500;
 }
 
@@ -581,7 +581,7 @@ input, button, select {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 159, 10, 0.15);
+    background: rgba(255, 209, 102, 0.15);
     color: var(--accent-warning);
     white-space: nowrap;
 }
@@ -857,7 +857,7 @@ input, button, select {
 }
 
 .history-btn:active {
-    background: rgba(100, 210, 255, 0.08);
+    background: rgba(125, 211, 252, 0.08);
 }
 
 /* ===== Settings button in header ===== */
