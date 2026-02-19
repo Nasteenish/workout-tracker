@@ -13,16 +13,16 @@
 
     --accent-primary: #A78BFA;
     --accent-success: #34D399;
-    --accent-warning: #FFD166;
+    --accent-warning: #FF9F0A;
     --accent-info: #7DD3FC;
     --accent-red: #FF6B6B;
 
     --set-S: #FF6B6B;
-    --set-SH: #FFD166;
+    --set-SH: #FF9F0A;
     --set-H: #34D399;
 
     --tech-drop: #FF6B6B;
-    --tech-rp: #FFD166;
+    --tech-rp: #FF9F0A;
     --tech-mp: #34D399;
 
     --border-color: rgba(255, 255, 255, 0.08);
@@ -581,7 +581,7 @@ input, button, select {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 209, 102, 0.15);
+    background: rgba(255, 159, 10, 0.15);
     color: var(--accent-warning);
     white-space: nowrap;
 }
