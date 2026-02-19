@@ -149,11 +149,34 @@ const App = {
 
         // Save settings
         if (target.id === 'settings-save') {
-            const cycleBtn = document.querySelector('.cycle-toggle button.active');
+            const cycleBtn = document.querySelector('.cycle-toggle button.active[data-cycle]');
             const cycleType = cycleBtn ? parseInt(cycleBtn.dataset.cycle) : 7;
             const startDate = document.getElementById('settings-start-date').value;
-            Storage.saveSettings({ cycleType, startDate });
+            const unitBtn = document.querySelector('.cycle-toggle button.active[data-unit]');
+            const weightUnit = unitBtn ? unitBtn.dataset.unit : 'kg';
+            Storage.saveSettings({ cycleType, startDate, weightUnit });
             location.hash = `#/week/${this._currentWeek}`;
+            return;
+        }
+
+        // Settings: add equipment
+        if (target.id === 'settings-eq-add' || target.closest('#settings-eq-add')) {
+            const input = document.getElementById('settings-eq-name');
+            const name = input ? input.value.trim() : '';
+            if (!name) return;
+            Storage.addEquipment(name);
+            UI.renderSettings();
+            return;
+        }
+
+        // Settings: remove equipment
+        if (target.matches('.eq-remove-btn') || target.closest('.eq-remove-btn')) {
+            const btn = target.matches('.eq-remove-btn') ? target : target.closest('.eq-remove-btn');
+            const eqId = btn.dataset.eqId;
+            if (eqId) {
+                Storage.removeEquipment(eqId);
+                UI.renderSettings();
+            }
             return;
         }
 
@@ -166,11 +189,53 @@ const App = {
             return;
         }
 
+        // Equipment button — show equipment picker
+        if (target.matches('.equipment-btn') || target.closest('.equipment-btn')) {
+            const btn = target.matches('.equipment-btn') ? target : target.closest('.equipment-btn');
+            const exId = btn.dataset.exercise;
+            UI.showEquipmentModal(exId);
+            return;
+        }
+
+        // Equipment modal — select option
+        if (target.matches('.eq-option') || target.closest('.eq-option')) {
+            const opt = target.matches('.eq-option') ? target : target.closest('.eq-option');
+            const eqId = opt.dataset.eqId;
+            const exId = opt.dataset.exercise;
+            Storage.setExerciseEquipment(exId, eqId || null);
+            UI.hideEquipmentModal();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return;
+        }
+
+        // Equipment modal — add new
+        if (target.id === 'eq-add-btn' || target.closest('#eq-add-btn')) {
+            const input = document.getElementById('eq-new-name');
+            const name = input ? input.value.trim() : '';
+            if (!name) return;
+            const modal = document.getElementById('equipment-modal');
+            const exId = modal ? modal._exerciseId : null;
+            const newId = Storage.addEquipment(name);
+            if (exId) {
+                Storage.setExerciseEquipment(exId, newId);
+                UI.hideEquipmentModal();
+                UI.renderDay(this._currentWeek, this._currentDay);
+            }
+            return;
+        }
+
+        // Equipment modal — close on overlay
+        if (target.id === 'equipment-modal') {
+            UI.hideEquipmentModal();
+            return;
+        }
+
         // Complete button
         if (target.matches('.complete-btn') || target.closest('.complete-btn')) {
             const btn = target.matches('.complete-btn') ? target : target.closest('.complete-btn');
             const exId = btn.dataset.exercise;
             const setIdx = parseInt(btn.dataset.set);
+            const eqId = Storage.getExerciseEquipment(exId);
 
             // Get current input values
             const row = btn.closest('.set-row');
@@ -182,7 +247,7 @@ const App = {
             const existing = Storage.getSetLog(this._currentWeek, this._currentDay, exId, setIdx);
             if (existing && existing.completed) {
                 // Uncomplete
-                Storage.toggleSetComplete(this._currentWeek, this._currentDay, exId, setIdx);
+                Storage.toggleSetComplete(this._currentWeek, this._currentDay, exId, setIdx, eqId);
                 btn.classList.remove('completed');
                 btn.innerHTML = '';
             } else {
@@ -193,7 +258,7 @@ const App = {
                 if (reps > 0) {
                     repsInput.value = reps;
                 }
-                Storage.saveSetLog(this._currentWeek, this._currentDay, exId, setIdx, weight, reps);
+                Storage.saveSetLog(this._currentWeek, this._currentDay, exId, setIdx, weight, reps, eqId);
                 btn.classList.add('completed');
                 btn.innerHTML = '&#10003;';
             }
@@ -290,11 +355,48 @@ const App = {
             return;
         }
 
+        // Weight modal: unit toggle (kg <-> lbs)
+        if (target.id === 'unit-toggle' || target.closest('#unit-toggle')) {
+            const modal = document.getElementById('weight-modal');
+            if (!modal) return;
+            const valEl = document.getElementById('modal-value');
+            const current = parseFloat(valEl.textContent) || 0;
+            const labelEl = document.getElementById('modal-unit-label');
+            const toggleBtn = document.getElementById('unit-toggle');
+
+            if (modal._displayUnit === 'kg') {
+                // Convert kg -> lbs
+                const lbs = Math.round(current * 2.20462 * 100) / 100;
+                valEl.textContent = lbs;
+                modal._displayUnit = 'lbs';
+                labelEl.textContent = 'lbs';
+                toggleBtn.textContent = 'lbs \u2194 \u043a\u0433';
+            } else {
+                // Convert lbs -> kg
+                const kg = Math.round(current / 2.20462 * 100) / 100;
+                valEl.textContent = kg;
+                modal._displayUnit = 'kg';
+                labelEl.textContent = '\u043a\u0433';
+                toggleBtn.textContent = '\u043a\u0433 \u2194 lbs';
+            }
+            modal._isTyping = false;
+            return;
+        }
+
         // Weight modal: done
         if (target.id === 'modal-done') {
             const modal = document.getElementById('weight-modal');
             if (!modal) return;
-            const value = parseFloat(document.getElementById('modal-value').textContent) || 0;
+            let value = parseFloat(document.getElementById('modal-value').textContent) || 0;
+            // If displaying in lbs, convert back to storage unit
+            const storageUnit = Storage.getWeightUnit();
+            if (modal._displayUnit !== storageUnit) {
+                if (modal._displayUnit === 'lbs' && storageUnit === 'kg') {
+                    value = Math.round(value / 2.20462 * 100) / 100;
+                } else if (modal._displayUnit === 'kg' && storageUnit === 'lbs') {
+                    value = Math.round(value * 2.20462 * 100) / 100;
+                }
+            }
             const input = modal._targetInput;
             if (input) {
                 input.value = value;

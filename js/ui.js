@@ -150,6 +150,18 @@ const UI = {
 
         const restText = formatRest(ex.rest);
 
+        // Equipment selector
+        const eqId = Storage.getExerciseEquipment(ex.id);
+        const eq = eqId ? Storage.getEquipmentById(eqId) : null;
+        const eqLabel = eq ? eq.name : 'Оборудование';
+        const eqHtml = `
+            <div class="equipment-row">
+                <button class="equipment-btn" data-exercise="${ex.id}">
+                    ${eqLabel} &#9662;
+                </button>
+            </div>
+        `;
+
         return `
             <div class="exercise-card">
                 <div class="exercise-header">
@@ -159,6 +171,7 @@ const UI = {
                         ${restText ? `<span>${restText}</span>` : ''}
                     </div>
                 </div>
+                ${eqHtml}
                 ${setsHtml}
                 <button class="history-btn" data-exercise="${ex.id}">
                     &#128200; История
@@ -170,11 +183,14 @@ const UI = {
     _renderSetRow(ex, setIdx, weekNum, dayNum) {
         const set = ex.sets[setIdx];
         const log = Storage.getSetLog(weekNum, dayNum, ex.id, setIdx);
-        const prev = Storage.getPreviousLog(weekNum, dayNum, ex.id, setIdx);
+        const eqId = Storage.getExerciseEquipment(ex.id);
+        const prev = Storage.getPreviousLog(weekNum, dayNum, ex.id, setIdx, eqId);
         const isCompleted = log && log.completed;
         const weightVal = log ? log.weight : '';
         const repsVal = log ? log.reps : '';
-        const prevText = prev ? `пред: ${prev.weight}кг x ${prev.reps}` : '';
+        const unit = Storage.getWeightUnit();
+        const unitLabel = unit === 'lbs' ? 'lbs' : 'кг';
+        const prevText = prev ? `пред: ${prev.weight}${unitLabel} x ${prev.reps}` : '';
 
         // Type badge
         const typeClass = `type-${set.type}`;
@@ -217,7 +233,7 @@ const UI = {
                 </div>
                 <div class="set-inputs">
                     <div class="input-group">
-                        <label>кг</label>
+                        <label>${unitLabel}</label>
                         <input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*"
                             class="weight-input"
                             data-exercise="${ex.id}" data-set="${setIdx}"
@@ -305,6 +321,8 @@ const UI = {
     // ===== HISTORY VIEW =====
     renderHistory(exerciseId) {
         const history = Storage.getExerciseHistory(exerciseId);
+        const unit = Storage.getWeightUnit();
+        const unitLabel = unit === 'lbs' ? 'lbs' : 'кг';
 
         // Find exercise name using getGroupExercises helper
         let exerciseName = exerciseId;
@@ -326,29 +344,53 @@ const UI = {
         if (history.length === 0) {
             contentHtml = '<p class="history-empty">Нет записей</p>';
         } else {
+            // Group entries by equipmentId
+            const byEquipment = {};
             let maxWeight = 0;
             for (const entry of history) {
-                let setsHtml = '';
                 for (const s of entry.sets) {
-                    setsHtml += `
-                        <div class="history-set">
-                            <span>П.${s.setIdx + 1}:</span>
-                            <span class="weight-value">${s.weight}кг x ${s.reps}</span>
-                        </div>
-                    `;
+                    const eqKey = s.equipmentId || '_none';
+                    if (!byEquipment[eqKey]) byEquipment[eqKey] = [];
                     if (s.weight > maxWeight) maxWeight = s.weight;
                 }
+                // Group full entries
+                const eqKey = (entry.sets[0] && entry.sets[0].equipmentId) || '_none';
+                if (!byEquipment[eqKey]) byEquipment[eqKey] = [];
+                byEquipment[eqKey].push(entry);
+            }
 
-                contentHtml += `
-                    <div class="history-week">
-                        <div class="history-week-title">Неделя ${entry.week}, День ${entry.day}</div>
-                        ${setsHtml}
-                    </div>
-                `;
+            const eqKeys = Object.keys(byEquipment);
+            const hasMultipleEquipment = eqKeys.length > 1 || (eqKeys.length === 1 && eqKeys[0] !== '_none');
+
+            for (const eqKey of eqKeys) {
+                const entries = byEquipment[eqKey];
+                if (hasMultipleEquipment) {
+                    const eq = eqKey !== '_none' ? Storage.getEquipmentById(eqKey) : null;
+                    const eqName = eq ? eq.name : 'Без оборудования';
+                    contentHtml += `<div class="history-equipment-title">${eqName}</div>`;
+                }
+
+                for (const entry of entries) {
+                    let setsHtml = '';
+                    for (const s of entry.sets) {
+                        setsHtml += `
+                            <div class="history-set">
+                                <span>П.${s.setIdx + 1}:</span>
+                                <span class="weight-value">${s.weight}${unitLabel} x ${s.reps}</span>
+                            </div>
+                        `;
+                    }
+                    contentHtml += `
+                        <div class="history-week">
+                            <div class="history-week-title">Неделя ${entry.week}, День ${entry.day}</div>
+                            ${setsHtml}
+                        </div>
+                    `;
+                }
             }
 
             if (maxWeight > 0) {
-                contentHtml += `<div class="history-max">Максимальный вес: ${maxWeight} кг</div>`;
+                contentHtml += `<div class="history-max">Максимальный вес: ${maxWeight} ${unitLabel}</div>`;
             }
         }
 
@@ -369,13 +411,17 @@ const UI = {
     // ===== WEIGHT INPUT MODAL =====
     showWeightModal(inputEl) {
         const currentVal = inputEl.value || inputEl.placeholder || '0';
+        const unit = Storage.getWeightUnit();
+        const unitLabel = unit === 'lbs' ? 'lbs' : 'кг';
+        const otherLabel = unit === 'lbs' ? 'кг' : 'lbs';
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
         overlay.id = 'weight-modal';
         overlay.innerHTML = `
             <div class="weight-modal">
                 <div class="modal-header">
-                    <h3>Вес (кг)</h3>
+                    <h3>Вес (<span id="modal-unit-label">${unitLabel}</span>)</h3>
+                    <button class="unit-toggle" id="unit-toggle">${unitLabel} &harr; ${otherLabel}</button>
                     <button class="modal-done" id="modal-done">Готово</button>
                 </div>
                 <div class="modal-value" id="modal-value">${currentVal}</div>
@@ -407,9 +453,10 @@ const UI = {
         `;
         document.body.appendChild(overlay);
 
-        // Store reference to the input element
+        // Store reference to the input element and current display unit
         overlay._targetInput = inputEl;
         overlay._isTyping = false;
+        overlay._displayUnit = unit; // 'kg' or 'lbs'
 
         // Handle clicks inside the modal directly
         overlay.addEventListener('click', function(e) {
@@ -424,9 +471,75 @@ const UI = {
         }
     },
 
+    // ===== EQUIPMENT MODAL =====
+    showEquipmentModal(exerciseId) {
+        const equipmentList = Storage.getEquipmentList();
+        const currentEqId = Storage.getExerciseEquipment(exerciseId);
+
+        let optionsHtml = `
+            <div class="eq-option ${!currentEqId ? 'selected' : ''}" data-eq-id="" data-exercise="${exerciseId}">
+                Без оборудования
+            </div>
+        `;
+        for (const eq of equipmentList) {
+            const isSelected = eq.id === currentEqId;
+            optionsHtml += `
+                <div class="eq-option ${isSelected ? 'selected' : ''}" data-eq-id="${eq.id}" data-exercise="${exerciseId}">
+                    ${eq.name}
+                </div>
+            `;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.id = 'equipment-modal';
+        overlay.innerHTML = `
+            <div class="equipment-modal">
+                <div class="modal-header">
+                    <h3>Оборудование</h3>
+                </div>
+                <div class="eq-list">
+                    ${optionsHtml}
+                </div>
+                <div class="eq-add-row">
+                    <input type="text" id="eq-new-name" placeholder="Новое оборудование..." class="eq-new-input">
+                    <button class="eq-add-btn" id="eq-add-btn">+</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        overlay._exerciseId = exerciseId;
+
+        overlay.addEventListener('click', function(e) {
+            App.handleClick(e);
+        });
+    },
+
+    hideEquipmentModal() {
+        const modal = document.getElementById('equipment-modal');
+        if (modal) modal.remove();
+    },
+
     // ===== SETTINGS MODAL =====
     renderSettings() {
         const settings = Storage.getSettings();
+        const unit = Storage.getWeightUnit();
+        const equipmentList = Storage.getEquipmentList();
+
+        let eqListHtml = '';
+        for (const eq of equipmentList) {
+            eqListHtml += `
+                <div class="settings-eq-item">
+                    <span>${eq.name}</span>
+                    <button class="eq-remove-btn" data-eq-id="${eq.id}">&times;</button>
+                </div>
+            `;
+        }
+        if (equipmentList.length === 0) {
+            eqListHtml = '<div class="settings-eq-empty">Нет оборудования</div>';
+        }
+
         document.getElementById('app').innerHTML = `
             <div class="app-header">
                 <button class="back-btn" id="btn-back-settings">&#9664;</button>
@@ -446,7 +559,25 @@ const UI = {
                     <label>Дата начала программы</label>
                     <input type="date" id="settings-start-date" value="${settings.startDate || ''}">
                 </div>
+                <div class="setup-field">
+                    <label>Единица веса</label>
+                    <div class="cycle-toggle">
+                        <button data-unit="kg" ${unit === 'kg' ? 'class="active"' : ''}>кг</button>
+                        <button data-unit="lbs" ${unit === 'lbs' ? 'class="active"' : ''}>lbs</button>
+                    </div>
+                </div>
                 <button class="btn-primary" id="settings-save">Сохранить</button>
+
+                <div class="setup-field" style="margin-top: 32px;">
+                    <label>Оборудование</label>
+                    <div class="settings-eq-list">
+                        ${eqListHtml}
+                    </div>
+                    <div class="eq-add-row">
+                        <input type="text" id="settings-eq-name" placeholder="Название..." class="eq-new-input">
+                        <button class="eq-add-btn" id="settings-eq-add">+</button>
+                    </div>
+                </div>
 
                 <div class="data-actions" style="margin-top: 48px;">
                     <button id="btn-reset" style="color: var(--accent-primary);">&#9888; Сбросить данные</button>

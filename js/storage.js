@@ -10,6 +10,9 @@ const Storage = {
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
             this._data = raw ? JSON.parse(raw) : this._defaultData();
+            // Migrate: add new fields if missing
+            if (!this._data.equipment) this._data.equipment = [];
+            if (!this._data.exerciseEquipment) this._data.exerciseEquipment = {};
         } catch (e) {
             console.error('Storage load error:', e);
             this._data = this._defaultData();
@@ -29,8 +32,11 @@ const Storage = {
         return {
             settings: {
                 cycleType: 7,
-                startDate: null
+                startDate: null,
+                weightUnit: 'kg'
             },
+            equipment: [],
+            exerciseEquipment: {},
             exerciseChoices: {},
             log: {}
         };
@@ -51,6 +57,47 @@ const Storage = {
         return s.startDate !== null;
     },
 
+    getWeightUnit() {
+        return this.getSettings().weightUnit || 'kg';
+    },
+
+    setWeightUnit(unit) {
+        this.saveSettings({ weightUnit: unit });
+    },
+
+    // ===== Equipment =====
+    getEquipmentList() {
+        return this._load().equipment || [];
+    },
+
+    addEquipment(name, type) {
+        const data = this._load();
+        const id = 'eq_' + Date.now();
+        data.equipment.push({ id, name, type: type || 'other' });
+        this._save();
+        return id;
+    },
+
+    removeEquipment(id) {
+        const data = this._load();
+        data.equipment = data.equipment.filter(e => e.id !== id);
+        this._save();
+    },
+
+    getEquipmentById(id) {
+        if (!id) return null;
+        return this.getEquipmentList().find(e => e.id === id) || null;
+    },
+
+    getExerciseEquipment(exerciseId) {
+        return this._load().exerciseEquipment[exerciseId] || null;
+    },
+
+    setExerciseEquipment(exerciseId, equipmentId) {
+        this._load().exerciseEquipment[exerciseId] = equipmentId;
+        this._save();
+    },
+
     // Exercise choices (for choose_one groups)
     getChoice(groupKey) {
         return this._load().exerciseChoices[groupKey] || null;
@@ -61,7 +108,7 @@ const Storage = {
         this._save();
     },
 
-    // Set logging
+    // ===== Set logging =====
     getSetLog(week, day, exerciseId, setIdx) {
         const data = this._load();
         const w = String(week);
@@ -74,7 +121,7 @@ const Storage = {
         return null;
     },
 
-    saveSetLog(week, day, exerciseId, setIdx, weight, reps) {
+    saveSetLog(week, day, exerciseId, setIdx, weight, reps, equipmentId) {
         const data = this._load();
         const w = String(week);
         const d = String(day);
@@ -90,10 +137,11 @@ const Storage = {
             completed: true,
             timestamp: Date.now()
         };
+        if (equipmentId) data.log[w][d][exerciseId][s].equipmentId = equipmentId;
         this._save();
     },
 
-    toggleSetComplete(week, day, exerciseId, setIdx) {
+    toggleSetComplete(week, day, exerciseId, setIdx, equipmentId) {
         const existing = this.getSetLog(week, day, exerciseId, setIdx);
         if (existing && existing.completed) {
             // Uncomplete
@@ -119,6 +167,7 @@ const Storage = {
                 completed: true,
                 timestamp: Date.now()
             };
+            if (equipmentId) data.log[w][d][exerciseId][s].equipmentId = equipmentId;
             this._save();
             return true;
         }
@@ -147,8 +196,29 @@ const Storage = {
         this._save();
     },
 
+    // Stamp current equipment on a set log entry
+    stampEquipment(week, day, exerciseId, setIdx, equipmentId) {
+        const data = this._load();
+        const w = String(week);
+        const d = String(day);
+        const s = String(setIdx);
+        if (data.log[w] && data.log[w][d] && data.log[w][d][exerciseId] && data.log[w][d][exerciseId][s]) {
+            data.log[w][d][exerciseId][s].equipmentId = equipmentId || null;
+            this._save();
+        }
+    },
+
     // Get previous week's log for an exercise/set (for placeholder)
-    getPreviousLog(week, day, exerciseId, setIdx) {
+    // If equipmentId provided, prefer matching equipment; fallback to any
+    getPreviousLog(week, day, exerciseId, setIdx, equipmentId) {
+        // First pass: match equipment
+        if (equipmentId) {
+            for (let w = week - 1; w >= 1; w--) {
+                const log = this.getSetLog(w, day, exerciseId, setIdx);
+                if (log && log.completed && log.equipmentId === equipmentId) return log;
+            }
+        }
+        // Fallback: any equipment
         for (let w = week - 1; w >= 1; w--) {
             const log = this.getSetLog(w, day, exerciseId, setIdx);
             if (log && log.completed) return log;
@@ -156,7 +226,7 @@ const Storage = {
         return null;
     },
 
-    // Get exercise history across all weeks
+    // Get exercise history across all weeks — includes equipmentId
     getExerciseHistory(exerciseId) {
         const data = this._load();
         const history = [];
@@ -176,7 +246,8 @@ const Storage = {
                             setIdx: parseInt(setIdx),
                             weight: setData.weight,
                             reps: setData.reps,
-                            timestamp: setData.timestamp
+                            timestamp: setData.timestamp,
+                            equipmentId: setData.equipmentId || null
                         });
                     }
                 }
