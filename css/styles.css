@@ -1178,34 +1178,52 @@ body.modal-open {
     border-color: rgba(255, 45, 85, 0.2);
 }
 
-.timer-duration-row {
+.td-minsec {
     display: flex;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.td-field-wrap {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
 }
 
-.td-adj {
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.05);
-    border-radius: var(--radius-sm);
-    color: var(--text-secondary);
-    font-size: 13px;
-    font-weight: 600;
-    padding: 6px 12px;
-    cursor: pointer;
-    -webkit-appearance: none;
-    appearance: none;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.td-display {
-    font-size: 20px;
+.td-num-input {
+    width: 76px;
+    text-align: center;
+    font-size: 30px;
     font-weight: 700;
     color: #fff;
-    letter-spacing: -0.5px;
-    min-width: 56px;
-    text-align: center;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: var(--radius-sm);
+    padding: 10px 6px;
+    -webkit-appearance: none;
+    appearance: none;
     font-variant-numeric: tabular-nums;
+}
+
+.td-num-input::-webkit-inner-spin-button,
+.td-num-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.td-field-lbl {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.td-colon {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--text-muted);
+    padding-top: 10px;
 }
 
 .btn-danger {
