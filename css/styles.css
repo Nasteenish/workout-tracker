@@ -747,6 +747,9 @@ input, button, select {
     background: linear-gradient(135deg, rgba(195, 255, 60, 1) 0%, rgba(90, 160, 10, 0.85) 100%);
     border-color: transparent;
     color: #000;
+}
+
+.complete-btn.pop {
     animation: spring-pop 0.4s ease-out;
 }
 
