@@ -326,7 +326,7 @@ const App = {
                 // Uncomplete
                 Storage.toggleSetComplete(this._currentWeek, this._currentDay, exId, setIdx, eqId);
                 btn.classList.remove('completed');
-                btn.innerHTML = '';
+                btn.innerHTML = '<span class="complete-inner"></span>';
             } else {
                 // Complete with values
                 if (weight > 0) {
@@ -337,7 +337,7 @@ const App = {
                 }
                 Storage.saveSetLog(this._currentWeek, this._currentDay, exId, setIdx, weight, reps, eqId);
                 btn.classList.add('completed');
-                btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 9l3.5 3.5L14 5.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+                btn.innerHTML = '<span class="complete-inner"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 9l3.5 3.5L14 5.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
                 btn.classList.add('pop');
                 btn.addEventListener('animationend', () => btn.classList.remove('pop'), { once: true });
                 RestTimer.start();

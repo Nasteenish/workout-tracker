@@ -200,7 +200,7 @@ const UI = {
             <div class="app-header">
                 <button class="back-btn" id="btn-back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
                 <div class="header-title">
-                    <h1>Нед.${weekNum} / День ${dayNum}</h1>
+                    <h1>Неделя ${weekNum} / День ${dayNum}</h1>
                     <div class="header-subtitle">${dayTitle}</div>
                 </div>
             </div>
@@ -318,7 +318,9 @@ const UI = {
                     </div>
                     <button class="complete-btn ${isCompleted ? 'completed' : ''}"
                         data-exercise="${ex.id}" data-set="${setIdx}">
-                        ${isCompleted ? '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 9l3.5 3.5L14 5.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+                        <span class="complete-inner">
+                            ${isCompleted ? '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 9l3.5 3.5L14 5.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+                        </span>
                     </button>
                 </div>
                 ${prevText ? `<div class="set-prev">${prevText}</div>` : ''}
