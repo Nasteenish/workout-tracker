@@ -547,16 +547,20 @@ input, button, select {
 }
 
 .chooser-badge {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     flex-shrink: 0;
     background: rgba(157, 141, 245, 0.18);
     border-radius: 50%;
     color: var(--accent-primary);
-    margin-left: 2px;
+}
+
+.equipment-btn .chooser-badge {
+    width: 16px;
+    height: 16px;
 }
 
 /* Superset Group */

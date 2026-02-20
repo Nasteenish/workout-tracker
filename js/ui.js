@@ -225,7 +225,7 @@ const UI = {
         const eqHtml = `
             <div class="equipment-row">
                 <button class="equipment-btn" data-exercise="${ex.id}">
-                    ${eqLabel} &#9662;
+                    ${eqLabel}<span class="chooser-badge"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                 </button>
             </div>
         `;
