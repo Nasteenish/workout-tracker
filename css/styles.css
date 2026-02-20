@@ -5,7 +5,7 @@
     --bg-card: rgba(255, 255, 255, 0.08);
     --bg-card-hover: rgba(255, 255, 255, 0.12);
     --bg-input: rgba(255, 255, 255, 0.07);
-    --bg-modal: rgba(4, 4, 10, 0.85);
+    --bg-modal: rgba(4, 4, 10, 0.96);
     --glass-blur: blur(24px);
     --glass-border: 1px solid rgba(255, 255, 255, 0.11);
     --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -726,7 +726,10 @@ input, button, select {
 }
 
 .weight-modal {
-    background: var(--bg-secondary);
+    background: rgba(14, 14, 24, 0.98);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-top: var(--glass-border);
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     padding: var(--spacing-lg);
     padding-bottom: calc(var(--spacing-lg) + env(safe-area-inset-bottom, 0px));
@@ -958,7 +961,10 @@ input, button, select {
 
 /* Equipment Modal */
 .equipment-modal {
-    background: var(--bg-secondary);
+    background: rgba(14, 14, 24, 0.98);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-top: var(--glass-border);
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     padding: var(--spacing-md);
     padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom, 0px));
