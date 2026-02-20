@@ -1502,7 +1502,7 @@ body.modal-open {
     height: 110px;
 }
 
-.rtn-ring-wrap svg {
+.rtn-ring-wrap > svg {
     transform: rotate(-90deg);
 }
 
