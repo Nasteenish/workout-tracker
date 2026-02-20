@@ -294,91 +294,37 @@ const UI = {
         const placeholderW = prev ? prev.weight : '';
         const placeholderR = prev ? prev.reps : '';
 
-        // Build segments from techniques
-        const segTechLabels = { DROP: 'drop', REST_PAUSE: 'R-P', MP: 'MP', DROP_OR_REST: 'drop/R-P' };
-        const segTechClasses = { DROP: 'seg-lbl-drop', REST_PAUSE: 'seg-lbl-rp', MP: 'seg-lbl-mp', DROP_OR_REST: 'seg-lbl-drop' };
-        const segments = [{ label: null, cls: null, segIdx: 0 }];
-        if (set.techniques) {
-            for (const t of set.techniques) {
-                if (segTechLabels[t]) segments.push({ label: segTechLabels[t], cls: segTechClasses[t], segIdx: segments.length });
-            }
-        }
-
-        const completeBtnSvg = isCompleted
-            ? `<svg width="40" height="40" viewBox="0 0 40 40"><defs><linearGradient id="cg-${ex.id}-${setIdx}" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#C3FF3C"/><stop offset="1" stop-color="#5AA00A"/></linearGradient></defs><circle cx="20" cy="20" r="20" fill="url(#cg-${ex.id}-${setIdx})"/><g transform="translate(11,11)"><path d="M4 9l3.5 3.5L14 5.5" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`
-            : '<svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18.5" stroke="rgba(157,141,245,0.4)" stroke-width="1.5"/></svg>';
-
-        const setInfoHtml = `
-            <div class="set-info">
-                <span class="set-number">П.${setIdx + 1}</span>
-                <span class="set-type-badge ${typeClass}">${typeLabel}</span>
-                <span class="rpe-badge">${set.rpe}</span>
-                ${techHtml}
-            </div>`;
-
-        if (segments.length === 1) {
-            // Single segment: original layout
-            return `
-                <div class="set-row" data-exercise="${ex.id}" data-set="${setIdx}">
-                    ${setInfoHtml}
-                    <div class="set-inputs">
-                        <div class="input-group">
-                            <button class="unit-cycle-btn" data-exercise="${ex.id}">${unitLabel}</button>
-                            <input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*"
-                                class="weight-input"
-                                data-exercise="${ex.id}" data-set="${setIdx}"
-                                value="${weightVal}" placeholder="${placeholderW}">
-                        </div>
-                        <div class="input-group">
-                            <label>reps</label>
-                            <input type="text" inputmode="numeric" pattern="[0-9]*"
-                                class="reps-input"
-                                data-exercise="${ex.id}" data-set="${setIdx}"
-                                value="${repsVal}" placeholder="${placeholderR}">
-                        </div>
-                        <div role="button" class="complete-btn ${isCompleted ? 'completed' : ''}"
-                            data-exercise="${ex.id}" data-set="${setIdx}">${completeBtnSvg}</div>
-                    </div>
-                    ${prevText ? `<div class="set-prev">${prevText}</div>` : ''}
-                </div>
-            `;
-        }
-
-        // Multi-segment layout (horizontal row of compact blocks)
-        let segsHtml = '';
-        for (const seg of segments) {
-            const segLog = seg.segIdx === 0 ? log : (log && log.segs && log.segs[String(seg.segIdx)]) || null;
-            const wVal = segLog ? (seg.segIdx === 0 ? weightVal : (segLog.weight ?? '')) : '';
-            const rVal = segLog ? (seg.segIdx === 0 ? repsVal : (segLog.reps ?? '')) : '';
-            const wPh = seg.segIdx === 0 ? placeholderW : '';
-            const rPh = seg.segIdx === 0 ? placeholderR : '';
-            const wClass = seg.segIdx === 0 ? 'weight-input seg-weight-input' : 'seg-weight-input';
-            const rClass = seg.segIdx === 0 ? 'reps-input seg-reps-input' : 'seg-reps-input';
-            const prefixHtml = seg.label
-                ? `<span class="seg-lbl ${seg.cls}">${seg.label}</span>`
-                : `<button class="unit-cycle-btn" data-exercise="${ex.id}">${unitLabel}</button>`;
-            segsHtml += `
-                <div class="set-seg">
-                    ${prefixHtml}
-                    <input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*"
-                        class="${wClass}"
-                        data-exercise="${ex.id}" data-set="${setIdx}" data-seg="${seg.segIdx}"
-                        value="${wVal}" placeholder="${wPh}">
-                    <input type="text" inputmode="numeric" pattern="[0-9]*"
-                        class="${rClass}"
-                        data-exercise="${ex.id}" data-set="${setIdx}" data-seg="${seg.segIdx}"
-                        value="${rVal}" placeholder="${rPh}">
-                </div>
-            `;
-        }
-
         return `
             <div class="set-row" data-exercise="${ex.id}" data-set="${setIdx}">
-                ${setInfoHtml}
-                <div class="set-inputs multi-seg">
-                    <div class="set-segs">${segsHtml}</div>
+                <div class="set-info">
+                    <span class="set-number">П.${setIdx + 1}</span>
+                    <span class="set-type-badge ${typeClass}">${typeLabel}</span>
+                    <span class="rpe-badge">${set.rpe}</span>
+                    ${techHtml}
+                </div>
+                <div class="set-inputs">
+                    <div class="input-group">
+                        <button class="unit-cycle-btn" data-exercise="${ex.id}">${unitLabel}</button>
+                        <input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*"
+                            class="weight-input"
+                            data-exercise="${ex.id}" data-set="${setIdx}"
+                            value="${weightVal}"
+                            placeholder="${placeholderW}">
+                    </div>
+                    <div class="input-group">
+                        <label>reps</label>
+                        <input type="text" inputmode="numeric" pattern="[0-9]*"
+                            class="reps-input"
+                            data-exercise="${ex.id}" data-set="${setIdx}"
+                            value="${repsVal}"
+                            placeholder="${placeholderR}">
+                    </div>
                     <div role="button" class="complete-btn ${isCompleted ? 'completed' : ''}"
-                        data-exercise="${ex.id}" data-set="${setIdx}">${completeBtnSvg}</div>
+                        data-exercise="${ex.id}" data-set="${setIdx}">
+                        ${isCompleted
+                            ? `<svg width="40" height="40" viewBox="0 0 40 40"><defs><linearGradient id="cg-${ex.id}-${setIdx}" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#C3FF3C"/><stop offset="1" stop-color="#5AA00A"/></linearGradient></defs><circle cx="20" cy="20" r="20" fill="url(#cg-${ex.id}-${setIdx})"/><g transform="translate(11,11)"><path d="M4 9l3.5 3.5L14 5.5" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`
+                            : '<svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18.5" stroke="rgba(157,141,245,0.4)" stroke-width="1.5"/></svg>'}
+                    </div>
                 </div>
                 ${prevText ? `<div class="set-prev">${prevText}</div>` : ''}
             </div>
