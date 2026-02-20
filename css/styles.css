@@ -744,8 +744,9 @@ input, button, select {
     transition: border-color 0.2s;
     -webkit-appearance: none;
     appearance: none;
-    -webkit-mask-image: -webkit-radial-gradient(white, black);
-    mask-image: radial-gradient(white, black);
+    -webkit-clip-path: circle(50%);
+    clip-path: circle(50%);
+    -webkit-tap-highlight-color: transparent;
 }
 
 .complete-btn.completed {
@@ -1049,8 +1050,7 @@ body.modal-open {
     gap: var(--spacing-sm);
     max-width: 100%;
     margin: var(--spacing-lg) auto 0;
-    padding-top: var(--spacing-lg);
-    border-top: 1px solid var(--border-color);
+    padding-top: 0;
 }
 
 .data-actions button {
