@@ -19,8 +19,8 @@ const App = {
         document.getElementById('app').addEventListener('input', (e) => this.handleInput(e));
         document.getElementById('app').addEventListener('focus', (e) => this.handleFocus(e), true);
 
-        // Swipe left/right to navigate weeks (circular)
-        this._initWeekSwipe();
+        // Swipe navigation: left/right weeks + right-swipe to go back from day view
+        this._initSwipeNav();
 
         // Pull-to-refresh
         this._initPullToRefresh();
@@ -32,14 +32,21 @@ const App = {
         this.route();
     },
 
-    _initWeekSwipe() {
+    _initSwipeNav() {
         let startX = 0, startY = 0;
-        let dragging = false; // committed to horizontal drag
-        let locked = false;   // committed to vertical scroll
+        let dragging = false;
+        let locked = false;
+        let isWeekView = false;
+        let isDayView = false;
 
-        const getSlide = () => document.querySelector('.week-slide');
+        const getSlide = () => isWeekView
+            ? document.querySelector('.week-slide')
+            : document.querySelector('.day-slide');
 
         document.addEventListener('touchstart', (e) => {
+            isWeekView = !!location.hash.match(/^#\/week\/\d+$/);
+            isDayView = !!location.hash.match(/^#\/week\/\d+\/day\/\d+$/);
+            if (!isWeekView && !isDayView) return;
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
             dragging = false;
@@ -49,13 +56,14 @@ const App = {
         }, { passive: true });
 
         document.addEventListener('touchmove', (e) => {
-            if (!location.hash.match(/^#\/week\/\d+$/)) return;
+            if (!isWeekView && !isDayView) return;
             if (locked) return;
             const dx = e.touches[0].clientX - startX;
             const dy = e.touches[0].clientY - startY;
             if (!dragging) {
                 if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
                 if (Math.abs(dy) > Math.abs(dx)) { locked = true; return; }
+                if (isDayView && dx < 0) { locked = true; return; } // only right-swipe in day view
                 dragging = true;
             }
             const el = getSlide();
@@ -63,29 +71,33 @@ const App = {
         }, { passive: true });
 
         document.addEventListener('touchend', (e) => {
-            if (!location.hash.match(/^#\/week\/\d+$/)) return;
+            if (!isWeekView && !isDayView) return;
             const dx = e.changedTouches[0].clientX - startX;
             const el = getSlide();
 
             if (!dragging || Math.abs(dx) < 60) {
-                // snap back
                 if (el) {
-                    el.style.transition = 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    el.style.transition = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
                     el.style.transform = 'translateX(0)';
                 }
                 return;
             }
 
-            // slide out old content
             if (el) {
-                el.style.transition = 'transform 0.25s cubic-bezier(0.4, 0, 1, 1)';
+                el.style.transition = 'transform 0.18s cubic-bezier(0.4, 0, 1, 1)';
                 el.style.transform = `translateX(${dx < 0 ? '-110%' : '110%'})`;
             }
 
-            this._swipeDir = dx < 0 ? 'left' : 'right';
-            const week = this._currentWeek;
-            const next = dx < 0 ? (week === 12 ? 1 : week + 1) : (week === 1 ? 12 : week - 1);
-            setTimeout(() => { location.hash = `#/week/${next}`; }, 220);
+            if (isWeekView) {
+                this._swipeDir = dx < 0 ? 'left' : 'right';
+                const week = this._currentWeek;
+                const next = dx < 0 ? (week === 12 ? 1 : week + 1) : (week === 1 ? 12 : week - 1);
+                setTimeout(() => { location.hash = `#/week/${next}`; }, 160);
+            } else {
+                // day view: right-swipe = back to week
+                this._swipeDir = 'right';
+                setTimeout(() => { location.hash = `#/week/${this._currentWeek}`; }, 160);
+            }
         }, { passive: true });
     },
 

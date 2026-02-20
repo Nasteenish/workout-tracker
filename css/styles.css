@@ -172,7 +172,8 @@ input, button, select {
     padding-bottom: calc(var(--spacing-xl) * 3);
 }
 
-.week-slide {
+.week-slide,
+.day-slide {
     will-change: transform;
 }
 

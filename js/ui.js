@@ -161,7 +161,7 @@ const UI = {
             slide.style.transition = 'none';
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    slide.style.transition = 'transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    slide.style.transition = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
                     slide.style.transform = 'translateX(0)';
                 });
             });
@@ -220,7 +220,9 @@ const UI = {
                 </div>
             </div>
             <div class="app-content">
+                <div class="day-slide">
                 ${html}
+                </div>
             </div>
         `;
     },
