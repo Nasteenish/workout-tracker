@@ -1480,7 +1480,7 @@ body.modal-open {
     animation: slide-up-modal 0.38s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.app-content > * {
+.app-content > *:not(.slide-container):not(.week-nav):not(.data-actions) {
     animation: fadeIn 0.2s ease-out;
 }
 
