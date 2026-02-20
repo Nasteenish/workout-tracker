@@ -228,6 +228,29 @@ const Storage = {
         }
     },
 
+    // Save extra segment value (segIdx > 0 = drop/MP/R-P)
+    saveSegValue(week, day, exerciseId, setIdx, segIdx, field, value) {
+        if (segIdx === 0) {
+            this.updateSetValue(week, day, exerciseId, setIdx, field, value);
+            return;
+        }
+        const data = this._load();
+        const w = String(week), d = String(day), s = String(setIdx);
+        if (!data.log[w]) data.log[w] = {};
+        if (!data.log[w][d]) data.log[w][d] = {};
+        if (!data.log[w][d][exerciseId]) data.log[w][d][exerciseId] = {};
+        if (!data.log[w][d][exerciseId][s]) {
+            data.log[w][d][exerciseId][s] = { weight: 0, reps: 0, completed: false, timestamp: Date.now() };
+        }
+        const entry = data.log[w][d][exerciseId][s];
+        if (!entry.segs) entry.segs = {};
+        const si = String(segIdx);
+        if (!entry.segs[si]) entry.segs[si] = {};
+        entry.segs[si][field] = value;
+        entry.timestamp = Date.now();
+        this._save();
+    },
+
     // Get previous week's log for an exercise/set (for placeholder)
     // If equipmentId provided, prefer matching equipment; fallback to any
     getPreviousLog(week, day, exerciseId, setIdx, equipmentId) {

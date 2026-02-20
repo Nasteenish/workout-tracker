@@ -462,13 +462,30 @@ const App = {
             this._saveDebounced(this._currentWeek, this._currentDay, exId, setIdx, 'reps', target.value);
             return;
         }
+
+        // Extra segment inputs (seg > 0)
+        if (target.matches('.seg-weight-input') && parseInt(target.dataset.seg) > 0) {
+            const exId = target.dataset.exercise;
+            const setIdx = parseInt(target.dataset.set);
+            const segIdx = parseInt(target.dataset.seg);
+            Storage.saveSegValue(this._currentWeek, this._currentDay, exId, setIdx, segIdx, 'weight', target.value);
+            return;
+        }
+        if (target.matches('.seg-reps-input') && parseInt(target.dataset.seg) > 0) {
+            const exId = target.dataset.exercise;
+            const setIdx = parseInt(target.dataset.set);
+            const segIdx = parseInt(target.dataset.seg);
+            Storage.saveSegValue(this._currentWeek, this._currentDay, exId, setIdx, segIdx, 'reps', target.value);
+            return;
+        }
     },
 
     handleFocus(e) {
         const target = e.target;
 
         // Move cursor to end so backspace works naturally
-        if (target.matches('.weight-input') || target.matches('.reps-input')) {
+        if (target.matches('.weight-input') || target.matches('.reps-input') ||
+            target.matches('.seg-weight-input') || target.matches('.seg-reps-input')) {
             requestAnimationFrame(() => {
                 const len = target.value.length;
                 target.setSelectionRange(len, len);
