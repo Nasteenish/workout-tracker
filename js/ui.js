@@ -294,10 +294,39 @@ const UI = {
         const placeholderW = prev ? prev.weight : '';
         const placeholderR = prev ? prev.reps : '';
 
-        // Count extra reps segments from techniques
+        // Count extra segments from techniques
         const segCount = 1 + (set.techniques ? set.techniques.filter(t => ['DROP','REST_PAUSE','MP','DROP_OR_REST'].includes(t)).length : 0);
 
-        // Build reps input area: single or split
+        const getSegData = (i) => {
+            const raw = log && log.segs && log.segs[String(i)];
+            if (!raw) return { weight: '', reps: '' };
+            if (typeof raw === 'object') return { weight: raw.weight ?? '', reps: raw.reps ?? '' };
+            return { weight: '', reps: raw }; // legacy plain value
+        };
+
+        // Build weight input area
+        let weightInputHtml;
+        if (segCount === 1) {
+            weightInputHtml = `<input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*"
+                class="weight-input"
+                data-exercise="${ex.id}" data-set="${setIdx}"
+                value="${weightVal}" placeholder="${placeholderW}">`;
+        } else {
+            let parts = `<input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*"
+                class="weight-input seg-weight-input split-main"
+                data-exercise="${ex.id}" data-set="${setIdx}" data-seg="0"
+                value="${weightVal}" placeholder="${placeholderW}">`;
+            for (let i = 1; i < segCount; i++) {
+                const sv = getSegData(i).weight;
+                parts += `<span class="split-sep">+</span><input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*"
+                    class="seg-weight-input split-extra"
+                    data-exercise="${ex.id}" data-set="${setIdx}" data-seg="${i}"
+                    value="${sv}" placeholder="">`;
+            }
+            weightInputHtml = `<div class="split-reps">${parts}</div>`;
+        }
+
+        // Build reps input area
         let repsInputHtml;
         if (segCount === 1) {
             repsInputHtml = `<input type="text" inputmode="numeric" pattern="[0-9]*"
@@ -310,11 +339,11 @@ const UI = {
                 data-exercise="${ex.id}" data-set="${setIdx}" data-seg="0"
                 value="${repsVal}" placeholder="${placeholderR}">`;
             for (let i = 1; i < segCount; i++) {
-                const segVal = (log && log.segs && log.segs[String(i)]) || '';
+                const sv = getSegData(i).reps;
                 parts += `<span class="split-sep">+</span><input type="text" inputmode="numeric" pattern="[0-9]*"
                     class="seg-reps-input split-extra"
                     data-exercise="${ex.id}" data-set="${setIdx}" data-seg="${i}"
-                    value="${segVal}" placeholder="">`;
+                    value="${sv}" placeholder="">`;
             }
             repsInputHtml = `<div class="split-reps">${parts}</div>`;
         }
@@ -334,10 +363,7 @@ const UI = {
                 <div class="set-inputs">
                     <div class="input-group">
                         <button class="unit-cycle-btn" data-exercise="${ex.id}">${unitLabel}</button>
-                        <input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*"
-                            class="weight-input"
-                            data-exercise="${ex.id}" data-set="${setIdx}"
-                            value="${weightVal}" placeholder="${placeholderW}">
+                        ${weightInputHtml}
                     </div>
                     <div class="input-group">
                         <label>reps</label>

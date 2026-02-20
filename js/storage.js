@@ -228,13 +228,9 @@ const Storage = {
         }
     },
 
-    saveSegReps(week, day, exerciseId, setIdx, segIdx, value) {
-        if (segIdx === 0) {
-            this.updateSetValue(week, day, exerciseId, setIdx, 'reps', value);
-            return;
-        }
+    _ensureSegEntry(week, day, exerciseId, setIdx, segIdx) {
         const data = this._load();
-        const w = String(week), d = String(day), s = String(setIdx);
+        const w = String(week), d = String(day), s = String(setIdx), si = String(segIdx);
         if (!data.log[w]) data.log[w] = {};
         if (!data.log[w][d]) data.log[w][d] = {};
         if (!data.log[w][d][exerciseId]) data.log[w][d][exerciseId] = {};
@@ -243,7 +239,22 @@ const Storage = {
         }
         const entry = data.log[w][d][exerciseId][s];
         if (!entry.segs) entry.segs = {};
-        entry.segs[String(segIdx)] = value;
+        if (!entry.segs[si] || typeof entry.segs[si] !== 'object') entry.segs[si] = {};
+        return { entry, si };
+    },
+
+    saveSegReps(week, day, exerciseId, setIdx, segIdx, value) {
+        if (segIdx === 0) { this.updateSetValue(week, day, exerciseId, setIdx, 'reps', value); return; }
+        const { entry, si } = this._ensureSegEntry(week, day, exerciseId, setIdx, segIdx);
+        entry.segs[si].reps = value;
+        entry.timestamp = Date.now();
+        this._save();
+    },
+
+    saveSegWeight(week, day, exerciseId, setIdx, segIdx, value) {
+        if (segIdx === 0) { this.updateSetValue(week, day, exerciseId, setIdx, 'weight', value); return; }
+        const { entry, si } = this._ensureSegEntry(week, day, exerciseId, setIdx, segIdx);
+        entry.segs[si].weight = value;
         entry.timestamp = Date.now();
         this._save();
     },

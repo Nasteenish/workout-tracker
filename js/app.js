@@ -471,13 +471,23 @@ const App = {
             Storage.saveSegReps(this._currentWeek, this._currentDay, exId, setIdx, segIdx, target.value);
             return;
         }
+
+        // Extra segment weight (seg > 0)
+        if (target.matches('.seg-weight-input') && parseInt(target.dataset.seg) > 0) {
+            const exId = target.dataset.exercise;
+            const setIdx = parseInt(target.dataset.set);
+            const segIdx = parseInt(target.dataset.seg);
+            Storage.saveSegWeight(this._currentWeek, this._currentDay, exId, setIdx, segIdx, target.value);
+            return;
+        }
     },
 
     handleFocus(e) {
         const target = e.target;
 
         // Move cursor to end so backspace works naturally
-        if (target.matches('.weight-input') || target.matches('.reps-input') || target.matches('.seg-reps-input')) {
+        if (target.matches('.weight-input') || target.matches('.reps-input') ||
+            target.matches('.seg-reps-input') || target.matches('.seg-weight-input')) {
             requestAnimationFrame(() => {
                 const len = target.value.length;
                 target.setSelectionRange(len, len);
