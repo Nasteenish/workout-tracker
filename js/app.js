@@ -120,7 +120,7 @@ const App = {
             const dx = e.changedTouches[0].clientX - startX;
             const front = getFront();
             const snap = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-            const commit = 'transform 0.2s cubic-bezier(0.4, 0, 0.6, 1)';
+            const commit = 'transform 0.18s cubic-bezier(0.4, 0, 0.6, 1)';
 
             if (!dragging || Math.abs(dx) < 60) {
                 // Snap back both panels
@@ -153,12 +153,14 @@ const App = {
                 setTimeout(() => {
                     location.hash = `#/week/${next}`;
                     requestAnimationFrame(removeCompanion);
-                }, 185);
+                }, 190);
             } else {
+                // Back from day view: scroll to top first so week content doesn't jump
                 setTimeout(() => {
+                    window.scrollTo(0, 0);
                     location.hash = `#/week/${this._currentWeek}`;
                     requestAnimationFrame(removeCompanion);
-                }, 185);
+                }, 190);
             }
         }, { passive: true });
     },
