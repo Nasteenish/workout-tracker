@@ -572,8 +572,8 @@ input, button, select {
     color: white;
 }
 
-.set-type-badge.type-S { background: var(--set-S); color: #000; }
-.set-type-badge.type-SH { background: var(--set-SH); color: #000; }
+.set-type-badge.type-S { background: var(--set-S); }
+.set-type-badge.type-SH { background: var(--set-SH); }
 .set-type-badge.type-H { background: var(--set-H); color: #000; }
 
 .rpe-badge {
