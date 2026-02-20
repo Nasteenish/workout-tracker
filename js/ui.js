@@ -611,7 +611,9 @@ const UI = {
                 </div>
                 <div class="setup-field">
                     <label>Дата начала программы</label>
-                    <input type="date" id="settings-start-date" value="${settings.startDate || ''}">
+                    <div class="date-wrapper">
+                        <input type="date" id="settings-start-date" value="${settings.startDate || ''}">
+                    </div>
                 </div>
                 <div class="setup-field">
                     <label>Единица веса</label>
