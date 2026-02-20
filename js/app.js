@@ -18,6 +18,9 @@ const App = {
         document.getElementById('app').addEventListener('input', (e) => this.handleInput(e));
         document.getElementById('app').addEventListener('focus', (e) => this.handleFocus(e), true);
 
+        // Swipe left/right to navigate weeks (circular)
+        this._initWeekSwipe();
+
         // Pull-to-refresh
         this._initPullToRefresh();
 
@@ -26,6 +29,30 @@ const App = {
 
         // Initial route
         this.route();
+    },
+
+    _initWeekSwipe() {
+        let startX = 0, startY = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        }, { passive: true });
+
+        document.addEventListener('touchend', (e) => {
+            if (!location.hash.match(/^#\/week\/\d+$/)) return;
+            const dx = e.changedTouches[0].clientX - startX;
+            const dy = e.changedTouches[0].clientY - startY;
+            if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+            const week = this._currentWeek;
+            if (dx < 0) {
+                // swipe left → next week
+                location.hash = `#/week/${week === 12 ? 1 : week + 1}`;
+            } else {
+                // swipe right → prev week
+                location.hash = `#/week/${week === 1 ? 12 : week - 1}`;
+            }
+        }, { passive: true });
     },
 
     _initPullToRefresh() {
@@ -162,15 +189,11 @@ const App = {
 
         // Week navigation
         if (target.id === 'prev-week' || target.closest('#prev-week')) {
-            if (this._currentWeek > 1) {
-                location.hash = `#/week/${this._currentWeek - 1}`;
-            }
+            location.hash = `#/week/${this._currentWeek === 1 ? 12 : this._currentWeek - 1}`;
             return;
         }
         if (target.id === 'next-week' || target.closest('#next-week')) {
-            if (this._currentWeek < 12) {
-                location.hash = `#/week/${this._currentWeek + 1}`;
-            }
+            location.hash = `#/week/${this._currentWeek === 12 ? 1 : this._currentWeek + 1}`;
             return;
         }
 
