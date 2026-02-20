@@ -5,7 +5,7 @@
     --bg-card: rgba(255, 255, 255, 0.08);
     --bg-card-hover: rgba(255, 255, 255, 0.12);
     --bg-input: rgba(255, 255, 255, 0.07);
-    --bg-modal: rgba(4, 4, 10, 0.75);
+    --bg-modal: rgba(4, 4, 10, 0.88);
     --glass-blur: blur(24px);
     --glass-border: 1px solid rgba(255, 255, 255, 0.11);
     --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -733,17 +733,13 @@ input, button, select {
 
 body.modal-open {
     overflow: hidden;
-    position: fixed;
-    width: 100%;
-    left: 0;
-    right: 0;
 }
 
 .weight-modal {
-    background: rgba(14, 14, 24, 0.98);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border-top: var(--glass-border);
+    background: rgba(18, 18, 32, 0.82);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     padding: var(--spacing-lg);
     padding-bottom: calc(var(--spacing-lg) + env(safe-area-inset-bottom, 0px));
@@ -975,10 +971,10 @@ body.modal-open {
 
 /* Equipment Modal */
 .equipment-modal {
-    background: rgba(14, 14, 24, 0.98);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border-top: var(--glass-border);
+    background: rgba(18, 18, 32, 0.82);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     padding: var(--spacing-md);
     padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom, 0px));

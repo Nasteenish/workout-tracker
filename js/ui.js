@@ -1,17 +1,19 @@
 /* ===== UI Rendering Module ===== */
 
-let _scrollY = 0;
-
 function lockBodyScroll() {
-    _scrollY = window.scrollY;
-    document.body.style.top = `-${_scrollY}px`;
     document.body.classList.add('modal-open');
 }
 
 function unlockBodyScroll() {
     document.body.classList.remove('modal-open');
-    document.body.style.top = '';
-    window.scrollTo(0, _scrollY);
+}
+
+function blockOverlayScroll(overlay, scrollableSelector) {
+    overlay.addEventListener('touchmove', function(e) {
+        if (!e.target.closest(scrollableSelector)) {
+            e.preventDefault();
+        }
+    }, { passive: false });
 }
 
 const UI = {
@@ -464,6 +466,7 @@ const UI = {
         overlay._isTyping = false;
         overlay._displayUnit = unit; // 'kg' or 'lbs'
 
+        blockOverlayScroll(overlay, '.weight-modal');
         // Handle clicks inside the modal directly
         overlay.addEventListener('click', function(e) {
             App.handleClick(e);
@@ -521,6 +524,7 @@ const UI = {
 
         overlay._exerciseId = exerciseId;
 
+        blockOverlayScroll(overlay, '.equipment-modal');
         overlay.addEventListener('click', function(e) {
             App.handleClick(e);
         });
@@ -585,6 +589,7 @@ const UI = {
         document.body.appendChild(overlay);
         lockBodyScroll();
 
+        blockOverlayScroll(overlay, '.equipment-modal');
         overlay.addEventListener('click', function(e) {
             App.handleClick(e);
         });
