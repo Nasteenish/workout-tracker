@@ -1020,50 +1020,27 @@ body.modal-open {
 .rest-day-card {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
-    padding: 12px var(--spacing-md);
+    justify-content: center;
+    gap: 6px;
+    padding: 6px var(--spacing-md);
     margin-bottom: var(--spacing-md);
     border-radius: var(--radius-md);
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     color: var(--text-muted);
-}
-
-.rest-day-card.rest-today {
-    background: rgba(157, 141, 245, 0.09);
-    border-color: rgba(157, 141, 245, 0.25);
-    color: var(--accent-primary);
-}
-
-.rest-day-card.rest-today .rest-icon {
-    color: var(--accent-primary);
 }
 
 .rest-icon {
     flex-shrink: 0;
-    opacity: 0.7;
+    opacity: 0.5;
+    display: block;
 }
 
 .rest-label {
-    flex: 1;
     font-size: var(--font-size-sm);
-    font-weight: 500;
-}
-
-.rest-dates {
-    font-size: var(--font-size-xs);
-    color: var(--text-muted);
-    opacity: 0.8;
-}
-
-.rest-now-badge {
-    font-size: 11px;
-    font-weight: 600;
-    background: rgba(157, 141, 245, 0.2);
-    color: var(--accent-primary);
-    padding: 2px 10px;
-    border-radius: 20px;
-    letter-spacing: 0.2px;
+    font-weight: 400;
+    opacity: 0.6;
+    line-height: 1;
 }
 
 /* ===== Export/Import buttons ===== */
@@ -1387,21 +1364,6 @@ body.modal-open {
 
 .app-content > * {
     animation: fadeIn 0.2s ease-out;
-}
-
-/* ===== Rest day indicator ===== */
-.rest-day-card {
-    background: var(--bg-secondary);
-    border: none;
-    border-radius: var(--radius-md);
-    padding: var(--spacing-xl);
-    text-align: center;
-    color: var(--text-muted);
-}
-
-.rest-day-card .rest-icon {
-    font-size: 48px;
-    margin-bottom: var(--spacing-md);
 }
 
 /* ===== Pull-to-refresh indicator ===== */
