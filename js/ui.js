@@ -306,13 +306,13 @@ const UI = {
                 value="${repsVal}" placeholder="${placeholderR}">`;
         } else {
             let parts = `<input type="text" inputmode="numeric" pattern="[0-9]*"
-                class="reps-input seg-reps-input"
+                class="reps-input seg-reps-input split-main"
                 data-exercise="${ex.id}" data-set="${setIdx}" data-seg="0"
                 value="${repsVal}" placeholder="${placeholderR}">`;
             for (let i = 1; i < segCount; i++) {
                 const segVal = (log && log.segs && log.segs[String(i)]) || '';
                 parts += `<input type="text" inputmode="numeric" pattern="[0-9]*"
-                    class="seg-reps-input"
+                    class="seg-reps-input split-extra"
                     data-exercise="${ex.id}" data-set="${setIdx}" data-seg="${i}"
                     value="${segVal}" placeholder="">`;
             }

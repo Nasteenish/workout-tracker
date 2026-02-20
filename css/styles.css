@@ -730,13 +730,21 @@ input, button, select {
 .split-reps {
     display: flex;
     flex: 1;
+    align-items: center;
     gap: 3px;
 }
 
-.split-reps input {
-    flex: 1;
+.split-reps input.split-main {
+    flex: 2;
     min-width: 0;
 }
+
+.split-reps input.split-extra {
+    flex: 1;
+    min-width: 0;
+    opacity: 0.75;
+}
+
 
 .input-group input {
     width: 100%;
