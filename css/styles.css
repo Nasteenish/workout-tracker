@@ -5,7 +5,7 @@
     --bg-card: rgba(255, 255, 255, 0.08);
     --bg-card-hover: rgba(255, 255, 255, 0.12);
     --bg-input: rgba(255, 255, 255, 0.07);
-    --bg-modal: rgba(4, 4, 10, 0.96);
+    --bg-modal: rgba(4, 4, 10, 0.75);
     --glass-blur: blur(24px);
     --glass-border: 1px solid rgba(255, 255, 255, 0.11);
     --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -719,10 +719,19 @@ input, button, select {
     position: fixed;
     inset: 0;
     background: var(--bg-modal);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     z-index: 200;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
+    overscroll-behavior: contain;
+}
+
+body.modal-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
 }
 
 .weight-modal {

@@ -443,6 +443,7 @@ const UI = {
             </div>
         `;
         document.body.appendChild(overlay);
+        document.body.classList.add('modal-open');
 
         // Store reference to the input element and current display unit
         overlay._targetInput = inputEl;
@@ -459,6 +460,9 @@ const UI = {
         const modal = document.getElementById('weight-modal');
         if (modal) {
             modal.remove();
+        }
+        if (!document.querySelector('.modal-overlay')) {
+            document.body.classList.remove('modal-open');
         }
     },
 
@@ -499,6 +503,7 @@ const UI = {
             </div>
         `;
         document.body.appendChild(overlay);
+        document.body.classList.add('modal-open');
 
         overlay._exerciseId = exerciseId;
 
@@ -510,6 +515,9 @@ const UI = {
     hideEquipmentModal() {
         const modal = document.getElementById('equipment-modal');
         if (modal) modal.remove();
+        if (!document.querySelector('.modal-overlay')) {
+            document.body.classList.remove('modal-open');
+        }
     },
 
     // ===== CHOICE MODAL (choose one exercise) =====
@@ -561,6 +569,7 @@ const UI = {
             </div>
         `;
         document.body.appendChild(overlay);
+        document.body.classList.add('modal-open');
 
         overlay.addEventListener('click', function(e) {
             App.handleClick(e);
@@ -570,6 +579,9 @@ const UI = {
     hideChoiceModal() {
         const modal = document.getElementById('choice-modal');
         if (modal) modal.remove();
+        if (!document.querySelector('.modal-overlay')) {
+            document.body.classList.remove('modal-open');
+        }
     },
 
     // ===== SETTINGS MODAL =====
