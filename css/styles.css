@@ -493,10 +493,10 @@ input, button, select {
 }
 
 .choose-one-btn {
-    background: var(--bg-card);
+    background: linear-gradient(135deg, rgba(167, 139, 250, 0.22) 0%, var(--bg-card) 65%);
     border: none;
     border-radius: var(--radius-pill);
-    color: var(--text-secondary);
+    color: var(--text-primary);
     font-size: var(--font-size-xs);
     padding: 5px 12px;
     cursor: pointer;
