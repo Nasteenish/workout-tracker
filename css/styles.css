@@ -574,7 +574,7 @@ input, button, select {
 
 .set-type-badge.type-S { background: var(--set-S); }
 .set-type-badge.type-SH { background: var(--set-SH); }
-.set-type-badge.type-H { background: var(--set-H); }
+.set-type-badge.type-H { background: var(--set-H); color: #000; }
 
 .rpe-badge {
     font-size: 10px;
@@ -617,7 +617,7 @@ input, button, select {
 
 .tech-badge.tech-DROP { background: var(--tech-drop); }
 .tech-badge.tech-REST_PAUSE { background: var(--tech-rp); }
-.tech-badge.tech-MP { background: var(--tech-mp); }
+.tech-badge.tech-MP { background: var(--tech-mp); color: #000; }
 
 /* Input row */
 .set-inputs {
@@ -680,7 +680,7 @@ input, button, select {
 
 .complete-btn.completed {
     background: var(--accent-success);
-    color: white;
+    color: #000;
 }
 
 .set-prev {
