@@ -489,7 +489,7 @@ input, button, select {
     background: var(--bg-card);
     border: none;
     border-radius: var(--radius-pill);
-    color: var(--accent-warning);
+    color: var(--accent-info);
     font-size: var(--font-size-xs);
     padding: 5px 12px;
     cursor: pointer;
