@@ -541,18 +541,16 @@ input, button, select {
 .exercise-name-chooser {
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
-    display: flex;
-    align-items: center;
-    gap: 5px;
 }
 
 .chooser-badge {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     flex-shrink: 0;
+    align-self: flex-start;
     background: rgba(157, 141, 245, 0.18);
     border-radius: 50%;
     color: var(--accent-primary);
