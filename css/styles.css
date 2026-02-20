@@ -745,6 +745,12 @@ input, button, select {
     opacity: 0.75;
 }
 
+.split-sep {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    flex-shrink: 0;
+    user-select: none;
+}
 
 .input-group input {
     width: 100%;

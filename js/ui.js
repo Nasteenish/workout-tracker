@@ -311,7 +311,7 @@ const UI = {
                 value="${repsVal}" placeholder="${placeholderR}">`;
             for (let i = 1; i < segCount; i++) {
                 const segVal = (log && log.segs && log.segs[String(i)]) || '';
-                parts += `<input type="text" inputmode="numeric" pattern="[0-9]*"
+                parts += `<span class="split-sep">+</span><input type="text" inputmode="numeric" pattern="[0-9]*"
                     class="seg-reps-input split-extra"
                     data-exercise="${ex.id}" data-set="${setIdx}" data-seg="${i}"
                     value="${segVal}" placeholder="">`;
