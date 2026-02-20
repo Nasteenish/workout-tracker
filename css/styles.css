@@ -240,9 +240,12 @@ input, button, select {
 }
 
 .setup-field input[type="date"] {
+    display: block;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
     height: var(--input-height);
     background: var(--bg-card);
     border: none;
@@ -250,6 +253,7 @@ input, button, select {
     color: var(--text-primary);
     padding: 0 var(--spacing-md);
     font-size: var(--font-size-base);
+    text-align: center;
 }
 
 .setup-field input[type="date"]:focus {
