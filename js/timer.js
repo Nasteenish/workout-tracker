@@ -5,10 +5,12 @@ const RestTimer = {
     _remaining: 120,
     _defaultDuration: 120,
     _paused: false,
+    _audioCtx: null,
 
     init() {
-        const saved = localStorage.getItem('rest_timer_duration');
-        if (saved) this._defaultDuration = parseInt(saved) || 120;
+        const settings = Storage.getSettings();
+        this._defaultDuration = settings.timerDuration || 120;
+        this._remaining = this._defaultDuration;
 
         const bar = document.createElement('div');
         bar.id = 'rest-timer-bar';
@@ -35,7 +37,22 @@ const RestTimer = {
         document.getElementById('rtb-plus').addEventListener('click', () => this.adjust(30));
         document.getElementById('rtb-pause').addEventListener('click', () => this.togglePause());
 
+        // Unlock AudioContext on first user interaction (required on iOS)
+        const unlock = () => this._unlockAudio();
+        document.addEventListener('touchstart', unlock, { passive: true, once: false });
+        document.addEventListener('click', unlock, { once: false });
+
         this._updateDisplay();
+    },
+
+    // Call this whenever settings change
+    setDefaultDuration(seconds) {
+        this._defaultDuration = Math.max(5, seconds);
+        Storage.saveSettings({ timerDuration: this._defaultDuration });
+        if (!this._interval) {
+            this._remaining = this._defaultDuration;
+            this._updateDisplay();
+        }
     },
 
     start() {
@@ -72,8 +89,19 @@ const RestTimer = {
     adjust(delta) {
         this._remaining = Math.max(5, this._remaining + delta);
         this._defaultDuration = Math.max(5, this._defaultDuration + delta);
-        localStorage.setItem('rest_timer_duration', this._defaultDuration);
+        Storage.saveSettings({ timerDuration: this._defaultDuration });
         this._updateDisplay();
+    },
+
+    _unlockAudio() {
+        try {
+            if (!this._audioCtx) {
+                this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (this._audioCtx.state === 'suspended') {
+                this._audioCtx.resume();
+            }
+        } catch(e) {}
     },
 
     _finish() {
@@ -88,19 +116,31 @@ const RestTimer = {
 
     _playBeep() {
         try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            [[880, 0, 0.5], [1100, 0.35, 0.6], [1320, 0.65, 0.8]].forEach(([freq, start, end]) => {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.frequency.value = freq;
-                osc.type = 'sine';
-                gain.gain.setValueAtTime(0.35, ctx.currentTime + start);
-                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + end);
-                osc.start(ctx.currentTime + start);
-                osc.stop(ctx.currentTime + end);
-            });
+            if (!this._audioCtx) {
+                this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            const ctx = this._audioCtx;
+
+            const doPlay = () => {
+                [[880, 0, 0.5], [1100, 0.35, 0.6], [1320, 0.65, 0.8]].forEach(([freq, start, end]) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.frequency.value = freq;
+                    osc.type = 'sine';
+                    gain.gain.setValueAtTime(0.35, ctx.currentTime + start);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + end);
+                    osc.start(ctx.currentTime + start);
+                    osc.stop(ctx.currentTime + end);
+                });
+            };
+
+            if (ctx.state === 'suspended') {
+                ctx.resume().then(doPlay).catch(() => {});
+            } else {
+                doPlay();
+            }
         } catch(e) {}
     },
 

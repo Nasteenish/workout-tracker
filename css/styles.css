@@ -1178,6 +1178,36 @@ body.modal-open {
     border-color: rgba(255, 45, 85, 0.2);
 }
 
+.timer-duration-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.td-adj {
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.td-display {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+    min-width: 56px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
 .btn-danger {
     width: 100%;
     padding: var(--spacing-sm);

@@ -735,6 +735,19 @@ const UI = {
                 </div>
 
                 <div class="settings-card">
+                    <div class="settings-card-label">Таймер отдыха</div>
+                    <div class="setup-field" style="margin-bottom: 0;">
+                        <label>Время по умолчанию</label>
+                        <div class="timer-duration-row">
+                            <button class="td-adj" id="td-minus">−30</button>
+                            <span class="td-display" id="td-display">${Math.floor((settings.timerDuration||120)/60)}:${String((settings.timerDuration||120)%60).padStart(2,'0')}</span>
+                            <input type="hidden" id="settings-timer-duration" value="${settings.timerDuration || 120}">
+                            <button class="td-adj" id="td-plus">+30</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
                     <div class="settings-card-label">Единицы</div>
                     <div class="setup-field" style="margin-bottom: 0;">
                         <div class="cycle-toggle">

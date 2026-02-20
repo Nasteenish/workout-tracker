@@ -198,6 +198,18 @@ const App = {
             return;
         }
 
+        // Settings: timer duration adjust
+        if (target.id === 'td-minus' || target.id === 'td-plus') {
+            const input = document.getElementById('settings-timer-duration');
+            const display = document.getElementById('td-display');
+            if (!input || !display) return;
+            const delta = target.id === 'td-minus' ? -30 : 30;
+            const newVal = Math.max(30, (parseInt(input.value) || 120) + delta);
+            input.value = newVal;
+            display.textContent = `${Math.floor(newVal/60)}:${String(newVal%60).padStart(2,'0')}`;
+            return;
+        }
+
         // Save settings
         if (target.id === 'settings-save') {
             const cycleBtn = document.querySelector('.cycle-toggle button.active[data-cycle]');
@@ -205,7 +217,10 @@ const App = {
             const startDate = document.getElementById('settings-start-date').value;
             const unitBtn = document.querySelector('.cycle-toggle button.active[data-unit]');
             const weightUnit = unitBtn ? unitBtn.dataset.unit : 'kg';
-            Storage.saveSettings({ cycleType, startDate, weightUnit });
+            const timerDurEl = document.getElementById('settings-timer-duration');
+            const timerDuration = timerDurEl ? (parseInt(timerDurEl.value) || 120) : 120;
+            Storage.saveSettings({ cycleType, startDate, weightUnit, timerDuration });
+            RestTimer.setDefaultDuration(timerDuration);
             location.hash = `#/week/${this._currentWeek}`;
             return;
         }
