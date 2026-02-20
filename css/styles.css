@@ -493,7 +493,7 @@ input, button, select {
     background: var(--bg-card);
     border: none;
     border-radius: var(--radius-pill);
-    color: var(--accent-info);
+    color: var(--accent-primary);
     font-size: var(--font-size-xs);
     padding: 5px 12px;
     cursor: pointer;
@@ -856,7 +856,7 @@ input, button, select {
     padding: var(--spacing-sm);
     background: none;
     border: none;
-    color: var(--accent-info);
+    color: var(--accent-primary);
     font-size: var(--font-size-xs);
     font-weight: 500;
     cursor: pointer;
