@@ -442,100 +442,6 @@ const App = {
             return;
         }
 
-        // Weight modal: quick adjust
-        if (target.matches('[data-adjust]')) {
-            const modal = document.getElementById('weight-modal');
-            if (!modal) return;
-            const valEl = document.getElementById('modal-value');
-            const current = parseFloat(valEl.textContent) || 0;
-            const adjust = parseFloat(target.dataset.adjust);
-            const newVal = Math.max(0, Math.round((current + adjust) * 100) / 100);
-            valEl.textContent = newVal;
-            modal._isTyping = false;
-            return;
-        }
-
-        // Weight modal: numpad
-        if (target.matches('[data-num]')) {
-            const modal = document.getElementById('weight-modal');
-            if (!modal) return;
-            const valEl = document.getElementById('modal-value');
-            const num = target.dataset.num;
-
-            if (num === 'backspace') {
-                const str = valEl.textContent;
-                valEl.textContent = str.length > 1 ? str.slice(0, -1) : '0';
-            } else {
-                if (!modal._isTyping) {
-                    valEl.textContent = num === '.' ? '0.' : num;
-                    modal._isTyping = true;
-                } else {
-                    if (num === '.' && valEl.textContent.includes('.')) return;
-                    valEl.textContent += num;
-                }
-            }
-            return;
-        }
-
-        // Weight modal: unit toggle (kg <-> lbs)
-        if (target.id === 'unit-toggle' || target.closest('#unit-toggle')) {
-            const modal = document.getElementById('weight-modal');
-            if (!modal) return;
-            const valEl = document.getElementById('modal-value');
-            const current = parseFloat(valEl.textContent) || 0;
-            const labelEl = document.getElementById('modal-unit-label');
-            const toggleBtn = document.getElementById('unit-toggle');
-
-            if (modal._displayUnit === 'kg') {
-                // Convert kg -> lbs
-                const lbs = Math.round(current * 2.20462 * 100) / 100;
-                valEl.textContent = lbs;
-                modal._displayUnit = 'lbs';
-                labelEl.textContent = 'lbs';
-                toggleBtn.textContent = 'lbs \u2194 \u043a\u0433';
-            } else {
-                // Convert lbs -> kg
-                const kg = Math.round(current / 2.20462 * 100) / 100;
-                valEl.textContent = kg;
-                modal._displayUnit = 'kg';
-                labelEl.textContent = '\u043a\u0433';
-                toggleBtn.textContent = '\u043a\u0433 \u2194 lbs';
-            }
-            modal._isTyping = false;
-            return;
-        }
-
-        // Weight modal: done
-        if (target.id === 'modal-done') {
-            const modal = document.getElementById('weight-modal');
-            if (!modal) return;
-            let value = parseFloat(document.getElementById('modal-value').textContent) || 0;
-            // If displaying in lbs, convert back to storage unit
-            const storageUnit = Storage.getWeightUnit();
-            if (modal._displayUnit !== storageUnit) {
-                if (modal._displayUnit === 'lbs' && storageUnit === 'kg') {
-                    value = Math.round(value / 2.20462 * 100) / 100;
-                } else if (modal._displayUnit === 'kg' && storageUnit === 'lbs') {
-                    value = Math.round(value * 2.20462 * 100) / 100;
-                }
-            }
-            const input = modal._targetInput;
-            if (input) {
-                input.value = value;
-                // Trigger save
-                const exId = input.dataset.exercise;
-                const setIdx = parseInt(input.dataset.set);
-                Storage.updateSetValue(this._currentWeek, this._currentDay, exId, setIdx, 'weight', value);
-            }
-            UI.hideWeightModal();
-            return;
-        }
-
-        // Click on modal overlay (outside modal content) to close
-        if (target.matches('.modal-overlay')) {
-            UI.hideWeightModal();
-            return;
-        }
     },
 
     handleInput(e) {
@@ -561,16 +467,8 @@ const App = {
     handleFocus(e) {
         const target = e.target;
 
-        // Show weight modal on weight input focus
-        if (target.matches('.weight-input')) {
-            e.preventDefault();
-            target.blur();
-            UI.showWeightModal(target);
-            return;
-        }
-
-        // Move cursor to end of reps input so backspace works naturally
-        if (target.matches('.reps-input')) {
+        // Move cursor to end so backspace works naturally
+        if (target.matches('.weight-input') || target.matches('.reps-input')) {
             requestAnimationFrame(() => {
                 const len = target.value.length;
                 target.setSelectionRange(len, len);
