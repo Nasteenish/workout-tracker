@@ -12,18 +12,18 @@
     --text-muted: #636366;
 
     --accent-primary: #A78BFA;
-    --accent-success: #92D050;
-    --accent-warning: #FF453A;
+    --accent-success: #B5F22A;
+    --accent-warning: #FF6D28;
     --accent-info: #7DD3FC;
-    --accent-red: #FF3B30;
+    --accent-red: #FF2D55;
 
-    --set-S: #FF3B30;
-    --set-SH: #FFD60A;
-    --set-H: #92D050;
+    --set-S: #FF2D55;
+    --set-SH: #FF6D28;
+    --set-H: #B5F22A;
 
-    --tech-drop: #FF3B30;
-    --tech-rp: #FFD60A;
-    --tech-mp: #92D050;
+    --tech-drop: #FF2D55;
+    --tech-rp: #FF6D28;
+    --tech-mp: #B5F22A;
 
     --border-color: rgba(255, 255, 255, 0.08);
     --border-highlight: rgba(255, 255, 255, 0.15);
@@ -201,7 +201,6 @@ input, button, select {
 
 .setup-field {
     width: 100%;
-    max-width: 320px;
     margin: 0 auto var(--spacing-lg);
     text-align: left;
 }
@@ -257,7 +256,7 @@ input, button, select {
 
 .btn-primary {
     width: 100%;
-    max-width: 320px;
+    max-width: 100%;
     height: var(--button-height);
     background: var(--accent-primary);
     color: white;
@@ -884,7 +883,7 @@ input, button, select {
 .data-actions {
     display: flex;
     gap: var(--spacing-sm);
-    max-width: 320px;
+    max-width: 100%;
     margin: var(--spacing-lg) auto 0;
     padding-top: var(--spacing-lg);
     border-top: 1px solid var(--border-color);
