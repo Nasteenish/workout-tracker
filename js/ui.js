@@ -235,7 +235,7 @@ const UI = {
                 <div class="exercise-header">
                     <div class="exercise-name ${choiceKey ? 'exercise-name-chooser' : ''}" ${choiceKey ? `data-choice-key="${choiceKey}"` : ''}>${ex.nameRu || ex.name}${choiceKey ? `<span class="chooser-badge"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>` : ''}</div>
                     <div class="exercise-meta">
-                        <span>${ex.reps} повт</span>
+                        <span>${ex.reps} reps</span>
                         ${restText ? `<span>${restText}</span>` : ''}
                     </div>
                 </div>
@@ -297,7 +297,7 @@ const UI = {
                     <span class="set-number">П.${setIdx + 1}</span>
                     <span class="set-type-badge ${typeClass}">${typeLabel}</span>
                     <span class="rpe-badge">${set.rpe}</span>
-                    <span class="set-reps">${ex.reps}</span>
+                    <span class="set-reps">${ex.reps} reps</span>
                     ${techHtml}
                 </div>
                 <div class="set-inputs">
@@ -310,7 +310,7 @@ const UI = {
                             placeholder="${placeholderW}">
                     </div>
                     <div class="input-group">
-                        <label>повт</label>
+                        <label>reps</label>
                         <input type="text" inputmode="numeric" pattern="[0-9]*"
                             class="reps-input"
                             data-exercise="${ex.id}" data-set="${setIdx}"
