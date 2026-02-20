@@ -730,17 +730,14 @@ input, button, select {
 .complete-btn {
     width: var(--touch-min);
     height: var(--touch-min);
-    border: none;
-    background: transparent;
-    cursor: pointer;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
-    -webkit-appearance: none;
-    appearance: none;
+    cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .complete-inner {
