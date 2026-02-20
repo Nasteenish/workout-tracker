@@ -216,7 +216,10 @@ const UI = {
             setsHtml += this._renderSetRow(ex, i, weekNum, dayNum);
         }
 
-        const restText = formatRest(ex.rest);
+        const timerSec = Storage.getSettings().timerDuration || 120;
+        const restText = timerSec >= 60
+            ? `rest ${Math.floor(timerSec / 60)}'`
+            : `rest ${timerSec}"`;
 
         // Equipment selector
         const eqId = Storage.getExerciseEquipment(ex.id);
