@@ -1182,7 +1182,7 @@ body.modal-open {
 .td-minsec {
     display: flex;
     align-items: flex-start;
-    gap: 6px;
+    gap: 10px;
 }
 
 .td-field-wrap {
@@ -1192,25 +1192,38 @@ body.modal-open {
     gap: 5px;
 }
 
-.td-num-input {
-    width: 76px;
-    text-align: center;
-    font-size: 30px;
-    font-weight: 700;
-    color: #fff;
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.15);
+.td-stepper {
+    display: flex;
+    align-items: center;
+    border: 1px solid rgba(255,255,255,0.12);
     border-radius: var(--radius-sm);
-    padding: 10px 6px;
-    -webkit-appearance: none;
-    appearance: none;
-    font-variant-numeric: tabular-nums;
+    overflow: hidden;
 }
 
-.td-num-input::-webkit-inner-spin-button,
-.td-num-input::-webkit-outer-spin-button {
+.td-step {
+    background: rgba(255,255,255,0.06);
+    border: none;
+    color: var(--text-secondary);
+    font-size: 20px;
+    font-weight: 300;
+    width: 40px;
+    height: 44px;
+    cursor: pointer;
     -webkit-appearance: none;
-    margin: 0;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.td-val {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+    min-width: 38px;
+    text-align: center;
 }
 
 .td-field-lbl {
@@ -1221,10 +1234,10 @@ body.modal-open {
 }
 
 .td-colon {
-    font-size: 30px;
+    font-size: 22px;
     font-weight: 700;
     color: var(--text-muted);
-    padding-top: 10px;
+    padding-top: 11px;
 }
 
 .btn-danger {

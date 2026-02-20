@@ -740,12 +740,20 @@ const UI = {
                         <label>Время по умолчанию</label>
                         <div class="td-minsec">
                             <div class="td-field-wrap">
-                                <input type="number" id="td-minutes" class="td-num-input" min="0" max="99" value="${Math.floor((settings.timerDuration||120)/60)}">
+                                <div class="td-stepper">
+                                    <button class="td-step" id="td-min-minus">−</button>
+                                    <span class="td-val" id="td-min-val">${Math.floor((settings.timerDuration||120)/60)}</span>
+                                    <button class="td-step" id="td-min-plus">+</button>
+                                </div>
                                 <span class="td-field-lbl">мин</span>
                             </div>
                             <span class="td-colon">:</span>
                             <div class="td-field-wrap">
-                                <input type="number" id="td-seconds" class="td-num-input" min="0" max="59" value="${String((settings.timerDuration||120)%60).padStart(2,'0')}">
+                                <div class="td-stepper">
+                                    <button class="td-step" id="td-sec-minus">−</button>
+                                    <span class="td-val" id="td-sec-val">${String((settings.timerDuration||120)%60).padStart(2,'0')}</span>
+                                    <button class="td-step" id="td-sec-plus">+</button>
+                                </div>
                                 <span class="td-field-lbl">сек</span>
                             </div>
                         </div>

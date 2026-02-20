@@ -198,6 +198,23 @@ const App = {
             return;
         }
 
+        // Settings: timer min/sec steppers
+        if (['td-min-minus','td-min-plus','td-sec-minus','td-sec-plus'].includes(target.id)) {
+            const minEl = document.getElementById('td-min-val');
+            const secEl = document.getElementById('td-sec-val');
+            if (!minEl || !secEl) return;
+            let mins = parseInt(minEl.textContent) || 0;
+            let secs = parseInt(secEl.textContent) || 0;
+            if (target.id === 'td-min-minus') mins = Math.max(0, mins - 1);
+            if (target.id === 'td-min-plus') mins = Math.min(99, mins + 1);
+            if (target.id === 'td-sec-minus') secs = secs === 0 ? 30 : 0;
+            if (target.id === 'td-sec-plus') secs = secs === 0 ? 30 : 0;
+            if (mins === 0 && secs === 0) secs = 30;
+            minEl.textContent = mins;
+            secEl.textContent = String(secs).padStart(2, '0');
+            return;
+        }
+
         // Save settings
         if (target.id === 'settings-save') {
             const cycleBtn = document.querySelector('.cycle-toggle button.active[data-cycle]');
@@ -205,9 +222,9 @@ const App = {
             const startDate = document.getElementById('settings-start-date').value;
             const unitBtn = document.querySelector('.cycle-toggle button.active[data-unit]');
             const weightUnit = unitBtn ? unitBtn.dataset.unit : 'kg';
-            const mins = parseInt(document.getElementById('td-minutes')?.value) || 0;
-            const secs = parseInt(document.getElementById('td-seconds')?.value) || 0;
-            const timerDuration = Math.max(10, mins * 60 + secs);
+            const mins = parseInt(document.getElementById('td-min-val')?.textContent) || 0;
+            const secs = parseInt(document.getElementById('td-sec-val')?.textContent) || 0;
+            const timerDuration = Math.max(30, mins * 60 + secs);
             Storage.saveSettings({ cycleType, startDate, weightUnit, timerDuration });
             RestTimer.setDefaultDuration(timerDuration);
             location.hash = `#/week/${this._currentWeek}`;
