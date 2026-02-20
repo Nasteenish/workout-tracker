@@ -218,8 +218,8 @@ const UI = {
 
         const timerSec = Storage.getSettings().timerDuration || 120;
         const restText = timerSec >= 60
-            ? `rest ${Math.floor(timerSec / 60)}'`
-            : `rest ${timerSec}"`;
+            ? `rest ${Math.floor(timerSec / 60)}min`
+            : `rest ${timerSec}s`;
 
         // Equipment selector
         const eqId = Storage.getExerciseEquipment(ex.id);
