@@ -572,8 +572,37 @@ input, button, select {
     color: white;
 }
 
-.set-type-badge.type-S { background: linear-gradient(135deg, rgba(255, 80, 110, 1) 0%, rgba(180, 10, 50, 0.85) 100%); }
-.set-type-badge.type-SH { background: linear-gradient(135deg, rgba(255, 140, 60, 1) 0%, rgba(200, 70, 10, 0.85) 100%); }
+.set-type-badge.type-S {
+    position: relative;
+    background: linear-gradient(135deg, #FFE0E8 0%, #FFFFFF 60%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.set-type-badge.type-S::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255, 80, 110, 1) 0%, rgba(180, 10, 50, 0.85) 100%);
+    border-radius: inherit;
+    z-index: -1;
+}
+
+.set-type-badge.type-SH {
+    position: relative;
+    background: linear-gradient(135deg, #FFE8D0 0%, #FFFFFF 60%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.set-type-badge.type-SH::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255, 140, 60, 1) 0%, rgba(200, 70, 10, 0.85) 100%);
+    border-radius: inherit;
+    z-index: -1;
+}
 .set-type-badge.type-H { background: linear-gradient(135deg, rgba(195, 255, 60, 1) 0%, rgba(90, 160, 10, 0.85) 100%); color: #000; }
 
 .rpe-badge {
