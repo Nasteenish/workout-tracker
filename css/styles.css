@@ -1,11 +1,14 @@
 /* ===== CSS Variables — Apple Fitness Style ===== */
 :root {
-    --bg-primary: #000000;
-    --bg-secondary: #1C1C1E;
-    --bg-card: #2C2C2E;
-    --bg-card-hover: #3A3A3C;
-    --bg-input: #1C1C1E;
-    --bg-modal: rgba(0, 0, 0, 0.88);
+    --bg-primary: #08080F;
+    --bg-secondary: rgba(255, 255, 255, 0.05);
+    --bg-card: rgba(255, 255, 255, 0.08);
+    --bg-card-hover: rgba(255, 255, 255, 0.12);
+    --bg-input: rgba(255, 255, 255, 0.07);
+    --bg-modal: rgba(4, 4, 10, 0.85);
+    --glass-blur: blur(24px);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.11);
+    --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 
     --text-primary: #FFFFFF;
     --text-secondary: #AEAEB2;
@@ -25,8 +28,8 @@
     --tech-rp: #FF6D28;
     --tech-mp: #B5F22A;
 
-    --border-color: rgba(255, 255, 255, 0.08);
-    --border-highlight: rgba(255, 255, 255, 0.15);
+    --border-color: rgba(255, 255, 255, 0.11);
+    --border-highlight: rgba(255, 255, 255, 0.20);
 
     --spacing-xs: 4px;
     --spacing-sm: 8px;
@@ -71,6 +74,11 @@ html {
 body {
     font-family: var(--font-family);
     background-color: var(--bg-primary);
+    background-image:
+        radial-gradient(ellipse at 20% 10%, rgba(157, 141, 245, 0.18) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 90%, rgba(45, 212, 191, 0.10) 0%, transparent 45%),
+        radial-gradient(ellipse at 60% 40%, rgba(255, 45, 85, 0.06) 0%, transparent 40%);
+    background-attachment: fixed;
     color: var(--text-primary);
     line-height: 1.4;
     min-height: 100vh;
@@ -237,6 +245,7 @@ input, button, select {
 .cycle-toggle button.active {
     background: linear-gradient(135deg, #BEB0FF 0%, #9D8DF5 50%, #6E5BC4 100%);
     color: white;
+    box-shadow: 0 2px 12px rgba(157, 141, 245, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .setup-field .date-wrapper {
@@ -274,6 +283,7 @@ input, button, select {
     touch-action: manipulation;
     border: none;
     border-radius: var(--radius-md);
+    box-shadow: 0 4px 20px rgba(157, 141, 245, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
     font-size: var(--font-size-lg);
     font-weight: 700;
     cursor: pointer;
@@ -336,8 +346,11 @@ input, button, select {
 /* Day Cards */
 .day-card {
     background: var(--bg-secondary);
-    border: none;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
     border-radius: var(--radius-md);
+    box-shadow: var(--glass-shadow);
     padding: var(--spacing-md);
     margin-bottom: var(--spacing-sm);
     cursor: pointer;
@@ -448,8 +461,11 @@ input, button, select {
 /* Exercise Card */
 .exercise-card {
     background: var(--bg-secondary);
-    border: none;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
     border-radius: var(--radius-md);
+    box-shadow: var(--glass-shadow);
     margin-bottom: var(--spacing-sm);
     overflow: hidden;
 }
@@ -651,7 +667,7 @@ input, button, select {
     width: 100%;
     height: var(--touch-min);
     background: var(--bg-card);
-    border: none;
+    border: var(--glass-border);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
     text-align: center;
@@ -673,7 +689,7 @@ input, button, select {
 .complete-btn {
     width: var(--touch-min);
     height: var(--touch-min);
-    border: none;
+    border: var(--glass-border);
     background: var(--bg-card);
     border-radius: 50%;
     color: var(--text-muted);
@@ -972,6 +988,7 @@ input, button, select {
     justify-content: space-between;
     padding: var(--spacing-sm) var(--spacing-md);
     background: var(--bg-card);
+    border: var(--glass-border);
     border-radius: var(--radius-sm);
     margin-bottom: var(--spacing-xs);
     min-height: var(--touch-min);
