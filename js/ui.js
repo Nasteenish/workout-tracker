@@ -256,9 +256,10 @@ const UI = {
         const isCompleted = log && log.completed;
         const weightVal = log ? log.weight : '';
         const repsVal = log ? log.reps : '';
-        const unit = Storage.getWeightUnit();
-        const unitLabel = unit === 'lbs' ? 'lbs' : 'кг';
-        const prevText = prev ? `пред: ${prev.weight}${unitLabel} x ${prev.reps}` : '';
+        const unitLabels = { kg: 'кг', lbs: 'lbs', plates: 'пл' };
+        const unit = Storage.getExerciseUnit(ex.id) || Storage.getWeightUnit();
+        const unitLabel = unitLabels[unit] || 'кг';
+        const prevText = prev ? `пред: ${prev.weight}<span class="set-prev-unit" data-exercise="${ex.id}">${unitLabel}</span> x ${prev.reps}` : '';
 
         // Type badge
         const typeClass = `type-${set.type}`;
@@ -301,7 +302,7 @@ const UI = {
                 </div>
                 <div class="set-inputs">
                     <div class="input-group">
-                        <label>${unitLabel}</label>
+                        <button class="unit-cycle-btn" data-exercise="${ex.id}">${unitLabel}</button>
                         <input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*"
                             class="weight-input"
                             data-exercise="${ex.id}" data-set="${setIdx}"
@@ -755,6 +756,7 @@ const UI = {
                         <div class="cycle-toggle">
                             <button data-unit="kg" ${unit === 'kg' ? 'class="active"' : ''}>кг</button>
                             <button data-unit="lbs" ${unit === 'lbs' ? 'class="active"' : ''}>lbs</button>
+                            <button data-unit="plates" ${unit === 'plates' ? 'class="active"' : ''}>плитки</button>
                         </div>
                     </div>
                 </div>

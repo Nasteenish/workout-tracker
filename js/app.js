@@ -276,6 +276,24 @@ const App = {
             return;
         }
 
+        // Unit cycle button — cycle kg → lbs → plates per exercise
+        if (target.matches('.unit-cycle-btn')) {
+            const exId = target.dataset.exercise;
+            const units = ['kg', 'lbs', 'plates'];
+            const labels = { kg: 'кг', lbs: 'lbs', plates: 'пл' };
+            const current = Storage.getExerciseUnit(exId) || Storage.getWeightUnit();
+            const next = units[(units.indexOf(current) + 1) % units.length];
+            Storage.setExerciseUnit(exId, next);
+            const nextLabel = labels[next];
+            document.querySelectorAll(`.unit-cycle-btn[data-exercise="${exId}"]`).forEach(b => {
+                b.textContent = nextLabel;
+            });
+            document.querySelectorAll(`.set-prev-unit[data-exercise="${exId}"]`).forEach(s => {
+                s.textContent = nextLabel;
+            });
+            return;
+        }
+
         // Equipment button — show equipment picker
         if (target.matches('.equipment-btn') || target.closest('.equipment-btn')) {
             const btn = target.matches('.equipment-btn') ? target : target.closest('.equipment-btn');

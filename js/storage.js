@@ -13,6 +13,7 @@ const Storage = {
             // Migrate: add new fields if missing
             if (!this._data.equipment) this._data.equipment = [];
             if (!this._data.exerciseEquipment) this._data.exerciseEquipment = {};
+            if (!this._data.exerciseUnits) this._data.exerciseUnits = {};
         } catch (e) {
             console.error('Storage load error:', e);
             this._data = this._defaultData();
@@ -37,6 +38,7 @@ const Storage = {
             },
             equipment: [],
             exerciseEquipment: {},
+            exerciseUnits: {},
             exerciseChoices: {},
             log: {}
         };
@@ -104,6 +106,15 @@ const Storage = {
 
     setExerciseEquipment(exerciseId, equipmentId) {
         this._load().exerciseEquipment[exerciseId] = equipmentId;
+        this._save();
+    },
+
+    getExerciseUnit(exerciseId) {
+        return this._load().exerciseUnits[exerciseId] || null;
+    },
+
+    setExerciseUnit(exerciseId, unit) {
+        this._load().exerciseUnits[exerciseId] = unit;
         this._save();
     },
 
