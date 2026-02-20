@@ -234,7 +234,7 @@ const UI = {
             <div class="exercise-card">
                 <div class="exercise-header">
                     ${choiceKey
-                        ? `<div class="exercise-name exercise-name-chooser" data-choice-key="${choiceKey}">${ex.nameRu || ex.name} <span class="chooser-arrow">&#9662;</span></div>`
+                        ? `<div class="exercise-name exercise-name-chooser" data-choice-key="${choiceKey}">${ex.nameRu || ex.name}<span class="chooser-badge"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>`
                         : `<div class="exercise-name">${ex.nameRu || ex.name}</div>`
                     }
                     <div class="exercise-meta">

@@ -546,10 +546,17 @@ input, button, select {
     gap: 5px;
 }
 
-.chooser-arrow {
-    font-size: 11px;
+.chooser-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    background: rgba(157, 141, 245, 0.18);
+    border-radius: 50%;
     color: var(--accent-primary);
-    opacity: 0.8;
+    margin-left: 2px;
 }
 
 /* Superset Group */
