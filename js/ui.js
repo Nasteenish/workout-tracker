@@ -318,7 +318,9 @@ const UI = {
                     </div>
                     <div role="button" class="complete-btn ${isCompleted ? 'completed' : ''}"
                         data-exercise="${ex.id}" data-set="${setIdx}">
-                        ${isCompleted ? '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 9l3.5 3.5L14 5.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+                        ${isCompleted
+                            ? `<svg width="40" height="40" viewBox="0 0 40 40"><defs><linearGradient id="cg-${ex.id}-${setIdx}" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#C3FF3C"/><stop offset="1" stop-color="#5AA00A"/></linearGradient></defs><circle cx="20" cy="20" r="20" fill="url(#cg-${ex.id}-${setIdx})"/><path d="M11 20.5l6 6L29 14" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+                            : '<svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18.5" stroke="rgba(157,141,245,0.4)" stroke-width="1.5"/></svg>'}
                     </div>
                 </div>
                 ${prevText ? `<div class="set-prev">${prevText}</div>` : ''}
