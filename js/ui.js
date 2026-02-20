@@ -65,7 +65,7 @@ const UI = {
             daysHtml += `
                 <a class="${cardClass}" href="#/week/${weekNum}/day/${dayNum}">
                     <div class="day-header">
-                        <span class="day-number">${isDone ? '&#10003; ' : ''}День ${dayNum}</span>
+                        <span class="day-number">${isDone ? '<svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="vertical-align:-2px;margin-right:2px"><path d="M2.5 6.5l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}День ${dayNum}</span>
                         <span class="day-date">${pct}%</span>
                     </div>
                     <div class="day-title">${dayTitle}</div>
@@ -82,15 +82,25 @@ const UI = {
                 <div class="header-title">
                     <h1>Трекер Тренировок</h1>
                 </div>
-                <button class="settings-btn" id="btn-settings">&#9881;</button>
+                <button class="settings-btn" id="btn-settings">
+                    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="11" cy="11" r="3" stroke="currentColor" stroke-width="1.7"/>
+                        <path d="M11 2.5V4M11 18v1.5M4.22 4.22l1.06 1.06M16.72 16.72l1.06 1.06M2.5 11H4M18 11h1.5M4.22 17.78l1.06-1.06M16.72 5.28l1.06-1.06" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                    </svg>
+                </button>
             </div>
             <div class="app-content">
                 <div class="week-nav">
-                    <button id="prev-week" ${weekNum <= 1 ? 'disabled' : ''}>&#9664;</button>
+                    <button id="prev-week" ${weekNum <= 1 ? 'disabled' : ''}>
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 15l-5-5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
                     <div class="week-label">
-                        <h2>Неделя ${weekNum} из 12</h2>
+                        <div class="week-num">${weekNum}</div>
+                        <div class="week-sublabel">неделя из 12</div>
                     </div>
-                    <button id="next-week" ${weekNum >= 12 ? 'disabled' : ''}>&#9654;</button>
+                    <button id="next-week" ${weekNum >= 12 ? 'disabled' : ''}>
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 15l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
                 </div>
                 ${daysHtml}
                 <div class="data-actions">
@@ -146,7 +156,7 @@ const UI = {
 
         document.getElementById('app').innerHTML = `
             <div class="app-header">
-                <button class="back-btn" id="btn-back">&#9664;</button>
+                <button class="back-btn" id="btn-back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
                 <div class="header-title">
                     <h1>Нед.${weekNum} / День ${dayNum}</h1>
                     <div class="header-subtitle">${dayTitle}</div>
@@ -266,7 +276,7 @@ const UI = {
                     </div>
                     <button class="complete-btn ${isCompleted ? 'completed' : ''}"
                         data-exercise="${ex.id}" data-set="${setIdx}">
-                        ${isCompleted ? '&#10003;' : ''}
+                        ${isCompleted ? '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 9l3.5 3.5L14 5.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
                     </button>
                 </div>
                 ${prevText ? `<div class="set-prev">${prevText}</div>` : ''}
@@ -292,7 +302,10 @@ const UI = {
 
         return `
             <div class="superset-group">
-                <div class="superset-label">Суперсет</div>
+                <div class="superset-label">
+                    <svg width="18" height="12" viewBox="0 0 18 12" fill="none"><circle cx="5.5" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/><circle cx="12.5" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/></svg>
+                    Суперсет
+                </div>
                 ${exercisesHtml}
             </div>
         `;
@@ -396,6 +409,22 @@ const UI = {
                 }
             }
 
+            // Sparkline — max weight per entry (last 8)
+            const sparkWeights = history.map(e => Math.max(...e.sets.map(s => s.weight || 0))).filter(w => w > 0);
+            if (sparkWeights.length > 1) {
+                const sparkMax = Math.max(...sparkWeights);
+                const shown = sparkWeights.slice(-8);
+                const isLast = (i) => i === shown.length - 1;
+                const bars = shown.map((w, i) => {
+                    const pct = Math.max(10, Math.round((w / sparkMax) * 100));
+                    return `<div class="spark-bar-wrap">
+                        <div class="spark-bar ${isLast(i) ? 'last' : ''}" style="height:${pct}%"></div>
+                        <div class="spark-label">${w}</div>
+                    </div>`;
+                }).join('');
+                contentHtml = `<div class="history-sparkline">${bars}</div>` + contentHtml;
+            }
+
             if (maxWeight > 0) {
                 contentHtml += `<div class="history-max">Максимальный вес: ${maxWeight} ${unitLabel}</div>`;
             }
@@ -403,7 +432,7 @@ const UI = {
 
         document.getElementById('app').innerHTML = `
             <div class="app-header">
-                <button class="back-btn" id="btn-back-history">&#9664;</button>
+                <button class="back-btn" id="btn-back-history"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
                 <div class="header-title">
                     <h1>История</h1>
                     <div class="header-subtitle">${exerciseName}</div>
@@ -627,7 +656,7 @@ const UI = {
 
         document.getElementById('app').innerHTML = `
             <div class="app-header">
-                <button class="back-btn" id="btn-back-settings">&#9664;</button>
+                <button class="back-btn" id="btn-back-settings"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
                 <div class="header-title">
                     <h1>Настройки</h1>
                 </div>
