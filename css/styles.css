@@ -501,7 +501,7 @@ input, button, select {
     border-radius: var(--radius-md);
     box-shadow: var(--glass-shadow);
     margin-bottom: var(--spacing-sm);
-    overflow: hidden;
+    overflow: clip;
 }
 
 .exercise-card .exercise-header {
@@ -749,9 +749,6 @@ input, button, select {
     justify-content: center;
     color: var(--text-muted);
     transition: border-color 0.2s, background 0.2s;
-    overflow: hidden;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
 }
 
 .complete-btn.completed .complete-inner {
