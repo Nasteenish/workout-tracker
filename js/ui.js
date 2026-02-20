@@ -638,14 +638,23 @@ const UI = {
         const unit = Storage.getWeightUnit();
         const equipmentList = Storage.getEquipmentList();
 
+        const startDate = settings.startDate || '';
+        let formattedDate = 'Выберите дату';
+        if (startDate) {
+            const d = new Date(startDate + 'T00:00:00');
+            formattedDate = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+
+        const svgPencil = `<svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M11.5 2.5l3 3L4.5 15.5H1.5v-3L11.5 2.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
         let eqListHtml = '';
         for (const eq of equipmentList) {
             eqListHtml += `
                 <div class="settings-eq-item">
                     <span>${eq.name}</span>
                     <div class="eq-item-actions">
-                        <button class="eq-edit-btn" data-eq-id="${eq.id}">&#9998;</button>
-                        <button class="eq-remove-btn" data-eq-id="${eq.id}">&times;</button>
+                        <button class="eq-edit-btn" data-eq-id="${eq.id}">${svgPencil}</button>
+                        <button class="eq-remove-btn" data-eq-id="${eq.id}"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
                     </div>
                 </div>
             `;
@@ -675,7 +684,8 @@ const UI = {
                     <div class="setup-field" style="margin-bottom: 0;">
                         <label>Дата начала</label>
                         <div class="date-wrapper">
-                            <input type="date" id="settings-start-date" value="${settings.startDate || ''}">
+                            <div class="settings-date-display" id="date-display-text">${formattedDate}</div>
+                            <input type="date" id="settings-start-date" value="${startDate}" class="date-input-hidden">
                         </div>
                     </div>
                 </div>
@@ -699,15 +709,27 @@ const UI = {
                     </div>
                     <div class="eq-add-row">
                         <input type="text" id="settings-eq-name" placeholder="Название..." class="eq-new-input">
-                        <button class="eq-add-btn" id="settings-eq-add">+</button>
+                        <button class="eq-add-btn" id="settings-eq-add"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 3v12M3 9h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
                     </div>
                 </div>
 
                 <div class="settings-card settings-danger" style="margin-top: var(--spacing-sm);">
-                    <button class="btn-danger" id="btn-reset">⚠ Сбросить все данные</button>
+                    <button class="btn-danger" id="btn-reset">Сбросить все данные</button>
                 </div>
 
             </div>
         `;
+
+        // Update date display text when user picks a date
+        const dateInput = document.getElementById('settings-start-date');
+        const dateDisplay = document.getElementById('date-display-text');
+        if (dateInput && dateDisplay) {
+            dateInput.addEventListener('change', function() {
+                if (this.value) {
+                    const d = new Date(this.value + 'T00:00:00');
+                    dateDisplay.textContent = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+                }
+            });
+        }
     }
 };
