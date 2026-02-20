@@ -584,7 +584,7 @@ input, button, select {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 214, 10, 0.15);
+    background: linear-gradient(135deg, rgba(255, 109, 40, 0.38) 0%, rgba(160, 45, 10, 0.18) 100%);
     color: var(--accent-warning);
     white-space: nowrap;
 }
