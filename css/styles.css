@@ -686,7 +686,7 @@ input, button, select {
 }
 
 .complete-btn.completed {
-    background: var(--accent-success);
+    background: linear-gradient(135deg, rgba(195, 255, 60, 1) 0%, rgba(90, 160, 10, 0.85) 100%);
     color: #000;
 }
 
