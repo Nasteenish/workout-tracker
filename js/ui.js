@@ -210,7 +210,7 @@ const UI = {
         `;
     },
 
-    _renderExercise(ex, weekNum, dayNum) {
+    _renderExercise(ex, weekNum, dayNum, choiceKey = null) {
         let setsHtml = '';
         for (let i = 0; i < ex.sets.length; i++) {
             setsHtml += this._renderSetRow(ex, i, weekNum, dayNum);
@@ -233,7 +233,10 @@ const UI = {
         return `
             <div class="exercise-card">
                 <div class="exercise-header">
-                    <div class="exercise-name">${ex.nameRu || ex.name}</div>
+                    ${choiceKey
+                        ? `<div class="exercise-name exercise-name-chooser" data-choice-key="${choiceKey}">${ex.nameRu || ex.name} <span class="chooser-arrow">&#9662;</span></div>`
+                        : `<div class="exercise-name">${ex.nameRu || ex.name}</div>`
+                    }
                     <div class="exercise-meta">
                         <span>${ex.reps} повт</span>
                         ${restText ? `<span>${restText}</span>` : ''}
@@ -363,23 +366,12 @@ const UI = {
             ? options.find(ex => ex.id === chosenId)
             : options[0];
 
-        const chosenName = chosen ? (chosen.nameRu || chosen.name) : 'Выберите';
-
         let exerciseHtml = '';
         if (chosen) {
-            exerciseHtml = this._renderExercise(chosen, weekNum, dayNum);
+            exerciseHtml = this._renderExercise(chosen, weekNum, dayNum, choiceKey);
         }
 
-        return `
-            <div class="choose-one-group">
-                <div class="choose-one-header">
-                    <button class="choose-one-btn" data-choice-key="${choiceKey}">
-                        ${chosenName} &#9662;
-                    </button>
-                </div>
-                ${exerciseHtml}
-            </div>
-        `;
+        return `<div class="choose-one-group">${exerciseHtml}</div>`;
     },
 
     // ===== HISTORY VIEW =====

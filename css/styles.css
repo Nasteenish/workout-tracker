@@ -538,27 +538,18 @@ input, button, select {
     margin-bottom: var(--spacing-sm);
 }
 
-.choose-one-header {
-    padding: var(--spacing-xs) var(--spacing-md) var(--spacing-xs) 0;
-}
-
-.choose-one-btn {
-    background: linear-gradient(var(--bg-card), var(--bg-card)) padding-box,
-                linear-gradient(135deg, rgba(190, 176, 255, 0.6) 0%, rgba(110, 91, 196, 0.3) 100%) border-box;
-    border: 1px solid transparent;
-    border-radius: var(--radius-pill);
-    color: var(--text-primary);
-    font-size: var(--font-size-xs);
-    padding: 5px 12px;
+.exercise-name-chooser {
     cursor: pointer;
-    display: inline-flex;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
     align-items: center;
-    gap: 4px;
-    font-weight: 600;
+    gap: 5px;
 }
 
-.choose-one-btn:active {
-    background: var(--bg-card-hover);
+.chooser-arrow {
+    font-size: 11px;
+    color: var(--accent-primary);
+    opacity: 0.8;
 }
 
 /* Superset Group */

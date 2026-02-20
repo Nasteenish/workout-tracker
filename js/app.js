@@ -367,11 +367,10 @@ const App = {
             return;
         }
 
-        // Choose one: open dropdown modal
-        if (target.matches('.choose-one-btn') || target.closest('.choose-one-btn')) {
-            const btn = target.matches('.choose-one-btn') ? target : target.closest('.choose-one-btn');
-            const choiceKey = btn.dataset.choiceKey;
-            UI.showChoiceModal(choiceKey);
+        // Choose one: tap exercise name to open selector
+        if (target.matches('.exercise-name-chooser') || target.closest('.exercise-name-chooser')) {
+            const el = target.matches('.exercise-name-chooser') ? target : target.closest('.exercise-name-chooser');
+            UI.showChoiceModal(el.dataset.choiceKey);
             return;
         }
 
