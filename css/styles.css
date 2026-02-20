@@ -497,8 +497,6 @@ input, button, select {
 /* Exercise Card */
 .exercise-card {
     background: var(--bg-secondary);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
     border: var(--glass-border);
     border-radius: var(--radius-md);
     box-shadow: var(--glass-shadow);
@@ -745,16 +743,19 @@ input, button, select {
     height: 100%;
     border-radius: 50%;
     border: 1.5px solid rgba(157, 141, 245, 0.4);
-    background: var(--bg-card);
+    background: #1C1C28;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--text-muted);
     transition: border-color 0.2s, background 0.2s;
+    overflow: hidden;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
 }
 
 .complete-btn.completed .complete-inner {
-    background: linear-gradient(135deg, rgba(195, 255, 60, 1) 0%, rgba(90, 160, 10, 0.85) 100%);
+    background: linear-gradient(135deg, #C3FF3C 0%, #5AA00A 100%);
     border-color: transparent;
     color: #000;
 }
