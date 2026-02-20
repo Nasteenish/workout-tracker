@@ -318,9 +318,7 @@ const UI = {
                     </div>
                     <div role="button" class="complete-btn ${isCompleted ? 'completed' : ''}"
                         data-exercise="${ex.id}" data-set="${setIdx}">
-                        <span class="complete-inner">
-                            ${isCompleted ? '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 9l3.5 3.5L14 5.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
-                        </span>
+                        ${isCompleted ? '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 9l3.5 3.5L14 5.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
                     </div>
                 </div>
                 ${prevText ? `<div class="set-prev">${prevText}</div>` : ''}
