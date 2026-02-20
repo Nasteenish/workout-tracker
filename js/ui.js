@@ -344,7 +344,7 @@ const UI = {
             `;
         }
 
-        // Multi-segment layout
+        // Multi-segment layout (horizontal row of compact blocks)
         let segsHtml = '';
         for (const seg of segments) {
             const segLog = seg.segIdx === 0 ? log : (log && log.segs && log.segs[String(seg.segIdx)]) || null;
@@ -354,24 +354,20 @@ const UI = {
             const rPh = seg.segIdx === 0 ? placeholderR : '';
             const wClass = seg.segIdx === 0 ? 'weight-input seg-weight-input' : 'seg-weight-input';
             const rClass = seg.segIdx === 0 ? 'reps-input seg-reps-input' : 'seg-reps-input';
-            const labelHtml = seg.label ? `<span class="seg-lbl ${seg.cls}">${seg.label}</span>` : '';
+            const prefixHtml = seg.label
+                ? `<span class="seg-lbl ${seg.cls}">${seg.label}</span>`
+                : `<button class="unit-cycle-btn" data-exercise="${ex.id}">${unitLabel}</button>`;
             segsHtml += `
                 <div class="set-seg">
-                    ${labelHtml}
-                    <div class="input-group">
-                        <button class="unit-cycle-btn" data-exercise="${ex.id}">${unitLabel}</button>
-                        <input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*"
-                            class="${wClass}"
-                            data-exercise="${ex.id}" data-set="${setIdx}" data-seg="${seg.segIdx}"
-                            value="${wVal}" placeholder="${wPh}">
-                    </div>
-                    <div class="input-group">
-                        <label>reps</label>
-                        <input type="text" inputmode="numeric" pattern="[0-9]*"
-                            class="${rClass}"
-                            data-exercise="${ex.id}" data-set="${setIdx}" data-seg="${seg.segIdx}"
-                            value="${rVal}" placeholder="${rPh}">
-                    </div>
+                    ${prefixHtml}
+                    <input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*"
+                        class="${wClass}"
+                        data-exercise="${ex.id}" data-set="${setIdx}" data-seg="${seg.segIdx}"
+                        value="${wVal}" placeholder="${wPh}">
+                    <input type="text" inputmode="numeric" pattern="[0-9]*"
+                        class="${rClass}"
+                        data-exercise="${ex.id}" data-set="${setIdx}" data-seg="${seg.segIdx}"
+                        value="${rVal}" placeholder="${rPh}">
                 </div>
             `;
         }
