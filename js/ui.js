@@ -148,8 +148,10 @@ const UI = {
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 15l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                 </div>
-                <div class="week-slide">
-                ${cardsHtml}
+                <div class="slide-container">
+                    <div class="week-slide">
+                    ${cardsHtml}
+                    </div>
                 </div>
                 <div class="data-actions">
                     <button id="btn-export">Экспорт</button>
@@ -212,8 +214,10 @@ const UI = {
                 </div>
             </div>
             <div class="app-content">
-                <div class="day-slide">
-                ${html}
+                <div class="slide-container">
+                    <div class="day-slide">
+                    ${html}
+                    </div>
                 </div>
             </div>
         `;

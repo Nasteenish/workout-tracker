@@ -52,8 +52,9 @@ const App = {
         const createCompanion = (targetWeek) => {
             const c = document.createElement('div');
             c.className = 'nav-companion';
-            c.innerHTML = `<div class="week-slide">${UI._weekCardsHTML(targetWeek)}</div>`;
-            document.getElementById('app').appendChild(c);
+            c.innerHTML = UI._weekCardsHTML(targetWeek);
+            const container = document.querySelector('.slide-container');
+            if (container) container.appendChild(c);
             return c;
         };
 
