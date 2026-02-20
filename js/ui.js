@@ -45,14 +45,12 @@ const UI = {
     },
 
     // ===== WEEK VIEW =====
-    renderWeek(weekNum, swipeDir = null) {
+    // Returns just the week day-cards HTML (used by swipe companion too)
+    _weekCardsHTML(weekNum) {
         const progress = getProgressWeek();
         const settings = Storage.getSettings();
         const cycleType = settings.cycleType || 7;
 
-        // Slot sequences per cycle type (from the program structure):
-        // 7-day: Day1, Day2, Day3, REST, Day4, Day5, REST
-        // 8-day: Day1, Day2, REST, Day3, Day4, REST, Day5, REST
         let slots;
         if (cycleType === 8) {
             slots = [
@@ -119,6 +117,12 @@ const UI = {
             }
         }
 
+        return cardsHtml;
+    },
+
+    renderWeek(weekNum) {
+        const cardsHtml = this._weekCardsHTML(weekNum);
+
         document.getElementById('app').innerHTML = `
             <div class="app-header">
                 <div class="header-title">
@@ -154,18 +158,6 @@ const UI = {
             </div>
         `;
 
-        if (swipeDir) {
-            const slide = document.querySelector('.week-slide');
-            const from = swipeDir === 'left' ? '110%' : '-110%';
-            slide.style.transform = `translateX(${from})`;
-            slide.style.transition = 'none';
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    slide.style.transition = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                    slide.style.transform = 'translateX(0)';
-                });
-            });
-        }
     },
 
     // ===== DAY VIEW =====

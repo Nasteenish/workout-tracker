@@ -170,11 +170,28 @@ input, button, select {
 .app-content {
     padding: var(--spacing-md);
     padding-bottom: calc(var(--spacing-xl) * 3);
+    position: relative;
+    z-index: 1;
 }
 
 .week-slide,
 .day-slide {
     will-change: transform;
+    animation: none; /* swipe gesture handles entrance */
+}
+
+/* iOS-style swipe companion panel (rendered behind current content) */
+.nav-companion {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    will-change: transform;
+    padding: 70px var(--spacing-md) 0;
+    box-sizing: border-box;
 }
 
 /* ===== Setup Screen ===== */
