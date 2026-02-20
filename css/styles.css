@@ -608,8 +608,8 @@ input, button, select {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, rgba(255, 109, 40, 0.38) 0%, rgba(160, 45, 10, 0.18) 100%);
-    color: var(--accent-warning);
+    background: linear-gradient(135deg, rgba(157, 141, 245, 0.35) 0%, rgba(110, 91, 196, 0.15) 100%);
+    color: var(--accent-primary);
     white-space: nowrap;
 }
 
@@ -1004,6 +1004,44 @@ input, button, select {
     color: var(--text-muted);
     font-size: var(--font-size-sm);
     padding: var(--spacing-sm) 0;
+}
+
+/* ===== Settings redesign ===== */
+.settings-card {
+    background: var(--bg-secondary);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.settings-card-label {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: var(--spacing-md);
+}
+
+.settings-danger {
+    background: rgba(255, 45, 85, 0.07);
+    border-color: rgba(255, 45, 85, 0.2);
+}
+
+.btn-danger {
+    width: 100%;
+    padding: var(--spacing-sm);
+    background: none;
+    border: none;
+    color: var(--accent-red);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
 }
 
 .eq-item-actions {

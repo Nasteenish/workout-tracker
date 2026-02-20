@@ -602,30 +602,38 @@ const UI = {
                 </div>
             </div>
             <div class="app-content">
-                <div class="setup-field">
-                    <label>Тип цикла</label>
-                    <div class="cycle-toggle">
-                        <button data-cycle="7" ${settings.cycleType === 7 ? 'class="active"' : ''}>7 дней</button>
-                        <button data-cycle="8" ${settings.cycleType === 8 ? 'class="active"' : ''}>8 дней</button>
+
+                <div class="settings-card">
+                    <div class="settings-card-label">Программа</div>
+                    <div class="setup-field" style="margin-bottom: var(--spacing-md);">
+                        <label>Тип цикла</label>
+                        <div class="cycle-toggle">
+                            <button data-cycle="7" ${settings.cycleType === 7 ? 'class="active"' : ''}>7 дней</button>
+                            <button data-cycle="8" ${settings.cycleType === 8 ? 'class="active"' : ''}>8 дней</button>
+                        </div>
+                    </div>
+                    <div class="setup-field" style="margin-bottom: 0;">
+                        <label>Дата начала</label>
+                        <div class="date-wrapper">
+                            <input type="date" id="settings-start-date" value="${settings.startDate || ''}">
+                        </div>
                     </div>
                 </div>
-                <div class="setup-field">
-                    <label>Дата начала программы</label>
-                    <div class="date-wrapper">
-                        <input type="date" id="settings-start-date" value="${settings.startDate || ''}">
+
+                <div class="settings-card">
+                    <div class="settings-card-label">Единицы</div>
+                    <div class="setup-field" style="margin-bottom: 0;">
+                        <div class="cycle-toggle">
+                            <button data-unit="kg" ${unit === 'kg' ? 'class="active"' : ''}>кг</button>
+                            <button data-unit="lbs" ${unit === 'lbs' ? 'class="active"' : ''}>lbs</button>
+                        </div>
                     </div>
                 </div>
-                <div class="setup-field">
-                    <label>Единица веса</label>
-                    <div class="cycle-toggle">
-                        <button data-unit="kg" ${unit === 'kg' ? 'class="active"' : ''}>кг</button>
-                        <button data-unit="lbs" ${unit === 'lbs' ? 'class="active"' : ''}>lbs</button>
-                    </div>
-                </div>
+
                 <button class="btn-primary" id="settings-save">Сохранить</button>
 
-                <div class="setup-field" style="margin-top: 32px;">
-                    <label>Оборудование</label>
+                <div class="settings-card" style="margin-top: var(--spacing-lg);">
+                    <div class="settings-card-label">Оборудование</div>
                     <div class="settings-eq-list">
                         ${eqListHtml}
                     </div>
@@ -635,9 +643,10 @@ const UI = {
                     </div>
                 </div>
 
-                <div class="data-actions" style="margin-top: 48px;">
-                    <button id="btn-reset" style="color: var(--accent-primary);">&#9888; Сбросить данные</button>
+                <div class="settings-card settings-danger" style="margin-top: var(--spacing-sm);">
+                    <button class="btn-danger" id="btn-reset">⚠ Сбросить все данные</button>
                 </div>
+
             </div>
         `;
     }
