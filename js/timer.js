@@ -87,7 +87,7 @@ const RestTimer = {
     },
 
     adjust(delta) {
-        this._remaining = Math.max(30, this._remaining + delta);
+        this._remaining = Math.max(5, this._remaining + delta);
         this._updateDisplay();
     },
 
