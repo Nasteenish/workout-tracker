@@ -207,9 +207,9 @@ const App = {
             let secs = parseInt(secEl.textContent) || 0;
             if (target.id === 'td-min-minus') mins = Math.max(0, mins - 1);
             if (target.id === 'td-min-plus') mins = Math.min(99, mins + 1);
-            if (target.id === 'td-sec-minus') secs = secs === 0 ? 30 : 0;
-            if (target.id === 'td-sec-plus') secs = secs === 0 ? 30 : 0;
-            if (mins === 0 && secs === 0) secs = 30;
+            if (target.id === 'td-sec-minus') secs = secs === 0 ? 55 : secs - 5;
+            if (target.id === 'td-sec-plus') secs = secs >= 55 ? 0 : secs + 5;
+            if (mins === 0 && secs === 0) { secs = 5; }
             minEl.textContent = mins;
             secEl.textContent = String(secs).padStart(2, '0');
             return;
