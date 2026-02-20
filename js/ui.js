@@ -1,5 +1,19 @@
 /* ===== UI Rendering Module ===== */
 
+let _scrollY = 0;
+
+function lockBodyScroll() {
+    _scrollY = window.scrollY;
+    document.body.style.top = `-${_scrollY}px`;
+    document.body.classList.add('modal-open');
+}
+
+function unlockBodyScroll() {
+    document.body.classList.remove('modal-open');
+    document.body.style.top = '';
+    window.scrollTo(0, _scrollY);
+}
+
 const UI = {
     // ===== SETUP SCREEN =====
     renderSetup() {
@@ -78,8 +92,8 @@ const UI = {
                 </div>
                 ${daysHtml}
                 <div class="data-actions">
-                    <button id="btn-export">&#128190; Экспорт</button>
-                    <button id="btn-import">&#128194; Импорт</button>
+                    <button id="btn-export">Экспорт</button>
+                    <button id="btn-import">Импорт</button>
                 </div>
             </div>
         `;
@@ -174,7 +188,7 @@ const UI = {
                 ${eqHtml}
                 ${setsHtml}
                 <button class="history-btn" data-exercise="${ex.id}">
-                    &#128200; История
+                    История
                 </button>
             </div>
         `;
@@ -276,7 +290,7 @@ const UI = {
 
         return `
             <div class="superset-group">
-                <div class="superset-label">&#128257; Суперсет</div>
+                <div class="superset-label">Суперсет</div>
                 ${exercisesHtml}
             </div>
         `;
@@ -443,7 +457,7 @@ const UI = {
             </div>
         `;
         document.body.appendChild(overlay);
-        document.body.classList.add('modal-open');
+        lockBodyScroll();
 
         // Store reference to the input element and current display unit
         overlay._targetInput = inputEl;
@@ -462,7 +476,7 @@ const UI = {
             modal.remove();
         }
         if (!document.querySelector('.modal-overlay')) {
-            document.body.classList.remove('modal-open');
+            unlockBodyScroll();
         }
     },
 
@@ -503,7 +517,7 @@ const UI = {
             </div>
         `;
         document.body.appendChild(overlay);
-        document.body.classList.add('modal-open');
+        lockBodyScroll();
 
         overlay._exerciseId = exerciseId;
 
@@ -516,7 +530,7 @@ const UI = {
         const modal = document.getElementById('equipment-modal');
         if (modal) modal.remove();
         if (!document.querySelector('.modal-overlay')) {
-            document.body.classList.remove('modal-open');
+            unlockBodyScroll();
         }
     },
 
@@ -569,7 +583,7 @@ const UI = {
             </div>
         `;
         document.body.appendChild(overlay);
-        document.body.classList.add('modal-open');
+        lockBodyScroll();
 
         overlay.addEventListener('click', function(e) {
             App.handleClick(e);
@@ -580,7 +594,7 @@ const UI = {
         const modal = document.getElementById('choice-modal');
         if (modal) modal.remove();
         if (!document.querySelector('.modal-overlay')) {
-            document.body.classList.remove('modal-open');
+            unlockBodyScroll();
         }
     },
 

@@ -987,6 +987,8 @@ body.modal-open {
     width: 100%;
     max-height: 70vh;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
 }
 
 .equipment-modal .modal-header {
