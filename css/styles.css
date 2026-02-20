@@ -235,7 +235,7 @@ input, button, select {
 }
 
 .cycle-toggle button.active {
-    background: var(--accent-primary);
+    background: linear-gradient(135deg, #C4A8FF 0%, #A78BFA 50%, #7C5FD4 100%);
     color: white;
 }
 
@@ -268,7 +268,7 @@ input, button, select {
     width: 100%;
     max-width: 100%;
     height: var(--button-height);
-    background: var(--accent-primary);
+    background: linear-gradient(135deg, #C4A8FF 0%, #A78BFA 50%, #7C5FD4 100%);
     color: white;
     -webkit-tap-highlight-color: rgba(167, 139, 250, 0.3);
     touch-action: manipulation;
@@ -493,8 +493,9 @@ input, button, select {
 }
 
 .choose-one-btn {
-    background: var(--bg-card);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: linear-gradient(var(--bg-card), var(--bg-card)) padding-box,
+                linear-gradient(135deg, rgba(196, 168, 255, 0.6) 0%, rgba(124, 95, 212, 0.3) 100%) border-box;
+    border: 1px solid transparent;
     border-radius: var(--radius-pill);
     color: var(--text-primary);
     font-size: var(--font-size-xs);
