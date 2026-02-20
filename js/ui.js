@@ -294,6 +294,35 @@ const UI = {
         const placeholderW = prev ? prev.weight : '';
         const placeholderR = prev ? prev.reps : '';
 
+        // Count extra reps segments from techniques
+        const segCount = 1 + (set.techniques ? set.techniques.filter(t => ['DROP','REST_PAUSE','MP','DROP_OR_REST'].includes(t)).length : 0);
+
+        // Build reps input area: single or split
+        let repsInputHtml;
+        if (segCount === 1) {
+            repsInputHtml = `<input type="text" inputmode="numeric" pattern="[0-9]*"
+                class="reps-input"
+                data-exercise="${ex.id}" data-set="${setIdx}"
+                value="${repsVal}" placeholder="${placeholderR}">`;
+        } else {
+            let parts = `<input type="text" inputmode="numeric" pattern="[0-9]*"
+                class="reps-input seg-reps-input"
+                data-exercise="${ex.id}" data-set="${setIdx}" data-seg="0"
+                value="${repsVal}" placeholder="${placeholderR}">`;
+            for (let i = 1; i < segCount; i++) {
+                const segVal = (log && log.segs && log.segs[String(i)]) || '';
+                parts += `<input type="text" inputmode="numeric" pattern="[0-9]*"
+                    class="seg-reps-input"
+                    data-exercise="${ex.id}" data-set="${setIdx}" data-seg="${i}"
+                    value="${segVal}" placeholder="">`;
+            }
+            repsInputHtml = `<div class="split-reps">${parts}</div>`;
+        }
+
+        const completeSvg = isCompleted
+            ? `<svg width="40" height="40" viewBox="0 0 40 40"><defs><linearGradient id="cg-${ex.id}-${setIdx}" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#C3FF3C"/><stop offset="1" stop-color="#5AA00A"/></linearGradient></defs><circle cx="20" cy="20" r="20" fill="url(#cg-${ex.id}-${setIdx})"/><g transform="translate(11,11)"><path d="M4 9l3.5 3.5L14 5.5" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`
+            : '<svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18.5" stroke="rgba(157,141,245,0.4)" stroke-width="1.5"/></svg>';
+
         return `
             <div class="set-row" data-exercise="${ex.id}" data-set="${setIdx}">
                 <div class="set-info">
@@ -308,23 +337,14 @@ const UI = {
                         <input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*"
                             class="weight-input"
                             data-exercise="${ex.id}" data-set="${setIdx}"
-                            value="${weightVal}"
-                            placeholder="${placeholderW}">
+                            value="${weightVal}" placeholder="${placeholderW}">
                     </div>
                     <div class="input-group">
                         <label>reps</label>
-                        <input type="text" inputmode="numeric" pattern="[0-9]*"
-                            class="reps-input"
-                            data-exercise="${ex.id}" data-set="${setIdx}"
-                            value="${repsVal}"
-                            placeholder="${placeholderR}">
+                        ${repsInputHtml}
                     </div>
                     <div role="button" class="complete-btn ${isCompleted ? 'completed' : ''}"
-                        data-exercise="${ex.id}" data-set="${setIdx}">
-                        ${isCompleted
-                            ? `<svg width="40" height="40" viewBox="0 0 40 40"><defs><linearGradient id="cg-${ex.id}-${setIdx}" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#C3FF3C"/><stop offset="1" stop-color="#5AA00A"/></linearGradient></defs><circle cx="20" cy="20" r="20" fill="url(#cg-${ex.id}-${setIdx})"/><g transform="translate(11,11)"><path d="M4 9l3.5 3.5L14 5.5" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`
-                            : '<svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18.5" stroke="rgba(157,141,245,0.4)" stroke-width="1.5"/></svg>'}
-                    </div>
+                        data-exercise="${ex.id}" data-set="${setIdx}">${completeSvg}</div>
                 </div>
                 ${prevText ? `<div class="set-prev">${prevText}</div>` : ''}
             </div>

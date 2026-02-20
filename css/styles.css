@@ -726,6 +726,18 @@ input, button, select {
     opacity: 0.6;
 }
 
+/* Split reps for DROP/MP/R-P sets */
+.split-reps {
+    display: flex;
+    flex: 1;
+    gap: 3px;
+}
+
+.split-reps input {
+    flex: 1;
+    min-width: 0;
+}
+
 .input-group input {
     width: 100%;
     height: var(--touch-min);
