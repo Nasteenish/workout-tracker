@@ -47,78 +47,77 @@ const UI = {
     // ===== WEEK VIEW =====
     renderWeek(weekNum) {
         const progress = getProgressWeek();
-
-        let daysHtml = '';
-        for (let d = 0; d < 5; d++) {
-            const dayNum = d + 1;
-            const { completed, total } = getCompletedSets(weekNum, dayNum);
-            const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-            const template = PROGRAM.dayTemplates[dayNum];
-            const dayTitle = template ? template.titleRu : `День ${dayNum}`;
-            const isDone = total > 0 && completed >= total;
-            const isNext = progress.week === weekNum && progress.day === dayNum;
-
-            let cardClass = 'day-card';
-            if (isNext) cardClass += ' today';
-            if (isDone) cardClass += ' done';
-
-            daysHtml += `
-                <a class="${cardClass}" href="#/week/${weekNum}/day/${dayNum}">
-                    <div class="day-header">
-                        <span class="day-number">${isDone ? '<svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="vertical-align:-2px;margin-right:2px"><path d="M2.5 6.5l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}День ${dayNum}</span>
-                        <span class="day-date">${pct}%</span>
-                    </div>
-                    <div class="day-title">${dayTitle}</div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${pct}%"></div>
-                    </div>
-                    <div class="progress-text">${completed}/${total} подходов</div>
-                </a>
-            `;
-        }
-
-        // Build rest day card
         const settings = Storage.getSettings();
         const cycleType = settings.cycleType || 7;
-        const restCount = cycleType - 5;
-        const startDate = settings.startDate;
-        const DAY_NAMES = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
-        const MONTH_SHORT = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
 
-        let restIsToday = false;
-        let restRangeHtml = '';
-
-        if (startDate) {
-            const cycleStart = parseLocalDate(startDate);
-            cycleStart.setDate(cycleStart.getDate() + (weekNum - 1) * cycleType);
-
-            const restStart = new Date(cycleStart);
-            restStart.setDate(cycleStart.getDate() + 5);
-            const restEnd = new Date(cycleStart);
-            restEnd.setDate(cycleStart.getDate() + cycleType - 1);
-
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            restIsToday = today >= restStart && today <= restEnd;
-
-            if (restCount === 1) {
-                restRangeHtml = `${DAY_NAMES[restStart.getDay()]} ${restStart.getDate()} ${MONTH_SHORT[restStart.getMonth()]}`;
-            } else {
-                restRangeHtml = `${DAY_NAMES[restStart.getDay()]} ${restStart.getDate()}–${DAY_NAMES[restEnd.getDay()]} ${restEnd.getDate()} ${MONTH_SHORT[restEnd.getMonth()]}`;
-            }
+        // Slot sequences per cycle type (from the program structure):
+        // 7-day: Day1, Day2, Day3, REST, Day4, Day5, REST
+        // 8-day: Day1, Day2, REST, Day3, Day4, REST, Day5, REST
+        let slots;
+        if (cycleType === 8) {
+            slots = [
+                { type: 'day', dayNum: 1 },
+                { type: 'day', dayNum: 2 },
+                { type: 'rest' },
+                { type: 'day', dayNum: 3 },
+                { type: 'day', dayNum: 4 },
+                { type: 'rest' },
+                { type: 'day', dayNum: 5 },
+                { type: 'rest' },
+            ];
+        } else {
+            slots = [
+                { type: 'day', dayNum: 1 },
+                { type: 'day', dayNum: 2 },
+                { type: 'day', dayNum: 3 },
+                { type: 'rest' },
+                { type: 'day', dayNum: 4 },
+                { type: 'day', dayNum: 5 },
+                { type: 'rest' },
+            ];
         }
 
-        const restNounForm = restCount === 1 ? 'день' : restCount < 5 ? 'дня' : 'дней';
-        const restHtml = `
-            <div class="rest-day-card${restIsToday ? ' rest-today' : ''}">
+        const restCardHtml = `
+            <div class="rest-day-card">
                 <svg class="rest-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                <span class="rest-label">Отдых · ${restCount} ${restNounForm}</span>
-                ${restRangeHtml ? `<span class="rest-dates">${restRangeHtml}</span>` : ''}
-                ${restIsToday ? '<span class="rest-now-badge">сегодня</span>' : ''}
+                <span class="rest-label">Отдых</span>
             </div>
         `;
+
+        let cardsHtml = '';
+        for (const slot of slots) {
+            if (slot.type === 'rest') {
+                cardsHtml += restCardHtml;
+            } else {
+                const dayNum = slot.dayNum;
+                const { completed, total } = getCompletedSets(weekNum, dayNum);
+                const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+                const template = PROGRAM.dayTemplates[dayNum];
+                const dayTitle = template ? template.titleRu : `День ${dayNum}`;
+                const isDone = total > 0 && completed >= total;
+                const isNext = progress.week === weekNum && progress.day === dayNum;
+
+                let cardClass = 'day-card';
+                if (isNext) cardClass += ' today';
+                if (isDone) cardClass += ' done';
+
+                cardsHtml += `
+                    <a class="${cardClass}" href="#/week/${weekNum}/day/${dayNum}">
+                        <div class="day-header">
+                            <span class="day-number">${isDone ? '<svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="vertical-align:-2px;margin-right:2px"><path d="M2.5 6.5l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}День ${dayNum}</span>
+                            <span class="day-date">${pct}%</span>
+                        </div>
+                        <div class="day-title">${dayTitle}</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${pct}%"></div>
+                        </div>
+                        <div class="progress-text">${completed}/${total} подходов</div>
+                    </a>
+                `;
+            }
+        }
 
         document.getElementById('app').innerHTML = `
             <div class="app-header">
@@ -145,8 +144,7 @@ const UI = {
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 15l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                 </div>
-                ${daysHtml}
-                ${restHtml}
+                ${cardsHtml}
                 <div class="data-actions">
                     <button id="btn-export">Экспорт</button>
                     <button id="btn-import">Импорт</button>
