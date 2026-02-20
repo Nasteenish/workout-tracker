@@ -102,6 +102,7 @@ input, button, select {
     margin: 0 auto;
     min-height: 100vh;
     position: relative;
+    overflow-x: hidden;
 }
 
 /* ===== Header ===== */
@@ -240,6 +241,8 @@ input, button, select {
 
 .setup-field input[type="date"] {
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     height: var(--input-height);
     background: var(--bg-card);
     border: none;
