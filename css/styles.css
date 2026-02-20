@@ -544,16 +544,21 @@ input, button, select {
 }
 
 .chooser-badge {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
-    flex-shrink: 0;
-    align-self: flex-start;
-    background: rgba(157, 141, 245, 0.18);
+    width: 20px;
+    height: 20px;
+    background: rgba(157, 141, 245, 0.22);
     border-radius: 50%;
     color: var(--accent-primary);
+    vertical-align: middle;
+    margin-left: 5px;
+}
+
+.exercise-card.is-chooser {
+    background: rgba(157, 141, 245, 0.07);
+    border-color: rgba(157, 141, 245, 0.2);
 }
 
 .equipment-btn .chooser-badge {
