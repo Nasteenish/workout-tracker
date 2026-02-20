@@ -1016,6 +1016,56 @@ body.modal-open {
     background: rgba(255, 255, 255, 0.05);
 }
 
+/* ===== Rest Day Card ===== */
+.rest-day-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 12px var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    color: var(--text-muted);
+}
+
+.rest-day-card.rest-today {
+    background: rgba(157, 141, 245, 0.09);
+    border-color: rgba(157, 141, 245, 0.25);
+    color: var(--accent-primary);
+}
+
+.rest-day-card.rest-today .rest-icon {
+    color: var(--accent-primary);
+}
+
+.rest-icon {
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.rest-label {
+    flex: 1;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+}
+
+.rest-dates {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    opacity: 0.8;
+}
+
+.rest-now-badge {
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(157, 141, 245, 0.2);
+    color: var(--accent-primary);
+    padding: 2px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.2px;
+}
+
 /* ===== Export/Import buttons ===== */
 .data-actions {
     display: flex;

@@ -77,6 +77,49 @@ const UI = {
             `;
         }
 
+        // Build rest day card
+        const settings = Storage.getSettings();
+        const cycleType = settings.cycleType || 7;
+        const restCount = cycleType - 5;
+        const startDate = settings.startDate;
+        const DAY_NAMES = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+        const MONTH_SHORT = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+
+        let restIsToday = false;
+        let restRangeHtml = '';
+
+        if (startDate) {
+            const cycleStart = parseLocalDate(startDate);
+            cycleStart.setDate(cycleStart.getDate() + (weekNum - 1) * cycleType);
+
+            const restStart = new Date(cycleStart);
+            restStart.setDate(cycleStart.getDate() + 5);
+            const restEnd = new Date(cycleStart);
+            restEnd.setDate(cycleStart.getDate() + cycleType - 1);
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            restIsToday = today >= restStart && today <= restEnd;
+
+            if (restCount === 1) {
+                restRangeHtml = `${DAY_NAMES[restStart.getDay()]} ${restStart.getDate()} ${MONTH_SHORT[restStart.getMonth()]}`;
+            } else {
+                restRangeHtml = `${DAY_NAMES[restStart.getDay()]} ${restStart.getDate()}–${DAY_NAMES[restEnd.getDay()]} ${restEnd.getDate()} ${MONTH_SHORT[restEnd.getMonth()]}`;
+            }
+        }
+
+        const restNounForm = restCount === 1 ? 'день' : restCount < 5 ? 'дня' : 'дней';
+        const restHtml = `
+            <div class="rest-day-card${restIsToday ? ' rest-today' : ''}">
+                <svg class="rest-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="rest-label">Отдых · ${restCount} ${restNounForm}</span>
+                ${restRangeHtml ? `<span class="rest-dates">${restRangeHtml}</span>` : ''}
+                ${restIsToday ? '<span class="rest-now-badge">сегодня</span>' : ''}
+            </div>
+        `;
+
         document.getElementById('app').innerHTML = `
             <div class="app-header">
                 <div class="header-title">
@@ -103,6 +146,7 @@ const UI = {
                     </button>
                 </div>
                 ${daysHtml}
+                ${restHtml}
                 <div class="data-actions">
                     <button id="btn-export">Экспорт</button>
                     <button id="btn-import">Импорт</button>
