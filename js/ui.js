@@ -300,7 +300,6 @@ const UI = {
                     <span class="set-number">П.${setIdx + 1}</span>
                     <span class="set-type-badge ${typeClass}">${typeLabel}</span>
                     <span class="rpe-badge">${set.rpe}</span>
-                    <span class="set-reps">${ex.reps} reps</span>
                     ${techHtml}
                 </div>
                 <div class="set-inputs">
