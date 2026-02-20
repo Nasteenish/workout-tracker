@@ -45,7 +45,7 @@ const UI = {
     },
 
     // ===== WEEK VIEW =====
-    renderWeek(weekNum) {
+    renderWeek(weekNum, swipeDir = null) {
         const progress = getProgressWeek();
         const settings = Storage.getSettings();
         const cycleType = settings.cycleType || 7;
@@ -133,24 +133,39 @@ const UI = {
             </div>
             <div class="app-content">
                 <div class="week-nav">
-                    <button id="prev-week" ${weekNum <= 1 ? 'disabled' : ''}>
+                    <button id="prev-week">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 15l-5-5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                     <div class="week-label">
                         <div class="week-num">${weekNum}</div>
                         <div class="week-sublabel">неделя из 12</div>
                     </div>
-                    <button id="next-week" ${weekNum >= 12 ? 'disabled' : ''}>
+                    <button id="next-week">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 15l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                 </div>
+                <div class="week-slide">
                 ${cardsHtml}
+                </div>
                 <div class="data-actions">
                     <button id="btn-export">Экспорт</button>
                     <button id="btn-import">Импорт</button>
                 </div>
             </div>
         `;
+
+        if (swipeDir) {
+            const slide = document.querySelector('.week-slide');
+            const from = swipeDir === 'left' ? '110%' : '-110%';
+            slide.style.transform = `translateX(${from})`;
+            slide.style.transition = 'none';
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    slide.style.transition = 'transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    slide.style.transform = 'translateX(0)';
+                });
+            });
+        }
     },
 
     // ===== DAY VIEW =====

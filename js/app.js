@@ -4,6 +4,7 @@ const App = {
     _currentWeek: 1,
     _currentDay: 1,
     _saveDebounced: null,
+    _swipeDir: null,
 
     init() {
         this._saveDebounced = debounce((week, day, exId, setIdx, field, value) => {
@@ -33,25 +34,58 @@ const App = {
 
     _initWeekSwipe() {
         let startX = 0, startY = 0;
+        let dragging = false; // committed to horizontal drag
+        let locked = false;   // committed to vertical scroll
+
+        const getSlide = () => document.querySelector('.week-slide');
 
         document.addEventListener('touchstart', (e) => {
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
+            dragging = false;
+            locked = false;
+            const el = getSlide();
+            if (el) el.style.transition = 'none';
+        }, { passive: true });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!location.hash.match(/^#\/week\/\d+$/)) return;
+            if (locked) return;
+            const dx = e.touches[0].clientX - startX;
+            const dy = e.touches[0].clientY - startY;
+            if (!dragging) {
+                if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+                if (Math.abs(dy) > Math.abs(dx)) { locked = true; return; }
+                dragging = true;
+            }
+            const el = getSlide();
+            if (el) el.style.transform = `translateX(${dx}px)`;
         }, { passive: true });
 
         document.addEventListener('touchend', (e) => {
             if (!location.hash.match(/^#\/week\/\d+$/)) return;
             const dx = e.changedTouches[0].clientX - startX;
-            const dy = e.changedTouches[0].clientY - startY;
-            if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
-            const week = this._currentWeek;
-            if (dx < 0) {
-                // swipe left → next week
-                location.hash = `#/week/${week === 12 ? 1 : week + 1}`;
-            } else {
-                // swipe right → prev week
-                location.hash = `#/week/${week === 1 ? 12 : week - 1}`;
+            const el = getSlide();
+
+            if (!dragging || Math.abs(dx) < 60) {
+                // snap back
+                if (el) {
+                    el.style.transition = 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    el.style.transform = 'translateX(0)';
+                }
+                return;
             }
+
+            // slide out old content
+            if (el) {
+                el.style.transition = 'transform 0.25s cubic-bezier(0.4, 0, 1, 1)';
+                el.style.transform = `translateX(${dx < 0 ? '-110%' : '110%'})`;
+            }
+
+            this._swipeDir = dx < 0 ? 'left' : 'right';
+            const week = this._currentWeek;
+            const next = dx < 0 ? (week === 12 ? 1 : week + 1) : (week === 1 ? 12 : week - 1);
+            setTimeout(() => { location.hash = `#/week/${next}`; }, 220);
         }, { passive: true });
     },
 
@@ -157,7 +191,9 @@ const App = {
         const weekMatch = hash.match(/^#\/week\/(\d+)$/);
         if (weekMatch) {
             this._currentWeek = parseInt(weekMatch[1]);
-            UI.renderWeek(this._currentWeek);
+            const dir = this._swipeDir;
+            this._swipeDir = null;
+            UI.renderWeek(this._currentWeek, dir);
             return;
         }
 

@@ -172,6 +172,10 @@ input, button, select {
     padding-bottom: calc(var(--spacing-xl) * 3);
 }
 
+.week-slide {
+    will-change: transform;
+}
+
 /* ===== Setup Screen ===== */
 .setup-screen {
     display: flex;
@@ -340,12 +344,7 @@ input, button, select {
     -webkit-backdrop-filter: blur(8px);
 }
 
-.week-nav button:disabled {
-    opacity: 0.2;
-    cursor: default;
-}
-
-.week-nav button:active:not(:disabled) {
+.week-nav button:active {
     background: var(--bg-card-hover);
 }
 
