@@ -263,7 +263,7 @@ const UI = {
 
         // Type badge
         const typeClass = `type-${set.type}`;
-        const typeLabels = { S: 'С', SH: 'С/Г', H: 'Г' };
+        const typeLabels = { S: 'S', SH: 'S/H', H: 'H' };
         const typeLabel = typeLabels[set.type] || set.type;
 
         // Technique badges
@@ -272,7 +272,7 @@ const UI = {
             const techLabels = {
                 'DROP': 'DROP',
                 'REST_PAUSE': 'R-P',
-                'MP': 'МП',
+                'MP': 'MP',
                 'DROP_OR_REST': 'DROP/R-P'
             };
             const techClasses = {
