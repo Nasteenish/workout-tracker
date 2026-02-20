@@ -88,8 +88,6 @@ const RestTimer = {
 
     adjust(delta) {
         this._remaining = Math.max(30, this._remaining + delta);
-        this._defaultDuration = Math.max(30, this._defaultDuration + delta);
-        Storage.saveSettings({ timerDuration: this._defaultDuration });
         this._updateDisplay();
     },
 
