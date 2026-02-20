@@ -550,6 +550,14 @@ const App = {
             UI.showWeightModal(target);
             return;
         }
+
+        // Move cursor to end of reps input so backspace works naturally
+        if (target.matches('.reps-input')) {
+            requestAnimationFrame(() => {
+                const len = target.value.length;
+                target.setSelectionRange(len, len);
+            });
+        }
     }
 };
 
