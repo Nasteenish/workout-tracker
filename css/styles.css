@@ -83,6 +83,7 @@ body {
     color: var(--text-primary);
     line-height: 1.4;
     min-height: 100vh;
+    position: relative;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior: none;
     -webkit-font-smoothing: antialiased;
@@ -94,6 +95,29 @@ body {
     padding-bottom: env(safe-area-inset-bottom);
     /* Hide scrollbar on iOS */
     -webkit-overflow-scrolling: touch;
+}
+
+/* Extend background beyond viewport for iOS overscroll */
+body::before,
+body::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 100vh;
+    background-color: var(--bg-primary);
+    background-image:
+        radial-gradient(ellipse at 20% 10%, rgba(157, 141, 245, 0.18) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 90%, rgba(45, 212, 191, 0.10) 0%, transparent 45%),
+        radial-gradient(ellipse at 60% 40%, rgba(255, 45, 85, 0.06) 0%, transparent 40%);
+    z-index: -1;
+    pointer-events: none;
+}
+body::before {
+    bottom: 100%;
+}
+body::after {
+    top: 100%;
 }
 
 /* Hide scrollbar */
