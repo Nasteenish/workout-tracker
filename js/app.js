@@ -249,6 +249,8 @@ const App = {
             if (window.scrollY > 2) { pulling = false; active = false; return; }
             const dy = e.touches[0].clientY - startY;
             if (dy > 10) {
+                // Block native overscroll bounce — only after pull confirmed
+                e.preventDefault();
                 if (!active) {
                     active = true;
                     app.style.transition = 'none';
@@ -274,7 +276,7 @@ const App = {
                     indicator.classList.add('spinning');
                 }
             }
-        }, { passive: true });
+        }, { passive: false });
 
         document.addEventListener('touchend', () => {
             // Smoothly return page content
