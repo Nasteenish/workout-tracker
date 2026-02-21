@@ -274,19 +274,17 @@ const App = {
 
         document.addEventListener('touchend', () => {
             if (active) {
-                // Frame 1: set transition while still at current position
-                app.style.transition = 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
-                // Force browser to commit the transition before animating
-                app.offsetHeight;
-                // Now animate to zero
-                app.style.transform = 'translateY(0)';
-                const onEnd = () => {
-                    app.style.transition = '';
-                    app.style.transform = '';
-                    app.removeEventListener('transitionend', onEnd);
-                };
-                app.addEventListener('transitionend', onEnd, { once: true });
-                setTimeout(onEnd, 620);
+                requestAnimationFrame(() => {
+                    app.style.transition = 'transform 0.55s cubic-bezier(0.16, 1, 0.3, 1)';
+                    app.style.transform = 'translateY(0)';
+                    const onEnd = () => {
+                        app.style.transition = '';
+                        app.style.transform = '';
+                        app.removeEventListener('transitionend', onEnd);
+                    };
+                    app.addEventListener('transitionend', onEnd, { once: true });
+                    setTimeout(onEnd, 570);
+                });
             }
             if (indicator) {
                 if (ready) {
