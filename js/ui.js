@@ -841,7 +841,7 @@ const UI = {
                     <div class="guide-item">
                         <span class="tech-badge tech-REST_PAUSE">R-P</span>
                         <div class="guide-item-text">
-                            <div class="guide-item-title">Рест-пауза (Rest Pause)</div>
+                            <div class="guide-item-title">Отдых-пауза (Rest Pause)</div>
                             <div class="guide-item-desc">После последнего подхода отдыхаешь 10-15 секунд с тем же весом, затем продолжаешь повторения до отказа.</div>
                         </div>
                     </div>
@@ -850,12 +850,6 @@ const UI = {
                         <div class="guide-item-text">
                             <div class="guide-item-title">Микро-паузы</div>
                             <div class="guide-item-desc">После отказа отдыхаешь максимум 5 секунд, затем делаешь ещё 1-3 повторения. Можно повторить несколько раз.</div>
-                        </div>
-                    </div>
-                    <div class="guide-item">
-                        <div class="guide-item-text">
-                            <div class="guide-item-title">AMRAP</div>
-                            <div class="guide-item-desc">As Many Reps As Possible — максимум повторений до полного отказа.</div>
                         </div>
                     </div>
                 </div>
