@@ -129,7 +129,7 @@ const UI = {
                     <h1>Трекер Тренировок</h1>
                 </div>
                 <div class="settings-btn">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
                         <circle cx="5" cy="6" r="2.2" fill="currentColor"/><line x1="7" y1="6" x2="17" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="19" cy="6" r="2.2" fill="currentColor"/>
                         <circle cx="5" cy="12" r="2.2" fill="currentColor"/><line x1="7" y1="12" x2="17" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="19" cy="12" r="2.2" fill="currentColor"/>
                         <circle cx="5" cy="18" r="2.2" fill="currentColor"/><line x1="7" y1="18" x2="17" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="19" cy="18" r="2.2" fill="currentColor"/>
@@ -171,7 +171,7 @@ const UI = {
                     <h1>Трекер Тренировок</h1>
                 </div>
                 <button class="settings-btn" id="btn-settings">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
                         <circle cx="5" cy="6" r="2.2" fill="currentColor"/><line x1="7" y1="6" x2="17" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="19" cy="6" r="2.2" fill="currentColor"/>
                         <circle cx="5" cy="12" r="2.2" fill="currentColor"/><line x1="7" y1="12" x2="17" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="19" cy="12" r="2.2" fill="currentColor"/>
                         <circle cx="5" cy="18" r="2.2" fill="currentColor"/><line x1="7" y1="18" x2="17" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="19" cy="18" r="2.2" fill="currentColor"/>
