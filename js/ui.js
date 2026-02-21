@@ -736,6 +736,7 @@ const UI = {
     renderMenu() {
         const GEAR_SVG = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/></svg>';
         const BOOK_SVG = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        const CALC_SVG = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M4 7a3 3 0 013-3h10a3 3 0 013 3v10a3 3 0 01-3 3H7a3 3 0 01-3-3V7z" stroke="currentColor" stroke-width="1.7"/><path d="M8 7h8v3H8V7z" fill="currentColor" opacity="0.3" stroke="currentColor" stroke-width="1"/><circle cx="8.5" cy="14" r="0.8" fill="currentColor"/><circle cx="12" cy="14" r="0.8" fill="currentColor"/><circle cx="15.5" cy="14" r="0.8" fill="currentColor"/><circle cx="8.5" cy="17" r="0.8" fill="currentColor"/><circle cx="12" cy="17" r="0.8" fill="currentColor"/><circle cx="15.5" cy="17" r="0.8" fill="currentColor"/></svg>';
 
         document.getElementById('app').innerHTML = `
             <div class="app-header">
@@ -758,6 +759,14 @@ const UI = {
                     <div class="menu-card-text">
                         <div class="menu-card-title">Справочник</div>
                         <div class="menu-card-desc">Типы подходов, RPE, техники интенсивности</div>
+                    </div>
+                    <svg class="menu-card-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 15l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </a>
+                <a class="menu-card" href="#/calculator">
+                    <div class="menu-card-icon">${CALC_SVG}</div>
+                    <div class="menu-card-text">
+                        <div class="menu-card-title">Калькулятор</div>
+                        <div class="menu-card-desc">Перевод фунтов в килограммы</div>
                     </div>
                     <svg class="menu-card-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 15l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </a>
@@ -880,6 +889,55 @@ const UI = {
 
             </div>
         `;
+    },
+
+    // ===== CALCULATOR =====
+    renderCalculator() {
+        document.getElementById('app').innerHTML = `
+            <div class="app-header">
+                <button class="back-btn" id="btn-back-calc"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                <div class="header-title">
+                    <h1>Калькулятор</h1>
+                </div>
+            </div>
+            <div class="app-content">
+                <div class="calc-card">
+                    <div class="calc-row">
+                        <div class="calc-field">
+                            <label class="calc-label">Фунты (lbs)</label>
+                            <input type="number" inputmode="decimal" class="calc-input" id="calc-lbs" placeholder="0">
+                        </div>
+                        <div class="calc-arrow">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M7 17l10-10M17 7v10M17 7H7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg>
+                        </div>
+                        <div class="calc-field">
+                            <label class="calc-label">Килограммы (кг)</label>
+                            <input type="number" inputmode="decimal" class="calc-input" id="calc-kg" placeholder="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="calc-hint">1 lb = 0.4536 кг</div>
+            </div>
+        `;
+
+        const lbsInput = document.getElementById('calc-lbs');
+        const kgInput = document.getElementById('calc-kg');
+        let activeSrc = null;
+
+        lbsInput.addEventListener('input', () => {
+            activeSrc = 'lbs';
+            const v = parseFloat(lbsInput.value);
+            kgInput.value = isNaN(v) ? '' : (v * 0.453592).toFixed(2).replace(/\.?0+$/, '');
+        });
+
+        kgInput.addEventListener('input', () => {
+            activeSrc = 'kg';
+            const v = parseFloat(kgInput.value);
+            lbsInput.value = isNaN(v) ? '' : (v / 0.453592).toFixed(2).replace(/\.?0+$/, '');
+        });
+
+        lbsInput.addEventListener('focus', () => { activeSrc = 'lbs'; });
+        kgInput.addEventListener('focus', () => { activeSrc = 'kg'; });
     },
 
     // ===== SETTINGS =====

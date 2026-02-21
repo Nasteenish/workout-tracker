@@ -72,7 +72,7 @@ const App = {
         document.addEventListener('touchstart', (e) => {
             isWeekView = !!location.hash.match(/^#\/week\/\d+$/);
             isDayView = !!location.hash.match(/^#\/week\/\d+\/day\/\d+$/);
-            isSettingsView = location.hash === '#/settings' || location.hash === '#/menu' || location.hash === '#/guide';
+            isSettingsView = location.hash === '#/settings' || location.hash === '#/menu' || location.hash === '#/guide' || location.hash === '#/calculator';
             if (!isWeekView && !isDayView && !isSettingsView) return;
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
@@ -403,6 +403,11 @@ const App = {
             return;
         }
 
+        if (hash === '#/calculator') {
+            UI.renderCalculator();
+            return;
+        }
+
         // History view: #/history/{exerciseId}
         const historyMatch = hash.match(/^#\/history\/(.+)$/);
         if (historyMatch) {
@@ -520,6 +525,22 @@ const App = {
 
         // Back from settings — smooth exit to menu
         if (target.id === 'btn-back-settings' || target.closest('#btn-back-settings')) {
+            const app = document.getElementById('app');
+            app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
+            app.style.transform = 'translateX(40px)';
+            app.style.opacity = '0';
+            setTimeout(() => {
+                app.style.transition = 'none';
+                app.style.transform = '';
+                app.style.opacity = '';
+                window.scrollTo(0, 0);
+                location.hash = '#/menu';
+            }, 190);
+            return;
+        }
+
+        // Back from calculator — smooth exit to menu
+        if (target.id === 'btn-back-calc' || target.closest('#btn-back-calc')) {
             const app = document.getElementById('app');
             app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
             app.style.transform = 'translateX(40px)';

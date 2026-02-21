@@ -1621,6 +1621,82 @@ body.modal-open {
     font-weight: 600;
 }
 
+/* ===== Calculator Page ===== */
+.calc-card {
+    background: var(--bg-secondary);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow);
+    padding: var(--spacing-lg);
+}
+
+.calc-row {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--spacing-md);
+}
+
+.calc-field {
+    flex: 1;
+    min-width: 0;
+}
+
+.calc-label {
+    display: block;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--spacing-sm);
+}
+
+.calc-input {
+    width: 100%;
+    height: 56px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: -0.5px;
+    font-variant-numeric: tabular-nums;
+    -webkit-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+}
+
+.calc-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(157, 141, 245, 0.25);
+}
+
+.calc-input::placeholder {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.calc-arrow {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    padding-bottom: 16px;
+}
+
+.calc-hint {
+    text-align: center;
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    margin-top: var(--spacing-md);
+}
+
 /* ===== Scrollbar — hidden for clean iOS look ===== */
 ::-webkit-scrollbar {
     display: none;
