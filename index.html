@@ -37,8 +37,13 @@
 
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js?v=134')
-                .then(reg => reg.update());
+            // Unregister old SW (without version param) first
+            navigator.serviceWorker.getRegistrations().then(regs => {
+                regs.forEach(r => r.unregister());
+            }).then(() => {
+                navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
+                    .then(reg => reg.update());
+            });
         }
     </script>
 </body>
