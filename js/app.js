@@ -221,14 +221,27 @@ const App = {
                     // Reset #app behind companion, render new content
                     resetApp();
                     app.classList.add('no-animate');
-                    location.hash = swipeTarget;
+                    // Update URL WITHOUT triggering hashchange → route()
+                    // so that no-animate stays active during render
+                    history.replaceState(null, '', swipeTarget);
+                    // Render directly instead of going through route()
+                    if (isMenuSubPage) {
+                        UI.renderMenu();
+                    } else {
+                        UI.renderWeek(this._currentWeek);
+                    }
                     // Crossfade companion out to smoothly reveal #app
                     if (companion) {
                         companion.style.transition = 'opacity 0.15s ease-out';
                         companion.style.opacity = '0';
                         setTimeout(removeCompanion, 160);
                     }
-                    // no-animate stays on — removed by route() on next navigation
+                    // Remove no-animate after browser has painted
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            app.classList.remove('no-animate');
+                        });
+                    });
                 }, 220);
                 return;
             }
