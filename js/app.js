@@ -38,7 +38,7 @@ const App = {
         let isWeekView = false, isDayView = false;
         let swipingLeft = false;
         let companion = null;
-        let isDayBack = false;
+        let swipeMode = null; // 'week' | 'dayBack'
 
         const W = () => window.innerWidth;
 
@@ -46,16 +46,7 @@ const App = {
             if (companion) { companion.remove(); companion = null; }
         };
 
-        const createCompanion = (targetWeek) => {
-            const c = document.createElement('div');
-            c.className = 'nav-companion';
-            c.innerHTML = UI._weekCardsHTML(targetWeek);
-            const container = document.querySelector('.slide-container');
-            if (container) container.appendChild(c);
-            return c;
-        };
-
-        const createBackCompanion = (weekNum) => {
+        const createFullCompanion = (weekNum) => {
             const c = document.createElement('div');
             c.className = 'back-companion';
             c.innerHTML = UI._weekViewHTML(weekNum);
@@ -71,12 +62,8 @@ const App = {
             startY = e.touches[0].clientY;
             dragging = false;
             locked = false;
-            isDayBack = false;
+            swipeMode = null;
             removeCompanion();
-            if (isWeekView) {
-                const el = document.querySelector('.week-slide');
-                if (el) el.style.transition = 'none';
-            }
         }, { passive: true });
 
         document.addEventListener('touchmove', (e) => {
@@ -92,65 +79,70 @@ const App = {
                 dragging = true;
                 swipingLeft = dx < 0;
 
+                const app = document.getElementById('app');
                 if (isWeekView) {
+                    swipeMode = 'week';
                     const targetWeek = swipingLeft
                         ? (this._currentWeek === 12 ? 1 : this._currentWeek + 1)
                         : (this._currentWeek === 1 ? 12 : this._currentWeek - 1);
-                    companion = createCompanion(targetWeek);
+                    companion = createFullCompanion(targetWeek);
                     companion.style.transition = 'none';
                     companion.style.transform = `translateX(${swipingLeft ? W() : -W()}px)`;
+                    app.classList.add('swiping-week');
+                    app.style.transition = 'none';
                 } else {
-                    // Day back-swipe: full-screen companion + move entire #app
-                    isDayBack = true;
-                    companion = createBackCompanion(this._currentWeek);
+                    swipeMode = 'dayBack';
+                    companion = createFullCompanion(this._currentWeek);
                     companion.style.transition = 'none';
                     companion.style.transform = `translateX(${-0.28 * W()}px)`;
-                    const app = document.getElementById('app');
                     app.classList.add('swiping-back');
                     app.style.transition = 'none';
                 }
             }
 
-            if (isDayBack) {
-                document.getElementById('app').style.transform = `translateX(${dx}px)`;
-                if (companion) {
-                    companion.style.transform = `translateX(${-0.28 * W() + 0.28 * dx}px)`;
-                }
-            } else {
-                const front = document.querySelector('.week-slide');
-                if (front) front.style.transform = `translateX(${dx}px)`;
+            const app = document.getElementById('app');
+            if (swipeMode === 'week') {
+                // Carousel: both pages move in sync
+                app.style.transform = `translateX(${dx}px)`;
                 if (companion) {
                     companion.style.transform = `translateX(${(swipingLeft ? W() : -W()) + dx}px)`;
+                }
+            } else {
+                // iOS back: parallax
+                app.style.transform = `translateX(${dx}px)`;
+                if (companion) {
+                    companion.style.transform = `translateX(${-0.28 * W() + 0.28 * dx}px)`;
                 }
             }
         }, { passive: true });
 
         document.addEventListener('touchend', (e) => {
             if (!isWeekView && !isDayView) return;
+            if (!swipeMode) return;
             const dx = e.changedTouches[0].clientX - startX;
             const snap = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
             const commit = 'transform 0.18s cubic-bezier(0.4, 0, 0.6, 1)';
+            const app = document.getElementById('app');
+            const swipeClass = swipeMode === 'dayBack' ? 'swiping-back' : 'swiping-week';
+
+            const cleanupApp = () => {
+                app.style.transition = 'none';
+                app.style.transform = '';
+                app.classList.remove(swipeClass);
+            };
 
             // === Day back-swipe ===
-            if (isDayBack) {
-                const app = document.getElementById('app');
+            if (swipeMode === 'dayBack') {
                 if (!dragging || dx < 60) {
-                    // Snap back
                     app.style.transition = snap;
                     app.style.transform = 'translateX(0)';
                     if (companion) {
                         companion.style.transition = snap;
                         companion.style.transform = `translateX(${-0.28 * W()}px)`;
                     }
-                    setTimeout(() => {
-                        removeCompanion();
-                        app.style.transition = 'none';
-                        app.style.transform = '';
-                        app.classList.remove('swiping-back');
-                    }, 230);
+                    setTimeout(() => { removeCompanion(); cleanupApp(); }, 230);
                     return;
                 }
-                // Commit: slide entire day view off, reveal week view
                 app.style.transition = commit;
                 app.style.transform = `translateX(${W() + 20}px)`;
                 if (companion) {
@@ -158,10 +150,7 @@ const App = {
                     companion.style.transform = 'translateX(0)';
                 }
                 setTimeout(() => {
-                    // Companion covers viewport — reset #app behind it invisibly
-                    app.style.transition = 'none';
-                    app.style.transform = '';
-                    app.classList.remove('swiping-back');
+                    cleanupApp();
                     window.scrollTo(0, 0);
                     location.hash = `#/week/${this._currentWeek}`;
                     requestAnimationFrame(removeCompanion);
@@ -169,32 +158,30 @@ const App = {
                 return;
             }
 
-            // === Week swipe ===
-            const front = document.querySelector('.week-slide');
+            // === Week carousel swipe ===
             if (!dragging || Math.abs(dx) < 60) {
-                if (front) { front.style.transition = snap; front.style.transform = 'translateX(0)'; }
+                app.style.transition = snap;
+                app.style.transform = 'translateX(0)';
                 if (companion) {
                     companion.style.transition = snap;
                     companion.style.transform = `translateX(${swipingLeft ? W() : -W()}px)`;
-                    setTimeout(removeCompanion, 230);
                 }
+                setTimeout(() => { removeCompanion(); cleanupApp(); }, 230);
                 return;
             }
 
-            if (front) {
-                front.style.transition = commit;
-                front.style.transform = `translateX(${swipingLeft ? '-110%' : '110%'})`;
-            }
+            app.style.transition = commit;
+            app.style.transform = `translateX(${swipingLeft ? -(W() + 20) : W() + 20}px)`;
             if (companion) {
                 companion.style.transition = commit;
                 companion.style.transform = 'translateX(0)';
             }
 
-            const week = this._currentWeek;
             const next = swipingLeft
-                ? (week === 12 ? 1 : week + 1)
-                : (week === 1 ? 12 : week - 1);
+                ? (this._currentWeek === 12 ? 1 : this._currentWeek + 1)
+                : (this._currentWeek === 1 ? 12 : this._currentWeek - 1);
             setTimeout(() => {
+                cleanupApp();
                 location.hash = `#/week/${next}`;
                 requestAnimationFrame(removeCompanion);
             }, 190);
