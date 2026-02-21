@@ -225,13 +225,17 @@ const App = {
     _initPullToRefresh() {
         let startY = 0;
         let pulling = false;
+        let ready = false;
         const threshold = 80;
         let indicator = null;
+
+        const ARROW_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 0114.93-4M20 12a8 8 0 01-14.93 4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M20 4v4h-4M4 20v-4h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
         document.addEventListener('touchstart', (e) => {
             if (window.scrollY <= 2) {
                 startY = e.touches[0].clientY;
                 pulling = true;
+                ready = false;
             }
         }, { passive: true });
 
@@ -242,27 +246,33 @@ const App = {
                 if (!indicator) {
                     indicator = document.createElement('div');
                     indicator.id = 'pull-indicator';
-                    indicator.textContent = '↓';
+                    indicator.innerHTML = ARROW_SVG;
                     document.body.appendChild(indicator);
                 }
                 const progress = Math.min(dy / threshold, 1);
                 indicator.style.opacity = progress;
-                if (progress >= 1) {
-                    indicator.textContent = '↻';
+                // Rotate arrow based on pull distance
+                const rotation = progress * 360;
+                indicator.style.transform = `translateX(-50%) rotate(${rotation}deg)`;
+                if (progress >= 1 && !ready) {
+                    ready = true;
+                    indicator.classList.add('spinning');
                 }
             }
         }, { passive: true });
 
         document.addEventListener('touchend', () => {
             if (indicator) {
-                const ready = indicator.textContent === '↻';
-                indicator.remove();
-                indicator = null;
                 if (ready) {
-                    location.reload();
+                    indicator.classList.add('spinning');
+                    setTimeout(() => location.reload(), 300);
+                } else {
+                    indicator.remove();
                 }
+                indicator = null;
             }
             pulling = false;
+            ready = false;
         });
     },
 
