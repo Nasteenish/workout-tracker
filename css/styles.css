@@ -221,8 +221,7 @@ input, button, select {
     margin-right: auto;
 }
 
-#app.swiping-back,
-#app.swiping-week {
+#app.swiping-back {
     z-index: 100;
     overflow-x: visible !important;
     background-color: var(--bg-primary);
@@ -232,9 +231,6 @@ input, button, select {
         radial-gradient(ellipse at 60% 40%, rgba(255, 45, 85, 0.06) 0%, transparent 40%);
     background-attachment: fixed;
     will-change: transform;
-}
-
-#app.swiping-back {
     box-shadow: -5px 0 20px rgba(0, 0, 0, 0.3);
 }
 
