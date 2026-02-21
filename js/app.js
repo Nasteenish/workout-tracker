@@ -264,11 +264,12 @@ const App = {
         document.addEventListener('touchend', () => {
             if (indicator) {
                 if (ready) {
+                    // Keep spinning until page reloads
                     indicator.classList.add('spinning');
-                    setTimeout(() => location.reload(), 300);
-                } else {
-                    indicator.remove();
+                    location.reload();
+                    return;
                 }
+                indicator.remove();
                 indicator = null;
             }
             pulling = false;
