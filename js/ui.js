@@ -142,9 +142,12 @@ const UI = {
                 if (isDone) cardClass += ' done';
 
                 const lastTs = Storage.getLastTrainingDate(weekNum, dayNum);
-                const trainedDateHtml = lastTs
-                    ? `<div class="day-trained-date">${new Date(lastTs).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</div>`
-                    : '';
+                let trainedDateHtml = '';
+                if (lastTs) {
+                    const dt = new Date(lastTs);
+                    const months = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+                    trainedDateHtml = `<div class="day-trained-date">${dt.getDate()} ${months[dt.getMonth()]}</div>`;
+                }
 
                 cardsHtml += `
                     <a class="${cardClass}" href="#/week/${weekNum}/day/${dayNum}">
