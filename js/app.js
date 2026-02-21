@@ -240,10 +240,19 @@ const App = {
         const snapBack = (fromY) => {
             const absFrom = Math.abs(fromY);
             if (absFrom < 1) { app.style.transition = ''; app.style.transform = ''; return; }
+            // Lock scroll so iOS Safari doesn't fight our transform at scrollY=0
+            document.documentElement.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden';
             const t0 = performance.now();
             const dur = 500;
             let stopped = false;
-            const stop = () => { stopped = true; app.style.transition = ''; app.style.transform = ''; };
+            const stop = () => {
+                if (stopped) return;
+                stopped = true;
+                app.style.transition = ''; app.style.transform = '';
+                document.documentElement.style.overflow = '';
+                document.body.style.overflow = '';
+            };
             const tick = (now) => {
                 if (stopped) return;
                 const p = Math.min((now - t0) / dur, 1);
