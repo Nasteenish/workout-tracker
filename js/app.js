@@ -274,15 +274,16 @@ const App = {
 
         document.addEventListener('touchend', () => {
             if (active) {
-                const snapFrom = app.style.transform;
-                app.style.transition = 'none';
-                app.style.transform = '';
-                app.animate([
-                    { transform: snapFrom },
-                    { transform: 'translateY(0)' }
-                ], {
-                    duration: 500,
-                    easing: 'cubic-bezier(0.16, 1, 0.3, 1)'
+                requestAnimationFrame(() => {
+                    app.style.transition = 'transform 0.55s cubic-bezier(0.16, 1, 0.3, 1)';
+                    app.style.transform = 'translateY(0)';
+                    const onEnd = () => {
+                        app.style.transition = '';
+                        app.style.transform = '';
+                        app.removeEventListener('transitionend', onEnd);
+                    };
+                    app.addEventListener('transitionend', onEnd, { once: true });
+                    setTimeout(onEnd, 570);
                 });
             }
             if (indicator) {
