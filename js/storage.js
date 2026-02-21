@@ -14,6 +14,14 @@ const Storage = {
             if (!this._data.equipment) this._data.equipment = [];
             if (!this._data.exerciseEquipment) this._data.exerciseEquipment = {};
             if (!this._data.exerciseUnits) this._data.exerciseUnits = {};
+            if (!this._data.exerciseEquipmentOptions) {
+                this._data.exerciseEquipmentOptions = {};
+                // Auto-migrate: link currently assigned equipment to their exercises
+                for (const [exId, eqId] of Object.entries(this._data.exerciseEquipment)) {
+                    if (eqId) this._data.exerciseEquipmentOptions[exId] = [eqId];
+                }
+                this._save();
+            }
         } catch (e) {
             console.error('Storage load error:', e);
             this._data = this._defaultData();
@@ -38,6 +46,7 @@ const Storage = {
             },
             equipment: [],
             exerciseEquipment: {},
+            exerciseEquipmentOptions: {},
             exerciseUnits: {},
             exerciseChoices: {},
             log: {}
@@ -83,6 +92,14 @@ const Storage = {
     removeEquipment(id) {
         const data = this._load();
         data.equipment = data.equipment.filter(e => e.id !== id);
+        // Clean up per-exercise links
+        for (const exId of Object.keys(data.exerciseEquipmentOptions)) {
+            data.exerciseEquipmentOptions[exId] = (data.exerciseEquipmentOptions[exId] || []).filter(eqId => eqId !== id);
+        }
+        // Clear current selections referencing this equipment
+        for (const [exId, eqId] of Object.entries(data.exerciseEquipment)) {
+            if (eqId === id) data.exerciseEquipment[exId] = null;
+        }
         this._save();
     },
 
@@ -106,6 +123,36 @@ const Storage = {
 
     setExerciseEquipment(exerciseId, equipmentId) {
         this._load().exerciseEquipment[exerciseId] = equipmentId;
+        if (equipmentId) this.linkEquipmentToExercise(exerciseId, equipmentId);
+        this._save();
+    },
+
+    // Per-exercise equipment options
+    getExerciseEquipmentOptions(exerciseId) {
+        const data = this._load();
+        const ids = data.exerciseEquipmentOptions[exerciseId] || [];
+        return ids.map(id => this.getEquipmentById(id)).filter(Boolean);
+    },
+
+    linkEquipmentToExercise(exerciseId, equipmentId) {
+        const data = this._load();
+        if (!data.exerciseEquipmentOptions[exerciseId]) {
+            data.exerciseEquipmentOptions[exerciseId] = [];
+        }
+        if (!data.exerciseEquipmentOptions[exerciseId].includes(equipmentId)) {
+            data.exerciseEquipmentOptions[exerciseId].push(equipmentId);
+        }
+    },
+
+    unlinkEquipmentFromExercise(exerciseId, equipmentId) {
+        const data = this._load();
+        if (data.exerciseEquipmentOptions[exerciseId]) {
+            data.exerciseEquipmentOptions[exerciseId] = data.exerciseEquipmentOptions[exerciseId].filter(id => id !== equipmentId);
+        }
+        // If this was the current selection, clear it
+        if (data.exerciseEquipment[exerciseId] === equipmentId) {
+            data.exerciseEquipment[exerciseId] = null;
+        }
         this._save();
     },
 

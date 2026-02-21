@@ -613,7 +613,8 @@ const UI = {
 
     // ===== EQUIPMENT MODAL =====
     showEquipmentModal(exerciseId) {
-        const equipmentList = Storage.getEquipmentList();
+        // Show only equipment linked to this exercise
+        const exerciseEquipment = Storage.getExerciseEquipmentOptions(exerciseId);
         const currentEqId = Storage.getExerciseEquipment(exerciseId);
 
         let optionsHtml = `
@@ -621,7 +622,7 @@ const UI = {
                 Без оборудования
             </div>
         `;
-        for (const eq of equipmentList) {
+        for (const eq of exerciseEquipment) {
             const isSelected = eq.id === currentEqId;
             optionsHtml += `
                 <div class="eq-option ${isSelected ? 'selected' : ''}" data-eq-id="${eq.id}" data-exercise="${exerciseId}">
