@@ -35,7 +35,7 @@ const App = {
     _initSwipeNav() {
         let startX = 0, startY = 0;
         let dragging = false, locked = false;
-        let isWeekView = false, isDayView = false, isSettingsView = false;
+        let isWeekView = false, isDayView = false, isSettingsView = false, isMenuSubPage = false;
         let swipingLeft = false;
         let companion = null;
         let isDayBack = false;
@@ -69,10 +69,19 @@ const App = {
             return c;
         };
 
+        const createMenuCompanion = () => {
+            const c = document.createElement('div');
+            c.className = 'back-companion';
+            c.innerHTML = UI._menuHTML();
+            document.body.appendChild(c);
+            return c;
+        };
+
         document.addEventListener('touchstart', (e) => {
             isWeekView = !!location.hash.match(/^#\/week\/\d+$/);
             isDayView = !!location.hash.match(/^#\/week\/\d+\/day\/\d+$/);
-            isSettingsView = location.hash === '#/settings' || location.hash === '#/menu' || location.hash === '#/guide' || location.hash === '#/calculator';
+            isMenuSubPage = location.hash === '#/settings' || location.hash === '#/guide' || location.hash === '#/calculator';
+            isSettingsView = location.hash === '#/menu' || isMenuSubPage;
             if (!isWeekView && !isDayView && !isSettingsView) return;
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
@@ -112,7 +121,7 @@ const App = {
                 } else if (isDayView || isSettingsView) {
                     // Day/Settings back-swipe: full-screen companion + move entire #app
                     isDayBack = true;
-                    companion = createBackCompanion(this._currentWeek);
+                    companion = isMenuSubPage ? createMenuCompanion() : createBackCompanion(this._currentWeek);
                     companion.style.transition = 'none';
                     companion.style.transform = `translateX(${-0.28 * W()}px)`;
                     const app = document.getElementById('app');
@@ -174,6 +183,7 @@ const App = {
                     companion.style.transition = commit;
                     companion.style.transform = 'translateX(0)';
                 }
+                const swipeTarget = isMenuSubPage ? '#/menu' : `#/week/${this._currentWeek}`;
                 setTimeout(() => {
                     // Companion covers viewport — reset #app behind it invisibly
                     app.style.transition = 'none';
@@ -181,7 +191,7 @@ const App = {
                     app.classList.remove('swiping-back');
                     unlockScroll();
                     window.scrollTo(0, 0);
-                    location.hash = `#/week/${this._currentWeek}`;
+                    location.hash = swipeTarget;
                     // Wait for repaint before removing companion
                     requestAnimationFrame(() => requestAnimationFrame(removeCompanion));
                 }, 190);
