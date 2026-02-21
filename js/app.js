@@ -111,6 +111,9 @@ const App = {
                 }
             }
 
+            // Lock to horizontal axis — prevent vertical scroll during swipe
+            if (dragging) e.preventDefault();
+
             if (isDayBack) {
                 document.getElementById('app').style.transform = `translateX(${dx}px)`;
                 if (companion) {
@@ -123,7 +126,7 @@ const App = {
                     companion.style.transform = `translateX(${(swipingLeft ? W() : -W()) + dx}px)`;
                 }
             }
-        }, { passive: true });
+        }, { passive: false });
 
         document.addEventListener('touchend', (e) => {
             if (!isWeekView && !isDayView) return;
