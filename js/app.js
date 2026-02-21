@@ -237,37 +237,43 @@ const App = {
 
         const atBottom = () => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
 
+        let snapStyleEl = null;
+        let snapId = 0;
+
         const snapBack = (fromY) => {
             const absFrom = Math.abs(fromY);
             if (absFrom < 1) { app.style.transition = ''; app.style.transform = ''; return; }
-            // Lock scroll so iOS Safari doesn't fight our transform at scrollY=0
-            document.documentElement.style.overflow = 'hidden';
-            document.body.style.overflow = 'hidden';
-            const t0 = performance.now();
-            const dur = 500;
-            let stopped = false;
-            const stop = () => {
-                if (stopped) return;
-                stopped = true;
-                app.style.transition = ''; app.style.transform = '';
-                document.documentElement.style.overflow = '';
-                document.body.style.overflow = '';
+
+            // Use CSS @keyframes — immune to iOS Safari scroll interference
+            const id = ++snapId;
+            const name = `snap-${id}`;
+            if (snapStyleEl) snapStyleEl.remove();
+            snapStyleEl = document.createElement('style');
+            snapStyleEl.textContent = `@keyframes ${name}{from{transform:translateY(${fromY}px)}to{transform:translateY(0)}}`;
+            document.head.appendChild(snapStyleEl);
+
+            app.style.transition = 'none';
+            app.style.transform = '';
+            app.style.animation = `${name} 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards`;
+
+            const cleanup = () => {
+                if (snapId !== id) return;
+                app.style.animation = '';
+                app.style.transform = '';
+                if (snapStyleEl) { snapStyleEl.remove(); snapStyleEl = null; }
             };
-            const tick = (now) => {
-                if (stopped) return;
-                const p = Math.min((now - t0) / dur, 1);
-                const ease = 1 - Math.pow(1 - p, 3);
-                const y = fromY * (1 - ease);
-                if (p < 1 && Math.abs(y) > 0.3) {
-                    app.style.transform = `translateY(${y.toFixed(1)}px)`;
-                    requestAnimationFrame(tick);
-                } else {
-                    stop();
-                }
+            app.addEventListener('animationend', cleanup, { once: true });
+            setTimeout(cleanup, 550);
+
+            const cancel = () => {
+                snapId++;
+                app.style.animation = '';
+                app.style.transition = '';
+                app.style.transform = '';
+                if (snapStyleEl) { snapStyleEl.remove(); snapStyleEl = null; }
             };
-            document.addEventListener('touchstart', stop, { once: true });
-            window.addEventListener('hashchange', stop, { once: true });
-            requestAnimationFrame(tick);
+            document.addEventListener('touchstart', cancel, { once: true });
+            window.addEventListener('hashchange', cancel, { once: true });
         };
 
         document.addEventListener('touchstart', (e) => {
