@@ -223,6 +223,10 @@ input, button, select {
     margin-right: auto;
 }
 
+.back-companion .app-content > * {
+    animation: none !important;
+}
+
 #app.swiping-back {
     z-index: 100;
     overflow-x: visible !important;
