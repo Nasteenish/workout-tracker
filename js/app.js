@@ -125,6 +125,11 @@ const App = {
                     companion.style.transition = 'none';
                     companion.style.transform = `translateX(${-0.28 * W()}px)`;
                     const app = document.getElementById('app');
+                    // Fix #app in place so overflow:hidden doesn't cause scroll jump
+                    app.style.position = 'fixed';
+                    app.style.top = `-${savedScrollY}px`;
+                    app.style.left = '0';
+                    app.style.right = '0';
                     app.classList.add('swiping-back');
                     app.style.transition = 'none';
                 }
@@ -172,7 +177,12 @@ const App = {
                         unlockScroll();
                         app.style.transition = 'none';
                         app.style.transform = '';
+                        app.style.position = '';
+                        app.style.top = '';
+                        app.style.left = '';
+                        app.style.right = '';
                         app.classList.remove('swiping-back');
+                        window.scrollTo(0, savedScrollY);
                     }, 230);
                     return;
                 }
@@ -188,6 +198,10 @@ const App = {
                     // Companion covers viewport — reset #app behind it invisibly
                     app.style.transition = 'none';
                     app.style.transform = '';
+                    app.style.position = '';
+                    app.style.top = '';
+                    app.style.left = '';
+                    app.style.right = '';
                     app.classList.remove('swiping-back');
                     unlockScroll();
                     window.scrollTo(0, 0);
