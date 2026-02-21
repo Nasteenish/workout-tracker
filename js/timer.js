@@ -6,6 +6,8 @@ const RestTimer = {
     _defaultDuration: 120,
     _paused: false,
     _audioCtx: null,
+    _endTime: null,
+    _pausedAt: null,
 
     init() {
         const settings = Storage.getSettings();
@@ -42,6 +44,12 @@ const RestTimer = {
         document.addEventListener('touchstart', unlock, { passive: true, once: false });
         document.addEventListener('click', unlock, { once: false });
 
+        // Request notification permission early
+        this._requestNotificationPermission();
+
+        // Handle returning from background
+        document.addEventListener('visibilitychange', () => this._onVisibilityChange());
+
         this._updateDisplay();
     },
 
@@ -58,7 +66,9 @@ const RestTimer = {
     start() {
         if (this._interval) clearInterval(this._interval);
         this._paused = false;
+        this._pausedAt = null;
         this._remaining = this._defaultDuration;
+        this._endTime = Date.now() + this._remaining * 1000;
         this._updateDisplay();
         this._updatePauseBtn();
 
@@ -66,7 +76,7 @@ const RestTimer = {
 
         this._interval = setInterval(() => {
             if (!this._paused) {
-                this._remaining--;
+                this._remaining = Math.ceil((this._endTime - Date.now()) / 1000);
                 this._updateDisplay();
                 if (this._remaining <= 0) {
                     this._finish();
@@ -78,16 +88,29 @@ const RestTimer = {
     stop() {
         if (this._interval) clearInterval(this._interval);
         this._interval = null;
+        this._endTime = null;
+        this._pausedAt = null;
         document.getElementById('rest-timer-bar').classList.remove('active');
     },
 
     togglePause() {
-        this._paused = !this._paused;
+        if (!this._paused) {
+            this._paused = true;
+            this._pausedAt = Date.now();
+        } else {
+            this._paused = false;
+            const pausedDuration = Date.now() - this._pausedAt;
+            this._endTime += pausedDuration;
+            this._pausedAt = null;
+        }
         this._updatePauseBtn();
     },
 
     adjust(delta) {
         this._remaining = Math.max(5, this._remaining + delta);
+        if (this._endTime && !this._paused) {
+            this._endTime += delta * 1000;
+        }
         this._updateDisplay();
     },
 
@@ -105,10 +128,16 @@ const RestTimer = {
     _finish() {
         clearInterval(this._interval);
         this._interval = null;
+        this._endTime = null;
         document.getElementById('rest-timer-bar').classList.remove('active');
 
         if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
         this._playBeep();
+
+        // System notification if app is in background, in-app overlay if visible
+        if (document.visibilityState !== 'visible') {
+            this._sendSystemNotification();
+        }
         this._showNotification();
     },
 
@@ -191,6 +220,36 @@ const RestTimer = {
         const s = sec % 60;
         display.textContent = `${m}:${s.toString().padStart(2, '0')}`;
         display.classList.toggle('rtb-warning', this._remaining <= 10 && this._remaining > 0);
+    },
+
+    _requestNotificationPermission() {
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    },
+
+    _sendSystemNotification() {
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('Пора!', {
+                body: 'Отдых завершён',
+                icon: './icons/icon-192.png',
+                tag: 'rest-timer',
+                requireInteraction: false
+            });
+        }
+    },
+
+    _onVisibilityChange() {
+        if (document.visibilityState !== 'visible') return;
+        if (!this._interval || this._paused) return;
+
+        // Recalculate remaining based on real time
+        this._remaining = Math.ceil((this._endTime - Date.now()) / 1000);
+        if (this._remaining <= 0) {
+            this._finish();
+        } else {
+            this._updateDisplay();
+        }
     },
 
     _updatePauseBtn() {
