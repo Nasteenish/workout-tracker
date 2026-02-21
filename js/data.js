@@ -196,21 +196,60 @@ const DEFAULT_PROGRAM = {
       titleRu: "Спина и плечи",
       exerciseGroups: [
         {
-          type: "single",
+          type: "choose_one",
+          choiceKey: "D2_support",
           sectionTitle: "BACK",
           sectionTitleRu: "СПИНА",
-          exercise: {
-            id: "D2E1",
-            name: "Supported row",
-            nameRu: "Тяга с опорой на грудь",
-            reps: "8-12",
-            rest: 120,
-            sets: [
-              { type: "S", rpe: "8-7", techniques: [] },
-              { type: "SH", rpe: "8-9", techniques: [] },
-              { type: "H", rpe: "9", techniques: [] }
-            ]
-          }
+          options: [
+            {
+              id: "D2E1",
+              name: "Supported row",
+              nameRu: "Тяга с опорой на грудь",
+              reps: "8-12",
+              rest: 120,
+              sets: [
+                { type: "S", rpe: "8-7", techniques: [] },
+                { type: "SH", rpe: "8-9", techniques: [] },
+                { type: "H", rpe: "9", techniques: [] }
+              ]
+            },
+            {
+              id: "D2E1_opt2",
+              name: "T-bar supported row",
+              nameRu: "Тяга Т-грифа с опорой",
+              reps: "8-12",
+              rest: 120,
+              sets: [
+                { type: "S", rpe: "8-7", techniques: [] },
+                { type: "SH", rpe: "8-9", techniques: [] },
+                { type: "H", rpe: "9", techniques: [] }
+              ]
+            },
+            {
+              id: "D2E1_opt3",
+              name: "Incline dumbbell rows",
+              nameRu: "Тяга гантелей на наклонной скамье",
+              reps: "8-12",
+              rest: 120,
+              sets: [
+                { type: "S", rpe: "8-7", techniques: [] },
+                { type: "SH", rpe: "8-9", techniques: [] },
+                { type: "H", rpe: "9", techniques: [] }
+              ]
+            },
+            {
+              id: "D2E1_opt4",
+              name: "Supported bar rows",
+              nameRu: "Тяга штанги с опорой",
+              reps: "8-12",
+              rest: 120,
+              sets: [
+                { type: "S", rpe: "8-7", techniques: [] },
+                { type: "SH", rpe: "8-9", techniques: [] },
+                { type: "H", rpe: "9", techniques: [] }
+              ]
+            }
+          ]
         },
         {
           type: "single",
@@ -1139,11 +1178,10 @@ const DEFAULT_PROGRAM = {
       },
       2: {
         // Day 2 - Supported row set 1: +1 DROP
-        "D2E1": {
-          sets: {
-            0: { techniques: ["DROP"] }
-          }
-        },
+        "D2E1": { sets: { 0: { techniques: ["DROP"] } } },
+        "D2E1_opt2": { sets: { 0: { techniques: ["DROP"] } } },
+        "D2E1_opt3": { sets: { 0: { techniques: ["DROP"] } } },
+        "D2E1_opt4": { sets: { 0: { techniques: ["DROP"] } } },
         // Close grip pulldown set 3: +1 MP
         "D2E2": {
           sets: {
@@ -1316,12 +1354,10 @@ const DEFAULT_PROGRAM = {
       },
       2: {
         // Day 2 - Supported row set 1: +1 DROP, set 3: +1 MP
-        "D2E1": {
-          sets: {
-            0: { techniques: ["DROP"] },
-            2: { techniques: ["MP"] }
-          }
-        },
+        "D2E1": { sets: { 0: { techniques: ["DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt2": { sets: { 0: { techniques: ["DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt3": { sets: { 0: { techniques: ["DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt4": { sets: { 0: { techniques: ["DROP"] }, 2: { techniques: ["MP"] } } },
         // Close grip pulldown set 3: +1 MP
         "D2E2": {
           sets: {
@@ -1498,12 +1534,10 @@ const DEFAULT_PROGRAM = {
       },
       2: {
         // Day 2 - Supported row set 1: +2 DROP, set 3: +1 MP
-        "D2E1": {
-          sets: {
-            0: { techniques: ["DROP", "DROP"] },
-            2: { techniques: ["MP"] }
-          }
-        },
+        "D2E1": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt2": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt3": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt4": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
         // Close grip pulldown set 3: +1 MP
         "D2E2": {
           sets: {
@@ -1678,12 +1712,10 @@ const DEFAULT_PROGRAM = {
         }
       },
       2: {
-        "D2E1": {
-          sets: {
-            0: { techniques: ["DROP", "DROP"] },
-            2: { techniques: ["MP"] }
-          }
-        },
+        "D2E1": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt2": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt3": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt4": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
         "D2E2": {
           sets: {
             2: { techniques: ["MP"] }
@@ -1863,12 +1895,10 @@ const DEFAULT_PROGRAM = {
       },
       2: {
         // Day 2 - Supported row set 1: +2 DROP, set 3: +1 MP
-        "D2E1": {
-          sets: {
-            0: { techniques: ["DROP", "DROP"] },
-            2: { techniques: ["MP"] }
-          }
-        },
+        "D2E1": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt2": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt3": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt4": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
         // Pulldown (D2E2) set 3: +1 MP
         "D2E2": {
           sets: {
@@ -2066,12 +2096,10 @@ const DEFAULT_PROGRAM = {
         }
       },
       2: {
-        "D2E1": {
-          sets: {
-            0: { techniques: ["DROP", "DROP"] },
-            2: { techniques: ["MP"] }
-          }
-        },
+        "D2E1": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt2": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt3": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt4": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
         "D2E2": {
           sets: {
             2: { techniques: ["MP"] }
@@ -2255,12 +2283,10 @@ const DEFAULT_PROGRAM = {
         }
       },
       2: {
-        "D2E1": {
-          sets: {
-            0: { techniques: ["DROP", "DROP"] },
-            2: { techniques: ["MP"] }
-          }
-        },
+        "D2E1": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt2": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt3": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt4": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
         "D2E2": {
           sets: {
             2: { techniques: ["MP"] }
@@ -2444,12 +2470,10 @@ const DEFAULT_PROGRAM = {
         }
       },
       2: {
-        "D2E1": {
-          sets: {
-            0: { techniques: ["DROP", "DROP"] },
-            2: { techniques: ["MP"] }
-          }
-        },
+        "D2E1": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt2": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt3": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
+        "D2E1_opt4": { sets: { 0: { techniques: ["DROP", "DROP"] }, 2: { techniques: ["MP"] } } },
         "D2E2": {
           sets: {
             2: { techniques: ["MP"] }
