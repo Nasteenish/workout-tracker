@@ -40,6 +40,7 @@ const App = {
         let companion = null;
         let isDayBack = false;
         let savedScrollY = 0;
+        let bodyLocked = false;
 
         const W = () => window.innerWidth;
 
@@ -47,9 +48,24 @@ const App = {
             if (companion) { companion.remove(); companion = null; }
         };
 
-        const unlockScroll = () => {
-            document.documentElement.style.overflow = '';
-            document.body.style.overflow = '';
+        const lockBody = () => {
+            if (bodyLocked) return;
+            savedScrollY = window.scrollY;
+            document.body.style.position = 'fixed';
+            document.body.style.top = -savedScrollY + 'px';
+            document.body.style.left = '0';
+            document.body.style.right = '0';
+            bodyLocked = true;
+        };
+
+        const unlockBody = () => {
+            if (!bodyLocked) return;
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.left = '';
+            document.body.style.right = '';
+            window.scrollTo(0, savedScrollY);
+            bodyLocked = false;
         };
 
         const createCompanion = (targetWeek) => {
@@ -80,6 +96,7 @@ const App = {
             locked = false;
             isDayBack = false;
             removeCompanion();
+            lockBody();
             if (isWeekView) {
                 const el = document.querySelector('.week-slide');
                 if (el) el.style.transition = 'none';
@@ -94,13 +111,10 @@ const App = {
 
             if (!dragging) {
                 if (Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
-                if (Math.abs(dy) > Math.abs(dx)) { locked = true; return; }
-                if ((isDayView || isSettingsView) && dx < 0) { locked = true; return; }
+                if (Math.abs(dy) > Math.abs(dx)) { locked = true; unlockBody(); return; }
+                if ((isDayView || isSettingsView) && dx < 0) { locked = true; unlockBody(); return; }
                 dragging = true;
                 swipingLeft = dx < 0;
-                savedScrollY = window.scrollY;
-                document.documentElement.style.overflow = 'hidden';
-                document.body.style.overflow = 'hidden';
 
                 if (isWeekView) {
                     const targetWeek = swipingLeft
@@ -121,25 +135,18 @@ const App = {
                 }
             }
 
-            // Lock to horizontal axis — prevent vertical scroll during swipe
-            if (dragging) {
-                e.preventDefault();
-                window.scrollTo(0, savedScrollY);
-            }
-
-            // Compensate for any vertical scroll drift the browser applied
-            const scrollDrift = dragging ? (window.scrollY - savedScrollY) : 0;
+            if (dragging) e.preventDefault();
 
             if (isDayBack) {
-                document.getElementById('app').style.transform = `translateX(${dx}px) translateY(${scrollDrift}px)`;
+                document.getElementById('app').style.transform = `translateX(${dx}px)`;
                 if (companion) {
                     companion.style.transform = `translateX(${-0.28 * W() + 0.28 * dx}px)`;
                 }
             } else {
                 const front = document.querySelector('.week-slide');
-                if (front) front.style.transform = `translateX(${dx}px) translateY(${scrollDrift}px)`;
+                if (front) front.style.transform = `translateX(${dx}px)`;
                 if (companion) {
-                    companion.style.transform = `translateX(${(swipingLeft ? W() : -W()) + dx}px) translateY(${scrollDrift}px)`;
+                    companion.style.transform = `translateX(${(swipingLeft ? W() : -W()) + dx}px)`;
                 }
             }
         }, { passive: false });
@@ -150,24 +157,26 @@ const App = {
             const snap = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
             const commit = 'transform 0.18s cubic-bezier(0.4, 0, 0.6, 1)';
 
-            // === Day back-swipe ===
+            // No drag happened — just unlock
+            if (!dragging) { unlockBody(); return; }
+
+            // === Day/Settings back-swipe ===
             if (isDayBack) {
                 const app = document.getElementById('app');
-                if (!dragging || dx < 60) {
+                if (dx < 60) {
                     // Snap back
                     app.style.transition = snap;
-                    app.style.transform = 'translateX(0) translateY(0)';
+                    app.style.transform = 'translateX(0)';
                     if (companion) {
                         companion.style.transition = snap;
                         companion.style.transform = `translateX(${-0.28 * W()}px)`;
                     }
                     setTimeout(() => {
                         removeCompanion();
-                        unlockScroll();
-                        window.scrollTo(0, savedScrollY);
                         app.style.transition = 'none';
                         app.style.transform = '';
                         app.classList.remove('swiping-back');
+                        unlockBody();
                     }, 230);
                     return;
                 }
@@ -179,11 +188,10 @@ const App = {
                     companion.style.transform = 'translateX(0)';
                 }
                 setTimeout(() => {
-                    // Companion covers viewport — reset #app behind it invisibly
                     app.style.transition = 'none';
                     app.style.transform = '';
                     app.classList.remove('swiping-back');
-                    unlockScroll();
+                    unlockBody();
                     window.scrollTo(0, 0);
                     location.hash = `#/week/${this._currentWeek}`;
                     requestAnimationFrame(removeCompanion);
@@ -193,15 +201,15 @@ const App = {
 
             // === Week swipe ===
             const front = document.querySelector('.week-slide');
-            if (!dragging || Math.abs(dx) < 60) {
-                if (front) { front.style.transition = snap; front.style.transform = 'translateX(0) translateY(0)'; }
+            if (Math.abs(dx) < 60) {
+                if (front) { front.style.transition = snap; front.style.transform = 'translateX(0)'; }
                 if (companion) {
                     companion.style.transition = snap;
                     companion.style.transform = `translateX(${swipingLeft ? W() : -W()}px)`;
-                    setTimeout(() => { removeCompanion(); unlockScroll(); window.scrollTo(0, savedScrollY); }, 230);
+                    setTimeout(() => { removeCompanion(); unlockBody(); }, 230);
+                    return;
                 }
-                unlockScroll();
-                window.scrollTo(0, savedScrollY);
+                unlockBody();
                 return;
             }
 
@@ -219,7 +227,7 @@ const App = {
                 ? (week === 12 ? 1 : week + 1)
                 : (week === 1 ? 12 : week - 1);
             setTimeout(() => {
-                unlockScroll();
+                unlockBody();
                 location.hash = `#/week/${next}`;
                 requestAnimationFrame(removeCompanion);
             }, 190);
