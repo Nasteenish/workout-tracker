@@ -229,7 +229,7 @@ const App = {
         const threshold = 80;
         let indicator = null;
 
-        const ARROW_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 0114.93-4M20 12a8 8 0 01-14.93 4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M20 4v4h-4M4 20v-4h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        const DUMBBELL_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="1" y="9" width="3" height="6" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="7" width="3" height="10" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="17" y="7" width="3" height="10" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="20" y="9" width="3" height="6" rx="1" stroke="currentColor" stroke-width="1.8"/><line x1="7" y1="12" x2="17" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 
         document.addEventListener('touchstart', (e) => {
             if (window.scrollY <= 2) {
@@ -246,7 +246,7 @@ const App = {
                 if (!indicator) {
                     indicator = document.createElement('div');
                     indicator.id = 'pull-indicator';
-                    indicator.innerHTML = ARROW_SVG;
+                    indicator.innerHTML = DUMBBELL_SVG;
                     document.body.appendChild(indicator);
                 }
                 const progress = Math.min(dy / threshold, 1);
