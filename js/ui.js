@@ -782,7 +782,7 @@ const UI = {
                         <span class="set-type-badge type-S">S</span>
                         <div class="guide-item-text">
                             <div class="guide-item-title">Сила (Strength)</div>
-                            <div class="guide-item-desc">Взрывные повторения. Фокус на перемещении веса с максимальной силой и скоростью. Каждое повторение — мощное и резкое.</div>
+                            <div class="guide-item-desc">Взрывные повторения. Фокус на перемещении веса с максимальной силой и скоростью. Каждое повторение — мощное и резкое. Первый подход направлен на увеличение силы или количества повторений от тренировки к тренировке.</div>
                         </div>
                     </div>
                     <div class="guide-item">
