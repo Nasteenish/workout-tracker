@@ -274,17 +274,18 @@ const App = {
 
         document.addEventListener('touchend', () => {
             if (active) {
-                const anim = app.animate([
-                    { transform: app.style.transform },
-                    { transform: 'translateY(0)' }
-                ], {
-                    duration: 500,
-                    easing: 'cubic-bezier(0.16, 1, 0.3, 1)'
+                app.style.transition = 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)';
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        app.style.transform = 'translateY(0)';
+                        const cleanup = () => {
+                            app.style.transition = '';
+                            app.style.transform = '';
+                        };
+                        app.addEventListener('transitionend', cleanup, { once: true });
+                        setTimeout(cleanup, 500);
+                    });
                 });
-                anim.onfinish = () => {
-                    app.style.transition = '';
-                    app.style.transform = '';
-                };
             }
             if (indicator) {
                 if (ready) {
