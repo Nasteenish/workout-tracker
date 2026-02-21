@@ -243,6 +243,7 @@ const App = {
             if (!pulling) return;
             const dy = e.touches[0].clientY - startY;
             if (dy > 10 && window.scrollY <= 2) {
+                e.preventDefault();
                 if (!indicator) {
                     indicator = document.createElement('div');
                     indicator.id = 'pull-indicator';
@@ -260,7 +261,7 @@ const App = {
                     indicator.classList.add('spinning');
                 }
             }
-        }, { passive: true });
+        }, { passive: false });
 
         document.addEventListener('touchend', () => {
             if (indicator) {
@@ -270,12 +271,13 @@ const App = {
                     location.reload();
                     return;
                 }
-                // Smooth fade-out
-                indicator.style.transition = 'opacity 0.2s ease-out, transform 0.2s ease-out';
+                // Smooth fade-out — keep current rotation, add scale-down
+                const cur = indicator.style.transform || 'translateX(-50%)';
+                indicator.style.transition = 'opacity 0.25s ease-out, transform 0.25s ease-out';
                 indicator.style.opacity = '0';
-                indicator.style.transform = 'translateX(-50%) scale(0.5)';
+                indicator.style.transform = cur + ' scale(0.5)';
                 const ref = indicator;
-                setTimeout(() => { ref.remove(); }, 220);
+                setTimeout(() => { ref.remove(); }, 260);
                 indicator = null;
             }
             pulling = false;
