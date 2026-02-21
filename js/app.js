@@ -218,15 +218,22 @@ const App = {
                     window.scrollTo(0, 0);
                 };
                 setTimeout(() => {
-                    // Companion covers viewport — reset #app behind it invisibly
+                    // Reset #app behind companion, render new content
                     resetApp();
                     app.classList.add('no-animate');
                     location.hash = swipeTarget;
-                    requestAnimationFrame(() => requestAnimationFrame(() => {
-                        removeCompanion();
-                        requestAnimationFrame(() => app.classList.remove('no-animate'));
-                    }));
-                }, 190);
+                    // Crossfade companion out to smoothly reveal #app
+                    if (companion) {
+                        companion.style.transition = 'opacity 0.15s ease-out';
+                        companion.style.opacity = '0';
+                        setTimeout(() => {
+                            removeCompanion();
+                            app.classList.remove('no-animate');
+                        }, 160);
+                    } else {
+                        app.classList.remove('no-animate');
+                    }
+                }, 220);
                 return;
             }
 
