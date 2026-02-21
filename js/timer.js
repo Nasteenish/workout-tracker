@@ -224,7 +224,7 @@ const RestTimer = {
             setTimeout(() => notif.remove(), 300);
         };
 
-        setTimeout(dismiss, 3000);
+        setTimeout(dismiss, 10000);
         notif.addEventListener('click', dismiss);
     },
 
