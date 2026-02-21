@@ -47,6 +47,11 @@ const App = {
             if (companion) { companion.remove(); companion = null; }
         };
 
+        const unlockScroll = () => {
+            document.documentElement.style.overflow = '';
+            document.body.style.overflow = '';
+        };
+
         const createCompanion = (targetWeek) => {
             const c = document.createElement('div');
             c.className = 'nav-companion';
@@ -88,12 +93,14 @@ const App = {
             const dy = e.touches[0].clientY - startY;
 
             if (!dragging) {
-                if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+                if (Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
                 if (Math.abs(dy) > Math.abs(dx)) { locked = true; return; }
                 if ((isDayView || isSettingsView) && dx < 0) { locked = true; return; }
                 dragging = true;
                 swipingLeft = dx < 0;
                 savedScrollY = window.scrollY;
+                document.documentElement.style.overflow = 'hidden';
+                document.body.style.overflow = 'hidden';
 
                 if (isWeekView) {
                     const targetWeek = swipingLeft
@@ -153,6 +160,7 @@ const App = {
                     }
                     setTimeout(() => {
                         removeCompanion();
+                        unlockScroll();
                         app.style.transition = 'none';
                         app.style.transform = '';
                         app.classList.remove('swiping-back');
@@ -171,6 +179,7 @@ const App = {
                     app.style.transition = 'none';
                     app.style.transform = '';
                     app.classList.remove('swiping-back');
+                    unlockScroll();
                     window.scrollTo(0, 0);
                     location.hash = `#/week/${this._currentWeek}`;
                     requestAnimationFrame(removeCompanion);
@@ -185,8 +194,9 @@ const App = {
                 if (companion) {
                     companion.style.transition = snap;
                     companion.style.transform = `translateX(${swipingLeft ? W() : -W()}px)`;
-                    setTimeout(removeCompanion, 230);
+                    setTimeout(() => { removeCompanion(); unlockScroll(); }, 230);
                 }
+                unlockScroll();
                 return;
             }
 
@@ -204,6 +214,7 @@ const App = {
                 ? (week === 12 ? 1 : week + 1)
                 : (week === 1 ? 12 : week - 1);
             setTimeout(() => {
+                unlockScroll();
                 location.hash = `#/week/${next}`;
                 requestAnimationFrame(removeCompanion);
             }, 190);
