@@ -11,6 +11,13 @@ const App = {
         const storedProgram = Storage.getProgram();
         if (storedProgram) {
             PROGRAM = storedProgram;
+            // Update DEFAULT_PROGRAM if stored version is outdated
+            if (typeof DEFAULT_PROGRAM !== 'undefined' && DEFAULT_PROGRAM.version
+                && (!storedProgram.version || storedProgram.version < DEFAULT_PROGRAM.version)
+                && storedProgram.title === DEFAULT_PROGRAM.title) {
+                PROGRAM = DEFAULT_PROGRAM;
+                Storage.saveProgram(DEFAULT_PROGRAM, false);
+            }
         } else if (Storage.isSetup() && typeof DEFAULT_PROGRAM !== 'undefined') {
             // Existing user (has startDate) but no program saved yet — auto-migrate
             PROGRAM = DEFAULT_PROGRAM;

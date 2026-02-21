@@ -19,6 +19,7 @@ const TECHNIQUE_TYPES = {
 let PROGRAM = null;
 
 const DEFAULT_PROGRAM = {
+  version: 2,
   title: "12-Week Training Program",
   coach: "Francisco Espin",
   athlete: "Anastasiia Dobrosol",
