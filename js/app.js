@@ -270,7 +270,12 @@ const App = {
                     location.reload();
                     return;
                 }
-                indicator.remove();
+                // Smooth fade-out
+                indicator.style.transition = 'opacity 0.2s ease-out, transform 0.2s ease-out';
+                indicator.style.opacity = '0';
+                indicator.style.transform = 'translateX(-50%) scale(0.5)';
+                const ref = indicator;
+                setTimeout(() => { ref.remove(); }, 220);
                 indicator = null;
             }
             pulling = false;
