@@ -127,16 +127,19 @@ const App = {
                 window.scrollTo(0, savedScrollY);
             }
 
+            // Compensate for any vertical scroll drift the browser applied
+            const scrollDrift = dragging ? (window.scrollY - savedScrollY) : 0;
+
             if (isDayBack) {
-                document.getElementById('app').style.transform = `translateX(${dx}px)`;
+                document.getElementById('app').style.transform = `translateX(${dx}px) translateY(${scrollDrift}px)`;
                 if (companion) {
                     companion.style.transform = `translateX(${-0.28 * W() + 0.28 * dx}px)`;
                 }
             } else {
                 const front = document.querySelector('.week-slide');
-                if (front) front.style.transform = `translateX(${dx}px)`;
+                if (front) front.style.transform = `translateX(${dx}px) translateY(${scrollDrift}px)`;
                 if (companion) {
-                    companion.style.transform = `translateX(${(swipingLeft ? W() : -W()) + dx}px)`;
+                    companion.style.transform = `translateX(${(swipingLeft ? W() : -W()) + dx}px) translateY(${scrollDrift}px)`;
                 }
             }
         }, { passive: false });
@@ -153,7 +156,7 @@ const App = {
                 if (!dragging || dx < 60) {
                     // Snap back
                     app.style.transition = snap;
-                    app.style.transform = 'translateX(0)';
+                    app.style.transform = 'translateX(0) translateY(0)';
                     if (companion) {
                         companion.style.transition = snap;
                         companion.style.transform = `translateX(${-0.28 * W()}px)`;
@@ -161,6 +164,7 @@ const App = {
                     setTimeout(() => {
                         removeCompanion();
                         unlockScroll();
+                        window.scrollTo(0, savedScrollY);
                         app.style.transition = 'none';
                         app.style.transform = '';
                         app.classList.remove('swiping-back');
@@ -190,13 +194,14 @@ const App = {
             // === Week swipe ===
             const front = document.querySelector('.week-slide');
             if (!dragging || Math.abs(dx) < 60) {
-                if (front) { front.style.transition = snap; front.style.transform = 'translateX(0)'; }
+                if (front) { front.style.transition = snap; front.style.transform = 'translateX(0) translateY(0)'; }
                 if (companion) {
                     companion.style.transition = snap;
                     companion.style.transform = `translateX(${swipingLeft ? W() : -W()}px)`;
-                    setTimeout(() => { removeCompanion(); unlockScroll(); }, 230);
+                    setTimeout(() => { removeCompanion(); unlockScroll(); window.scrollTo(0, savedScrollY); }, 230);
                 }
                 unlockScroll();
+                window.scrollTo(0, savedScrollY);
                 return;
             }
 
