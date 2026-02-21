@@ -252,7 +252,7 @@ const App = {
                 // Move page down (skip if back-swipe is active)
                 if (!app.classList.contains('swiping-back')) {
                     if (!active) { active = true; app.style.transition = 'none'; }
-                    app.style.transform = `translateY(${Math.min((dy - 10) * 0.35, 55)}px)`;
+                    app.style.transform = `translateY(${Math.min((dy - 10) * 0.45, 90)}px)`;
                 }
                 if (!indicator) {
                     indicator = document.createElement('div');
@@ -276,11 +276,15 @@ const App = {
             if (active) {
                 const from = parseFloat(app.style.transform.match(/translateY\((.+?)px\)/)?.[1]) || 0;
                 const t0 = performance.now();
-                const dur = 550;
+                const dur = 650;
+                const spring = (t) => {
+                    // Damped spring: overshoots past 0 then settles
+                    return 1 - Math.exp(-6 * t) * Math.cos(4.5 * t);
+                };
                 const tick = (now) => {
                     const p = Math.min((now - t0) / dur, 1);
-                    const ease = 1 - Math.pow(1 - p, 4);
-                    app.style.transform = `translateY(${(from * (1 - ease)).toFixed(1)}px)`;
+                    const y = from * (1 - spring(p));
+                    app.style.transform = `translateY(${y.toFixed(1)}px)`;
                     if (p < 1) requestAnimationFrame(tick);
                     else { app.style.transition = ''; app.style.transform = ''; }
                 };
