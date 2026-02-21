@@ -69,6 +69,14 @@ const App = {
             return c;
         };
 
+        const createMenuCompanion = () => {
+            const c = document.createElement('div');
+            c.className = 'back-companion';
+            c.innerHTML = UI._menuHTML();
+            document.body.appendChild(c);
+            return c;
+        };
+
         document.addEventListener('touchstart', (e) => {
             isWeekView = !!location.hash.match(/^#\/week\/\d+$/);
             isDayView = !!location.hash.match(/^#\/week\/\d+\/day\/\d+$/);
@@ -81,6 +89,11 @@ const App = {
             locked = false;
             isDayBack = false;
             removeCompanion();
+            // Pre-create menu companion on touchstart so DOM is ready before animation
+            if (isMenuSubPage) {
+                companion = createMenuCompanion();
+                companion.style.transform = `translateX(${-W()}px)`;
+            }
             if (isWeekView) {
                 const el = document.querySelector('.week-slide');
                 if (el) el.style.transition = 'none';
@@ -115,6 +128,9 @@ const App = {
                     isDayBack = true;
                     if (!isMenuSubPage) {
                         companion = createBackCompanion(this._currentWeek);
+                    }
+                    // Position companion (pre-created for menu sub-pages, just created for day/menu)
+                    if (companion) {
                         companion.style.transition = 'none';
                         companion.style.transform = `translateX(${-0.28 * W()}px)`;
                     }
@@ -151,6 +167,8 @@ const App = {
 
         document.addEventListener('touchend', (e) => {
             if (!isWeekView && !isDayView && !isSettingsView) return;
+            // Clean up pre-created companion if touch wasn't a horizontal swipe
+            if (!dragging && !isDayBack && companion) removeCompanion();
             const dx = e.changedTouches[0].clientX - startX;
             const snap = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
             const commit = 'transform 0.18s cubic-bezier(0.4, 0, 0.6, 1)';
@@ -200,20 +218,14 @@ const App = {
                     window.scrollTo(0, 0);
                 };
                 setTimeout(() => {
-                    if (companion) {
-                        // Companion covers viewport — reset #app behind it invisibly
-                        resetApp();
-                        app.classList.add('no-animate');
-                        location.hash = swipeTarget;
-                        requestAnimationFrame(() => requestAnimationFrame(() => {
-                            removeCompanion();
-                            requestAnimationFrame(() => app.classList.remove('no-animate'));
-                        }));
-                    } else {
-                        // No companion (menu sub-pages) — just navigate
-                        resetApp();
-                        location.hash = swipeTarget;
-                    }
+                    // Companion covers viewport — reset #app behind it invisibly
+                    resetApp();
+                    app.classList.add('no-animate');
+                    location.hash = swipeTarget;
+                    requestAnimationFrame(() => requestAnimationFrame(() => {
+                        removeCompanion();
+                        requestAnimationFrame(() => app.classList.remove('no-animate'));
+                    }));
                 }, 190);
                 return;
             }
