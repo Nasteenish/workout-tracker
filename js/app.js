@@ -229,7 +229,7 @@ const App = {
         let indicator = null;
 
         document.addEventListener('touchstart', (e) => {
-            if (window.scrollY === 0) {
+            if (window.scrollY <= 2) {
                 startY = e.touches[0].clientY;
                 pulling = true;
             }
@@ -238,15 +238,14 @@ const App = {
         document.addEventListener('touchmove', (e) => {
             if (!pulling) return;
             const dy = e.touches[0].clientY - startY;
-            if (dy > 10 && window.scrollY === 0) {
+            if (dy > 10 && window.scrollY <= 2) {
                 if (!indicator) {
                     indicator = document.createElement('div');
                     indicator.id = 'pull-indicator';
                     indicator.textContent = '↓';
-                    document.body.prepend(indicator);
+                    document.body.appendChild(indicator);
                 }
                 const progress = Math.min(dy / threshold, 1);
-                indicator.style.height = Math.min(dy * 0.5, 50) + 'px';
                 indicator.style.opacity = progress;
                 if (progress >= 1) {
                     indicator.textContent = '↻';
