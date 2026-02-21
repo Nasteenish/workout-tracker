@@ -232,72 +232,99 @@ const App = {
         const DUMBBELL_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="1" y="9" width="3" height="6" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="7" width="3" height="10" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="17" y="7" width="3" height="10" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="20" y="9" width="3" height="6" rx="1" stroke="currentColor" stroke-width="1.8"/><line x1="7" y1="12" x2="17" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 
         let active = false;
+        let bottomPull = false;
         const app = document.getElementById('app');
 
+        const atBottom = () => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
+
+        const snapBack = (fromY) => {
+            const absFrom = Math.abs(fromY);
+            if (absFrom < 1) { app.style.transition = ''; app.style.transform = ''; return; }
+            const t0 = performance.now();
+            const dur = 500;
+            let stopped = false;
+            const stop = () => { stopped = true; app.style.transition = ''; app.style.transform = ''; };
+            const tick = (now) => {
+                if (stopped) return;
+                const p = Math.min((now - t0) / dur, 1);
+                const ease = 1 - Math.pow(1 - p, 3);
+                const y = fromY * (1 - ease);
+                if (p < 1 && Math.abs(y) > 0.3) {
+                    app.style.transform = `translateY(${y.toFixed(1)}px)`;
+                    requestAnimationFrame(tick);
+                } else {
+                    stop();
+                }
+            };
+            document.addEventListener('touchstart', stop, { once: true });
+            window.addEventListener('hashchange', stop, { once: true });
+            requestAnimationFrame(tick);
+        };
+
         document.addEventListener('touchstart', (e) => {
-            if (window.scrollY <= 2) {
-                startY = e.touches[0].clientY;
-                pulling = true;
-                ready = false;
-                active = false;
-            }
+            startY = e.touches[0].clientY;
+            pulling = window.scrollY <= 2;
+            bottomPull = atBottom();
+            ready = false;
+            active = false;
         }, { passive: true });
 
         document.addEventListener('touchmove', (e) => {
-            if (!pulling) return;
-            if (window.scrollY > 2) { pulling = false; active = false; return; }
+            if (!pulling && !bottomPull) return;
             const dy = e.touches[0].clientY - startY;
-            if (dy > 10) {
+
+            // Pull down from top
+            if (pulling) {
+                if (window.scrollY > 2) { pulling = false; active = false; return; }
+                if (dy > 10) {
+                    e.preventDefault();
+                    if (!app.classList.contains('swiping-back')) {
+                        if (!active) { active = true; app.style.transition = 'none'; }
+                        app.style.transform = `translateY(${Math.min((dy - 10) * 0.35, 55)}px)`;
+                    }
+                    if (!indicator) {
+                        indicator = document.createElement('div');
+                        indicator.id = 'pull-indicator';
+                        indicator.innerHTML = DUMBBELL_SVG;
+                        document.body.appendChild(indicator);
+                    }
+                    if (ready) return;
+                    const progress = Math.min(dy / threshold, 1);
+                    indicator.style.opacity = progress;
+                    indicator.style.transform = `translateX(-50%) rotate(${progress * 360}deg)`;
+                    if (progress >= 1) {
+                        ready = true;
+                        indicator.style.transform = '';
+                        indicator.classList.add('spinning');
+                    }
+                }
+            }
+
+            // Pull up from bottom
+            if (bottomPull && dy < -10) {
+                if (!atBottom()) { bottomPull = false; return; }
                 e.preventDefault();
-                // Move page down (skip if back-swipe is active)
                 if (!app.classList.contains('swiping-back')) {
-                    if (!active) { active = true; app.style.transition = 'none'; }
-                    app.style.transform = `translateY(${Math.min((dy - 10) * 0.35, 55)}px)`;
-                }
-                if (!indicator) {
-                    indicator = document.createElement('div');
-                    indicator.id = 'pull-indicator';
-                    indicator.innerHTML = DUMBBELL_SVG;
-                    document.body.appendChild(indicator);
-                }
-                if (ready) return;
-                const progress = Math.min(dy / threshold, 1);
-                indicator.style.opacity = progress;
-                indicator.style.transform = `translateX(-50%) rotate(${progress * 360}deg)`;
-                if (progress >= 1) {
-                    ready = true;
-                    indicator.style.transform = '';
-                    indicator.classList.add('spinning');
+                    app.style.transition = 'none';
+                    app.style.transform = `translateY(${Math.max((dy + 10) * 0.35, -55)}px)`;
                 }
             }
         }, { passive: false });
 
         document.addEventListener('touchend', () => {
+            // Snap back from bottom pull
+            if (bottomPull) {
+                const m = app.style.transform.match(/translateY\((.+?)px\)/);
+                if (m && parseFloat(m[1]) < -0.5) {
+                    snapBack(parseFloat(m[1]));
+                }
+                bottomPull = false;
+            }
+
+            // Snap back from top pull
             if (active) {
                 const from = parseFloat(app.style.transform.match(/translateY\((.+?)px\)/)?.[1]) || 0;
-                if (from < 1) {
-                    app.style.transition = ''; app.style.transform = '';
-                } else {
-                    const t0 = performance.now();
-                    const dur = 500;
-                    let stopped = false;
-                    const stop = () => { stopped = true; app.style.transition = ''; app.style.transform = ''; };
-                    const tick = (now) => {
-                        if (stopped) return;
-                        const p = Math.min((now - t0) / dur, 1);
-                        const ease = 1 - Math.pow(1 - p, 3);
-                        const y = from * (1 - ease);
-                        if (p < 1 && y > 0.3) {
-                            app.style.transform = `translateY(${y.toFixed(1)}px)`;
-                            requestAnimationFrame(tick);
-                        } else {
-                            stop();
-                        }
-                    };
-                    document.addEventListener('touchstart', stop, { once: true });
-                    window.addEventListener('hashchange', stop, { once: true });
-                    requestAnimationFrame(tick);
-                }
+                snapBack(from);
             }
             if (indicator) {
                 if (ready) {
