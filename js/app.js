@@ -182,8 +182,8 @@ const App = {
                     unlockScroll();
                     window.scrollTo(0, 0);
                     location.hash = `#/week/${this._currentWeek}`;
-                    // Delay companion removal to let #app repaint behind it
-                    setTimeout(removeCompanion, 50);
+                    // Wait for repaint before removing companion
+                    requestAnimationFrame(() => requestAnimationFrame(removeCompanion));
                 }, 190);
                 return;
             }
@@ -376,15 +376,35 @@ const App = {
             return;
         }
 
-        // Back button
+        // Back button — smooth exit animation
         if (target.id === 'btn-back' || target.closest('#btn-back')) {
-            location.hash = `#/week/${this._currentWeek}`;
+            const app = document.getElementById('app');
+            app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
+            app.style.transform = 'translateX(40px)';
+            app.style.opacity = '0';
+            setTimeout(() => {
+                app.style.transition = 'none';
+                app.style.transform = '';
+                app.style.opacity = '';
+                window.scrollTo(0, 0);
+                location.hash = `#/week/${this._currentWeek}`;
+            }, 190);
             return;
         }
 
-        // Back from history
+        // Back from history — smooth exit
         if (target.id === 'btn-back-history' || target.closest('#btn-back-history')) {
-            location.hash = `#/week/${this._currentWeek}/day/${this._currentDay}`;
+            const app = document.getElementById('app');
+            app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
+            app.style.transform = 'translateX(40px)';
+            app.style.opacity = '0';
+            setTimeout(() => {
+                app.style.transition = 'none';
+                app.style.transform = '';
+                app.style.opacity = '';
+                window.scrollTo(0, 0);
+                location.hash = `#/week/${this._currentWeek}/day/${this._currentDay}`;
+            }, 190);
             return;
         }
 
@@ -394,9 +414,19 @@ const App = {
             return;
         }
 
-        // Back from settings
+        // Back from settings — smooth exit
         if (target.id === 'btn-back-settings' || target.closest('#btn-back-settings')) {
-            location.hash = `#/week/${this._currentWeek}`;
+            const app = document.getElementById('app');
+            app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
+            app.style.transform = 'translateX(40px)';
+            app.style.opacity = '0';
+            setTimeout(() => {
+                app.style.transition = 'none';
+                app.style.transform = '';
+                app.style.opacity = '';
+                window.scrollTo(0, 0);
+                location.hash = `#/week/${this._currentWeek}`;
+            }, 190);
             return;
         }
 
