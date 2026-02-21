@@ -1594,7 +1594,7 @@ body.modal-open {
 .guide-item .tech-badge {
     flex-shrink: 0;
     margin-top: 2px;
-    min-width: 40px;
+    min-width: 52px;
     text-align: center;
     box-sizing: border-box;
 }

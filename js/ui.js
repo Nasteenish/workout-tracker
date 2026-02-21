@@ -781,7 +781,7 @@ const UI = {
                     <div class="guide-item">
                         <span class="set-type-badge type-S">S</span>
                         <div class="guide-item-text">
-                            <div class="guide-item-title">Сила (Strength)</div>
+                            <div class="guide-item-title">Сила</div>
                             <div class="guide-item-desc">Взрывные повторения. Фокус на перемещении веса с максимальной силой и скоростью. Каждое повторение — мощное и резкое. Первый подход направлен на увеличение силы или количества повторений от тренировки к тренировке.</div>
                         </div>
                     </div>
@@ -795,7 +795,7 @@ const UI = {
                     <div class="guide-item">
                         <span class="set-type-badge type-H">H</span>
                         <div class="guide-item-text">
-                            <div class="guide-item-title">Гипертрофия (Hypertrophy)</div>
+                            <div class="guide-item-title">Гипертрофия</div>
                             <div class="guide-item-desc">Все повторения подконтрольные. Фокус на сокращении мышцы и чувстве нагрузки. Медленная негативная фаза.</div>
                         </div>
                     </div>
@@ -841,7 +841,7 @@ const UI = {
                     <div class="guide-item">
                         <span class="tech-badge tech-REST_PAUSE">R-P</span>
                         <div class="guide-item-text">
-                            <div class="guide-item-title">Отдых-пауза (Rest Pause)</div>
+                            <div class="guide-item-title">Отдых-пауза</div>
                             <div class="guide-item-desc">После последнего подхода отдыхаешь 10-15 секунд с тем же весом, затем продолжаешь повторения до отказа.</div>
                         </div>
                     </div>
