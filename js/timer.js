@@ -71,6 +71,7 @@ const RestTimer = {
         this._endTime = Date.now() + this._remaining * 1000;
         this._updateDisplay();
         this._updatePauseBtn();
+        this._swTimer('START_TIMER', this._remaining * 1000);
 
         document.getElementById('rest-timer-bar').classList.add('active');
 
@@ -90,6 +91,7 @@ const RestTimer = {
         this._interval = null;
         this._endTime = null;
         this._pausedAt = null;
+        this._swTimer('STOP_TIMER');
         document.getElementById('rest-timer-bar').classList.remove('active');
     },
 
@@ -97,11 +99,13 @@ const RestTimer = {
         if (!this._paused) {
             this._paused = true;
             this._pausedAt = Date.now();
+            this._swTimer('STOP_TIMER');
         } else {
             this._paused = false;
             const pausedDuration = Date.now() - this._pausedAt;
             this._endTime += pausedDuration;
             this._pausedAt = null;
+            this._swTimer('START_TIMER', (this._endTime - Date.now()));
         }
         this._updatePauseBtn();
     },
@@ -110,6 +114,7 @@ const RestTimer = {
         this._remaining = Math.max(5, this._remaining + delta);
         if (this._endTime && !this._paused) {
             this._endTime = Date.now() + this._remaining * 1000;
+            this._swTimer('START_TIMER', this._remaining * 1000);
         }
         this._updateDisplay();
     },
@@ -125,19 +130,21 @@ const RestTimer = {
         } catch(e) {}
     },
 
+    _swTimer(type, duration) {
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ type, duration });
+        }
+    },
+
     _finish() {
         clearInterval(this._interval);
         this._interval = null;
         this._endTime = null;
+        this._swTimer('STOP_TIMER');
         document.getElementById('rest-timer-bar').classList.remove('active');
 
         if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
         this._playBeep();
-
-        // System notification if app is in background, in-app overlay if visible
-        if (document.visibilityState !== 'visible') {
-            this._sendSystemNotification();
-        }
         this._showNotification();
     },
 

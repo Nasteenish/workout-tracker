@@ -1,4 +1,4 @@
-const CACHE_NAME = 'workout-tracker-v136';
+const CACHE_NAME = 'workout-tracker-v137';
 const ASSETS = [
     './',
     './index.html',
@@ -30,6 +30,42 @@ self.addEventListener('activate', event => {
                     .map(key => caches.delete(key))
             )
         ).then(() => self.clients.claim())
+    );
+});
+
+// ===== Rest Timer Background Notification =====
+let _timerTimeout = null;
+
+self.addEventListener('message', event => {
+    const { type, duration } = event.data || {};
+
+    if (type === 'START_TIMER') {
+        if (_timerTimeout) clearTimeout(_timerTimeout);
+        _timerTimeout = setTimeout(() => {
+            _timerTimeout = null;
+            self.registration.showNotification('Пора!', {
+                body: 'Отдых завершён',
+                icon: './icons/icon-192.png',
+                tag: 'rest-timer',
+                vibrate: [200, 80, 200, 80, 400],
+                requireInteraction: false
+            });
+        }, duration);
+    }
+
+    if (type === 'STOP_TIMER') {
+        if (_timerTimeout) clearTimeout(_timerTimeout);
+        _timerTimeout = null;
+    }
+});
+
+self.addEventListener('notificationclick', event => {
+    event.notification.close();
+    event.waitUntil(
+        clients.matchAll({ type: 'window' }).then(list => {
+            if (list.length > 0) return list[0].focus();
+            return clients.openWindow('/');
+        })
     );
 });
 
