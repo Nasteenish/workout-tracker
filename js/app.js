@@ -274,17 +274,17 @@ const App = {
 
         document.addEventListener('touchend', () => {
             if (active) {
-                requestAnimationFrame(() => {
-                    app.style.transition = 'transform 0.55s cubic-bezier(0.16, 1, 0.3, 1)';
-                    app.style.transform = 'translateY(0)';
-                    const onEnd = () => {
-                        app.style.transition = '';
-                        app.style.transform = '';
-                        app.removeEventListener('transitionend', onEnd);
-                    };
-                    app.addEventListener('transitionend', onEnd, { once: true });
-                    setTimeout(onEnd, 570);
+                const anim = app.animate([
+                    { transform: app.style.transform },
+                    { transform: 'translateY(0)' }
+                ], {
+                    duration: 500,
+                    easing: 'cubic-bezier(0.16, 1, 0.3, 1)'
                 });
+                anim.onfinish = () => {
+                    app.style.transition = '';
+                    app.style.transform = '';
+                };
             }
             if (indicator) {
                 if (ready) {
