@@ -818,6 +818,8 @@ input, button, select {
     flex: 1;
     min-width: 0;
     opacity: 0.75;
+    font-size: 16px;
+    height: 38px;
 }
 
 .split-sep {
@@ -825,6 +827,7 @@ input, button, select {
     color: var(--text-muted);
     flex-shrink: 0;
     user-select: none;
+    padding: 0 1px;
 }
 
 .input-group input {
