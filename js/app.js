@@ -232,56 +232,60 @@ const App = {
         const DUMBBELL_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="1" y="9" width="3" height="6" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="7" width="3" height="10" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="17" y="7" width="3" height="10" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="20" y="9" width="3" height="6" rx="1" stroke="currentColor" stroke-width="1.8"/><line x1="7" y1="12" x2="17" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 
         let active = false;
-        let bottomPull = false;
+        let bottomActive = false;
+        let pullLocked = false;
+        let startX_pull = 0;
         const app = document.getElementById('app');
 
         const atBottom = () => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
 
-        let snapStyleEl = null;
-        let snapId = 0;
+        let snapAnim = null;
 
         const snapBack = (fromY) => {
             const absFrom = Math.abs(fromY);
             if (absFrom < 1) { app.style.transition = ''; app.style.transform = ''; return; }
 
-            const id = ++snapId;
-            const name = `snap-${id}`;
-            if (snapStyleEl) snapStyleEl.remove();
-            snapStyleEl = document.createElement('style');
-            snapStyleEl.textContent = `@keyframes ${name}{from{transform:translateY(${fromY}px)}to{transform:translateY(0)}}`;
-            document.head.appendChild(snapStyleEl);
-
-            // Keep inline transform — animation with fill:both overrides it seamlessly
+            // Web Animations API — starts synchronously, no frame gap
             app.style.transition = 'none';
-            app.style.animation = `${name} 0.5s cubic-bezier(0.22, 1, 0.36, 1) both`;
-
-            const done = () => {
-                if (snapId !== id) return;
-                snapId++;
-                app.style.animation = '';
-                app.style.transition = '';
+            snapAnim = app.animate([
+                { transform: `translateY(${fromY}px)` },
+                { transform: 'translateY(0)' }
+            ], {
+                duration: 500,
+                easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+                fill: 'both'
+            });
+            snapAnim.onfinish = () => {
                 app.style.transform = '';
-                if (snapStyleEl) { snapStyleEl.remove(); snapStyleEl = null; }
-                document.removeEventListener('touchstart', done);
-                window.removeEventListener('hashchange', done);
+                app.style.transition = '';
+                if (snapAnim) { snapAnim.cancel(); snapAnim = null; }
             };
-            app.addEventListener('animationend', done, { once: true });
-            setTimeout(done, 550);
-            document.addEventListener('touchstart', done);
-            window.addEventListener('hashchange', done);
         };
 
         document.addEventListener('touchstart', (e) => {
             startY = e.touches[0].clientY;
+            startX_pull = e.touches[0].clientX;
             pulling = window.scrollY <= 2;
-            bottomPull = atBottom();
+            pullLocked = false;
             ready = false;
             active = false;
+            bottomActive = false;
+            // Cancel any running snap-back immediately
+            if (snapAnim) { snapAnim.cancel(); snapAnim = null; app.style.transform = ''; app.style.transition = ''; }
         }, { passive: true });
 
         document.addEventListener('touchmove', (e) => {
-            if (!pulling && !bottomPull) return;
+            if (pullLocked) return;
+            if (!pulling && !atBottom()) return;
             const dy = e.touches[0].clientY - startY;
+            const dx = e.touches[0].clientX - startX_pull;
+
+            // Direction lock: if horizontal, stop pull handling
+            if (!active && !bottomActive && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) {
+                pullLocked = true;
+                pulling = false;
+                return;
+            }
 
             // Pull down from top
             if (pulling) {
@@ -311,11 +315,10 @@ const App = {
             }
 
             // Pull up from bottom
-            if (bottomPull && dy < -10) {
-                if (!atBottom()) { bottomPull = false; return; }
+            if (atBottom() && dy < -10 && !active) {
                 e.preventDefault();
                 if (!app.classList.contains('swiping-back')) {
-                    app.style.transition = 'none';
+                    if (!bottomActive) { bottomActive = true; app.style.transition = 'none'; }
                     app.style.transform = `translateY(${Math.max((dy + 10) * 0.35, -55)}px)`;
                 }
             }
@@ -323,18 +326,16 @@ const App = {
 
         document.addEventListener('touchend', () => {
             // Snap back from bottom pull
-            if (bottomPull) {
+            // Snap back from bottom pull
+            if (bottomActive) {
                 const m = app.style.transform.match(/translateY\((.+?)px\)/);
-                if (m && parseFloat(m[1]) < -0.5) {
-                    snapBack(parseFloat(m[1]));
-                }
-                bottomPull = false;
+                if (m) snapBack(parseFloat(m[1]));
             }
 
             // Snap back from top pull
             if (active) {
-                const from = parseFloat(app.style.transform.match(/translateY\((.+?)px\)/)?.[1]) || 0;
-                snapBack(from);
+                const m = app.style.transform.match(/translateY\((.+?)px\)/);
+                if (m) snapBack(parseFloat(m[1]));
             }
             if (indicator) {
                 if (ready) {
@@ -353,6 +354,7 @@ const App = {
             pulling = false;
             ready = false;
             active = false;
+            bottomActive = false;
         });
     },
 
