@@ -4,8 +4,8 @@
   "description": "12-недельная программа тренировок с отслеживанием прогресса",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0f0f1a",
-  "theme_color": "#e94560",
+  "background_color": "#08080F",
+  "theme_color": "#08080F",
   "orientation": "portrait",
   "icons": [
     {
