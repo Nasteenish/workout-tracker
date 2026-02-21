@@ -235,31 +235,53 @@ const App = {
         let bottomActive = false;
         let pullLocked = false;
         let startX_pull = 0;
+        let snapping = false;
         const app = document.getElementById('app');
 
         const atBottom = () => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
 
-        let snapAnim = null;
+        const lockBody = () => {
+            document.body.style.position = 'fixed';
+            document.body.style.top = '0';
+            document.body.style.left = '0';
+            document.body.style.right = '0';
+            document.body.style.overflow = 'hidden';
+        };
+        const unlockBody = () => {
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.left = '';
+            document.body.style.right = '';
+            document.body.style.overflow = '';
+        };
 
         const snapBack = (fromY) => {
             const absFrom = Math.abs(fromY);
             if (absFrom < 1) { app.style.transition = ''; app.style.transform = ''; return; }
 
-            // Web Animations API — starts synchronously, no frame gap
+            // Lock body so iOS Safari can't engage native rubber-band bounce
+            lockBody();
+            snapping = true;
+
+            // Set current position with translate3d for GPU compositing
             app.style.transition = 'none';
-            snapAnim = app.animate([
-                { transform: `translateY(${fromY}px)` },
-                { transform: 'translateY(0)' }
-            ], {
-                duration: 500,
-                easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-                fill: 'both'
-            });
-            snapAnim.onfinish = () => {
+            app.style.transform = `translate3d(0, ${fromY}px, 0)`;
+
+            // Force reflow so browser registers the starting position
+            void app.offsetHeight;
+
+            // Now apply transition to animate to zero
+            app.style.transition = 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)';
+            app.style.transform = 'translate3d(0, 0, 0)';
+
+            const cleanup = () => {
                 app.style.transform = '';
                 app.style.transition = '';
-                if (snapAnim) { snapAnim.cancel(); snapAnim = null; }
+                unlockBody();
+                snapping = false;
             };
+            app.addEventListener('transitionend', cleanup, { once: true });
+            setTimeout(cleanup, 550);
         };
 
         document.addEventListener('touchstart', (e) => {
@@ -270,8 +292,13 @@ const App = {
             ready = false;
             active = false;
             bottomActive = false;
-            // Cancel any running snap-back immediately
-            if (snapAnim) { snapAnim.cancel(); snapAnim = null; app.style.transform = ''; app.style.transition = ''; }
+            // Cancel any running snap-back
+            if (snapping) {
+                app.style.transform = '';
+                app.style.transition = '';
+                unlockBody();
+                snapping = false;
+            }
         }, { passive: true });
 
         document.addEventListener('touchmove', (e) => {
@@ -325,7 +352,6 @@ const App = {
         }, { passive: false });
 
         document.addEventListener('touchend', () => {
-            // Snap back from bottom pull
             // Snap back from bottom pull
             if (bottomActive) {
                 const m = app.style.transform.match(/translateY\((.+?)px\)/);
