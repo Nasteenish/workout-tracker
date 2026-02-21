@@ -848,7 +848,7 @@ const UI = {
                     <div class="guide-item">
                         <span class="tech-badge tech-MP">MP</span>
                         <div class="guide-item-text">
-                            <div class="guide-item-title">Микро-паузы</div>
+                            <div class="guide-item-title">Микро-пауза</div>
                             <div class="guide-item-desc">После отказа отдыхаешь максимум 5 секунд, затем делаешь ещё 1-3 повторения. Можно повторить несколько раз.</div>
                         </div>
                     </div>
