@@ -7,6 +7,31 @@ const MONTHS_RU = [
 
 const DAYS_RU = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 
+function getTotalWeeks() {
+    return PROGRAM ? PROGRAM.totalWeeks : 12;
+}
+
+function getTotalDays() {
+    return PROGRAM ? Object.keys(PROGRAM.dayTemplates).length : 5;
+}
+
+function validateProgram(data) {
+    if (!data || typeof data !== 'object') return 'Неверный формат JSON';
+    if (!data.title || typeof data.title !== 'string') return 'Отсутствует title';
+    if (!data.totalWeeks || typeof data.totalWeeks !== 'number') return 'Отсутствует totalWeeks';
+    if (!data.dayTemplates || typeof data.dayTemplates !== 'object') return 'Отсутствует dayTemplates';
+    const days = Object.keys(data.dayTemplates);
+    if (days.length === 0) return 'dayTemplates пуст';
+    for (const dayKey of days) {
+        const day = data.dayTemplates[dayKey];
+        if (!day.exerciseGroups || !Array.isArray(day.exerciseGroups)) {
+            return `День ${dayKey}: отсутствует exerciseGroups`;
+        }
+    }
+    if (!data.weeklyOverrides) data.weeklyOverrides = {};
+    return null;
+}
+
 /** Parse "YYYY-MM-DD" as local date (avoids UTC shift bug) */
 function parseLocalDate(str) {
     if (str instanceof Date) return new Date(str.getFullYear(), str.getMonth(), str.getDate());
@@ -35,9 +60,9 @@ function formatDateISO(date) {
 function getScheduleDates(startDate, cycleType) {
     const dates = [];
     const start = parseLocalDate(startDate);
-    for (let week = 0; week < 12; week++) {
+    for (let week = 0; week < getTotalWeeks(); week++) {
         const weekDates = [];
-        for (let day = 0; day < 5; day++) {
+        for (let day = 0; day < getTotalDays(); day++) {
             const totalDays = week * cycleType + day;
             const date = new Date(start);
             date.setDate(start.getDate() + totalDays);
@@ -56,8 +81,8 @@ function getCurrentPosition(startDate, cycleType) {
     if (daysSinceStart < 0) return { week: 1, day: 1, isRestDay: false, isProgramComplete: false };
     const cycleNumber = Math.floor(daysSinceStart / cycleType);
     const dayInCycle = daysSinceStart % cycleType;
-    if (cycleNumber >= 12) return { week: 12, day: 5, isRestDay: false, isProgramComplete: true };
-    const isRestDay = dayInCycle >= 5;
+    if (cycleNumber >= getTotalWeeks()) return { week: getTotalWeeks(), day: getTotalDays(), isRestDay: false, isProgramComplete: true };
+    const isRestDay = dayInCycle >= getTotalDays();
     return {
         week: cycleNumber + 1,
         day: isRestDay ? null : dayInCycle + 1,
@@ -242,8 +267,8 @@ function getChosenExercise(group) {
  * Find the current progress position — first week/day that is not fully completed.
  */
 function getProgressWeek() {
-    for (var week = 1; week <= 12; week++) {
-        for (var day = 1; day <= 5; day++) {
+    for (var week = 1; week <= getTotalWeeks(); week++) {
+        for (var day = 1; day <= getTotalDays(); day++) {
             var result = getCompletedSets(week, day);
             if (result.total > 0 && result.completed < result.total) {
                 return { week: week, day: day };

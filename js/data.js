@@ -1,6 +1,6 @@
-// data.js - Complete 12-week training program data
-// Coach: Francisco Espin | Athlete: Anastasiia Dobrosol
+// data.js - Training program data
 // Architecture: template + weekly overrides pattern
+// PROGRAM is loaded dynamically from localStorage (or DEFAULT_PROGRAM as fallback)
 
 const SET_TYPES = {
   S: { label: "Straight", labelRu: "Прямой", color: "#4CAF50" },
@@ -15,7 +15,10 @@ const TECHNIQUE_TYPES = {
   DROP_OR_REST: { label: "Drop set or Rest-pause", labelRu: "Дроп-сет или Отдых-пауза", abbr: "DROP/REST" }
 };
 
-const PROGRAM = {
+// Mutable — loaded at runtime from localStorage or DEFAULT_PROGRAM
+let PROGRAM = null;
+
+const DEFAULT_PROGRAM = {
   title: "12-Week Training Program",
   coach: "Francisco Espin",
   athlete: "Anastasiia Dobrosol",
@@ -2579,5 +2582,5 @@ const PROGRAM = {
 
 // Make available for ES module or global scope
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { PROGRAM, SET_TYPES, TECHNIQUE_TYPES };
+  module.exports = { DEFAULT_PROGRAM, SET_TYPES, TECHNIQUE_TYPES };
 }

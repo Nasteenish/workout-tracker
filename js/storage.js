@@ -14,6 +14,7 @@ const Storage = {
             if (!this._data.equipment) this._data.equipment = [];
             if (!this._data.exerciseEquipment) this._data.exerciseEquipment = {};
             if (!this._data.exerciseUnits) this._data.exerciseUnits = {};
+            if (this._data.program === undefined) this._data.program = null;
             if (!this._data.exerciseEquipmentOptions) {
                 this._data.exerciseEquipmentOptions = {};
                 // Auto-migrate: link currently assigned equipment to their exercises
@@ -44,6 +45,7 @@ const Storage = {
                 startDate: null,
                 weightUnit: 'kg'
             },
+            program: null,
             equipment: [],
             exerciseEquipment: {},
             exerciseEquipmentOptions: {},
@@ -66,6 +68,29 @@ const Storage = {
     isSetup() {
         const s = this.getSettings();
         return s.startDate !== null;
+    },
+
+    // ===== Program =====
+    hasProgram() {
+        return this._load().program !== null;
+    },
+
+    getProgram() {
+        return this._load().program;
+    },
+
+    saveProgram(programData, clearExerciseData) {
+        const data = this._load();
+        if (clearExerciseData) {
+            data.log = {};
+            data.exerciseChoices = {};
+            data.exerciseEquipment = {};
+            data.exerciseEquipmentOptions = {};
+            data.exerciseUnits = {};
+            data.settings.startDate = null;
+        }
+        data.program = programData;
+        this._save();
     },
 
     getWeightUnit() {
@@ -327,11 +352,13 @@ const Storage = {
         const data = this._load();
         const history = [];
 
-        for (let week = 1; week <= 12; week++) {
+        const totalWeeks = PROGRAM ? PROGRAM.totalWeeks : 12;
+        const totalDays = PROGRAM ? Object.keys(PROGRAM.dayTemplates).length : 5;
+        for (let week = 1; week <= totalWeeks; week++) {
             const w = String(week);
             if (!data.log[w]) continue;
 
-            for (let day = 1; day <= 5; day++) {
+            for (let day = 1; day <= totalDays; day++) {
                 const d = String(day);
                 if (!data.log[w][d] || !data.log[w][d][exerciseId]) continue;
 

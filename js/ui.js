@@ -19,27 +19,54 @@ function blockOverlayScroll(overlay, scrollableSelector) {
 const UI = {
     // ===== SETUP SCREEN =====
     renderSetup() {
-        const today = formatDateISO(new Date());
+        // Phase 2: program loaded, need date/cycle setup
+        if (PROGRAM && !Storage.isSetup()) {
+            const today = formatDateISO(new Date());
+            const programTitle = PROGRAM.title || 'Трекер Тренировок';
+            const totalW = getTotalWeeks();
+            const athleteName = PROGRAM.athlete ? `<p class="subtitle" style="opacity:0.5;margin-top:4px">${PROGRAM.athlete}</p>` : '';
+            document.getElementById('app').innerHTML = `
+                <div class="setup-screen">
+                    <div class="app-icon">&#127947;</div>
+                    <h1>${programTitle}</h1>
+                    <p class="subtitle">${totalW}-недельная программа</p>
+                    ${athleteName}
+
+                    <div class="setup-field">
+                        <label>Тип цикла</label>
+                        <div class="cycle-toggle">
+                            <button class="active" data-cycle="7">7 дней</button>
+                            <button data-cycle="8">8 дней</button>
+                        </div>
+                    </div>
+
+                    <div class="setup-field">
+                        <label>Дата начала программы</label>
+                        <input type="date" id="start-date" value="${today}">
+                    </div>
+
+                    <button class="btn-primary" id="setup-start" onclick="App.startSetup()">НАЧАТЬ</button>
+                </div>
+            `;
+            return;
+        }
+
+        // Phase 1: no program — show import screen
+        const hasDefault = typeof DEFAULT_PROGRAM !== 'undefined';
         document.getElementById('app').innerHTML = `
             <div class="setup-screen">
                 <div class="app-icon">&#127947;</div>
                 <h1>Трекер Тренировок</h1>
-                <p class="subtitle">12-недельная программа</p>
+                <p class="subtitle">Загрузите программу тренировок</p>
 
                 <div class="setup-field">
-                    <label>Тип цикла</label>
-                    <div class="cycle-toggle">
-                        <button class="active" data-cycle="7">7 дней</button>
-                        <button data-cycle="8">8 дней</button>
-                    </div>
+                    <button class="btn-primary" id="setup-import-program">
+                        ЗАГРУЗИТЬ ПРОГРАММУ
+                    </button>
+                    <div id="program-status" style="min-height:24px;margin-top:8px;font-size:13px;text-align:center"></div>
                 </div>
 
-                <div class="setup-field">
-                    <label>Дата начала программы</label>
-                    <input type="date" id="start-date" value="${today}">
-                </div>
-
-                <button class="btn-primary" id="setup-start" onclick="App.startSetup()">НАЧАТЬ</button>
+                ${hasDefault ? '<button class="btn-secondary" id="setup-use-default" style="margin-top:8px;opacity:0.6">Программа по умолчанию</button>' : ''}
             </div>
         `;
     },
@@ -51,8 +78,10 @@ const UI = {
         const settings = Storage.getSettings();
         const cycleType = settings.cycleType || 7;
 
+        const numDays = getTotalDays();
         let slots;
-        if (cycleType === 8) {
+        if (cycleType === 8 && numDays === 5) {
+            // Original 8-day layout for 5-day programs
             slots = [
                 { type: 'day', dayNum: 1 },
                 { type: 'day', dayNum: 2 },
@@ -60,19 +89,30 @@ const UI = {
                 { type: 'day', dayNum: 3 },
                 { type: 'day', dayNum: 4 },
                 { type: 'rest' },
+                { type: 'day', dayNum: 5 },
+                { type: 'rest' },
+            ];
+        } else if (cycleType === 7 && numDays === 5) {
+            // Original 7-day layout for 5-day programs
+            slots = [
+                { type: 'day', dayNum: 1 },
+                { type: 'day', dayNum: 2 },
+                { type: 'day', dayNum: 3 },
+                { type: 'rest' },
+                { type: 'day', dayNum: 4 },
                 { type: 'day', dayNum: 5 },
                 { type: 'rest' },
             ];
         } else {
-            slots = [
-                { type: 'day', dayNum: 1 },
-                { type: 'day', dayNum: 2 },
-                { type: 'day', dayNum: 3 },
-                { type: 'rest' },
-                { type: 'day', dayNum: 4 },
-                { type: 'day', dayNum: 5 },
-                { type: 'rest' },
-            ];
+            // Dynamic layout: N training days + rest days to fill cycle
+            slots = [];
+            for (let d = 1; d <= numDays; d++) {
+                slots.push({ type: 'day', dayNum: d });
+            }
+            const restDays = Math.max(0, cycleType - numDays);
+            for (let r = 0; r < restDays; r++) {
+                slots.push({ type: 'rest' });
+            }
         }
 
         const restCardHtml = `
@@ -143,7 +183,7 @@ const UI = {
                     </button>
                     <div class="week-label">
                         <div class="week-num">${weekNum}</div>
-                        <div class="week-sublabel">неделя из 12</div>
+                        <div class="week-sublabel">неделя из ${getTotalWeeks()}</div>
                     </div>
                     <button>
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 15l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -185,7 +225,7 @@ const UI = {
                     </button>
                     <div class="week-label">
                         <div class="week-num">${weekNum}</div>
-                        <div class="week-sublabel">неделя из 12</div>
+                        <div class="week-sublabel">неделя из ${getTotalWeeks()}</div>
                     </div>
                     <button id="next-week">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 15l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -489,7 +529,7 @@ const UI = {
 
         // Find exercise name using getGroupExercises helper
         let exerciseName = exerciseId;
-        for (let d = 1; d <= 5; d++) {
+        for (let d = 1; d <= getTotalDays(); d++) {
             const tmpl = PROGRAM.dayTemplates[d];
             if (!tmpl) continue;
             for (const group of tmpl.exerciseGroups) {
@@ -673,7 +713,7 @@ const UI = {
     showChoiceModal(choiceKey) {
         // Find the group across all day templates
         let group = null;
-        for (let d = 1; d <= 5; d++) {
+        for (let d = 1; d <= getTotalDays(); d++) {
             const tmpl = PROGRAM.dayTemplates[d];
             if (!tmpl) continue;
             for (const g of tmpl.exerciseGroups) {

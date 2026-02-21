@@ -7,6 +7,16 @@ const App = {
     _swipeDir: null,
 
     init() {
+        // Load program from storage or auto-migrate existing users
+        const storedProgram = Storage.getProgram();
+        if (storedProgram) {
+            PROGRAM = storedProgram;
+        } else if (Storage.isSetup() && typeof DEFAULT_PROGRAM !== 'undefined') {
+            // Existing user (has startDate) but no program saved yet — auto-migrate
+            PROGRAM = DEFAULT_PROGRAM;
+            Storage.saveProgram(DEFAULT_PROGRAM, false);
+        }
+
         this._saveDebounced = debounce((week, day, exId, setIdx, field, value) => {
             Storage.updateSetValue(week, day, exId, setIdx, field, parseFloat(value) || 0);
         }, 300);
@@ -118,8 +128,8 @@ const App = {
 
                 if (isWeekView) {
                     const targetWeek = swipingLeft
-                        ? (this._currentWeek === 12 ? 1 : this._currentWeek + 1)
-                        : (this._currentWeek === 1 ? 12 : this._currentWeek - 1);
+                        ? (this._currentWeek === getTotalWeeks() ? 1 : this._currentWeek + 1)
+                        : (this._currentWeek === 1 ? getTotalWeeks() : this._currentWeek - 1);
                     companion = createCompanion(targetWeek);
                     companion.style.transition = 'none';
                     companion.style.transform = `translateX(${swipingLeft ? W() : -W()}px)`;
@@ -256,8 +266,8 @@ const App = {
 
             const week = this._currentWeek;
             const next = swipingLeft
-                ? (week === 12 ? 1 : week + 1)
-                : (week === 1 ? 12 : week - 1);
+                ? (week === getTotalWeeks() ? 1 : week + 1)
+                : (week === 1 ? getTotalWeeks() : week - 1);
             setTimeout(() => {
                 unlockScroll();
                 location.hash = `#/week/${next}`;
@@ -412,9 +422,36 @@ const App = {
         location.hash = '#/week/1';
     },
 
+    importProgram(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    const error = validateProgram(data);
+                    if (error) { reject(error); return; }
+                    const hadProgram = PROGRAM !== null;
+                    Storage.saveProgram(data, hadProgram);
+                    PROGRAM = data;
+                    resolve();
+                } catch (err) {
+                    reject('Неверный JSON файл');
+                }
+            };
+            reader.onerror = () => reject('Ошибка чтения файла');
+            reader.readAsText(file);
+        });
+    },
+
     route() {
         document.getElementById('app').classList.remove('no-animate');
         const hash = location.hash || '';
+
+        // Program check: no program loaded → go to setup
+        if (!PROGRAM && hash !== '#/setup') {
+            location.hash = '#/setup';
+            return;
+        }
 
         // Setup check
         if (!Storage.isSetup() && hash !== '#/setup') {
@@ -423,7 +460,7 @@ const App = {
         }
 
         if (hash === '#/setup' || hash === '') {
-            if (!Storage.isSetup()) {
+            if (!PROGRAM || !Storage.isSetup()) {
                 UI.renderSetup();
                 return;
             }
@@ -490,6 +527,35 @@ const App = {
     handleClick(e) {
         const target = e.target;
 
+        // Setup: import program from file
+        if (target.id === 'setup-import-program' || target.closest('#setup-import-program')) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (ev) => {
+                const file = ev.target.files[0];
+                if (!file) return;
+                this.importProgram(file).then(() => {
+                    UI.renderSetup();
+                }).catch(err => {
+                    const status = document.getElementById('program-status');
+                    if (status) status.innerHTML = `<span style="color:#FF2D55">${err}</span>`;
+                });
+            };
+            input.click();
+            return;
+        }
+
+        // Setup: use default program
+        if (target.id === 'setup-use-default' || target.closest('#setup-use-default')) {
+            if (typeof DEFAULT_PROGRAM !== 'undefined') {
+                Storage.saveProgram(DEFAULT_PROGRAM, false);
+                PROGRAM = DEFAULT_PROGRAM;
+                UI.renderSetup();
+            }
+            return;
+        }
+
         // Setup: cycle toggle
         if (target.matches('.cycle-toggle button')) {
             const buttons = target.parentElement.querySelectorAll('button');
@@ -506,11 +572,11 @@ const App = {
 
         // Week navigation
         if (target.id === 'prev-week' || target.closest('#prev-week')) {
-            location.hash = `#/week/${this._currentWeek === 1 ? 12 : this._currentWeek - 1}`;
+            location.hash = `#/week/${this._currentWeek === 1 ? getTotalWeeks() : this._currentWeek - 1}`;
             return;
         }
         if (target.id === 'next-week' || target.closest('#next-week')) {
-            location.hash = `#/week/${this._currentWeek === 12 ? 1 : this._currentWeek + 1}`;
+            location.hash = `#/week/${this._currentWeek === getTotalWeeks() ? 1 : this._currentWeek + 1}`;
             return;
         }
 
