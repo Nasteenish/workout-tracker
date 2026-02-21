@@ -50,6 +50,9 @@ const RestTimer = {
         // Handle returning from background
         document.addEventListener('visibilitychange', () => this._onVisibilityChange());
 
+        // Restore timer if page was killed and reloaded while timer was active
+        this._restoreTimer();
+
         this._updateDisplay();
     },
 
@@ -78,18 +81,11 @@ const RestTimer = {
         }
 
         this._swTimer('START_TIMER', this._remaining * 1000);
+        this._persistTimer();
 
         document.getElementById('rest-timer-bar').classList.add('active');
 
-        this._interval = setInterval(() => {
-            if (!this._paused) {
-                this._remaining = Math.ceil((this._endTime - Date.now()) / 1000);
-                this._updateDisplay();
-                if (this._remaining <= 0) {
-                    this._finish();
-                }
-            }
-        }, 1000);
+        this._startTicking();
     },
 
     stop() {
@@ -98,6 +94,7 @@ const RestTimer = {
         this._endTime = null;
         this._pausedAt = null;
         this._swTimer('STOP_TIMER');
+        this._clearPersistedTimer();
         document.getElementById('rest-timer-bar').classList.remove('active');
     },
 
@@ -113,6 +110,7 @@ const RestTimer = {
             this._pausedAt = null;
             this._swTimer('START_TIMER', (this._endTime - Date.now()));
         }
+        this._persistTimer();
         this._updatePauseBtn();
     },
 
@@ -122,6 +120,7 @@ const RestTimer = {
             this._endTime = Date.now() + this._remaining * 1000;
             this._swTimer('START_TIMER', this._remaining * 1000);
         }
+        this._persistTimer();
         this._updateDisplay();
     },
 
@@ -145,11 +144,81 @@ const RestTimer = {
         });
     },
 
+    _startTicking() {
+        if (this._interval) clearInterval(this._interval);
+        this._interval = setInterval(() => {
+            if (!this._paused) {
+                this._remaining = Math.ceil((this._endTime - Date.now()) / 1000);
+                this._updateDisplay();
+                if (this._remaining <= 0) {
+                    this._finish();
+                }
+            }
+        }, 1000);
+    },
+
+    _persistTimer() {
+        try {
+            const data = {
+                endTime: this._endTime,
+                paused: this._paused,
+                pausedAt: this._pausedAt,
+                remaining: this._remaining
+            };
+            localStorage.setItem('_restTimer', JSON.stringify(data));
+        } catch(e) {}
+    },
+
+    _clearPersistedTimer() {
+        try { localStorage.removeItem('_restTimer'); } catch(e) {}
+    },
+
+    _restoreTimer() {
+        try {
+            const raw = localStorage.getItem('_restTimer');
+            if (!raw) return;
+            const data = JSON.parse(raw);
+            if (!data || !data.endTime) return;
+
+            if (data.paused) {
+                // Timer was paused — restore paused state
+                this._paused = true;
+                this._pausedAt = data.pausedAt;
+                this._endTime = data.endTime;
+                this._remaining = data.remaining || Math.ceil((this._endTime - this._pausedAt) / 1000);
+                this._updateDisplay();
+                this._updatePauseBtn();
+                document.getElementById('rest-timer-bar').classList.add('active');
+                this._startTicking();
+                return;
+            }
+
+            const remaining = Math.ceil((data.endTime - Date.now()) / 1000);
+            if (remaining <= 0) {
+                // Timer expired while page was dead — fire immediately
+                this._clearPersistedTimer();
+                this._showFinishEffects();
+            } else {
+                // Timer still active — resume it
+                this._endTime = data.endTime;
+                this._remaining = remaining;
+                this._paused = false;
+                this._updateDisplay();
+                this._updatePauseBtn();
+                document.getElementById('rest-timer-bar').classList.add('active');
+                this._startTicking();
+            }
+        } catch(e) {
+            this._clearPersistedTimer();
+        }
+    },
+
     _finish() {
         clearInterval(this._interval);
         this._interval = null;
         this._endTime = null;
         this._swTimer('STOP_TIMER');
+        this._clearPersistedTimer();
         document.getElementById('rest-timer-bar').classList.remove('active');
 
         // If page is hidden (user on YouTube etc.), defer notification until they return
