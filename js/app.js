@@ -226,13 +226,9 @@ const App = {
                     if (companion) {
                         companion.style.transition = 'opacity 0.15s ease-out';
                         companion.style.opacity = '0';
-                        setTimeout(() => {
-                            removeCompanion();
-                            app.classList.remove('no-animate');
-                        }, 160);
-                    } else {
-                        app.classList.remove('no-animate');
+                        setTimeout(removeCompanion, 160);
                     }
+                    // no-animate stays on — removed by route() on next navigation
                 }, 220);
                 return;
             }
@@ -418,6 +414,7 @@ const App = {
     },
 
     route() {
+        document.getElementById('app').classList.remove('no-animate');
         const hash = location.hash || '';
 
         // Setup check
