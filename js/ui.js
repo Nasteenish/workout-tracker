@@ -141,6 +141,11 @@ const UI = {
                 if (isNext) cardClass += ' today';
                 if (isDone) cardClass += ' done';
 
+                const lastTs = Storage.getLastTrainingDate(weekNum, dayNum);
+                const trainedDateHtml = lastTs
+                    ? `<div class="day-trained-date">${new Date(lastTs).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</div>`
+                    : '';
+
                 cardsHtml += `
                     <a class="${cardClass}" href="#/week/${weekNum}/day/${dayNum}">
                         <div class="day-header">
@@ -152,6 +157,7 @@ const UI = {
                             <div class="progress-fill" style="width: ${pct}%"></div>
                         </div>
                         <div class="progress-text">${completed}/${total} подходов</div>
+                        ${trainedDateHtml}
                     </a>
                 `;
             }

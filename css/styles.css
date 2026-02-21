@@ -525,6 +525,12 @@ input, button, select {
     color: var(--text-muted);
 }
 
+.day-trained-date {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.35);
+    margin-top: 4px;
+}
+
 /* ===== Day View ===== */
 .warmup-section {
     background: var(--bg-secondary);

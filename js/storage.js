@@ -385,6 +385,20 @@ const Storage = {
         return history;
     },
 
+    // Last training date for a given week/day (max timestamp across all sets)
+    getLastTrainingDate(week, day) {
+        const data = this._load();
+        const w = String(week), d = String(day);
+        if (!data.log[w] || !data.log[w][d]) return null;
+        let maxTs = 0;
+        for (const exId of Object.keys(data.log[w][d])) {
+            for (const setData of Object.values(data.log[w][d][exId])) {
+                if (setData && setData.timestamp > maxTs) maxTs = setData.timestamp;
+            }
+        }
+        return maxTs > 0 ? maxTs : null;
+    },
+
     // Export / Import
     exportData() {
         return JSON.stringify(this._load(), null, 2);
