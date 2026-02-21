@@ -130,9 +130,9 @@ const UI = {
                 </div>
                 <div class="settings-btn">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                        <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-                        <line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-                        <line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="5" y1="4" x2="5" y2="8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="6" x2="19" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="19" y1="4" x2="19" y2="8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="5" y1="10" x2="5" y2="14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="19" y1="10" x2="19" y2="14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="5" y1="16" x2="5" y2="20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="18" x2="19" y2="18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="19" y1="16" x2="19" y2="20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
                     </svg>
                 </div>
             </div>
@@ -172,9 +172,9 @@ const UI = {
                 </div>
                 <button class="settings-btn" id="btn-settings">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                        <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-                        <line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-                        <line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="5" y1="4" x2="5" y2="8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="6" x2="19" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="19" y1="4" x2="19" y2="8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="5" y1="10" x2="5" y2="14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="19" y1="10" x2="19" y2="14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="5" y1="16" x2="5" y2="20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="18" x2="19" y2="18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="19" y1="16" x2="19" y2="20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
                     </svg>
                 </button>
             </div>
