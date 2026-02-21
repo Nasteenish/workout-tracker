@@ -332,7 +332,7 @@ const UI = {
         return `
             <div class="exercise-card ${choiceKey ? 'is-chooser' : ''}">
                 <div class="exercise-header">
-                    <div class="exercise-name ${choiceKey ? 'exercise-name-chooser' : ''}" ${choiceKey ? `data-choice-key="${choiceKey}"` : ''}>${ex.nameRu || ex.name}${choiceKey ? `<span class="chooser-badge"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>` : ''}</div>
+                    <div class="exercise-name ${choiceKey ? 'exercise-name-chooser' : ''}" ${choiceKey ? `data-choice-key="${choiceKey}"` : ''}>${choiceKey ? this._nameWithBadge(ex.nameRu || ex.name) : (ex.nameRu || ex.name)}</div>
                     <div class="exercise-meta">
                         <span>${ex.reps} reps</span>
                         ${restText ? `<span>${restText}</span>` : ''}
@@ -500,6 +500,15 @@ const UI = {
                 ${exercisesHtml}
             </div>
         `;
+    },
+
+    _nameWithBadge(name) {
+        const badge = `<span class="chooser-badge"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
+        const lastSpace = name.lastIndexOf(' ');
+        if (lastSpace > 0) {
+            return `${name.substring(0, lastSpace)} <span class="chooser-nowrap">${name.substring(lastSpace + 1)}${badge}</span>`;
+        }
+        return `<span class="chooser-nowrap">${name}${badge}</span>`;
     },
 
     _renderChooseOne(group, weekNum, dayNum) {

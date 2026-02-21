@@ -604,17 +604,12 @@ input, button, select {
 }
 
 .exercise-name-chooser {
-    display: flex;
-    align-items: flex-start;
-    gap: 5px;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
 }
 
-.exercise-name-chooser .chooser-badge {
-    flex-shrink: 0;
-    margin-left: 0;
-    margin-top: 2px;
+.chooser-nowrap {
+    white-space: nowrap;
 }
 
 .chooser-badge {
