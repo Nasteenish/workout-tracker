@@ -227,12 +227,7 @@ const App = {
                     // Remove companion instantly — #app already has correct content
                     removeCompanion();
                     window.scrollTo(0, 0);
-                    // Remove no-animate after browser has painted
-                    requestAnimationFrame(() => {
-                        requestAnimationFrame(() => {
-                            app.classList.remove('no-animate');
-                        });
-                    });
+                    // Keep no-animate on — route() will remove it on next navigation
                 }, 220);
                 return;
             }
