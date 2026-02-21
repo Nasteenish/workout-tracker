@@ -109,7 +109,7 @@ const RestTimer = {
     adjust(delta) {
         this._remaining = Math.max(5, this._remaining + delta);
         if (this._endTime && !this._paused) {
-            this._endTime += delta * 1000;
+            this._endTime = Date.now() + this._remaining * 1000;
         }
         this._updateDisplay();
     },
