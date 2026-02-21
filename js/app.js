@@ -282,8 +282,8 @@ const App = {
             // Smoothly return page content
             if (active) {
                 app.style.transition = 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                app.style.transform = '';
-                setTimeout(() => { app.style.transition = ''; }, 360);
+                app.style.transform = 'translateY(0)';
+                setTimeout(() => { app.style.transition = ''; app.style.transform = ''; }, 360);
             }
             if (indicator) {
                 if (ready) {
