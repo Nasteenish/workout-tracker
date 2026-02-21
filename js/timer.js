@@ -8,6 +8,8 @@ const RestTimer = {
     _audioCtx: null,
     _endTime: null,
     _pausedAt: null,
+    _keepAliveAudio: null,
+    _keepAliveUrl: null,
 
     init() {
         const settings = Storage.getSettings();
@@ -86,6 +88,7 @@ const RestTimer = {
         document.getElementById('rest-timer-bar').classList.add('active');
 
         this._startTicking();
+        this._startKeepAlive();
     },
 
     stop() {
@@ -95,6 +98,7 @@ const RestTimer = {
         this._pausedAt = null;
         this._swTimer('STOP_TIMER');
         this._clearPersistedTimer();
+        this._stopKeepAlive();
         document.getElementById('rest-timer-bar').classList.remove('active');
     },
 
@@ -133,6 +137,52 @@ const RestTimer = {
                 this._audioCtx.resume();
             }
         } catch(e) {}
+    },
+
+    _startKeepAlive() {
+        if (this._keepAliveAudio) return;
+        try {
+            // Generate 1-second silent WAV in memory
+            const sampleRate = 8000;
+            const numSamples = sampleRate;
+            const buffer = new ArrayBuffer(44 + numSamples);
+            const view = new DataView(buffer);
+            const w = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
+            w(0, 'RIFF');
+            view.setUint32(4, 36 + numSamples, true);
+            w(8, 'WAVE');
+            w(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate, true);
+            view.setUint16(32, 1, true);
+            view.setUint16(34, 8, true);
+            w(36, 'data');
+            view.setUint32(40, numSamples, true);
+            for (let i = 0; i < numSamples; i++) view.setUint8(44 + i, 128);
+
+            const blob = new Blob([buffer], { type: 'audio/wav' });
+            this._keepAliveUrl = URL.createObjectURL(blob);
+            const audio = new Audio(this._keepAliveUrl);
+            audio.loop = true;
+            audio.volume = 0.01;
+            audio.play().catch(() => {});
+            this._keepAliveAudio = audio;
+        } catch(e) {}
+    },
+
+    _stopKeepAlive() {
+        if (this._keepAliveAudio) {
+            this._keepAliveAudio.pause();
+            this._keepAliveAudio.src = '';
+            this._keepAliveAudio = null;
+        }
+        if (this._keepAliveUrl) {
+            URL.revokeObjectURL(this._keepAliveUrl);
+            this._keepAliveUrl = null;
+        }
     },
 
     _swTimer(type, duration) {
@@ -218,6 +268,7 @@ const RestTimer = {
         this._interval = null;
         this._endTime = null;
         this._clearPersistedTimer();
+        this._stopKeepAlive();
         document.getElementById('rest-timer-bar').classList.remove('active');
 
         // If page is hidden (user on YouTube etc.), let SW notification fire on its own
