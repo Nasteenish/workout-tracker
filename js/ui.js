@@ -876,11 +876,6 @@ const UI = {
                             <div class="guide-item-desc"><strong>+2 DROP</strong>, <strong>+2 MP</strong> — цифра означает количество дополнительных подходов с техникой</div>
                         </div>
                     </div>
-                    <div class="guide-item">
-                        <div class="guide-item-text">
-                            <div class="guide-item-desc"><strong>DROP/R-P</strong> — можно выбрать дроп-сет или рест-паузу на свой выбор</div>
-                        </div>
-                    </div>
                 </div>
 
             </div>
