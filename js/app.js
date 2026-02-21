@@ -112,12 +112,15 @@ const App = {
                 } else if (isDayView || isSettingsView) {
                     // Day/Settings back-swipe: full-screen companion + move entire #app
                     isDayBack = true;
+                    savedScrollY = window.scrollY;
+                    window.scrollTo(0, 0);
                     companion = createBackCompanion(this._currentWeek);
                     companion.style.transition = 'none';
                     companion.style.transform = `translateX(${-0.28 * W()}px)`;
                     const app = document.getElementById('app');
                     app.classList.add('swiping-back');
                     app.style.transition = 'none';
+                    app.style.transform = `translateY(${-savedScrollY}px)`;
                 }
             }
 
@@ -128,7 +131,7 @@ const App = {
             }
 
             if (isDayBack) {
-                document.getElementById('app').style.transform = `translateX(${dx}px)`;
+                document.getElementById('app').style.transform = `translateX(${dx}px) translateY(${-savedScrollY}px)`;
                 if (companion) {
                     companion.style.transform = `translateX(${-0.28 * W() + 0.28 * dx}px)`;
                 }
@@ -153,7 +156,7 @@ const App = {
                 if (!dragging || dx < 60) {
                     // Snap back
                     app.style.transition = snap;
-                    app.style.transform = 'translateX(0)';
+                    app.style.transform = 'translateX(0) translateY(0)';
                     if (companion) {
                         companion.style.transition = snap;
                         companion.style.transform = `translateX(${-0.28 * W()}px)`;
@@ -164,12 +167,13 @@ const App = {
                         app.style.transition = 'none';
                         app.style.transform = '';
                         app.classList.remove('swiping-back');
+                        window.scrollTo(0, savedScrollY);
                     }, 230);
                     return;
                 }
                 // Commit: slide entire day view off, reveal week view
                 app.style.transition = commit;
-                app.style.transform = `translateX(${W() + 20}px)`;
+                app.style.transform = `translateX(${W() + 20}px) translateY(${-savedScrollY}px)`;
                 if (companion) {
                     companion.style.transition = commit;
                     companion.style.transform = 'translateX(0)';
