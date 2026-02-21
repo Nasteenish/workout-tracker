@@ -1,4 +1,4 @@
-const CACHE_NAME = 'workout-tracker-v137';
+const CACHE_NAME = 'workout-tracker-v138';
 const ASSETS = [
     './',
     './index.html',
@@ -35,27 +35,36 @@ self.addEventListener('activate', event => {
 
 // ===== Rest Timer Background Notification =====
 let _timerTimeout = null;
+let _timerResolve = null;
 
 self.addEventListener('message', event => {
     const { type, duration } = event.data || {};
 
     if (type === 'START_TIMER') {
+        // Cancel previous timer
         if (_timerTimeout) clearTimeout(_timerTimeout);
-        _timerTimeout = setTimeout(() => {
-            _timerTimeout = null;
-            self.registration.showNotification('Пора!', {
-                body: 'Отдых завершён',
-                icon: './icons/icon-192.png',
-                tag: 'rest-timer',
-                vibrate: [200, 80, 200, 80, 400],
-                requireInteraction: false
-            });
-        }, duration);
+        if (_timerResolve) { _timerResolve(); _timerResolve = null; }
+
+        // waitUntil keeps the SW alive until the timer fires
+        event.waitUntil(new Promise(resolve => {
+            _timerResolve = resolve;
+            _timerTimeout = setTimeout(() => {
+                _timerTimeout = null;
+                _timerResolve = null;
+                self.registration.showNotification('Пора!', {
+                    body: 'Отдых завершён',
+                    icon: './icons/icon-192.png',
+                    tag: 'rest-timer',
+                    vibrate: [200, 80, 200, 80, 400]
+                }).then(resolve).catch(resolve);
+            }, duration);
+        }));
     }
 
     if (type === 'STOP_TIMER') {
         if (_timerTimeout) clearTimeout(_timerTimeout);
         _timerTimeout = null;
+        if (_timerResolve) { _timerResolve(); _timerResolve = null; }
     }
 });
 
