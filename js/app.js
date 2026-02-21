@@ -72,7 +72,7 @@ const App = {
         document.addEventListener('touchstart', (e) => {
             isWeekView = !!location.hash.match(/^#\/week\/\d+$/);
             isDayView = !!location.hash.match(/^#\/week\/\d+\/day\/\d+$/);
-            isSettingsView = location.hash === '#/settings';
+            isSettingsView = location.hash === '#/settings' || location.hash === '#/menu' || location.hash === '#/guide';
             if (!isWeekView && !isDayView && !isSettingsView) return;
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
@@ -388,8 +388,18 @@ const App = {
             return;
         }
 
+        if (hash === '#/menu') {
+            UI.renderMenu();
+            return;
+        }
+
         if (hash === '#/settings') {
             UI.renderSettings();
+            return;
+        }
+
+        if (hash === '#/guide') {
+            UI.renderGuide();
             return;
         }
 
@@ -486,14 +496,14 @@ const App = {
             return;
         }
 
-        // Settings
+        // Menu (was Settings)
         if (target.id === 'btn-settings' || target.closest('#btn-settings')) {
-            location.hash = '#/settings';
+            location.hash = '#/menu';
             return;
         }
 
-        // Back from settings — smooth exit
-        if (target.id === 'btn-back-settings' || target.closest('#btn-back-settings')) {
+        // Back from menu — smooth exit to week view
+        if (target.id === 'btn-back-menu' || target.closest('#btn-back-menu')) {
             const app = document.getElementById('app');
             app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
             app.style.transform = 'translateX(40px)';
@@ -504,6 +514,38 @@ const App = {
                 app.style.opacity = '';
                 window.scrollTo(0, 0);
                 location.hash = `#/week/${this._currentWeek}`;
+            }, 190);
+            return;
+        }
+
+        // Back from settings — smooth exit to menu
+        if (target.id === 'btn-back-settings' || target.closest('#btn-back-settings')) {
+            const app = document.getElementById('app');
+            app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
+            app.style.transform = 'translateX(40px)';
+            app.style.opacity = '0';
+            setTimeout(() => {
+                app.style.transition = 'none';
+                app.style.transform = '';
+                app.style.opacity = '';
+                window.scrollTo(0, 0);
+                location.hash = '#/menu';
+            }, 190);
+            return;
+        }
+
+        // Back from guide — smooth exit to menu
+        if (target.id === 'btn-back-guide' || target.closest('#btn-back-guide')) {
+            const app = document.getElementById('app');
+            app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
+            app.style.transform = 'translateX(40px)';
+            app.style.opacity = '0';
+            setTimeout(() => {
+                app.style.transition = 'none';
+                app.style.transform = '';
+                app.style.opacity = '';
+                window.scrollTo(0, 0);
+                location.hash = '#/menu';
             }, 190);
             return;
         }

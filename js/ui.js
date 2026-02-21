@@ -732,7 +732,168 @@ const UI = {
         }
     },
 
-    // ===== SETTINGS MODAL =====
+    // ===== MENU =====
+    renderMenu() {
+        const GEAR_SVG = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/></svg>';
+        const BOOK_SVG = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+        document.getElementById('app').innerHTML = `
+            <div class="app-header">
+                <button class="back-btn" id="btn-back-menu"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                <div class="header-title">
+                    <h1>Меню</h1>
+                </div>
+            </div>
+            <div class="app-content">
+                <a class="menu-card" href="#/settings">
+                    <div class="menu-card-icon">${GEAR_SVG}</div>
+                    <div class="menu-card-text">
+                        <div class="menu-card-title">Настройки</div>
+                        <div class="menu-card-desc">Программа, таймер, единицы, оборудование</div>
+                    </div>
+                    <svg class="menu-card-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 15l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </a>
+                <a class="menu-card" href="#/guide">
+                    <div class="menu-card-icon">${BOOK_SVG}</div>
+                    <div class="menu-card-text">
+                        <div class="menu-card-title">Справочник</div>
+                        <div class="menu-card-desc">Типы подходов, RPE, техники интенсивности</div>
+                    </div>
+                    <svg class="menu-card-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 15l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </a>
+            </div>
+        `;
+    },
+
+    // ===== GUIDE =====
+    renderGuide() {
+        document.getElementById('app').innerHTML = `
+            <div class="app-header">
+                <button class="back-btn" id="btn-back-guide"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                <div class="header-title">
+                    <h1>Справочник</h1>
+                </div>
+            </div>
+            <div class="app-content">
+
+                <div class="guide-card">
+                    <div class="guide-card-label">Типы подходов</div>
+                    <div class="guide-item">
+                        <span class="set-type-badge type-S">S</span>
+                        <div class="guide-item-text">
+                            <div class="guide-item-title">Сила (Strength)</div>
+                            <div class="guide-item-desc">Взрывные повторения. Фокус на перемещении веса с максимальной силой и скоростью. Каждое повторение — мощное и резкое.</div>
+                        </div>
+                    </div>
+                    <div class="guide-item">
+                        <span class="set-type-badge type-SH">S/H</span>
+                        <div class="guide-item-text">
+                            <div class="guide-item-title">Сила / Гипертрофия</div>
+                            <div class="guide-item-desc">Начинаешь подконтрольно, ближе к отказу переключаешься на взрывное выполнение. Комбинация контроля и мощности.</div>
+                        </div>
+                    </div>
+                    <div class="guide-item">
+                        <span class="set-type-badge type-H">H</span>
+                        <div class="guide-item-text">
+                            <div class="guide-item-title">Гипертрофия (Hypertrophy)</div>
+                            <div class="guide-item-desc">Все повторения подконтрольные. Фокус на сокращении мышцы и чувстве нагрузки. Медленная негативная фаза.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="guide-card">
+                    <div class="guide-card-label">Шкала RPE</div>
+                    <div class="guide-item">
+                        <span class="rpe-badge">RPE 7</span>
+                        <div class="guide-item-text">
+                            <div class="guide-item-desc">3 повторения до отказа — вес ощущается тяжёлым, но есть запас</div>
+                        </div>
+                    </div>
+                    <div class="guide-item">
+                        <span class="rpe-badge">RPE 8</span>
+                        <div class="guide-item-text">
+                            <div class="guide-item-desc">2 повторения до отказа — тяжело, мог бы сделать ещё 2</div>
+                        </div>
+                    </div>
+                    <div class="guide-item">
+                        <span class="rpe-badge">RPE 9</span>
+                        <div class="guide-item-text">
+                            <div class="guide-item-desc">1 повторение до отказа — очень тяжело, максимум ещё 1</div>
+                        </div>
+                    </div>
+                    <div class="guide-item">
+                        <span class="rpe-badge">RPE 10</span>
+                        <div class="guide-item-text">
+                            <div class="guide-item-desc">Полный отказ — больше ни одного повторения с правильной техникой</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="guide-card">
+                    <div class="guide-card-label">Техники интенсивности</div>
+                    <div class="guide-item">
+                        <span class="tech-badge tech-DROP">DROP</span>
+                        <div class="guide-item-text">
+                            <div class="guide-item-title">Дроп-сет</div>
+                            <div class="guide-item-desc">После последнего подхода снижаешь вес на 20-30% и сразу продолжаешь повторения до отказа без отдыха.</div>
+                        </div>
+                    </div>
+                    <div class="guide-item">
+                        <span class="tech-badge tech-REST_PAUSE">R-P</span>
+                        <div class="guide-item-text">
+                            <div class="guide-item-title">Рест-пауза (Rest Pause)</div>
+                            <div class="guide-item-desc">После последнего подхода отдыхаешь 10-15 секунд с тем же весом, затем продолжаешь повторения до отказа.</div>
+                        </div>
+                    </div>
+                    <div class="guide-item">
+                        <span class="tech-badge tech-MP">MP</span>
+                        <div class="guide-item-text">
+                            <div class="guide-item-title">Микро-паузы</div>
+                            <div class="guide-item-desc">После отказа отдыхаешь максимум 5 секунд, затем делаешь ещё 1-3 повторения. Можно повторить несколько раз.</div>
+                        </div>
+                    </div>
+                    <div class="guide-item">
+                        <div class="guide-item-text">
+                            <div class="guide-item-title">AMRAP</div>
+                            <div class="guide-item-desc">As Many Reps As Possible — максимум повторений до полного отказа.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="guide-card">
+                    <div class="guide-card-label">Обозначения в программе</div>
+                    <div class="guide-item">
+                        <div class="guide-item-text">
+                            <div class="guide-item-desc"><strong>+1 DROP</strong> — после последнего подхода сделай 1 дроп-сет</div>
+                        </div>
+                    </div>
+                    <div class="guide-item">
+                        <div class="guide-item-text">
+                            <div class="guide-item-desc"><strong>+1 REST</strong> — после последнего подхода сделай 1 рест-паузу</div>
+                        </div>
+                    </div>
+                    <div class="guide-item">
+                        <div class="guide-item-text">
+                            <div class="guide-item-desc"><strong>+1 MP</strong> — после последнего подхода сделай 1 микро-паузу</div>
+                        </div>
+                    </div>
+                    <div class="guide-item">
+                        <div class="guide-item-text">
+                            <div class="guide-item-desc"><strong>+2 DROP</strong>, <strong>+2 MP</strong> — цифра означает количество дополнительных подходов с техникой</div>
+                        </div>
+                    </div>
+                    <div class="guide-item">
+                        <div class="guide-item-text">
+                            <div class="guide-item-desc"><strong>DROP/R-P</strong> — можно выбрать дроп-сет или рест-паузу на свой выбор</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        `;
+    },
+
+    // ===== SETTINGS =====
     renderSettings() {
         const settings = Storage.getSettings();
         const unit = Storage.getWeightUnit();

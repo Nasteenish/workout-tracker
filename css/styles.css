@@ -1497,6 +1497,127 @@ body.modal-open {
     opacity: 0.5;
 }
 
+/* ===== Menu Cards ===== */
+.menu-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg) var(--spacing-md);
+    background: var(--bg-secondary);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow);
+    margin-bottom: var(--spacing-md);
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.menu-card:active {
+    background: var(--bg-card);
+    transform: scale(0.98);
+}
+
+.menu-card-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(157, 141, 245, 0.15);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-primary);
+    flex-shrink: 0;
+}
+
+.menu-card-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.menu-card-title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    margin-bottom: 2px;
+}
+
+.menu-card-desc {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.menu-card-arrow {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+/* ===== Guide Page ===== */
+.guide-card {
+    background: var(--bg-secondary);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.guide-card-label {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: var(--spacing-md);
+}
+
+.guide-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) 0;
+    border-top: 1px solid var(--border-color);
+}
+
+.guide-item:first-of-type {
+    border-top: none;
+    padding-top: 0;
+}
+
+.guide-item .set-type-badge,
+.guide-item .rpe-badge,
+.guide-item .tech-badge {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.guide-item-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.guide-item-title {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.guide-item-desc {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.guide-item-desc strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
 /* ===== Scrollbar — hidden for clean iOS look ===== */
 ::-webkit-scrollbar {
     display: none;
