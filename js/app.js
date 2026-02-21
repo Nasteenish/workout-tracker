@@ -231,19 +231,32 @@ const App = {
 
         const DUMBBELL_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="1" y="9" width="3" height="6" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="7" width="3" height="10" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="17" y="7" width="3" height="10" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="20" y="9" width="3" height="6" rx="1" stroke="currentColor" stroke-width="1.8"/><line x1="7" y1="12" x2="17" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 
+        let active = false;
+        const app = document.getElementById('app');
+
         document.addEventListener('touchstart', (e) => {
             if (window.scrollY <= 2) {
                 startY = e.touches[0].clientY;
                 pulling = true;
                 ready = false;
+                active = false;
             }
         }, { passive: true });
 
         document.addEventListener('touchmove', (e) => {
             if (!pulling) return;
+            // If page scrolled away from top, this is normal scroll — bail out
+            if (window.scrollY > 2) { pulling = false; active = false; return; }
             const dy = e.touches[0].clientY - startY;
-            if (dy > 10 && window.scrollY <= 2) {
-                e.preventDefault();
+            if (dy > 10) {
+                if (!active) {
+                    active = true;
+                    app.style.transition = 'none';
+                }
+                // Rubber-band: translate page content down (dampened)
+                const pull = Math.min((dy - 10) * 0.35, 55);
+                app.style.transform = `translateY(${pull}px)`;
+
                 if (!indicator) {
                     indicator = document.createElement('div');
                     indicator.id = 'pull-indicator';
@@ -261,27 +274,33 @@ const App = {
                     indicator.classList.add('spinning');
                 }
             }
-        }, { passive: false });
+        }, { passive: true });
 
         document.addEventListener('touchend', () => {
+            // Smoothly return page content
+            if (active) {
+                app.style.transition = 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                app.style.transform = '';
+                setTimeout(() => { app.style.transition = ''; }, 360);
+            }
             if (indicator) {
                 if (ready) {
-                    // Keep spinning until page reloads
                     indicator.classList.add('spinning');
                     location.reload();
                     return;
                 }
                 // Smooth fade-out — keep current rotation, add scale-down
                 const cur = indicator.style.transform || 'translateX(-50%)';
-                indicator.style.transition = 'opacity 0.25s ease-out, transform 0.25s ease-out';
+                indicator.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
                 indicator.style.opacity = '0';
                 indicator.style.transform = cur + ' scale(0.5)';
                 const ref = indicator;
-                setTimeout(() => { ref.remove(); }, 260);
+                setTimeout(() => { ref.remove(); }, 310);
                 indicator = null;
             }
             pulling = false;
             ready = false;
+            active = false;
         });
     },
 
