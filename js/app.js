@@ -274,7 +274,7 @@ const App = {
 
         document.addEventListener('touchend', () => {
             if (active) {
-                app.style.transition = 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)';
+                app.style.transition = 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
                 requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
                         app.style.transform = 'translateY(0)';
@@ -283,7 +283,7 @@ const App = {
                             app.style.transform = '';
                         };
                         app.addEventListener('transitionend', cleanup, { once: true });
-                        setTimeout(cleanup, 500);
+                        setTimeout(cleanup, 850);
                     });
                 });
             }
