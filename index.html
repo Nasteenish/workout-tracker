@@ -32,18 +32,13 @@
     <script src="./js/data.js?v=16"></script>
     <script src="./js/storage.js?v=14"></script>
     <script src="./js/ui.js?v=28"></script>
-    <script src="./js/timer.js?v=15"></script>
+    <script src="./js/timer.js?v=16"></script>
     <script src="./js/app.js?v=47"></script>
 
     <script>
         if ('serviceWorker' in navigator) {
-            // Unregister old SW (without version param) first
-            navigator.serviceWorker.getRegistrations().then(regs => {
-                regs.forEach(r => r.unregister());
-            }).then(() => {
-                navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
-                    .then(reg => reg.update());
-            });
+            navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
+                .then(reg => reg.update());
         }
     </script>
 </body>

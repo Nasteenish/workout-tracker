@@ -71,6 +71,12 @@ const RestTimer = {
         this._endTime = Date.now() + this._remaining * 1000;
         this._updateDisplay();
         this._updatePauseBtn();
+
+        // Ensure notification permission for background alerts
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
         this._swTimer('START_TIMER', this._remaining * 1000);
 
         document.getElementById('rest-timer-bar').classList.add('active');
@@ -131,9 +137,12 @@ const RestTimer = {
     },
 
     _swTimer(type, duration) {
-        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage({ type, duration });
-        }
+        if (!navigator.serviceWorker) return;
+        navigator.serviceWorker.ready.then(reg => {
+            if (reg.active) {
+                reg.active.postMessage({ type, duration });
+            }
+        });
     },
 
     _finish() {
