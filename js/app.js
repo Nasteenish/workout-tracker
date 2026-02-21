@@ -181,9 +181,12 @@ const App = {
                     app.classList.remove('swiping-back');
                     unlockScroll();
                     window.scrollTo(0, 0);
+                    // Render synchronously before removing companion
                     location.hash = `#/week/${this._currentWeek}`;
-                    // Delay companion removal to let #app repaint behind it
-                    setTimeout(removeCompanion, 50);
+                    this.route();
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(removeCompanion);
+                    });
                 }, 190);
                 return;
             }
