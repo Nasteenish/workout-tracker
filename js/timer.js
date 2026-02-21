@@ -152,6 +152,17 @@ const RestTimer = {
         this._swTimer('STOP_TIMER');
         document.getElementById('rest-timer-bar').classList.remove('active');
 
+        // If page is hidden (user on YouTube etc.), defer notification until they return
+        if (document.visibilityState !== 'visible') {
+            this._pendingFinish = true;
+            return;
+        }
+
+        this._showFinishEffects();
+    },
+
+    _showFinishEffects() {
+        this._pendingFinish = false;
         if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
         this._playBeep();
         this._showNotification();
@@ -257,6 +268,13 @@ const RestTimer = {
 
     _onVisibilityChange() {
         if (document.visibilityState !== 'visible') return;
+
+        // Show deferred finish effects when returning from background
+        if (this._pendingFinish) {
+            this._showFinishEffects();
+            return;
+        }
+
         if (!this._interval || this._paused) return;
 
         // Recalculate remaining based on real time
