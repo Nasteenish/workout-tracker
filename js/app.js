@@ -206,7 +206,16 @@ const App = {
                     companion.style.transform = 'translateX(0)';
                 }
                 const swipeTarget = isMenuSubPage ? '#/menu' : `#/week/${this._currentWeek}`;
-                const resetApp = () => {
+                setTimeout(() => {
+                    app.classList.add('no-animate');
+                    history.replaceState(null, '', swipeTarget);
+                    // Render while #app is still off-screen (position:fixed + translated)
+                    if (isMenuSubPage) {
+                        UI.renderMenu();
+                    } else {
+                        UI.renderWeek(this._currentWeek);
+                    }
+                    // Reset #app to normal position (companion still covers it)
                     app.style.transition = 'none';
                     app.style.transform = '';
                     app.style.position = '';
@@ -215,27 +224,9 @@ const App = {
                     app.style.right = '';
                     app.classList.remove('swiping-back');
                     unlockScroll();
+                    // Remove companion instantly — #app already has correct content
+                    removeCompanion();
                     window.scrollTo(0, 0);
-                };
-                setTimeout(() => {
-                    // Reset #app behind companion, render new content
-                    resetApp();
-                    app.classList.add('no-animate');
-                    // Update URL WITHOUT triggering hashchange → route()
-                    // so that no-animate stays active during render
-                    history.replaceState(null, '', swipeTarget);
-                    // Render directly instead of going through route()
-                    if (isMenuSubPage) {
-                        UI.renderMenu();
-                    } else {
-                        UI.renderWeek(this._currentWeek);
-                    }
-                    // Crossfade companion out to smoothly reveal #app
-                    if (companion) {
-                        companion.style.transition = 'opacity 0.15s ease-out';
-                        companion.style.opacity = '0';
-                        setTimeout(removeCompanion, 160);
-                    }
                     // Remove no-animate after browser has painted
                     requestAnimationFrame(() => {
                         requestAnimationFrame(() => {
