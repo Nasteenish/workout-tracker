@@ -203,11 +203,16 @@ const App = {
                     app.style.left = '';
                     app.style.right = '';
                     app.classList.remove('swiping-back');
+                    // Suppress fadeIn on new content so companion→app switch is seamless
+                    app.classList.add('no-animate');
                     unlockScroll();
                     window.scrollTo(0, 0);
                     location.hash = swipeTarget;
-                    // Wait for repaint before removing companion
-                    requestAnimationFrame(() => requestAnimationFrame(removeCompanion));
+                    // Wait for repaint before removing companion, then re-enable animations
+                    requestAnimationFrame(() => requestAnimationFrame(() => {
+                        removeCompanion();
+                        requestAnimationFrame(() => app.classList.remove('no-animate'));
+                    }));
                 }, 190);
                 return;
             }

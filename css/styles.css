@@ -223,7 +223,8 @@ input, button, select {
     margin-right: auto;
 }
 
-.back-companion .app-content > * {
+.back-companion .app-content > *,
+#app.no-animate .app-content > * {
     animation: none !important;
 }
 
