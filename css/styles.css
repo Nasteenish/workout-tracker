@@ -111,7 +111,6 @@ input, button, select {
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
-    touch-action: pan-y;
 }
 
 /* ===== Header ===== */

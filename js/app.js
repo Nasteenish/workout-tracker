@@ -39,6 +39,7 @@ const App = {
         let swipingLeft = false;
         let companion = null;
         let isDayBack = false;
+        let savedScrollY = 0;
 
         const W = () => window.innerWidth;
 
@@ -92,6 +93,7 @@ const App = {
                 if ((isDayView || isSettingsView) && dx < 0) { locked = true; return; }
                 dragging = true;
                 swipingLeft = dx < 0;
+                savedScrollY = window.scrollY;
 
                 if (isWeekView) {
                     const targetWeek = swipingLeft
@@ -113,7 +115,10 @@ const App = {
             }
 
             // Lock to horizontal axis — prevent vertical scroll during swipe
-            if (dragging) e.preventDefault();
+            if (dragging) {
+                e.preventDefault();
+                window.scrollTo(0, savedScrollY);
+            }
 
             if (isDayBack) {
                 document.getElementById('app').style.transform = `translateX(${dx}px)`;
