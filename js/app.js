@@ -274,18 +274,18 @@ const App = {
 
         document.addEventListener('touchend', () => {
             if (active) {
-                app.style.transition = 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => {
-                        app.style.transform = 'translateY(0)';
-                        const cleanup = () => {
-                            app.style.transition = '';
-                            app.style.transform = '';
-                        };
-                        app.addEventListener('transitionend', cleanup, { once: true });
-                        setTimeout(cleanup, 850);
-                    });
-                });
+                const from = parseFloat(app.style.transform.match(/translateY\((.+?)px\)/)?.[1]) || 0;
+                const t0 = performance.now();
+                const dur = 550;
+                const tick = (now) => {
+                    const p = Math.min((now - t0) / dur, 1);
+                    const ease = 1 - Math.pow(1 - p, 4);
+                    app.style.transform = `translateY(${(from * (1 - ease)).toFixed(1)}px)`;
+                    if (p < 1) requestAnimationFrame(tick);
+                    else { app.style.transition = ''; app.style.transform = ''; }
+                };
+                app.style.transition = 'none';
+                requestAnimationFrame(tick);
             }
             if (indicator) {
                 if (ready) {
