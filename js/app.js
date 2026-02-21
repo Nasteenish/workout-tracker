@@ -244,7 +244,6 @@ const App = {
             const absFrom = Math.abs(fromY);
             if (absFrom < 1) { app.style.transition = ''; app.style.transform = ''; return; }
 
-            // Use CSS @keyframes — immune to iOS Safari scroll interference
             const id = ++snapId;
             const name = `snap-${id}`;
             if (snapStyleEl) snapStyleEl.remove();
@@ -252,28 +251,24 @@ const App = {
             snapStyleEl.textContent = `@keyframes ${name}{from{transform:translateY(${fromY}px)}to{transform:translateY(0)}}`;
             document.head.appendChild(snapStyleEl);
 
+            // Keep inline transform — animation with fill:both overrides it seamlessly
             app.style.transition = 'none';
-            app.style.transform = '';
-            app.style.animation = `${name} 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards`;
+            app.style.animation = `${name} 0.5s cubic-bezier(0.22, 1, 0.36, 1) both`;
 
-            const cleanup = () => {
+            const done = () => {
                 if (snapId !== id) return;
-                app.style.animation = '';
-                app.style.transform = '';
-                if (snapStyleEl) { snapStyleEl.remove(); snapStyleEl = null; }
-            };
-            app.addEventListener('animationend', cleanup, { once: true });
-            setTimeout(cleanup, 550);
-
-            const cancel = () => {
                 snapId++;
                 app.style.animation = '';
                 app.style.transition = '';
                 app.style.transform = '';
                 if (snapStyleEl) { snapStyleEl.remove(); snapStyleEl = null; }
+                document.removeEventListener('touchstart', done);
+                window.removeEventListener('hashchange', done);
             };
-            document.addEventListener('touchstart', cancel, { once: true });
-            window.addEventListener('hashchange', cancel, { once: true });
+            app.addEventListener('animationend', done, { once: true });
+            setTimeout(done, 550);
+            document.addEventListener('touchstart', done);
+            window.addEventListener('hashchange', done);
         };
 
         document.addEventListener('touchstart', (e) => {
