@@ -120,6 +120,47 @@ const UI = {
         return cardsHtml;
     },
 
+    // Returns full week view HTML (for back-swipe companion)
+    _weekViewHTML(weekNum) {
+        const cardsHtml = this._weekCardsHTML(weekNum);
+        return `
+            <div class="app-header">
+                <div class="header-title">
+                    <h1>Трекер Тренировок</h1>
+                </div>
+                <div class="settings-btn">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="app-content">
+                <div class="week-nav">
+                    <button>
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 15l-5-5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <div class="week-label">
+                        <div class="week-num">${weekNum}</div>
+                        <div class="week-sublabel">неделя из 12</div>
+                    </div>
+                    <button>
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 15l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                </div>
+                <div class="slide-container">
+                    <div class="week-slide">
+                    ${cardsHtml}
+                    </div>
+                </div>
+                <div class="data-actions">
+                    <button>Экспорт</button>
+                    <button>Импорт</button>
+                </div>
+            </div>
+        `;
+    },
+
     renderWeek(weekNum) {
         const cardsHtml = this._weekCardsHTML(weekNum);
 

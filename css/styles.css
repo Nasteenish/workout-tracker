@@ -196,6 +196,44 @@ input, button, select {
     will-change: transform;
 }
 
+/* Full-page companion for iOS back navigation from day view */
+.back-companion {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    pointer-events: none;
+    will-change: transform;
+    overflow: hidden;
+    background-color: var(--bg-primary);
+    background-image:
+        radial-gradient(ellipse at 20% 10%, rgba(157, 141, 245, 0.18) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 90%, rgba(45, 212, 191, 0.10) 0%, transparent 45%),
+        radial-gradient(ellipse at 60% 40%, rgba(255, 45, 85, 0.06) 0%, transparent 40%);
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.back-companion > * {
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#app.swiping-back {
+    z-index: 100;
+    overflow-x: visible !important;
+    background-color: var(--bg-primary);
+    background-image:
+        radial-gradient(ellipse at 20% 10%, rgba(157, 141, 245, 0.18) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 90%, rgba(45, 212, 191, 0.10) 0%, transparent 45%),
+        radial-gradient(ellipse at 60% 40%, rgba(255, 45, 85, 0.06) 0%, transparent 40%);
+    background-attachment: fixed;
+    will-change: transform;
+    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.3);
+}
+
 /* ===== Setup Screen ===== */
 .setup-screen {
     display: flex;
