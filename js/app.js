@@ -69,14 +69,6 @@ const App = {
             return c;
         };
 
-        const createMenuCompanion = () => {
-            const c = document.createElement('div');
-            c.className = 'back-companion';
-            c.innerHTML = UI._menuHTML();
-            document.body.appendChild(c);
-            return c;
-        };
-
         document.addEventListener('touchstart', (e) => {
             isWeekView = !!location.hash.match(/^#\/week\/\d+$/);
             isDayView = !!location.hash.match(/^#\/week\/\d+\/day\/\d+$/);
@@ -121,9 +113,11 @@ const App = {
                 } else if (isDayView || isSettingsView) {
                     // Day/Settings back-swipe: full-screen companion + move entire #app
                     isDayBack = true;
-                    companion = isMenuSubPage ? createMenuCompanion() : createBackCompanion(this._currentWeek);
-                    companion.style.transition = 'none';
-                    companion.style.transform = `translateX(${-0.28 * W()}px)`;
+                    if (!isMenuSubPage) {
+                        companion = createBackCompanion(this._currentWeek);
+                        companion.style.transition = 'none';
+                        companion.style.transform = `translateX(${-0.28 * W()}px)`;
+                    }
                     const app = document.getElementById('app');
                     // Fix #app in place so overflow:hidden doesn't cause scroll jump
                     app.style.position = 'fixed';
@@ -186,7 +180,7 @@ const App = {
                     }, 230);
                     return;
                 }
-                // Commit: slide entire day view off, reveal week view
+                // Commit: slide entire day view off
                 app.style.transition = commit;
                 app.style.transform = `translateX(${W() + 20}px)`;
                 if (companion) {
@@ -194,8 +188,7 @@ const App = {
                     companion.style.transform = 'translateX(0)';
                 }
                 const swipeTarget = isMenuSubPage ? '#/menu' : `#/week/${this._currentWeek}`;
-                setTimeout(() => {
-                    // Companion covers viewport — reset #app behind it invisibly
+                const resetApp = () => {
                     app.style.transition = 'none';
                     app.style.transform = '';
                     app.style.position = '';
@@ -203,16 +196,24 @@ const App = {
                     app.style.left = '';
                     app.style.right = '';
                     app.classList.remove('swiping-back');
-                    // Suppress fadeIn on new content so companion→app switch is seamless
-                    app.classList.add('no-animate');
                     unlockScroll();
                     window.scrollTo(0, 0);
-                    location.hash = swipeTarget;
-                    // Wait for repaint before removing companion, then re-enable animations
-                    requestAnimationFrame(() => requestAnimationFrame(() => {
-                        removeCompanion();
-                        requestAnimationFrame(() => app.classList.remove('no-animate'));
-                    }));
+                };
+                setTimeout(() => {
+                    if (companion) {
+                        // Companion covers viewport — reset #app behind it invisibly
+                        resetApp();
+                        app.classList.add('no-animate');
+                        location.hash = swipeTarget;
+                        requestAnimationFrame(() => requestAnimationFrame(() => {
+                            removeCompanion();
+                            requestAnimationFrame(() => app.classList.remove('no-animate'));
+                        }));
+                    } else {
+                        // No companion (menu sub-pages) — just navigate
+                        resetApp();
+                        location.hash = swipeTarget;
+                    }
                 }, 190);
                 return;
             }
