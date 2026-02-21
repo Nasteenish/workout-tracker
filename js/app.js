@@ -249,13 +249,14 @@ const App = {
                     indicator.innerHTML = DUMBBELL_SVG;
                     document.body.appendChild(indicator);
                 }
+                if (ready) return;
                 const progress = Math.min(dy / threshold, 1);
                 indicator.style.opacity = progress;
-                // Rotate arrow based on pull distance
                 const rotation = progress * 360;
                 indicator.style.transform = `translateX(-50%) rotate(${rotation}deg)`;
-                if (progress >= 1 && !ready) {
+                if (progress >= 1) {
                     ready = true;
+                    indicator.style.transform = '';
                     indicator.classList.add('spinning');
                 }
             }
