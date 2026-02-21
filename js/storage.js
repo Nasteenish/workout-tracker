@@ -260,19 +260,17 @@ const Storage = {
     },
 
     // Get previous week's log for an exercise/set (for placeholder)
-    // If equipmentId provided, prefer matching equipment; fallback to any
+    // If equipmentId provided, match ONLY that equipment (no fallback)
     getPreviousLog(week, day, exerciseId, setIdx, equipmentId) {
-        // First pass: match equipment
-        if (equipmentId) {
-            for (let w = week - 1; w >= 1; w--) {
-                const log = this.getSetLog(w, day, exerciseId, setIdx);
-                if (log && log.completed && log.equipmentId === equipmentId) return log;
-            }
-        }
-        // Fallback: any equipment
         for (let w = week - 1; w >= 1; w--) {
             const log = this.getSetLog(w, day, exerciseId, setIdx);
-            if (log && log.completed) return log;
+            if (log && log.completed) {
+                if (equipmentId) {
+                    if (log.equipmentId === equipmentId) return log;
+                } else {
+                    return log;
+                }
+            }
         }
         return null;
     },

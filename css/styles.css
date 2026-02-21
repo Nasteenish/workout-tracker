@@ -1491,6 +1491,11 @@ body.modal-open {
     border-bottom: 1px solid var(--border-color);
 }
 
+.history-other-eq {
+    margin-top: var(--spacing-lg);
+    opacity: 0.5;
+}
+
 /* ===== Scrollbar — hidden for clean iOS look ===== */
 ::-webkit-scrollbar {
     display: none;

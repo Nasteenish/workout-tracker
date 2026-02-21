@@ -478,9 +478,12 @@ const UI = {
 
     // ===== HISTORY VIEW =====
     renderHistory(exerciseId) {
-        const history = Storage.getExerciseHistory(exerciseId);
-        const unit = Storage.getWeightUnit();
-        const unitLabel = unit === 'lbs' ? 'lbs' : 'кг';
+        const allHistory = Storage.getExerciseHistory(exerciseId);
+        const unit = Storage.getExerciseUnit(exerciseId) || Storage.getWeightUnit();
+        const unitLabels = { kg: 'кг', lbs: 'lbs', plates: 'пл' };
+        const unitLabel = unitLabels[unit] || 'кг';
+        const currentEqId = Storage.getExerciseEquipment(exerciseId);
+        const currentEq = currentEqId ? Storage.getEquipmentById(currentEqId) : null;
 
         // Find exercise name using getGroupExercises helper
         let exerciseName = exerciseId;
@@ -498,39 +501,34 @@ const UI = {
             }
         }
 
+        // Filter history by current equipment if selected
+        let history, otherHistory;
+        if (currentEqId) {
+            history = allHistory.map(entry => {
+                const filteredSets = entry.sets.filter(s => s.equipmentId === currentEqId);
+                return filteredSets.length > 0 ? { ...entry, sets: filteredSets } : null;
+            }).filter(Boolean);
+            otherHistory = allHistory.map(entry => {
+                const filteredSets = entry.sets.filter(s => s.equipmentId !== currentEqId);
+                return filteredSets.length > 0 ? { ...entry, sets: filteredSets } : null;
+            }).filter(Boolean);
+        } else {
+            history = allHistory;
+            otherHistory = [];
+        }
+
         let contentHtml = '';
-        if (history.length === 0) {
+        if (history.length === 0 && otherHistory.length === 0) {
             contentHtml = '<p class="history-empty">Нет записей</p>';
         } else {
-            // Group entries by equipmentId
-            const byEquipment = {};
             let maxWeight = 0;
-            for (const entry of history) {
-                for (const s of entry.sets) {
-                    const eqKey = s.equipmentId || '_none';
-                    if (!byEquipment[eqKey]) byEquipment[eqKey] = [];
-                    if (s.weight > maxWeight) maxWeight = s.weight;
-                }
-                // Group full entries
-                const eqKey = (entry.sets[0] && entry.sets[0].equipmentId) || '_none';
-                if (!byEquipment[eqKey]) byEquipment[eqKey] = [];
-                byEquipment[eqKey].push(entry);
-            }
 
-            const eqKeys = Object.keys(byEquipment);
-            const hasMultipleEquipment = eqKeys.length > 1 || (eqKeys.length === 1 && eqKeys[0] !== '_none');
-
-            for (const eqKey of eqKeys) {
-                const entries = byEquipment[eqKey];
-                if (hasMultipleEquipment) {
-                    const eq = eqKey !== '_none' ? Storage.getEquipmentById(eqKey) : null;
-                    const eqName = eq ? eq.name : 'Без оборудования';
-                    contentHtml += `<div class="history-equipment-title">${eqName}</div>`;
-                }
-
+            const renderEntries = (entries) => {
+                let html = '';
                 for (const entry of entries) {
                     let setsHtml = '';
                     for (const s of entry.sets) {
+                        if (s.weight > maxWeight) maxWeight = s.weight;
                         setsHtml += `
                             <div class="history-set">
                                 <span>П.${s.setIdx + 1}:</span>
@@ -538,16 +536,17 @@ const UI = {
                             </div>
                         `;
                     }
-                    contentHtml += `
+                    html += `
                         <div class="history-week">
                             <div class="history-week-title">Неделя ${entry.week}, День ${entry.day}</div>
                             ${setsHtml}
                         </div>
                     `;
                 }
-            }
+                return html;
+            };
 
-            // Sparkline — max weight per entry (last 8)
+            // Sparkline — max weight per entry (last 8), based on filtered data
             const sparkWeights = history.map(e => Math.max(...e.sets.map(s => s.weight || 0))).filter(w => w > 0);
             if (sparkWeights.length > 1) {
                 const sparkMax = Math.max(...sparkWeights);
@@ -560,7 +559,34 @@ const UI = {
                         <div class="spark-label">${w}</div>
                     </div>`;
                 }).join('');
-                contentHtml = `<div class="history-sparkline">${bars}</div>` + contentHtml;
+                contentHtml += `<div class="history-sparkline">${bars}</div>`;
+            }
+
+            if (currentEq) {
+                contentHtml += `<div class="history-equipment-title">${currentEq.name}</div>`;
+            }
+
+            if (history.length > 0) {
+                contentHtml += renderEntries(history);
+            } else if (currentEqId) {
+                contentHtml += '<p class="history-empty">Нет записей для этого оборудования</p>';
+            }
+
+            // Show other equipment data as secondary section
+            if (otherHistory.length > 0) {
+                // Group other entries by equipment
+                const byEquipment = {};
+                for (const entry of otherHistory) {
+                    const eqKey = (entry.sets[0] && entry.sets[0].equipmentId) || '_none';
+                    if (!byEquipment[eqKey]) byEquipment[eqKey] = [];
+                    byEquipment[eqKey].push(entry);
+                }
+                for (const eqKey of Object.keys(byEquipment)) {
+                    const eq = eqKey !== '_none' ? Storage.getEquipmentById(eqKey) : null;
+                    const eqName = eq ? eq.name : 'Без оборудования';
+                    contentHtml += `<div class="history-equipment-title history-other-eq">${eqName}</div>`;
+                    contentHtml += renderEntries(byEquipment[eqKey]);
+                }
             }
 
             if (maxWeight > 0) {
@@ -568,12 +594,15 @@ const UI = {
             }
         }
 
+        const subtitleParts = [exerciseName];
+        if (currentEq) subtitleParts.push(currentEq.name);
+
         document.getElementById('app').innerHTML = `
             <div class="app-header">
                 <button class="back-btn" id="btn-back-history"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
                 <div class="header-title">
                     <h1>История</h1>
-                    <div class="header-subtitle">${exerciseName}</div>
+                    <div class="header-subtitle">${subtitleParts.join(' · ')}</div>
                 </div>
             </div>
             <div class="app-content">
