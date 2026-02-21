@@ -217,16 +217,16 @@ const RestTimer = {
         clearInterval(this._interval);
         this._interval = null;
         this._endTime = null;
-        this._swTimer('STOP_TIMER');
         this._clearPersistedTimer();
         document.getElementById('rest-timer-bar').classList.remove('active');
 
-        // If page is hidden (user on YouTube etc.), defer notification until they return
+        // If page is hidden (user on YouTube etc.), let SW notification fire on its own
         if (document.visibilityState !== 'visible') {
             this._pendingFinish = true;
             return;
         }
 
+        this._swTimer('STOP_TIMER');
         this._showFinishEffects();
     },
 
@@ -340,6 +340,7 @@ const RestTimer = {
 
         // Show deferred finish effects when returning from background
         if (this._pendingFinish) {
+            this._swTimer('STOP_TIMER');
             this._showFinishEffects();
             return;
         }
