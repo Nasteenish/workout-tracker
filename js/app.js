@@ -231,19 +231,29 @@ const App = {
 
         const DUMBBELL_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="1" y="9" width="3" height="6" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="7" width="3" height="10" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="17" y="7" width="3" height="10" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="20" y="9" width="3" height="6" rx="1" stroke="currentColor" stroke-width="1.8"/><line x1="7" y1="12" x2="17" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 
+        let active = false;
+        const app = document.getElementById('app');
+
         document.addEventListener('touchstart', (e) => {
             if (window.scrollY <= 2) {
                 startY = e.touches[0].clientY;
                 pulling = true;
                 ready = false;
+                active = false;
             }
         }, { passive: true });
 
         document.addEventListener('touchmove', (e) => {
             if (!pulling) return;
-            if (window.scrollY > 2) { pulling = false; return; }
+            if (window.scrollY > 2) { pulling = false; active = false; return; }
             const dy = e.touches[0].clientY - startY;
             if (dy > 10) {
+                e.preventDefault();
+                // Move page down (skip if back-swipe is active)
+                if (!app.classList.contains('swiping-back')) {
+                    if (!active) { active = true; app.style.transition = 'none'; }
+                    app.style.transform = `translateY(${Math.min((dy - 10) * 0.35, 55)}px)`;
+                }
                 if (!indicator) {
                     indicator = document.createElement('div');
                     indicator.id = 'pull-indicator';
@@ -252,33 +262,48 @@ const App = {
                 }
                 if (ready) return;
                 const progress = Math.min(dy / threshold, 1);
-                const pullDown = Math.min((dy - 10) * 0.35, 45);
-                const rotation = progress * 360;
                 indicator.style.opacity = progress;
-                indicator.style.transform = `translateX(-50%) translateY(${pullDown}px) rotate(${rotation}deg)`;
+                indicator.style.transform = `translateX(-50%) rotate(${progress * 360}deg)`;
                 if (progress >= 1) {
                     ready = true;
+                    indicator.style.transform = '';
                     indicator.classList.add('spinning');
                 }
             }
-        }, { passive: true });
+        }, { passive: false });
 
         document.addEventListener('touchend', () => {
+            if (active) {
+                requestAnimationFrame(() => {
+                    app.style.transition = 'transform 0.4s cubic-bezier(0.22, 1, 0.36, 1)';
+                    app.style.transform = 'translateY(0)';
+                    const onEnd = () => {
+                        app.style.transition = '';
+                        app.style.transform = '';
+                        app.removeEventListener('transitionend', onEnd);
+                    };
+                    app.addEventListener('transitionend', onEnd, { once: true });
+                    // Fallback cleanup
+                    setTimeout(onEnd, 420);
+                });
+            }
             if (indicator) {
                 if (ready) {
                     indicator.classList.add('spinning');
                     location.reload();
                     return;
                 }
+                const cur = indicator.style.transform || 'translateX(-50%)';
                 indicator.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
                 indicator.style.opacity = '0';
-                indicator.style.transform = 'translateX(-50%) translateY(0) scale(0.5)';
+                indicator.style.transform = cur + ' scale(0.5)';
                 const ref = indicator;
                 setTimeout(() => { ref.remove(); }, 310);
                 indicator = null;
             }
             pulling = false;
             ready = false;
+            active = false;
         });
     },
 
