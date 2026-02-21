@@ -35,7 +35,7 @@ const App = {
     _initSwipeNav() {
         let startX = 0, startY = 0;
         let dragging = false, locked = false;
-        let isWeekView = false, isDayView = false;
+        let isWeekView = false, isDayView = false, isSettingsView = false;
         let swipingLeft = false;
         let companion = null;
         let isDayBack = false;
@@ -66,7 +66,8 @@ const App = {
         document.addEventListener('touchstart', (e) => {
             isWeekView = !!location.hash.match(/^#\/week\/\d+$/);
             isDayView = !!location.hash.match(/^#\/week\/\d+\/day\/\d+$/);
-            if (!isWeekView && !isDayView) return;
+            isSettingsView = location.hash === '#/settings';
+            if (!isWeekView && !isDayView && !isSettingsView) return;
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
             dragging = false;
@@ -80,7 +81,7 @@ const App = {
         }, { passive: true });
 
         document.addEventListener('touchmove', (e) => {
-            if (!isWeekView && !isDayView) return;
+            if (!isWeekView && !isDayView && !isSettingsView) return;
             if (locked) return;
             const dx = e.touches[0].clientX - startX;
             const dy = e.touches[0].clientY - startY;
@@ -88,7 +89,7 @@ const App = {
             if (!dragging) {
                 if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
                 if (Math.abs(dy) > Math.abs(dx)) { locked = true; return; }
-                if (isDayView && dx < 0) { locked = true; return; }
+                if ((isDayView || isSettingsView) && dx < 0) { locked = true; return; }
                 dragging = true;
                 swipingLeft = dx < 0;
 
@@ -99,8 +100,8 @@ const App = {
                     companion = createCompanion(targetWeek);
                     companion.style.transition = 'none';
                     companion.style.transform = `translateX(${swipingLeft ? W() : -W()}px)`;
-                } else {
-                    // Day back-swipe: full-screen companion + move entire #app
+                } else if (isDayView || isSettingsView) {
+                    // Day/Settings back-swipe: full-screen companion + move entire #app
                     isDayBack = true;
                     companion = createBackCompanion(this._currentWeek);
                     companion.style.transition = 'none';
@@ -129,7 +130,7 @@ const App = {
         }, { passive: false });
 
         document.addEventListener('touchend', (e) => {
-            if (!isWeekView && !isDayView) return;
+            if (!isWeekView && !isDayView && !isSettingsView) return;
             const dx = e.changedTouches[0].clientX - startX;
             const snap = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
             const commit = 'transform 0.18s cubic-bezier(0.4, 0, 0.6, 1)';
