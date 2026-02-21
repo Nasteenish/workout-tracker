@@ -810,7 +810,7 @@ input, button, select {
 }
 
 .split-reps input.split-main {
-    flex: 2;
+    flex: 1;
     min-width: 0;
 }
 
@@ -818,6 +818,8 @@ input, button, select {
     flex: 1;
     min-width: 0;
     opacity: 0.75;
+    font-size: 16px;
+    padding: 0 3px;
 }
 
 .split-sep {
