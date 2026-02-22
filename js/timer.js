@@ -185,6 +185,74 @@ const RestTimer = {
         }
     },
 
+    // Generate beep WAV and play via <audio> (works in iOS background, unlike Web Audio API)
+    _playBeepViaAudio() {
+        try {
+            const sampleRate = 44100;
+            const duration = 0.9;
+            const numSamples = Math.floor(sampleRate * duration);
+            const buffer = new ArrayBuffer(44 + numSamples * 2);
+            const view = new DataView(buffer);
+            const w = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
+
+            // WAV header (16-bit mono)
+            w(0, 'RIFF');
+            view.setUint32(4, 36 + numSamples * 2, true);
+            w(8, 'WAVE');
+            w(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            w(36, 'data');
+            view.setUint32(40, numSamples * 2, true);
+
+            // Three ascending tones: 880Hz, 1100Hz, 1320Hz
+            const tones = [
+                { freq: 880,  start: 0,    end: 0.3 },
+                { freq: 1100, start: 0.3,  end: 0.6 },
+                { freq: 1320, start: 0.6,  end: 0.9 }
+            ];
+
+            for (let i = 0; i < numSamples; i++) {
+                const t = i / sampleRate;
+                let sample = 0;
+                for (const tone of tones) {
+                    if (t >= tone.start && t < tone.end) {
+                        const env = Math.max(0, 1 - (t - tone.start) / (tone.end - tone.start) * 0.5);
+                        sample = Math.sin(2 * Math.PI * tone.freq * t) * env * 0.4;
+                    }
+                }
+                view.setInt16(44 + i * 2, sample * 32767, true);
+            }
+
+            const blob = new Blob([buffer], { type: 'audio/wav' });
+            const url = URL.createObjectURL(blob);
+
+            // Reuse keepalive <audio> if available (already has OS audio session)
+            if (this._keepAliveAudio) {
+                this._keepAliveAudio.loop = false;
+                this._keepAliveAudio.volume = 1;
+                this._keepAliveAudio.src = url;
+                this._keepAliveAudio.play().catch(() => {});
+                this._keepAliveAudio.onended = () => {
+                    this._stopKeepAlive();
+                    URL.revokeObjectURL(url);
+                };
+                if (this._keepAliveUrl) URL.revokeObjectURL(this._keepAliveUrl);
+                this._keepAliveUrl = url;
+            } else {
+                const audio = new Audio(url);
+                audio.volume = 1;
+                audio.play().catch(() => {});
+                audio.onended = () => { URL.revokeObjectURL(url); };
+            }
+        } catch(e) {}
+    },
+
     _swTimer(type, duration) {
         if (!navigator.serviceWorker) return;
         navigator.serviceWorker.ready.then(reg => {
@@ -268,19 +336,20 @@ const RestTimer = {
         this._interval = null;
         this._endTime = null;
         this._clearPersistedTimer();
-        this._stopKeepAlive();
         document.getElementById('rest-timer-bar').classList.remove('active');
 
-        // Always play beep + vibrate (keepalive kept the process alive)
         if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
-        this._playBeep();
 
         if (document.visibilityState !== 'visible') {
-            // Show in-app overlay when user returns
+            // Play beep via <audio> (reuses keepalive audio session — works in iOS background)
+            this._playBeepViaAudio();
             this._pendingFinish = true;
             return;
         }
 
+        // Page is visible — use Web Audio API (better quality) and clean up
+        this._stopKeepAlive();
+        this._playBeep();
         this._swTimer('STOP_TIMER');
         this._showNotification();
     },
