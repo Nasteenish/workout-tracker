@@ -51,10 +51,11 @@ const RestTimer = {
             this._touchStartX = e.touches[0].clientX;
             this._dragging = false;
             this._dragDy = 0;
-            // Lock page scroll to prevent pull-to-refresh on iOS
-            this._savedOverflow = document.body.style.overflow;
-            document.body.style.overflow = 'hidden';
-            document.documentElement.style.overflow = 'hidden';
+            // Lock page scroll: position:fixed is the only reliable iOS method
+            this._lockScrollY = window.scrollY;
+            document.body.style.position = 'fixed';
+            document.body.style.top = `-${this._lockScrollY}px`;
+            document.body.style.width = '100%';
         }, { passive: false });
 
         bar.addEventListener('touchmove', (e) => {
@@ -89,8 +90,10 @@ const RestTimer = {
 
         bar.addEventListener('touchend', (e) => {
             // Unlock page scroll
-            document.body.style.overflow = this._savedOverflow || '';
-            document.documentElement.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            window.scrollTo(0, this._lockScrollY || 0);
 
             if (this._touchStartY === null) return;
             const dy = e.changedTouches[0].clientY - this._touchStartY;
@@ -133,8 +136,10 @@ const RestTimer = {
         });
 
         bar.addEventListener('touchcancel', () => {
-            document.body.style.overflow = this._savedOverflow || '';
-            document.documentElement.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            window.scrollTo(0, this._lockScrollY || 0);
             this._touchStartY = null;
             this._dragging = false;
             bar.style.transition = '';
