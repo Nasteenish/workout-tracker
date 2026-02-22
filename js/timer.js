@@ -40,20 +40,42 @@ const RestTimer = {
         document.getElementById('rtb-plus').addEventListener('click', () => this.adjust(30));
         document.getElementById('rtb-pause').addEventListener('click', () => this.togglePause());
 
-        // Swipe up to minimize, tap to expand
+        // Drag to minimize / tap to expand
         let _swY = 0;
-        let _swiping = false;
-        bar.addEventListener('touchstart', (e) => { _swY = e.touches[0].clientY; _swiping = false; }, { passive: true });
+        let _dragging = false;
+        bar.addEventListener('touchstart', (e) => {
+            _swY = e.touches[0].clientY;
+            _dragging = false;
+        }, { passive: true });
         bar.addEventListener('touchmove', (e) => {
+            if (this._minimized || !this._interval) return;
             const dy = e.touches[0].clientY - _swY;
-            if (Math.abs(dy) > 10) { _swiping = true; e.preventDefault(); }
+            if (Math.abs(dy) > 8) {
+                _dragging = true;
+                e.preventDefault();
+                const up = Math.min(0, dy);
+                const progress = Math.min(1, Math.abs(up) / 120);
+                bar.style.transition = 'none';
+                bar.style.transform = `translateX(-50%) translateY(${up * 0.5}px) scale(${1 - progress * 0.1})`;
+                bar.style.opacity = 1 - progress * 0.15;
+            }
         }, { passive: false });
         bar.addEventListener('touchend', (e) => {
+            if (!_dragging) return;
             const dy = e.changedTouches[0].clientY - _swY;
-            if (dy < -30 && !this._minimized) this.minimize();
+            if (dy < -40 && !this._minimized) {
+                this._animateMinimize();
+            } else {
+                bar.style.transition = 'transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.35s ease';
+                bar.style.transform = '';
+                bar.style.opacity = '';
+                setTimeout(() => { bar.style.transition = ''; bar.style.transform = ''; bar.style.opacity = ''; }, 400);
+            }
+            setTimeout(() => { _dragging = false; }, 50);
         }, { passive: true });
         bar.addEventListener('click', (e) => {
-            if (this._minimized || _swiping) { e.stopPropagation(); if (this._minimized) this.expand(); }
+            if (_dragging) { e.stopPropagation(); return; }
+            if (this._minimized) { e.stopPropagation(); this._animateExpand(); }
         });
 
         // Unlock AudioContext on first user interaction (required on iOS)
@@ -147,14 +169,64 @@ const RestTimer = {
         this._updateDisplay();
     },
 
-    minimize() {
+    _animateMinimize() {
+        const bar = document.getElementById('rest-timer-bar');
+        // Capture current visual position (includes drag offset)
+        const first = bar.getBoundingClientRect();
+
+        // Apply minimized state instantly
+        bar.style.transition = 'none';
+        bar.style.transform = '';
+        bar.style.opacity = '';
         this._minimized = true;
-        document.getElementById('rest-timer-bar').classList.add('minimized');
+        bar.classList.add('minimized');
+        void bar.offsetHeight;
+
+        // Capture target position
+        const last = bar.getBoundingClientRect();
+
+        // FLIP: minimized CSS has transform:none, so raw = visual
+        const dx = (first.left + first.width / 2) - (last.left + last.width / 2);
+        const dy = (first.top + first.height / 2) - (last.top + last.height / 2);
+        const sx = first.width / last.width;
+        const sy = first.height / last.height;
+
+        bar.animate([
+            { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, borderRadius: '28px', opacity: 0.85 },
+            { transform: 'none', borderRadius: '50%', opacity: 1 }
+        ], { duration: 420, easing: 'cubic-bezier(0.22, 0.9, 0.36, 1)' });
     },
 
-    expand() {
+    _animateExpand() {
+        const bar = document.getElementById('rest-timer-bar');
+        // Capture minimized position
+        const first = bar.getBoundingClientRect();
+
+        // Apply expanded state instantly
+        bar.style.transition = 'none';
         this._minimized = false;
-        document.getElementById('rest-timer-bar').classList.remove('minimized');
+        bar.classList.remove('minimized');
+        void bar.offsetHeight;
+
+        // Capture expanded position
+        const last = bar.getBoundingClientRect();
+
+        // Expanded CSS has transform: translateX(-50%)
+        // Raw center X = visual center X + width/2 (undoing the -50%)
+        const rawCx = last.left + last.width;
+        const rawCy = last.top + last.height / 2;
+        const firstCx = first.left + first.width / 2;
+        const firstCy = first.top + first.height / 2;
+
+        const tx = firstCx - rawCx;
+        const ty = firstCy - rawCy;
+        const sx = first.width / last.width;
+        const sy = first.height / last.height;
+
+        bar.animate([
+            { transform: `translate(${tx}px, ${ty}px) scale(${sx}, ${sy})`, borderRadius: '50%', opacity: 0.85 },
+            { transform: `translateX(${-last.width / 2}px)`, borderRadius: '28px', opacity: 1 }
+        ], { duration: 420, easing: 'cubic-bezier(0.22, 0.9, 0.36, 1)' });
     },
 
     _unlockAudio() {
