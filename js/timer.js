@@ -110,8 +110,12 @@ const RestTimer = {
                     ], { duration: 250, easing: 'ease-in', fill: 'forwards' });
                     anim.onfinish = () => {
                         anim.cancel();
+                        // Skip CSS top-transition so stop() doesn't replay the fly-up
+                        bar.style.transition = 'none';
                         bar.style.transform = '';
                         this.stop();
+                        // Re-enable transition on next frame
+                        requestAnimationFrame(() => { bar.style.transition = ''; });
                     };
                     return;
                 }
