@@ -88,7 +88,6 @@ const RestTimer = {
         document.getElementById('rest-timer-bar').classList.add('active');
 
         this._startTicking();
-        this._startKeepAlive();
     },
 
     stop() {
@@ -98,7 +97,6 @@ const RestTimer = {
         this._pausedAt = null;
         this._swTimer('STOP_TIMER');
         this._clearPersistedTimer();
-        this._stopKeepAlive();
         document.getElementById('rest-timer-bar').classList.remove('active');
     },
 
@@ -338,27 +336,24 @@ const RestTimer = {
         this._clearPersistedTimer();
         document.getElementById('rest-timer-bar').classList.remove('active');
 
-        if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
-
         if (document.visibilityState !== 'visible') {
-            // Play beep via <audio> (reuses keepalive audio session — works in iOS background)
-            this._playBeepViaAudio();
-            // Show system push notification
-            this._sendSystemNotification();
+            // Page hidden — SW notification will fire on its own (don't cancel it)
             this._pendingFinish = true;
             return;
         }
 
-        // Page is visible — use Web Audio API (better quality) and clean up
-        this._stopKeepAlive();
-        this._playBeep();
+        // Page is visible — play effects and cancel SW timer
         this._swTimer('STOP_TIMER');
+        if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
+        this._playBeep();
         this._showNotification();
     },
 
     _showFinishEffects() {
         this._pendingFinish = false;
-        // Beep + vibrate already played in _finish(); just show the overlay
+        this._swTimer('STOP_TIMER');
+        if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
+        this._playBeep();
         this._showNotification();
     },
 
