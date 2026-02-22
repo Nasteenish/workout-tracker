@@ -385,9 +385,8 @@ input, button, select {
     opacity: 0.7;
 }
 .btn-compact {
-    width: auto;
-    padding: 0 var(--spacing-xl);
-    min-width: 200px;
+    width: calc(100% - 2 * var(--spacing-md));
+    max-width: calc(100% - 2 * var(--spacing-md));
 }
 
 /* ===== Login Screen ===== */
