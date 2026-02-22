@@ -333,25 +333,21 @@ const RestTimer = {
         clearInterval(this._interval);
         this._interval = null;
         this._endTime = null;
+        this._swTimer('STOP_TIMER');
         this._clearPersistedTimer();
         document.getElementById('rest-timer-bar').classList.remove('active');
 
+        // If page is hidden (user on YouTube etc.), defer notification until they return
         if (document.visibilityState !== 'visible') {
-            // Page hidden — SW notification will fire on its own (don't cancel it)
             this._pendingFinish = true;
             return;
         }
 
-        // Page is visible — play effects and cancel SW timer
-        this._swTimer('STOP_TIMER');
-        if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
-        this._playBeep();
-        this._showNotification();
+        this._showFinishEffects();
     },
 
     _showFinishEffects() {
         this._pendingFinish = false;
-        this._swTimer('STOP_TIMER');
         if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
         this._playBeep();
         this._showNotification();
@@ -458,7 +454,6 @@ const RestTimer = {
 
         // Show deferred finish effects when returning from background
         if (this._pendingFinish) {
-            this._swTimer('STOP_TIMER');
             this._showFinishEffects();
             return;
         }
