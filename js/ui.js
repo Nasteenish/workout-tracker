@@ -682,14 +682,14 @@ const UI = {
                 let xLabels = '';
                 const step = weeks.length <= 12 ? 1 : Math.ceil(weeks.length / 8);
                 for (let i = 0; i < weeks.length; i += step) {
-                    xLabels += `<text x="${x(i)}" y="${H - 4}" class="chart-x-label">Н${weeks[i]}</text>`;
+                    xLabels += `<text x="${x(i)}" y="${H - 4}" class="chart-x-label">W${weeks[i]}</text>`;
                 }
                 // Line + points
                 const pts = values.map((v, i) => `${x(i)},${y(v)}`).join(' ');
                 let circles = '';
                 for (let i = 0; i < values.length; i++) {
                     const isLast = i === values.length - 1;
-                    circles += `<circle cx="${x(i)}" cy="${y(values[i])}" r="${isLast ? 4 : 3}" class="chart-point${isLast ? ' last' : ''}"><title>Н${weeks[i]}: ${values[i]}${unitLabel}</title></circle>`;
+                    circles += `<circle cx="${x(i)}" cy="${y(values[i])}" r="${isLast ? 4 : 3}" class="chart-point${isLast ? ' last' : ''}"><title>W${weeks[i]}: ${values[i]}${unitLabel}</title></circle>`;
                 }
                 contentHtml += `<div class="progress-chart"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
                     ${gridHtml}${xLabels}
