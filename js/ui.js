@@ -17,6 +17,49 @@ function blockOverlayScroll(overlay, scrollableSelector) {
 }
 
 const UI = {
+    // ===== LOGIN SCREEN =====
+    renderLogin() {
+        document.getElementById('app').innerHTML = `
+            <div class="login-screen">
+                <div class="app-icon">&#127947;</div>
+                <h1>Трекер Тренировок</h1>
+                <p class="subtitle">Войдите в свой аккаунт</p>
+
+                <div class="login-field">
+                    <label for="login-input">Логин</label>
+                    <input type="text" id="login-input" autocomplete="username" autocapitalize="none" placeholder="Введите логин">
+                </div>
+
+                <div class="login-field">
+                    <label for="password-input">Пароль</label>
+                    <input type="password" id="password-input" autocomplete="current-password" placeholder="Введите пароль">
+                </div>
+
+                <div id="login-error" class="login-error" style="display:none"></div>
+
+                <button class="btn-primary" id="login-submit">ВОЙТИ</button>
+            </div>
+        `;
+
+        // Submit on Enter key
+        var passInput = document.getElementById('password-input');
+        if (passInput) {
+            passInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('login-submit').click();
+                }
+            });
+        }
+        var loginInput = document.getElementById('login-input');
+        if (loginInput) {
+            loginInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('password-input').focus();
+                }
+            });
+        }
+    },
+
     // ===== SETUP SCREEN =====
     renderSetup() {
         // Phase 2: program loaded, need date/cycle setup
@@ -172,10 +215,12 @@ const UI = {
     // Returns full week view HTML (for back-swipe companion)
     _weekViewHTML(weekNum) {
         const cardsHtml = this._weekCardsHTML(weekNum);
+        const currentUser = Storage.getCurrentUser();
+        const headerName = currentUser ? currentUser.name : 'Трекер Тренировок';
         return `
             <div class="app-header">
                 <div class="header-title">
-                    <h1>Трекер Тренировок</h1>
+                    <h1>${headerName}</h1>
                 </div>
                 <div class="settings-btn">
                     <svg width="25" height="25" viewBox="0 0 24 24" fill="none">
@@ -213,11 +258,13 @@ const UI = {
 
     renderWeek(weekNum) {
         const cardsHtml = this._weekCardsHTML(weekNum);
+        const currentUser = Storage.getCurrentUser();
+        const headerName = currentUser ? currentUser.name : 'Трекер Тренировок';
 
         document.getElementById('app').innerHTML = `
             <div class="app-header">
                 <div class="header-title">
-                    <h1>Трекер Тренировок</h1>
+                    <h1>${headerName}</h1>
                 </div>
                 <button class="settings-btn" id="btn-settings">
                     <svg width="25" height="25" viewBox="0 0 24 24" fill="none">
@@ -797,6 +844,8 @@ const UI = {
         const GEAR_SVG = '<svg width="25" height="25" viewBox="0 0 24 24" fill="none"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/></svg>';
         const BOOK_SVG = '<svg width="25" height="25" viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         const CALC_SVG = '<svg width="25" height="25" viewBox="0 0 24 24" fill="none"><path d="M4 7a3 3 0 013-3h10a3 3 0 013 3v10a3 3 0 01-3 3H7a3 3 0 01-3-3V7z" stroke="currentColor" stroke-width="1.7"/><path d="M8 7h8v3H8V7z" fill="currentColor" opacity="0.3" stroke="currentColor" stroke-width="1"/><circle cx="8.5" cy="14" r="0.8" fill="currentColor"/><circle cx="12" cy="14" r="0.8" fill="currentColor"/><circle cx="15.5" cy="14" r="0.8" fill="currentColor"/><circle cx="8.5" cy="17" r="0.8" fill="currentColor"/><circle cx="12" cy="17" r="0.8" fill="currentColor"/><circle cx="15.5" cy="17" r="0.8" fill="currentColor"/></svg>';
+        const currentUser = Storage.getCurrentUser();
+        const LOGOUT_SVG = '<svg width="25" height="25" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><polyline points="16 17 21 12 16 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         return `
             <div class="app-header">
                 <button class="back-btn" id="btn-back-menu"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -829,6 +878,14 @@ const UI = {
                     </div>
                     <svg class="menu-card-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 15l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </a>
+
+                <div class="menu-card" id="btn-logout" style="margin-top:var(--spacing-xl);opacity:0.6;cursor:pointer">
+                    <div class="menu-card-icon">${LOGOUT_SVG}</div>
+                    <div class="menu-card-text">
+                        <div class="menu-card-title">Выйти</div>
+                        <div class="menu-card-desc">${currentUser ? currentUser.name : ''}</div>
+                    </div>
+                </div>
             </div>
         `;
     },

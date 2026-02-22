@@ -1,14 +1,22 @@
 /* ===== Storage Module ===== */
 
-const STORAGE_KEY = 'workout_tracker_v1';
+// Dynamic storage key per user
+function _storageKey() {
+    var userId = localStorage.getItem('wt_current');
+    return userId ? 'wt_data_' + userId : 'workout_tracker_v1';
+}
 
 const Storage = {
     _data: null,
 
+    _invalidateCache() {
+        this._data = null;
+    },
+
     _load() {
         if (this._data) return this._data;
         try {
-            const raw = localStorage.getItem(STORAGE_KEY);
+            const raw = localStorage.getItem(_storageKey());
             this._data = raw ? JSON.parse(raw) : this._defaultData();
             // Migrate: add new fields if missing
             if (!this._data.equipment) this._data.equipment = [];
@@ -32,7 +40,7 @@ const Storage = {
 
     _save() {
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(this._data));
+            localStorage.setItem(_storageKey(), JSON.stringify(this._data));
         } catch (e) {
             console.error('Storage save error:', e);
         }
@@ -55,7 +63,86 @@ const Storage = {
         };
     },
 
-    // Settings
+    // ===== User Management =====
+    getUsers() {
+        try {
+            var raw = localStorage.getItem('wt_users');
+            return raw ? JSON.parse(raw) : [];
+        } catch (e) { return []; }
+    },
+
+    _saveUsers(users) {
+        localStorage.setItem('wt_users', JSON.stringify(users));
+    },
+
+    getCurrentUserId() {
+        return localStorage.getItem('wt_current') || null;
+    },
+
+    setCurrentUser(userId) {
+        this._invalidateCache();
+        localStorage.setItem('wt_current', userId);
+    },
+
+    getCurrentUser() {
+        var userId = this.getCurrentUserId();
+        if (!userId) return null;
+        return this.getUsers().find(function(u) { return u.id === userId; }) || null;
+    },
+
+    createUser(id, name, programId) {
+        var users = this.getUsers();
+        users.push({ id: id, name: name, programId: programId, createdAt: Date.now() });
+        this._saveUsers(users);
+        return id;
+    },
+
+    logout() {
+        this._invalidateCache();
+        localStorage.removeItem('wt_current');
+    },
+
+    // One-time migration: convert old single-user data to multi-user
+    migrateToMultiUser() {
+        // Already migrated?
+        if (this.getUsers().length > 0) return;
+
+        // Check if old single-user data exists
+        var oldData = localStorage.getItem('workout_tracker_v1');
+        if (!oldData) return;
+
+        try {
+            var parsed = JSON.parse(oldData);
+            var athlete = parsed.program && parsed.program.athlete ? parsed.program.athlete : '';
+
+            // Determine user id and programId from athlete name
+            var userId, name, programId;
+            if (athlete.indexOf('Mikhail') !== -1 || athlete.indexOf('Timoshin') !== -1) {
+                userId = 'mikhail';
+                name = 'Михаил';
+                programId = 'mikhail_default';
+            } else {
+                userId = 'anastasia';
+                name = 'Анастасия';
+                programId = 'anastasia_default';
+            }
+
+            // Create user profile
+            this.createUser(userId, name, programId);
+
+            // Copy data to new key
+            localStorage.setItem('wt_data_' + userId, oldData);
+
+            // Set as current user
+            localStorage.setItem('wt_current', userId);
+
+            // Keep old key as backup (don't delete)
+        } catch (e) {
+            console.error('Migration error:', e);
+        }
+    },
+
+    // ===== Settings =====
     getSettings() {
         return this._load().settings;
     },
@@ -66,7 +153,7 @@ const Storage = {
     },
 
     isSetup() {
-        const s = this.getSettings();
+        var s = this.getSettings();
         return s.startDate !== null;
     },
 
@@ -80,7 +167,7 @@ const Storage = {
     },
 
     saveProgram(programData, clearExerciseData) {
-        const data = this._load();
+        var data = this._load();
         if (clearExerciseData) {
             data.log = {};
             data.exerciseChoices = {};
@@ -107,30 +194,28 @@ const Storage = {
     },
 
     addEquipment(name, type) {
-        const data = this._load();
-        const id = 'eq_' + Date.now();
-        data.equipment.push({ id, name, type: type || 'other' });
+        var data = this._load();
+        var id = 'eq_' + Date.now();
+        data.equipment.push({ id: id, name: name, type: type || 'other' });
         this._save();
         return id;
     },
 
     removeEquipment(id) {
-        const data = this._load();
-        data.equipment = data.equipment.filter(e => e.id !== id);
-        // Clean up per-exercise links
-        for (const exId of Object.keys(data.exerciseEquipmentOptions)) {
-            data.exerciseEquipmentOptions[exId] = (data.exerciseEquipmentOptions[exId] || []).filter(eqId => eqId !== id);
+        var data = this._load();
+        data.equipment = data.equipment.filter(function(e) { return e.id !== id; });
+        for (var exId of Object.keys(data.exerciseEquipmentOptions)) {
+            data.exerciseEquipmentOptions[exId] = (data.exerciseEquipmentOptions[exId] || []).filter(function(eqId) { return eqId !== id; });
         }
-        // Clear current selections referencing this equipment
-        for (const [exId, eqId] of Object.entries(data.exerciseEquipment)) {
-            if (eqId === id) data.exerciseEquipment[exId] = null;
+        for (var [exId2, eqId] of Object.entries(data.exerciseEquipment)) {
+            if (eqId === id) data.exerciseEquipment[exId2] = null;
         }
         this._save();
     },
 
     renameEquipment(id, newName) {
-        const data = this._load();
-        const eq = data.equipment.find(e => e.id === id);
+        var data = this._load();
+        var eq = data.equipment.find(function(e) { return e.id === id; });
         if (eq) {
             eq.name = newName;
             this._save();
@@ -139,7 +224,7 @@ const Storage = {
 
     getEquipmentById(id) {
         if (!id) return null;
-        return this.getEquipmentList().find(e => e.id === id) || null;
+        return this.getEquipmentList().find(function(e) { return e.id === id; }) || null;
     },
 
     getExerciseEquipment(exerciseId) {
@@ -152,15 +237,14 @@ const Storage = {
         this._save();
     },
 
-    // Per-exercise equipment options
     getExerciseEquipmentOptions(exerciseId) {
-        const data = this._load();
-        const ids = data.exerciseEquipmentOptions[exerciseId] || [];
-        return ids.map(id => this.getEquipmentById(id)).filter(Boolean);
+        var data = this._load();
+        var ids = data.exerciseEquipmentOptions[exerciseId] || [];
+        return ids.map(function(id) { return Storage.getEquipmentById(id); }).filter(Boolean);
     },
 
     linkEquipmentToExercise(exerciseId, equipmentId) {
-        const data = this._load();
+        var data = this._load();
         if (!data.exerciseEquipmentOptions[exerciseId]) {
             data.exerciseEquipmentOptions[exerciseId] = [];
         }
@@ -170,11 +254,10 @@ const Storage = {
     },
 
     unlinkEquipmentFromExercise(exerciseId, equipmentId) {
-        const data = this._load();
+        var data = this._load();
         if (data.exerciseEquipmentOptions[exerciseId]) {
-            data.exerciseEquipmentOptions[exerciseId] = data.exerciseEquipmentOptions[exerciseId].filter(id => id !== equipmentId);
+            data.exerciseEquipmentOptions[exerciseId] = data.exerciseEquipmentOptions[exerciseId].filter(function(id) { return id !== equipmentId; });
         }
-        // If this was the current selection, clear it
         if (data.exerciseEquipment[exerciseId] === equipmentId) {
             data.exerciseEquipment[exerciseId] = null;
         }
@@ -202,11 +285,8 @@ const Storage = {
 
     // ===== Set logging =====
     getSetLog(week, day, exerciseId, setIdx) {
-        const data = this._load();
-        const w = String(week);
-        const d = String(day);
-        const s = String(setIdx);
-
+        var data = this._load();
+        var w = String(week), d = String(day), s = String(setIdx);
         if (data.log[w] && data.log[w][d] && data.log[w][d][exerciseId] && data.log[w][d][exerciseId][s]) {
             return data.log[w][d][exerciseId][s];
         }
@@ -214,15 +294,11 @@ const Storage = {
     },
 
     saveSetLog(week, day, exerciseId, setIdx, weight, reps, equipmentId) {
-        const data = this._load();
-        const w = String(week);
-        const d = String(day);
-        const s = String(setIdx);
-
+        var data = this._load();
+        var w = String(week), d = String(day), s = String(setIdx);
         if (!data.log[w]) data.log[w] = {};
         if (!data.log[w][d]) data.log[w][d] = {};
         if (!data.log[w][d][exerciseId]) data.log[w][d][exerciseId] = {};
-
         data.log[w][d][exerciseId][s] = {
             weight: weight,
             reps: reps,
@@ -234,25 +310,19 @@ const Storage = {
     },
 
     toggleSetComplete(week, day, exerciseId, setIdx, equipmentId) {
-        const existing = this.getSetLog(week, day, exerciseId, setIdx);
+        var existing = this.getSetLog(week, day, exerciseId, setIdx);
         if (existing && existing.completed) {
-            // Uncomplete
-            const data = this._load();
+            var data = this._load();
             delete data.log[String(week)][String(day)][exerciseId][String(setIdx)];
             this._save();
             return false;
         } else {
-            // Complete with current values
-            const data = this._load();
-            const w = String(week);
-            const d = String(day);
-            const s = String(setIdx);
-
+            var data = this._load();
+            var w = String(week), d = String(day), s = String(setIdx);
             if (!data.log[w]) data.log[w] = {};
             if (!data.log[w][d]) data.log[w][d] = {};
             if (!data.log[w][d][exerciseId]) data.log[w][d][exerciseId] = {};
-
-            const current = data.log[w][d][exerciseId][s] || {};
+            var current = data.log[w][d][exerciseId][s] || {};
             data.log[w][d][exerciseId][s] = {
                 weight: current.weight || 0,
                 reps: current.reps || 0,
@@ -266,34 +336,24 @@ const Storage = {
     },
 
     updateSetValue(week, day, exerciseId, setIdx, field, value) {
-        const data = this._load();
-        const w = String(week);
-        const d = String(day);
-        const s = String(setIdx);
-
+        var data = this._load();
+        var w = String(week), d = String(day), s = String(setIdx);
         if (!data.log[w]) data.log[w] = {};
         if (!data.log[w][d]) data.log[w][d] = {};
         if (!data.log[w][d][exerciseId]) data.log[w][d][exerciseId] = {};
         if (!data.log[w][d][exerciseId][s]) {
             data.log[w][d][exerciseId][s] = {
-                weight: 0,
-                reps: 0,
-                completed: false,
-                timestamp: Date.now()
+                weight: 0, reps: 0, completed: false, timestamp: Date.now()
             };
         }
-
         data.log[w][d][exerciseId][s][field] = value;
         data.log[w][d][exerciseId][s].timestamp = Date.now();
         this._save();
     },
 
-    // Stamp current equipment on a set log entry
     stampEquipment(week, day, exerciseId, setIdx, equipmentId) {
-        const data = this._load();
-        const w = String(week);
-        const d = String(day);
-        const s = String(setIdx);
+        var data = this._load();
+        var w = String(week), d = String(day), s = String(setIdx);
         if (data.log[w] && data.log[w][d] && data.log[w][d][exerciseId] && data.log[w][d][exerciseId][s]) {
             data.log[w][d][exerciseId][s].equipmentId = equipmentId || null;
             this._save();
@@ -301,41 +361,39 @@ const Storage = {
     },
 
     _ensureSegEntry(week, day, exerciseId, setIdx, segIdx) {
-        const data = this._load();
-        const w = String(week), d = String(day), s = String(setIdx), si = String(segIdx);
+        var data = this._load();
+        var w = String(week), d = String(day), s = String(setIdx), si = String(segIdx);
         if (!data.log[w]) data.log[w] = {};
         if (!data.log[w][d]) data.log[w][d] = {};
         if (!data.log[w][d][exerciseId]) data.log[w][d][exerciseId] = {};
         if (!data.log[w][d][exerciseId][s]) {
             data.log[w][d][exerciseId][s] = { weight: 0, reps: 0, completed: false, timestamp: Date.now() };
         }
-        const entry = data.log[w][d][exerciseId][s];
+        var entry = data.log[w][d][exerciseId][s];
         if (!entry.segs) entry.segs = {};
         if (!entry.segs[si] || typeof entry.segs[si] !== 'object') entry.segs[si] = {};
-        return { entry, si };
+        return { entry: entry, si: si };
     },
 
     saveSegReps(week, day, exerciseId, setIdx, segIdx, value) {
         if (segIdx === 0) { this.updateSetValue(week, day, exerciseId, setIdx, 'reps', value); return; }
-        const { entry, si } = this._ensureSegEntry(week, day, exerciseId, setIdx, segIdx);
-        entry.segs[si].reps = value;
-        entry.timestamp = Date.now();
+        var r = this._ensureSegEntry(week, day, exerciseId, setIdx, segIdx);
+        r.entry.segs[r.si].reps = value;
+        r.entry.timestamp = Date.now();
         this._save();
     },
 
     saveSegWeight(week, day, exerciseId, setIdx, segIdx, value) {
         if (segIdx === 0) { this.updateSetValue(week, day, exerciseId, setIdx, 'weight', value); return; }
-        const { entry, si } = this._ensureSegEntry(week, day, exerciseId, setIdx, segIdx);
-        entry.segs[si].weight = value;
-        entry.timestamp = Date.now();
+        var r = this._ensureSegEntry(week, day, exerciseId, setIdx, segIdx);
+        r.entry.segs[r.si].weight = value;
+        r.entry.timestamp = Date.now();
         this._save();
     },
 
-    // Get previous week's log for an exercise/set (for placeholder)
-    // If equipmentId provided, match ONLY that equipment (no fallback)
     getPreviousLog(week, day, exerciseId, setIdx, equipmentId) {
-        for (let w = week - 1; w >= 1; w--) {
-            const log = this.getSetLog(w, day, exerciseId, setIdx);
+        for (var w = week - 1; w >= 1; w--) {
+            var log = this.getSetLog(w, day, exerciseId, setIdx);
             if (log && log.completed) {
                 if (equipmentId) {
                     if (log.equipmentId === equipmentId) return log;
@@ -347,23 +405,19 @@ const Storage = {
         return null;
     },
 
-    // Get exercise history across all weeks — includes equipmentId
     getExerciseHistory(exerciseId) {
-        const data = this._load();
-        const history = [];
-
-        const totalWeeks = PROGRAM ? PROGRAM.totalWeeks : 12;
-        const totalDays = PROGRAM ? Object.keys(PROGRAM.dayTemplates).length : 5;
-        for (let week = 1; week <= totalWeeks; week++) {
-            const w = String(week);
+        var data = this._load();
+        var history = [];
+        var totalWeeks = PROGRAM ? PROGRAM.totalWeeks : 12;
+        var totalDays = PROGRAM ? Object.keys(PROGRAM.dayTemplates).length : 5;
+        for (var week = 1; week <= totalWeeks; week++) {
+            var w = String(week);
             if (!data.log[w]) continue;
-
-            for (let day = 1; day <= totalDays; day++) {
-                const d = String(day);
+            for (var day = 1; day <= totalDays; day++) {
+                var d = String(day);
                 if (!data.log[w][d] || !data.log[w][d][exerciseId]) continue;
-
-                const sets = [];
-                for (const [setIdx, setData] of Object.entries(data.log[w][d][exerciseId])) {
+                var sets = [];
+                for (var [setIdx, setData] of Object.entries(data.log[w][d][exerciseId])) {
                     if (setData.completed) {
                         sets.push({
                             setIdx: parseInt(setIdx),
@@ -374,39 +428,35 @@ const Storage = {
                         });
                     }
                 }
-
                 if (sets.length > 0) {
-                    sets.sort((a, b) => a.setIdx - b.setIdx);
-                    history.push({ week, day, sets });
+                    sets.sort(function(a, b) { return a.setIdx - b.setIdx; });
+                    history.push({ week: week, day: day, sets: sets });
                 }
             }
         }
-
         return history;
     },
 
-    // Last training date for a given week/day (max timestamp across all sets)
     getLastTrainingDate(week, day) {
-        const data = this._load();
-        const w = String(week), d = String(day);
+        var data = this._load();
+        var w = String(week), d = String(day);
         if (!data.log[w] || !data.log[w][d]) return null;
-        let maxTs = 0;
-        for (const exId of Object.keys(data.log[w][d])) {
-            for (const setData of Object.values(data.log[w][d][exId])) {
+        var maxTs = 0;
+        for (var exId of Object.keys(data.log[w][d])) {
+            for (var setData of Object.values(data.log[w][d][exId])) {
                 if (setData && setData.timestamp > maxTs) maxTs = setData.timestamp;
             }
         }
         return maxTs > 0 ? maxTs : null;
     },
 
-    // Export / Import
     exportData() {
         return JSON.stringify(this._load(), null, 2);
     },
 
     importData(jsonString) {
         try {
-            const data = JSON.parse(jsonString);
+            var data = JSON.parse(jsonString);
             if (data.settings && data.log) {
                 this._data = data;
                 this._save();

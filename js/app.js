@@ -7,21 +7,19 @@ const App = {
     _swipeDir: null,
 
     init() {
-        // Load program from storage or auto-migrate existing users
-        const storedProgram = Storage.getProgram();
-        if (storedProgram) {
-            PROGRAM = storedProgram;
-            // Update DEFAULT_PROGRAM if stored version is outdated
-            if (typeof DEFAULT_PROGRAM !== 'undefined' && DEFAULT_PROGRAM.version
-                && (!storedProgram.version || storedProgram.version < DEFAULT_PROGRAM.version)
-                && storedProgram.title === DEFAULT_PROGRAM.title) {
-                PROGRAM = DEFAULT_PROGRAM;
-                Storage.saveProgram(DEFAULT_PROGRAM, false);
+        // Multi-user migration (once)
+        Storage.migrateToMultiUser();
+
+        // Load program for current user
+        const currentUser = Storage.getCurrentUser();
+        if (currentUser) {
+            this._loadProgramForUser(currentUser);
+        } else {
+            // Legacy fallback: try loading stored program directly
+            const storedProgram = Storage.getProgram();
+            if (storedProgram) {
+                PROGRAM = storedProgram;
             }
-        } else if (Storage.isSetup() && typeof DEFAULT_PROGRAM !== 'undefined') {
-            // Existing user (has startDate) but no program saved yet — auto-migrate
-            PROGRAM = DEFAULT_PROGRAM;
-            Storage.saveProgram(DEFAULT_PROGRAM, false);
         }
 
         this._saveDebounced = debounce((week, day, exId, setIdx, field, value) => {
@@ -417,6 +415,62 @@ const App = {
         });
     },
 
+    _loadProgramForUser(user) {
+        var storedProgram = Storage.getProgram();
+        if (storedProgram) {
+            PROGRAM = storedProgram;
+            // Update built-in program if stored version is outdated
+            var builtin = BUILTIN_PROGRAMS[user.programId];
+            if (builtin) {
+                var latestProgram = builtin.getProgram();
+                if (latestProgram && latestProgram.version
+                    && (!storedProgram.version || storedProgram.version < latestProgram.version)) {
+                    PROGRAM = latestProgram;
+                    Storage.saveProgram(latestProgram, false);
+                }
+            }
+        } else {
+            // No stored program — load from built-in
+            var builtin = BUILTIN_PROGRAMS[user.programId];
+            if (builtin) {
+                PROGRAM = builtin.getProgram();
+                if (PROGRAM) Storage.saveProgram(PROGRAM, false);
+            }
+        }
+    },
+
+    switchUser(userId) {
+        Storage.setCurrentUser(userId);
+        PROGRAM = null;
+        var user = Storage.getCurrentUser();
+        if (user) this._loadProgramForUser(user);
+        location.hash = '';
+        this.route();
+    },
+
+    login(loginStr, passwordStr) {
+        var account = ACCOUNTS.find(function(a) {
+            return a.login === loginStr && a.password === passwordStr;
+        });
+        if (!account) return false;
+
+        // Check if user profile exists, create if not
+        var users = Storage.getUsers();
+        var existing = users.find(function(u) { return u.id === account.id; });
+        if (!existing) {
+            Storage.createUser(account.id, account.name, account.programId);
+        }
+
+        this.switchUser(account.id);
+        return true;
+    },
+
+    logout() {
+        Storage.logout();
+        PROGRAM = null;
+        location.hash = '#/login';
+    },
+
     startSetup() {
         const cycleBtn = document.querySelector('.cycle-toggle button.active');
         const cycleType = cycleBtn ? parseInt(cycleBtn.dataset.cycle) : 7;
@@ -453,6 +507,18 @@ const App = {
     route() {
         document.getElementById('app').classList.remove('no-animate');
         const hash = location.hash || '';
+
+        // Login screen
+        if (hash === '#/login') {
+            UI.renderLogin();
+            return;
+        }
+
+        // If no current user → login
+        if (!Storage.getCurrentUserId()) {
+            location.hash = '#/login';
+            return;
+        }
 
         // Program check: no program loaded → go to setup
         if (!PROGRAM && hash !== '#/setup') {
@@ -533,6 +599,29 @@ const App = {
 
     handleClick(e) {
         const target = e.target;
+
+        // Login form submit
+        if (target.id === 'login-submit' || target.closest('#login-submit')) {
+            var loginInput = document.getElementById('login-input');
+            var passInput = document.getElementById('password-input');
+            var loginVal = loginInput ? loginInput.value.trim() : '';
+            var passVal = passInput ? passInput.value.trim() : '';
+            if (!loginVal || !passVal) return;
+            if (!this.login(loginVal, passVal)) {
+                var err = document.getElementById('login-error');
+                if (err) {
+                    err.textContent = 'Неверный логин или пароль';
+                    err.style.display = 'block';
+                }
+            }
+            return;
+        }
+
+        // Logout
+        if (target.id === 'btn-logout' || target.closest('#btn-logout')) {
+            this.logout();
+            return;
+        }
 
         // Setup: import program from file
         if (target.id === 'setup-import-program' || target.closest('#setup-import-program')) {
