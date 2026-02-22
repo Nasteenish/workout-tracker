@@ -125,7 +125,7 @@ const Storage = {
                 localStorage.setItem('wt_data_mikhail', origData);
                 localStorage.removeItem('wt_data_anastasia');
                 wrongUser.id = 'mikhail';
-                wrongUser.name = 'Михаил';
+                wrongUser.name = 'Дима';
                 wrongUser.programId = 'mikhail_default';
                 this._saveUsers(users);
                 if (localStorage.getItem('wt_current') === 'anastasia') {
@@ -155,7 +155,7 @@ const Storage = {
             var userId, name, programId;
             if (athlete.indexOf('Mikhail') !== -1 || athlete.indexOf('Timoshin') !== -1) {
                 userId = 'mikhail';
-                name = 'Михаил';
+                name = 'Дима';
                 programId = 'mikhail_default';
             } else if (athlete.indexOf('Anastasiia') !== -1 || athlete.indexOf('Dobrosol') !== -1) {
                 userId = 'anastasia';

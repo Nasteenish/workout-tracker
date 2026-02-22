@@ -9,7 +9,7 @@ const BUILTIN_PROGRAMS = {
         getProgram: function() { return DEFAULT_PROGRAM; }
     },
     'mikhail_default': {
-        name: 'Михаил Тимошин',
+        name: 'Дима',
         description: '12-недельная предсоревновательная',
         athlete: 'Mikhail Timoshin',
         getProgram: function() { return MIKHAIL_PROGRAM; }
@@ -20,5 +20,5 @@ const BUILTIN_PROGRAMS = {
 // To add a new user: add an entry here + optionally add their program
 const ACCOUNTS = [
     { id: 'anastasia', login: 'nastya', password: '1234', name: 'Анастасия', programId: 'anastasia_default' },
-    { id: 'mikhail',   login: 'misha',  password: '1234', name: 'Михаил',    programId: 'mikhail_default' }
+    { id: 'mikhail',   login: 'misha',  password: '1234', name: 'Дима',       programId: 'mikhail_default' }
 ];
