@@ -149,10 +149,10 @@ const RestTimer = {
         this._endTime = null;
         document.getElementById('rest-timer-bar').classList.remove('active');
 
+        this._swTimer('STOP_TIMER');
         if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
         this._playBeep();
         this._showNotification();
-        this._sendSystemNotification();
     },
 
     _playBeep() {
@@ -240,10 +240,6 @@ const RestTimer = {
         if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission();
         }
-    },
-
-    _sendSystemNotification() {
-        this._swTimer('SHOW_NOTIFICATION');
     },
 
     _onVisibilityChange() {
