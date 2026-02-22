@@ -653,20 +653,49 @@ const UI = {
                 return html;
             };
 
-            // Sparkline — max weight per entry (last 8), based on filtered data
-            const sparkWeights = history.map(e => Math.max(...e.sets.map(s => s.weight || 0))).filter(w => w > 0);
-            if (sparkWeights.length > 1) {
-                const sparkMax = Math.max(...sparkWeights);
-                const shown = sparkWeights.slice(-8);
-                const isLast = (i) => i === shown.length - 1;
-                const bars = shown.map((w, i) => {
-                    const pct = Math.max(10, Math.round((w / sparkMax) * 100));
-                    return `<div class="spark-bar-wrap">
-                        <div class="spark-bar ${isLast(i) ? 'last' : ''}" style="height:${pct}%"></div>
-                        <div class="spark-label">${w}</div>
-                    </div>`;
-                }).join('');
-                contentHtml += `<div class="history-sparkline">${bars}</div>`;
+            // Progress chart — max weight per week, SVG line chart
+            const weekMap = {};
+            for (const e of history) {
+                const mw = Math.max(...e.sets.map(s => s.weight || 0));
+                if (mw > 0 && (!weekMap[e.week] || mw > weekMap[e.week])) weekMap[e.week] = mw;
+            }
+            const weeks = Object.keys(weekMap).map(Number).sort((a, b) => a - b);
+            if (weeks.length > 1) {
+                const values = weeks.map(w => weekMap[w]);
+                const minV = Math.min(...values);
+                const maxV = Math.max(...values);
+                const pad = { top: 22, right: 12, bottom: 24, left: 38 };
+                const W = 320, H = 130;
+                const cW = W - pad.left - pad.right, cH = H - pad.top - pad.bottom;
+                const range = maxV - minV || 1;
+                const x = (i) => pad.left + (i / (weeks.length - 1)) * cW;
+                const y = (v) => pad.top + cH - ((v - minV) / range) * cH;
+                // Grid lines (3 levels)
+                let gridHtml = '';
+                const gridSteps = [minV, minV + range / 2, maxV];
+                for (const gv of gridSteps) {
+                    const gy = y(gv);
+                    gridHtml += `<line x1="${pad.left}" y1="${gy}" x2="${W - pad.right}" y2="${gy}" class="chart-grid"/>`;
+                    gridHtml += `<text x="${pad.left - 5}" y="${gy + 3}" class="chart-y-label">${Math.round(gv)}</text>`;
+                }
+                // X labels
+                let xLabels = '';
+                const step = weeks.length <= 12 ? 1 : Math.ceil(weeks.length / 8);
+                for (let i = 0; i < weeks.length; i += step) {
+                    xLabels += `<text x="${x(i)}" y="${H - 4}" class="chart-x-label">Н${weeks[i]}</text>`;
+                }
+                // Line + points
+                const pts = values.map((v, i) => `${x(i)},${y(v)}`).join(' ');
+                let circles = '';
+                for (let i = 0; i < values.length; i++) {
+                    const isLast = i === values.length - 1;
+                    circles += `<circle cx="${x(i)}" cy="${y(values[i])}" r="${isLast ? 4 : 3}" class="chart-point${isLast ? ' last' : ''}"><title>Н${weeks[i]}: ${values[i]}${unitLabel}</title></circle>`;
+                }
+                contentHtml += `<div class="progress-chart"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
+                    ${gridHtml}${xLabels}
+                    <polyline points="${pts}" class="chart-line"/>
+                    ${circles}
+                </svg></div>`;
             }
 
             if (currentEq) {

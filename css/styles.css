@@ -1214,45 +1214,20 @@ body.modal-open {
 }
 
 /* History sparkline */
-.history-sparkline {
-    display: flex;
-    align-items: flex-end;
-    gap: 5px;
-    height: 56px;
+.progress-chart {
     margin-bottom: var(--spacing-lg);
     padding: var(--spacing-sm) var(--spacing-md);
     background: rgba(255,255,255,0.04);
     border-radius: var(--radius-md);
     border: var(--glass-border);
 }
-
-.spark-bar-wrap {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-    height: 100%;
-    gap: 3px;
-}
-
-.spark-bar {
-    width: 100%;
-    background: linear-gradient(180deg, var(--accent-primary) 0%, rgba(110,91,196,0.5) 100%);
-    border-radius: 2px 2px 0 0;
-    min-height: 4px;
-    transition: height 0.4s ease;
-}
-
-.spark-bar.last {
-    background: linear-gradient(180deg, var(--accent-success) 0%, rgba(90,160,10,0.6) 100%);
-}
-
-.spark-label {
-    font-size: 9px;
-    color: var(--text-muted);
-    white-space: nowrap;
-}
+.progress-chart svg { width: 100%; height: auto; }
+.chart-grid { stroke: rgba(255,255,255,0.08); stroke-width: 1; }
+.chart-line { fill: none; stroke: var(--accent-success); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart-point { fill: var(--accent-primary); stroke: none; }
+.chart-point.last { fill: var(--accent-success); r: 4; }
+.chart-y-label { fill: var(--text-muted); font-size: 9px; text-anchor: end; }
+.chart-x-label { fill: var(--text-muted); font-size: 9px; text-anchor: middle; }
 
 /* ===== History button ===== */
 .history-btn {
