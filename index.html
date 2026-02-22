@@ -41,43 +41,33 @@
     <script src="./js/app.js?v=47"></script>
 
     <script>
-        // Notification diagnostic — open by tapping version 5 times
+        // Notification diagnostic — shows automatically on load
         (function() {
-            var tapCount = 0, tapTimer;
-            document.addEventListener('click', function(e) {
-                if (e.target.closest('.app-version, .settings-version')) {
-                    tapCount++;
-                    clearTimeout(tapTimer);
-                    tapTimer = setTimeout(function() { tapCount = 0; }, 1500);
-                    if (tapCount >= 5) {
-                        tapCount = 0;
-                        showDiag();
+            window.addEventListener('load', function() {
+                setTimeout(function() {
+                    var panel = document.getElementById('notif-diag');
+                    var status = document.getElementById('diag-status');
+                    panel.style.display = 'block';
+                    var lines = [];
+                    lines.push('Notification API: ' + ('Notification' in window ? 'YES' : 'NO'));
+                    lines.push('Permission: ' + (('Notification' in window) ? Notification.permission : 'N/A'));
+                    lines.push('SW support: ' + ('serviceWorker' in navigator ? 'YES' : 'NO'));
+                    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                        lines.push('SW controller: ACTIVE ✓');
+                    } else {
+                        lines.push('SW controller: NONE ✗');
                     }
-                }
+                    navigator.serviceWorker.ready.then(function(reg) {
+                        lines.push('SW ready: ' + (reg.active ? 'ACTIVE ✓' : 'NO'));
+                        lines.push('SW scope: ' + reg.scope);
+                        status.textContent = lines.join('\n');
+                    }).catch(function(e) {
+                        lines.push('SW ready error: ' + e.message);
+                        status.textContent = lines.join('\n');
+                    });
+                    status.textContent = lines.join('\n');
+                }, 2000);
             });
-            function showDiag() {
-                var panel = document.getElementById('notif-diag');
-                var status = document.getElementById('diag-status');
-                panel.style.display = 'block';
-                var lines = [];
-                lines.push('Notification API: ' + ('Notification' in window ? 'YES' : 'NO'));
-                lines.push('Permission: ' + (('Notification' in window) ? Notification.permission : 'N/A'));
-                lines.push('SW support: ' + ('serviceWorker' in navigator ? 'YES' : 'NO'));
-                if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-                    lines.push('SW controller: ACTIVE ✓');
-                } else {
-                    lines.push('SW controller: NONE ✗');
-                }
-                navigator.serviceWorker.ready.then(function(reg) {
-                    lines.push('SW ready: ' + (reg.active ? 'ACTIVE ✓' : 'NO'));
-                    lines.push('SW scope: ' + reg.scope);
-                    status.textContent = lines.join('\n');
-                }).catch(function(e) {
-                    lines.push('SW ready error: ' + e.message);
-                    status.textContent = lines.join('\n');
-                });
-                status.textContent = lines.join('\n');
-            }
             document.addEventListener('click', function(e) {
                 if (e.target.id === 'diag-close') {
                     document.getElementById('notif-diag').style.display = 'none';
