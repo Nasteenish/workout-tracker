@@ -38,6 +38,7 @@ const UI = {
                 <div id="login-error" class="login-error" style="display:none"></div>
 
                 <button class="btn-primary" id="login-submit">ВОЙТИ</button>
+                <button class="btn-link" id="btn-register">Создать аккаунт</button>
             </div>
         `;
 
@@ -109,6 +110,7 @@ const UI = {
                     <div id="program-status" style="min-height:24px;margin-top:8px;font-size:13px;text-align:center"></div>
                 </div>
 
+                <button class="btn-secondary" id="setup-create-program" style="margin-top:8px">СОЗДАТЬ ПРОГРАММУ</button>
                 ${hasDefault ? '<button class="btn-secondary" id="setup-use-default" style="margin-top:8px;opacity:0.6">Программа по умолчанию</button>' : ''}
             </div>
         `;
@@ -343,6 +345,19 @@ const UI = {
         }
 
         const dayTitle = workout.titleRu || workout.title || `День ${dayNum}`;
+        const isCustom = PROGRAM && PROGRAM.isCustom;
+        const editBtn = isCustom ? '<button class="edit-mode-btn" id="btn-edit-day"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' : '';
+
+        // Empty day state for custom programs
+        if (isCustom && workout.exerciseGroups.length === 0) {
+            html = `
+                <div class="empty-day">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3"><path d="M12 5v14M5 12h14"/></svg>
+                    <p>Нет упражнений</p>
+                    <button class="btn-primary" id="btn-edit-day" style="margin-top:var(--spacing-md)">ДОБАВИТЬ УПРАЖНЕНИЯ</button>
+                </div>
+            `;
+        }
 
         document.getElementById('app').innerHTML = `
             <div class="app-header">
@@ -351,6 +366,7 @@ const UI = {
                     <h1>Неделя ${weekNum} / День ${dayNum}</h1>
                     <div class="header-subtitle">${dayTitle}</div>
                 </div>
+                ${editBtn}
             </div>
             <div class="app-content">
                 <div class="slide-container">

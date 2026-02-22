@@ -97,6 +97,34 @@ const Storage = {
         return id;
     },
 
+    // Self-registration: create new user with login/password stored in wt_users
+    createSelfRegisteredUser(name, login, password) {
+        var users = this.getUsers();
+        var id = 'user_' + Date.now();
+        users.push({ id: id, name: name, login: login, password: password, programId: null, selfRegistered: true, createdAt: Date.now() });
+        this._saveUsers(users);
+        return id;
+    },
+
+    // Login for self-registered users
+    loginSelfRegistered(login, password) {
+        var users = this.getUsers();
+        return users.find(function(u) {
+            return u.selfRegistered && u.login === login && u.password === password;
+        }) || null;
+    },
+
+    // Check if login is already taken (across hardcoded + self-registered)
+    isLoginTaken(login) {
+        // Check hardcoded ACCOUNTS
+        if (typeof ACCOUNTS !== 'undefined') {
+            if (ACCOUNTS.some(function(a) { return a.login === login; })) return true;
+        }
+        // Check self-registered
+        var users = this.getUsers();
+        return users.some(function(u) { return u.login === login; });
+    },
+
     logout() {
         this._invalidateCache();
         localStorage.removeItem('wt_current');

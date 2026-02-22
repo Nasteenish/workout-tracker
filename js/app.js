@@ -457,20 +457,28 @@ const App = {
     },
 
     login(loginStr, passwordStr) {
+        // 1. Try hardcoded ACCOUNTS (existing users — unchanged)
         var account = ACCOUNTS.find(function(a) {
             return a.login === loginStr && a.password === passwordStr;
         });
-        if (!account) return false;
-
-        // Check if user profile exists, create if not
-        var users = Storage.getUsers();
-        var existing = users.find(function(u) { return u.id === account.id; });
-        if (!existing) {
-            Storage.createUser(account.id, account.name, account.programId);
+        if (account) {
+            var users = Storage.getUsers();
+            var existing = users.find(function(u) { return u.id === account.id; });
+            if (!existing) {
+                Storage.createUser(account.id, account.name, account.programId);
+            }
+            this.switchUser(account.id);
+            return true;
         }
 
-        this.switchUser(account.id);
-        return true;
+        // 2. Try self-registered users
+        var selfUser = Storage.loginSelfRegistered(loginStr, passwordStr);
+        if (selfUser) {
+            this.switchUser(selfUser.id);
+            return true;
+        }
+
+        return false;
     },
 
     logout() {
@@ -491,7 +499,7 @@ const App = {
         overlay.className = 'notif-prompt-overlay';
         overlay.innerHTML =
             '<div class="notif-prompt">' +
-                '<div class="notif-prompt-icon">&#128276;</div>' +
+                '<div class="notif-prompt-icon"><svg viewBox="0 0 36 36" fill="white"><path d="M18 3a2 2 0 0 0-2 2v1.07A9 9 0 0 0 9 15v6.5L6.5 25a1 1 0 0 0 .5 1.5h10a3 3 0 0 0 6 0h10a1 1 0 0 0 .5-1.5L31 21.5V15a9 9 0 0 0-7-8.93V5a2 2 0 0 0-2-2h-4zm0 30a3 3 0 0 1-3-3h6a3 3 0 0 1-3 3z"/></svg></div>' +
                 '<div class="notif-prompt-title">Включить уведомления?</div>' +
                 '<div class="notif-prompt-text">Вы получите сигнал когда отдых между подходами закончится</div>' +
                 '<button class="btn-primary" id="notif-allow">Разрешить</button>' +
@@ -559,9 +567,32 @@ const App = {
             return;
         }
 
+        // Registration screen
+        if (hash === '#/register') {
+            Builder.renderRegister();
+            return;
+        }
+
         // If no current user → login
         if (!Storage.getCurrentUserId()) {
             location.hash = '#/login';
+            return;
+        }
+
+        // Builder wizard (needs user, no program required)
+        if (hash === '#/builder/step1') {
+            Builder.renderWizardStep1();
+            return;
+        }
+        if (hash === '#/builder/step2') {
+            Builder.renderWizardStep2();
+            return;
+        }
+
+        // Day editor (needs user + program)
+        var editDayMatch = hash.match(/^#\/edit\/day\/(\d+)$/);
+        if (editDayMatch) {
+            Builder.renderDayEditor(parseInt(editDayMatch[1]));
             return;
         }
 
@@ -663,6 +694,24 @@ const App = {
             return;
         }
 
+        // Go to registration
+        if (target.id === 'btn-register' || target.closest('#btn-register')) {
+            location.hash = '#/register';
+            return;
+        }
+
+        // Registration: submit
+        if (target.id === 'reg-submit' || target.closest('#reg-submit')) {
+            Builder.handleRegister();
+            return;
+        }
+
+        // Registration: go back to login
+        if (target.id === 'btn-go-login' || target.closest('#btn-go-login')) {
+            location.hash = '#/login';
+            return;
+        }
+
         // Logout
         if (target.id === 'btn-logout' || target.closest('#btn-logout')) {
             this.logout();
@@ -685,6 +734,113 @@ const App = {
                 });
             };
             input.click();
+            return;
+        }
+
+        // Setup: create program (builder)
+        if (target.id === 'setup-create-program' || target.closest('#setup-create-program')) {
+            location.hash = '#/builder/step1';
+            return;
+        }
+
+        // Builder wizard: toggle buttons (weeks/days)
+        if (target.matches('.builder-toggle button')) {
+            var btns = target.parentElement.querySelectorAll('button');
+            btns.forEach(function(b) { b.classList.remove('active'); });
+            target.classList.add('active');
+            return;
+        }
+
+        // Builder wizard: step1 → step2
+        if (target.id === 'builder-next' || target.closest('#builder-next')) {
+            Builder.saveStep1();
+            location.hash = '#/builder/step2';
+            return;
+        }
+
+        // Builder wizard: back from step1 → setup
+        if (target.id === 'builder-back-setup' || target.closest('#builder-back-setup')) {
+            location.hash = '#/setup';
+            return;
+        }
+
+        // Builder wizard: back from step2 → step1
+        if (target.id === 'builder-back-step1' || target.closest('#builder-back-step1')) {
+            // Save day names to config
+            if (Builder._config) {
+                var dayInputs = document.querySelectorAll('.builder-day-name');
+                var names = [];
+                dayInputs.forEach(function(inp) { names.push(inp.value.trim()); });
+                Builder._config.dayNames = names;
+            }
+            location.hash = '#/builder/step1';
+            return;
+        }
+
+        // Builder wizard: create program
+        if (target.id === 'builder-create' || target.closest('#builder-create')) {
+            Builder.createProgram();
+            location.hash = '#/setup';
+            return;
+        }
+
+        // Day editor: add exercise
+        if (target.id === 'editor-add-exercise' || target.closest('#editor-add-exercise')) {
+            Builder.showExercisePicker();
+            return;
+        }
+
+        // Day editor: save
+        if (target.id === 'editor-save' || target.closest('#editor-save')) {
+            Builder.saveDayEdits();
+            return;
+        }
+
+        // Day editor: move up
+        if (target.classList.contains('editor-move-up') || target.closest('.editor-move-up')) {
+            var btn = target.classList.contains('editor-move-up') ? target : target.closest('.editor-move-up');
+            Builder.moveExercise(parseInt(btn.dataset.idx), -1);
+            return;
+        }
+
+        // Day editor: move down
+        if (target.classList.contains('editor-move-down') || target.closest('.editor-move-down')) {
+            var btn = target.classList.contains('editor-move-down') ? target : target.closest('.editor-move-down');
+            Builder.moveExercise(parseInt(btn.dataset.idx), 1);
+            return;
+        }
+
+        // Day editor: delete exercise
+        if (target.classList.contains('editor-delete') || target.closest('.editor-delete')) {
+            var btn = target.classList.contains('editor-delete') ? target : target.closest('.editor-delete');
+            Builder.deleteExercise(parseInt(btn.dataset.idx));
+            return;
+        }
+
+        // Day editor: back
+        if (target.id === 'btn-back-editor' || target.closest('#btn-back-editor')) {
+            var app = document.getElementById('app');
+            app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
+            app.style.transform = 'translateX(40px)';
+            app.style.opacity = '0';
+            setTimeout(function() {
+                app.style.transition = 'none';
+                app.style.transform = '';
+                app.style.opacity = '';
+                window.scrollTo(0, 0);
+                if (Storage.isSetup()) {
+                    location.hash = '#/week/' + App._currentWeek + '/day/' + (Builder._editingDay ? Builder._editingDay.dayNum : App._currentDay);
+                } else {
+                    location.hash = '#/setup';
+                }
+                Builder._editingDay = null;
+            }, 190);
+            return;
+        }
+
+        // Edit day (pencil on training day view)
+        if (target.id === 'btn-edit-day' || target.closest('#btn-edit-day')) {
+            location.hash = '#/edit/day/' + this._currentDay;
             return;
         }
 
