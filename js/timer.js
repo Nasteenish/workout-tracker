@@ -380,12 +380,35 @@ const RestTimer = {
         });
 
         const dismiss = () => {
+            if (notif._dismissed) return;
+            notif._dismissed = true;
             notif.classList.remove('visible');
             setTimeout(() => notif.remove(), 300);
         };
 
-        setTimeout(dismiss, 3000);
         notif.addEventListener('click', dismiss);
+
+        // If app is visible — auto-dismiss after 3s; if in background — wait for tap
+        if (document.visibilityState === 'visible') {
+            setTimeout(dismiss, 3000);
+        } else {
+            // When user returns, show the notification fresh, dismiss only on tap
+            const onReturn = () => {
+                if (document.visibilityState !== 'visible') return;
+                document.removeEventListener('visibilitychange', onReturn);
+                // Re-trigger the entrance animation
+                notif.classList.remove('visible');
+                const fill = notif.querySelector('.rtn-ring-fill');
+                if (fill) fill.style.strokeDashoffset = '289';
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        if (fill) fill.style.strokeDashoffset = '0';
+                        notif.classList.add('visible');
+                    });
+                });
+            };
+            document.addEventListener('visibilitychange', onReturn);
+        }
     },
 
     _updateDisplay() {
