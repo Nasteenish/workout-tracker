@@ -473,6 +473,42 @@ const App = {
         location.hash = '#/login';
     },
 
+    _showNotificationPrompt() {
+        if (!('Notification' in window)) return;
+        if (Notification.permission !== 'default') return;
+        if (localStorage.getItem('_wt_notif_asked')) return;
+
+        // Show once per device
+        localStorage.setItem('_wt_notif_asked', '1');
+
+        var overlay = document.createElement('div');
+        overlay.className = 'notif-prompt-overlay';
+        overlay.innerHTML =
+            '<div class="notif-prompt">' +
+                '<div class="notif-prompt-icon">&#128276;</div>' +
+                '<div class="notif-prompt-title">Включить уведомления?</div>' +
+                '<div class="notif-prompt-text">Вы получите сигнал когда отдых между подходами закончится</div>' +
+                '<button class="btn-primary" id="notif-allow">Разрешить</button>' +
+                '<button class="notif-skip" id="notif-skip">Не сейчас</button>' +
+            '</div>';
+        document.body.appendChild(overlay);
+
+        requestAnimationFrame(function() {
+            overlay.classList.add('visible');
+        });
+
+        var dismiss = function() {
+            overlay.classList.remove('visible');
+            setTimeout(function() { overlay.remove(); }, 300);
+        };
+
+        document.getElementById('notif-allow').addEventListener('click', function() {
+            Notification.requestPermission();
+            dismiss();
+        });
+        document.getElementById('notif-skip').addEventListener('click', dismiss);
+    },
+
     startSetup() {
         const cycleBtn = document.querySelector('.cycle-toggle button.active');
         const cycleType = cycleBtn ? parseInt(cycleBtn.dataset.cycle) : 7;
@@ -587,6 +623,7 @@ const App = {
             this._currentWeek = parseInt(weekMatch[1]);
             this._swipeDir = null;
             UI.renderWeek(this._currentWeek);
+            this._showNotificationPrompt();
             return;
         }
 

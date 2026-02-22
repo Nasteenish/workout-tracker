@@ -463,6 +463,43 @@ input, button, select {
     margin-bottom: var(--spacing-md);
 }
 
+/* ===== Notification Prompt ===== */
+.notif-prompt-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9000;
+    opacity: 0;
+    transition: opacity 0.3s;
+    padding: var(--spacing-lg);
+}
+.notif-prompt-overlay.visible { opacity: 1; }
+
+.notif-prompt {
+    background: var(--bg-primary);
+    border: var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl) var(--spacing-lg);
+    text-align: center;
+    max-width: 320px;
+    width: 100%;
+}
+.notif-prompt-icon { font-size: 48px; margin-bottom: var(--spacing-md); }
+.notif-prompt-title { font-size: 18px; font-weight: 700; margin-bottom: var(--spacing-sm); }
+.notif-prompt-text { font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-lg); line-height: 1.4; }
+.notif-prompt .btn-primary { width: 100%; margin-bottom: var(--spacing-sm); }
+.notif-skip {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-sm);
+    cursor: pointer;
+}
+
 /* ===== Week View ===== */
 .week-nav {
     display: flex;
