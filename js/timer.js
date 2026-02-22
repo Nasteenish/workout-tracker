@@ -8,6 +8,7 @@ const RestTimer = {
     _audioCtx: null,
     _endTime: null,
     _pausedAt: null,
+    _minimized: false,
 
     init() {
         const settings = Storage.getSettings();
@@ -38,6 +39,17 @@ const RestTimer = {
         document.getElementById('rtb-minus').addEventListener('click', () => this.adjust(-30));
         document.getElementById('rtb-plus').addEventListener('click', () => this.adjust(30));
         document.getElementById('rtb-pause').addEventListener('click', () => this.togglePause());
+
+        // Swipe up to minimize, tap to expand
+        let _swY = 0;
+        bar.addEventListener('touchstart', (e) => { _swY = e.touches[0].clientY; }, { passive: true });
+        bar.addEventListener('touchend', (e) => {
+            const dy = e.changedTouches[0].clientY - _swY;
+            if (dy < -30 && !this._minimized) this.minimize();
+        }, { passive: true });
+        bar.addEventListener('click', (e) => {
+            if (this._minimized) { e.stopPropagation(); this.expand(); }
+        });
 
         // Unlock AudioContext on first user interaction (required on iOS)
         const unlock = () => this._unlockAudio();
@@ -79,7 +91,10 @@ const RestTimer = {
 
         this._swTimer('START_TIMER', this._remaining * 1000);
 
-        document.getElementById('rest-timer-bar').classList.add('active');
+        const timerBar = document.getElementById('rest-timer-bar');
+        timerBar.classList.remove('minimized');
+        this._minimized = false;
+        timerBar.classList.add('active');
 
         this._interval = setInterval(() => {
             if (!this._paused) {
@@ -97,8 +112,10 @@ const RestTimer = {
         this._interval = null;
         this._endTime = null;
         this._pausedAt = null;
+        this._minimized = false;
         this._swTimer('STOP_TIMER');
-        document.getElementById('rest-timer-bar').classList.remove('active');
+        const stopBar = document.getElementById('rest-timer-bar');
+        stopBar.classList.remove('active', 'minimized');
     },
 
     togglePause() {
@@ -125,6 +142,16 @@ const RestTimer = {
         this._updateDisplay();
     },
 
+    minimize() {
+        this._minimized = true;
+        document.getElementById('rest-timer-bar').classList.add('minimized');
+    },
+
+    expand() {
+        this._minimized = false;
+        document.getElementById('rest-timer-bar').classList.remove('minimized');
+    },
+
     _unlockAudio() {
         try {
             if (!this._audioCtx) {
@@ -147,7 +174,9 @@ const RestTimer = {
         clearInterval(this._interval);
         this._interval = null;
         this._endTime = null;
-        document.getElementById('rest-timer-bar').classList.remove('active');
+        const finBar = document.getElementById('rest-timer-bar');
+        finBar.classList.remove('active', 'minimized');
+        this._minimized = false;
 
         this._swTimer('STOP_TIMER');
         if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
