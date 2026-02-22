@@ -879,7 +879,7 @@ const UI = {
                     <svg class="menu-card-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 15l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </a>
 
-                <div class="menu-card" id="btn-logout" style="margin-top:var(--spacing-xl);opacity:0.6;cursor:pointer">
+                <div class="menu-card" id="btn-logout">
                     <div class="menu-card-icon">${LOGOUT_SVG}</div>
                     <div class="menu-card-text">
                         <div class="menu-card-title">Выйти</div>
