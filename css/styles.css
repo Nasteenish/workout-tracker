@@ -265,8 +265,8 @@ input, button, select {
 }
 
 .setup-screen .app-icon svg {
-    width: 44px;
-    height: 44px;
+    width: 54px;
+    height: 54px;
 }
 
 .setup-screen h1 {
@@ -416,8 +416,8 @@ input, button, select {
 }
 
 .login-screen .app-icon svg {
-    width: 44px;
-    height: 44px;
+    width: 54px;
+    height: 54px;
 }
 
 /* Staggered entrance animation */
@@ -488,11 +488,13 @@ input, button, select {
 
 .login-field input:-webkit-autofill,
 .login-field input:-webkit-autofill:hover,
-.login-field input:-webkit-autofill:focus {
-    -webkit-box-shadow: 0 0 0 50px rgba(255, 255, 255, 0.08) inset !important;
+.login-field input:-webkit-autofill:focus,
+.login-field input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #1a1a24 inset !important;
     -webkit-text-fill-color: white !important;
     caret-color: white;
     border-color: rgba(157, 141, 245, 0.3);
+    transition: background-color 5000s ease-in-out 0s;
 }
 
 .login-error {
