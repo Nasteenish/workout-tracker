@@ -8,8 +8,6 @@ const RestTimer = {
     _audioCtx: null,
     _endTime: null,
     _pausedAt: null,
-    _keepAliveAudio: null,
-    _keepAliveUrl: null,
 
     init() {
         const settings = Storage.getSettings();
@@ -133,120 +131,6 @@ const RestTimer = {
             }
             if (this._audioCtx.state === 'suspended') {
                 this._audioCtx.resume();
-            }
-        } catch(e) {}
-    },
-
-    _startKeepAlive() {
-        if (this._keepAliveAudio) return;
-        try {
-            // Generate 1-second silent WAV in memory
-            const sampleRate = 8000;
-            const numSamples = sampleRate;
-            const buffer = new ArrayBuffer(44 + numSamples);
-            const view = new DataView(buffer);
-            const w = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
-            w(0, 'RIFF');
-            view.setUint32(4, 36 + numSamples, true);
-            w(8, 'WAVE');
-            w(12, 'fmt ');
-            view.setUint32(16, 16, true);
-            view.setUint16(20, 1, true);
-            view.setUint16(22, 1, true);
-            view.setUint32(24, sampleRate, true);
-            view.setUint32(28, sampleRate, true);
-            view.setUint16(32, 1, true);
-            view.setUint16(34, 8, true);
-            w(36, 'data');
-            view.setUint32(40, numSamples, true);
-            for (let i = 0; i < numSamples; i++) view.setUint8(44 + i, 128);
-
-            const blob = new Blob([buffer], { type: 'audio/wav' });
-            this._keepAliveUrl = URL.createObjectURL(blob);
-            const audio = new Audio(this._keepAliveUrl);
-            audio.loop = true;
-            audio.volume = 0.01;
-            audio.play().catch(() => {});
-            this._keepAliveAudio = audio;
-        } catch(e) {}
-    },
-
-    _stopKeepAlive() {
-        if (this._keepAliveAudio) {
-            this._keepAliveAudio.pause();
-            this._keepAliveAudio.src = '';
-            this._keepAliveAudio = null;
-        }
-        if (this._keepAliveUrl) {
-            URL.revokeObjectURL(this._keepAliveUrl);
-            this._keepAliveUrl = null;
-        }
-    },
-
-    // Generate beep WAV and play via <audio> (works in iOS background, unlike Web Audio API)
-    _playBeepViaAudio() {
-        try {
-            const sampleRate = 44100;
-            const duration = 0.9;
-            const numSamples = Math.floor(sampleRate * duration);
-            const buffer = new ArrayBuffer(44 + numSamples * 2);
-            const view = new DataView(buffer);
-            const w = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
-
-            // WAV header (16-bit mono)
-            w(0, 'RIFF');
-            view.setUint32(4, 36 + numSamples * 2, true);
-            w(8, 'WAVE');
-            w(12, 'fmt ');
-            view.setUint32(16, 16, true);
-            view.setUint16(20, 1, true);
-            view.setUint16(22, 1, true);
-            view.setUint32(24, sampleRate, true);
-            view.setUint32(28, sampleRate * 2, true);
-            view.setUint16(32, 2, true);
-            view.setUint16(34, 16, true);
-            w(36, 'data');
-            view.setUint32(40, numSamples * 2, true);
-
-            // Three ascending tones: 880Hz, 1100Hz, 1320Hz
-            const tones = [
-                { freq: 880,  start: 0,    end: 0.3 },
-                { freq: 1100, start: 0.3,  end: 0.6 },
-                { freq: 1320, start: 0.6,  end: 0.9 }
-            ];
-
-            for (let i = 0; i < numSamples; i++) {
-                const t = i / sampleRate;
-                let sample = 0;
-                for (const tone of tones) {
-                    if (t >= tone.start && t < tone.end) {
-                        const env = Math.max(0, 1 - (t - tone.start) / (tone.end - tone.start) * 0.5);
-                        sample = Math.sin(2 * Math.PI * tone.freq * t) * env * 0.4;
-                    }
-                }
-                view.setInt16(44 + i * 2, sample * 32767, true);
-            }
-
-            const blob = new Blob([buffer], { type: 'audio/wav' });
-            const url = URL.createObjectURL(blob);
-
-            // Reuse keepalive <audio> if available (already has OS audio session)
-            if (this._keepAliveAudio) {
-                this._keepAliveAudio.loop = false;
-                this._keepAliveAudio.volume = 1;
-                this._keepAliveAudio.src = url;
-                this._keepAliveAudio.play().catch(() => {});
-                this._keepAliveAudio.onended = () => {
-                    this._stopKeepAlive();
-                    URL.revokeObjectURL(url);
-                };
-                if (this._keepAliveUrl) URL.revokeObjectURL(this._keepAliveUrl);
-                this._keepAliveUrl = url;
-            } else {
-                const audio = new Audio(url);
-                audio.volume = 1;
-                audio.play().catch(() => {});
-                audio.onended = () => { URL.revokeObjectURL(url); };
             }
         } catch(e) {}
     },
@@ -441,12 +325,14 @@ const RestTimer = {
     },
 
     _sendSystemNotification() {
-        if (!navigator.serviceWorker) return;
-        navigator.serviceWorker.ready.then(reg => {
-            if (reg.active) {
-                reg.active.postMessage({ type: 'SHOW_NOTIFICATION' });
-            }
-        });
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('Пора!', {
+                body: 'Отдых завершён',
+                icon: './icons/icon-192.png',
+                tag: 'rest-timer',
+                requireInteraction: false
+            });
+        }
     },
 
     _onVisibilityChange() {
