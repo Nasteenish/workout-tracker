@@ -39,11 +39,11 @@
     <script>
         if ('serviceWorker' in navigator) {
             // One-time SW reset to clear corrupted state after rapid updates
-            if (!localStorage.getItem('_swReset149')) {
+            if (!localStorage.getItem('_swReset156')) {
                 navigator.serviceWorker.getRegistrations().then(function(regs) {
                     return Promise.all(regs.map(function(r) { return r.unregister(); }));
                 }).then(function() {
-                    localStorage.setItem('_swReset149', '1');
+                    localStorage.setItem('_swReset156', '1');
                     return navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' });
                 }).then(function(reg) { return reg.update(); });
             } else {
