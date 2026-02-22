@@ -640,35 +640,6 @@ const MIKHAIL2_PROGRAM = {
               }
             ]
           }
-        },
-        {
-          "type": "single",
-          "sectionTitle": "HAMSTRINGS",
-          "sectionTitleRu": "БИЦЕПС БЕДРА",
-          "exercise": {
-            "id": "D2E11",
-            "name": "Single leg curl",
-            "nameRu": "Сгибание ноги (поочерёдно)",
-            "reps": "12-15",
-            "rest": 120,
-            "sets": [
-              {
-                "type": "H",
-                "rpe": "9-10",
-                "techniques": []
-              },
-              {
-                "type": "H",
-                "rpe": "9-10",
-                "techniques": []
-              },
-              {
-                "type": "H",
-                "rpe": "9-10",
-                "techniques": []
-              }
-            ]
-          }
         }
       ]
     },
@@ -3606,15 +3577,6 @@ const MIKHAIL2_PROGRAM = {
               ]
             }
           }
-        },
-        "D2E11": {
-          "sets": {
-            "2": {
-              "techniques": [
-                "MP"
-              ]
-            }
-          }
         }
       },
       "3": {
@@ -4270,16 +4232,6 @@ const MIKHAIL2_PROGRAM = {
                 "REST_PAUSE"
               ]
             },
-            "2": {
-              "techniques": [
-                "MP",
-                "MP"
-              ]
-            }
-          }
-        },
-        "D2E11": {
-          "sets": {
             "2": {
               "techniques": [
                 "MP",
@@ -5019,16 +4971,6 @@ const MIKHAIL2_PROGRAM = {
                 "REST_PAUSE"
               ]
             },
-            "2": {
-              "techniques": [
-                "MP",
-                "MP"
-              ]
-            }
-          }
-        },
-        "D2E11": {
-          "sets": {
             "2": {
               "techniques": [
                 "MP",
@@ -5790,16 +5732,6 @@ const MIKHAIL2_PROGRAM = {
                 "REST_PAUSE"
               ]
             },
-            "2": {
-              "techniques": [
-                "MP",
-                "MP"
-              ]
-            }
-          }
-        },
-        "D2E11": {
-          "sets": {
             "2": {
               "techniques": [
                 "MP",
@@ -6588,21 +6520,6 @@ const MIKHAIL2_PROGRAM = {
             "1": {
               "techniques": [
                 "REST_PAUSE",
-                "REST_PAUSE"
-              ]
-            },
-            "2": {
-              "techniques": [
-                "MP",
-                "MP"
-              ]
-            }
-          }
-        },
-        "D2E11": {
-          "sets": {
-            "1": {
-              "techniques": [
                 "REST_PAUSE"
               ]
             },
@@ -7404,21 +7321,6 @@ const MIKHAIL2_PROGRAM = {
             "1": {
               "techniques": [
                 "REST_PAUSE",
-                "REST_PAUSE"
-              ]
-            },
-            "2": {
-              "techniques": [
-                "MP",
-                "MP"
-              ]
-            }
-          }
-        },
-        "D2E11": {
-          "sets": {
-            "1": {
-              "techniques": [
                 "REST_PAUSE"
               ]
             },
