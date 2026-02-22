@@ -343,6 +343,8 @@ const RestTimer = {
         if (document.visibilityState !== 'visible') {
             // Play beep via <audio> (reuses keepalive audio session — works in iOS background)
             this._playBeepViaAudio();
+            // Show system push notification
+            this._sendSystemNotification();
             this._pendingFinish = true;
             return;
         }
