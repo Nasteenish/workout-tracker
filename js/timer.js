@@ -67,12 +67,17 @@ const RestTimer = {
 
             if (this._dragging) {
                 this._dragDy = dy;
-                // Expanded: only allow drag down; minimized: only allow drag up
+                // Expanded: drag down → minimize, drag up → dismiss
                 if (!this._minimized && dy > 0) {
                     const dampened = dy * 0.6;
                     const scale = Math.max(0.4, 1 - dy / 600);
                     const opacity = Math.max(0.5, 1 - dy / 400);
                     bar.style.transform = `translateX(-50%) translateY(${dampened}px) scale(${scale})`;
+                    bar.style.opacity = opacity;
+                } else if (!this._minimized && dy < 0) {
+                    const dampened = dy * 0.6;
+                    const opacity = Math.max(0.3, 1 - Math.abs(dy) / 300);
+                    bar.style.transform = `translateX(-50%) translateY(${dampened}px)`;
                     bar.style.opacity = opacity;
                 } else if (this._minimized && dy < 0) {
                     const dampened = dy * 0.6;
@@ -97,6 +102,19 @@ const RestTimer = {
             bar.style.opacity = '';
 
             if (wasDragging) {
+                if (!this._minimized && dy < -50) {
+                    // Swiped up on expanded bar → fly up and dismiss
+                    const anim = bar.animate([
+                        { transform: `translateX(-50%) translateY(${dy * 0.6}px)`, opacity: bar.style.opacity || 1 },
+                        { transform: 'translateX(-50%) translateY(-120px)', opacity: 0 }
+                    ], { duration: 250, easing: 'ease-in', fill: 'forwards' });
+                    anim.onfinish = () => {
+                        anim.cancel();
+                        bar.style.transform = '';
+                        this.stop();
+                    };
+                    return;
+                }
                 if (!this._minimized && dy > 60) {
                     // Dragged down enough → minimize
                     bar.style.transform = '';
