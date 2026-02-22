@@ -396,7 +396,7 @@ const RestTimer = {
             const onReturn = () => {
                 if (document.visibilityState !== 'visible') return;
                 document.removeEventListener('visibilitychange', onReturn);
-                // Re-trigger the entrance animation
+                // Re-trigger the entrance animation + auto-dismiss after 3s
                 notif.classList.remove('visible');
                 const fill = notif.querySelector('.rtn-ring-fill');
                 if (fill) fill.style.strokeDashoffset = '289';
@@ -406,6 +406,7 @@ const RestTimer = {
                         notif.classList.add('visible');
                     });
                 });
+                setTimeout(dismiss, 3000);
             };
             document.addEventListener('visibilitychange', onReturn);
         }
