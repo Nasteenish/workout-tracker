@@ -51,6 +51,7 @@ const RestTimer = {
         document.addEventListener('visibilitychange', () => this._onVisibilityChange());
 
         this._updateDisplay();
+        this._restoreState();
     },
 
     // Call this whenever settings change
@@ -80,6 +81,7 @@ const RestTimer = {
         this._swTimer('START_TIMER', this._remaining * 1000);
 
         document.getElementById('rest-timer-bar').classList.add('active');
+        this._saveState();
 
         this._interval = setInterval(() => {
             if (!this._paused) {
@@ -99,6 +101,7 @@ const RestTimer = {
         this._pausedAt = null;
         this._swTimer('STOP_TIMER');
         document.getElementById('rest-timer-bar').classList.remove('active');
+        this._saveState();
     },
 
     togglePause() {
@@ -114,6 +117,7 @@ const RestTimer = {
             this._swTimer('START_TIMER', (this._endTime - Date.now()));
         }
         this._updatePauseBtn();
+        this._saveState();
     },
 
     adjust(delta) {
@@ -123,6 +127,7 @@ const RestTimer = {
             this._swTimer('START_TIMER', this._remaining * 1000);
         }
         this._updateDisplay();
+        this._saveState();
     },
 
     _unlockAudio() {
@@ -148,6 +153,7 @@ const RestTimer = {
         this._interval = null;
         this._endTime = null;
         document.getElementById('rest-timer-bar').classList.remove('active');
+        this._saveState();
 
         this._swTimer('STOP_TIMER');
         if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
@@ -252,6 +258,63 @@ const RestTimer = {
             this._finish();
         } else {
             this._updateDisplay();
+        }
+    },
+
+    _saveState() {
+        if (!this._endTime) {
+            localStorage.removeItem('_wt_timer');
+            return;
+        }
+        localStorage.setItem('_wt_timer', JSON.stringify({
+            endTime: this._endTime,
+            paused: this._paused,
+            pausedAt: this._pausedAt,
+            defaultDuration: this._defaultDuration
+        }));
+    },
+
+    _restoreState() {
+        try {
+            const saved = localStorage.getItem('_wt_timer');
+            if (!saved) return;
+            const s = JSON.parse(saved);
+
+            if (s.paused) {
+                this._remaining = Math.ceil((s.endTime - s.pausedAt) / 1000);
+            } else {
+                this._remaining = Math.ceil((s.endTime - Date.now()) / 1000);
+            }
+
+            if (this._remaining <= 0) {
+                localStorage.removeItem('_wt_timer');
+                return;
+            }
+
+            this._endTime = s.endTime;
+            this._paused = s.paused;
+            this._pausedAt = s.pausedAt;
+            this._defaultDuration = s.defaultDuration || this._defaultDuration;
+
+            if (this._paused) {
+                const drift = Date.now() - s.pausedAt;
+                this._endTime += drift;
+                this._pausedAt = Date.now();
+            }
+
+            document.getElementById('rest-timer-bar').classList.add('active');
+            this._updateDisplay();
+            this._updatePauseBtn();
+
+            this._interval = setInterval(() => {
+                if (!this._paused) {
+                    this._remaining = Math.ceil((this._endTime - Date.now()) / 1000);
+                    this._updateDisplay();
+                    if (this._remaining <= 0) this._finish();
+                }
+            }, 1000);
+        } catch (e) {
+            localStorage.removeItem('_wt_timer');
         }
     },
 
