@@ -50,15 +50,6 @@ const RestTimer = {
         // Handle returning from background
         document.addEventListener('visibilitychange', () => this._onVisibilityChange());
 
-        // Listen for diagnostic messages from SW
-        if (navigator.serviceWorker) {
-            navigator.serviceWorker.addEventListener('message', (event) => {
-                if (event.data && event.data.type === 'DIAG') {
-                    this._diag('SW→ ' + event.data.msg);
-                }
-            });
-        }
-
         this._updateDisplay();
     },
 
@@ -86,9 +77,6 @@ const RestTimer = {
             Notification.requestPermission();
         }
 
-        // DEBUG: show diagnostic + send immediate test notification
-        this._diag('perm=' + (window.Notification ? Notification.permission : 'N/A'));
-        this._swTimer('TEST_NOTIFICATION');
         this._swTimer('START_TIMER', this._remaining * 1000);
 
         document.getElementById('rest-timer-bar').classList.add('active');
@@ -149,15 +137,9 @@ const RestTimer = {
     },
 
     _swTimer(type, duration) {
-        if (!navigator.serviceWorker) { this._diag('NO serviceWorker!'); return; }
-        this._diag('→SW ' + type + ' (waiting for ready...)');
+        if (!navigator.serviceWorker) return;
         navigator.serviceWorker.ready.then(reg => {
-            if (reg.active) {
-                this._diag('→SW ' + type + ' delivered to active');
-                reg.active.postMessage({ type, duration });
-            } else {
-                this._diag('→SW ERROR: no active worker!');
-            }
+            if (reg.active) reg.active.postMessage({ type, duration });
         });
     },
 
@@ -166,8 +148,6 @@ const RestTimer = {
         this._interval = null;
         this._endTime = null;
         document.getElementById('rest-timer-bar').classList.remove('active');
-
-        this._diag('_finish() called, vis=' + document.visibilityState);
 
         if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
         this._playBeep();
@@ -263,7 +243,6 @@ const RestTimer = {
     },
 
     _sendSystemNotification() {
-        this._diag('sending SHOW_NOTIFICATION to SW');
         this._swTimer('SHOW_NOTIFICATION');
     },
 
@@ -278,18 +257,6 @@ const RestTimer = {
         } else {
             this._updateDisplay();
         }
-    },
-
-    _diag(msg) {
-        let el = document.getElementById('timer-diag');
-        if (!el) {
-            el = document.createElement('div');
-            el.id = 'timer-diag';
-            el.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#220;color:#ff0;font:11px monospace;padding:4px 8px;z-index:99999;white-space:pre-wrap';
-            document.body.appendChild(el);
-        }
-        el.style.display = 'block';
-        el.textContent = (el.textContent ? el.textContent + '\n' : '') + new Date().toLocaleTimeString() + ' ' + msg;
     },
 
     _updatePauseBtn() {

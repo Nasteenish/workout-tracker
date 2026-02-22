@@ -1,4 +1,4 @@
-const CACHE_NAME = 'workout-tracker-v160';
+const CACHE_NAME = 'workout-tracker-v162';
 const ASSETS = [
     './',
     './index.html',
@@ -33,21 +33,12 @@ self.addEventListener('activate', event => {
     );
 });
 
-// Helper: report back to page for diagnostics
-function diagReport(msg) {
-    self.clients.matchAll().then(clients => {
-        clients.forEach(c => c.postMessage({ type: 'DIAG', msg: msg }));
-    });
-}
-
 // ===== Rest Timer Background Notification =====
 let _timerTimeout = null;
 let _timerResolve = null;
 
 self.addEventListener('message', event => {
     const { type, duration } = event.data || {};
-
-    diagReport('SW got: ' + type);
 
     if (type === 'START_TIMER') {
         if (_timerTimeout) clearTimeout(_timerTimeout);
@@ -58,20 +49,13 @@ self.addEventListener('message', event => {
             _timerTimeout = setTimeout(() => {
                 _timerTimeout = null;
                 _timerResolve = null;
-                diagReport('SW timer fired, calling showNotification...');
                 self.registration.showNotification('Пора!', {
                     body: 'Отдых завершён',
                     icon: './icons/icon-192.png',
                     tag: 'rest-timer',
                     renotify: true,
                     vibrate: [200, 80, 200, 80, 400]
-                }).then(() => {
-                    diagReport('showNotification OK (timer)');
-                    resolve();
-                }).catch(err => {
-                    diagReport('showNotification ERROR (timer): ' + err.message);
-                    resolve();
-                });
+                }).then(resolve).catch(resolve);
             }, duration);
         }));
     }
@@ -84,24 +68,6 @@ self.addEventListener('message', event => {
                 tag: 'rest-timer',
                 renotify: true,
                 vibrate: [200, 80, 200, 80, 400]
-            }).then(() => {
-                diagReport('showNotification OK (SHOW)');
-            }).catch(err => {
-                diagReport('showNotification ERROR (SHOW): ' + err.message);
-            })
-        );
-    }
-
-    if (type === 'TEST_NOTIFICATION') {
-        event.waitUntil(
-            self.registration.showNotification('Тест!', {
-                body: 'SW уведомление работает',
-                icon: './icons/icon-192.png',
-                tag: 'test-notif'
-            }).then(() => {
-                diagReport('showNotification OK (TEST)');
-            }).catch(err => {
-                diagReport('showNotification ERROR (TEST): ' + err.message);
             })
         );
     }
