@@ -450,14 +450,15 @@ const RestTimer = {
     },
 
     _sendSystemNotification() {
-        if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('Пора!', {
+        if (!navigator.serviceWorker) return;
+        navigator.serviceWorker.ready.then(reg => {
+            reg.showNotification('Пора!', {
                 body: 'Отдых завершён',
                 icon: './icons/icon-192.png',
                 tag: 'rest-timer',
-                requireInteraction: false
-            });
-        }
+                vibrate: [200, 80, 200, 80, 400]
+            }).catch(() => {});
+        });
     },
 
     _onVisibilityChange() {
