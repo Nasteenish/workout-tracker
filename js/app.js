@@ -1006,10 +1006,8 @@ const App = {
                 const gid = `cg-${exId}-${setIdx}`;
                 btn.innerHTML = `<svg width="40" height="40" viewBox="0 0 40 40"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#C3FF3C"/><stop offset="1" stop-color="#5AA00A"/></linearGradient></defs><circle cx="20" cy="20" r="20" fill="url(#${gid})"/><g transform="translate(11,11)"><path d="M4 9l3.5 3.5L14 5.5" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`;
                 btn.classList.add('pop');
-                btn.addEventListener('animationend', () => {
-                    btn.classList.remove('pop');
-                    row.classList.add('done');
-                }, { once: true });
+                btn.addEventListener('animationend', () => btn.classList.remove('pop'), { once: true });
+                row.classList.add('done');
                 RestTimer.start();
             }
             return;
