@@ -312,9 +312,19 @@ const RestTimer = {
         this._saveState();
 
         this._swTimer('STOP_TIMER');
-        if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
-        this._playBeep();
-        this._showNotification();
+
+        const alertUser = () => {
+            if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
+            this._playBeep();
+        };
+
+        if (document.visibilityState === 'visible') {
+            alertUser();
+            this._showNotification(null);
+        } else {
+            // App is in background — defer sound/vibration until user returns
+            this._showNotification(alertUser);
+        }
     },
 
     _playBeep() {
@@ -347,7 +357,7 @@ const RestTimer = {
         } catch(e) {}
     },
 
-    _showNotification() {
+    _showNotification(onReturnCallback) {
         const notif = document.createElement('div');
         notif.className = 'rtn-overlay';
         notif.innerHTML = `
@@ -396,6 +406,8 @@ const RestTimer = {
             const onReturn = () => {
                 if (document.visibilityState !== 'visible') return;
                 document.removeEventListener('visibilitychange', onReturn);
+                // Play sound/vibration now that the user is back
+                if (onReturnCallback) onReturnCallback();
                 // Re-trigger the entrance animation + auto-dismiss after 3s
                 notif.classList.remove('visible');
                 const fill = notif.querySelector('.rtn-ring-fill');
