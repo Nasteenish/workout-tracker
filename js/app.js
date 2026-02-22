@@ -419,11 +419,13 @@ const App = {
         var storedProgram = Storage.getProgram();
         if (storedProgram) {
             PROGRAM = storedProgram;
-            // Update built-in program if stored version is outdated
+            // Update built-in program only if same athlete and newer version
             var builtin = BUILTIN_PROGRAMS[user.programId];
             if (builtin) {
                 var latestProgram = builtin.getProgram();
-                if (latestProgram && latestProgram.version
+                var sameAthlete = latestProgram && storedProgram.athlete
+                    && latestProgram.athlete === storedProgram.athlete;
+                if (sameAthlete && latestProgram.version
                     && (!storedProgram.version || storedProgram.version < latestProgram.version)) {
                     PROGRAM = latestProgram;
                     Storage.saveProgram(latestProgram, false);

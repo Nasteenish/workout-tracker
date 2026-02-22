@@ -102,8 +102,45 @@ const Storage = {
         localStorage.removeItem('wt_current');
     },
 
+    // Fix misidentified users from v164 migration
+    _fixMigration() {
+        if (localStorage.getItem('_wt_fix_v165')) return;
+        localStorage.setItem('_wt_fix_v165', '1');
+
+        var users = this.getUsers();
+        if (users.length === 0) return;
+
+        var origData = localStorage.getItem('workout_tracker_v1');
+        if (!origData) return;
+
+        try {
+            var parsed = JSON.parse(origData);
+            var athlete = parsed.program && parsed.program.athlete ? parsed.program.athlete : '';
+            var isAnastasia = athlete.indexOf('Anastasiia') !== -1 || athlete.indexOf('Dobrosol') !== -1;
+
+            // User was wrongly assigned as anastasia but original data is NOT Anastasia's
+            var wrongUser = users.find(function(u) { return u.id === 'anastasia'; });
+            if (wrongUser && !isAnastasia) {
+                // Restore from original backup
+                localStorage.setItem('wt_data_mikhail', origData);
+                localStorage.removeItem('wt_data_anastasia');
+                wrongUser.id = 'mikhail';
+                wrongUser.name = 'Михаил';
+                wrongUser.programId = 'mikhail_default';
+                this._saveUsers(users);
+                if (localStorage.getItem('wt_current') === 'anastasia') {
+                    localStorage.setItem('wt_current', 'mikhail');
+                }
+            }
+        } catch (e) {
+            console.error('Fix migration error:', e);
+        }
+    },
+
     // One-time migration: convert old single-user data to multi-user
     migrateToMultiUser() {
+        this._fixMigration();
+
         // Already migrated?
         if (this.getUsers().length > 0) return;
 
@@ -115,16 +152,18 @@ const Storage = {
             var parsed = JSON.parse(oldData);
             var athlete = parsed.program && parsed.program.athlete ? parsed.program.athlete : '';
 
-            // Determine user id and programId from athlete name
             var userId, name, programId;
             if (athlete.indexOf('Mikhail') !== -1 || athlete.indexOf('Timoshin') !== -1) {
                 userId = 'mikhail';
                 name = 'Михаил';
                 programId = 'mikhail_default';
-            } else {
+            } else if (athlete.indexOf('Anastasiia') !== -1 || athlete.indexOf('Dobrosol') !== -1) {
                 userId = 'anastasia';
                 name = 'Анастасия';
                 programId = 'anastasia_default';
+            } else {
+                // Unknown athlete — show login screen
+                return;
             }
 
             // Create user profile
@@ -135,8 +174,6 @@ const Storage = {
 
             // Set as current user
             localStorage.setItem('wt_current', userId);
-
-            // Keep old key as backup (don't delete)
         } catch (e) {
             console.error('Migration error:', e);
         }
