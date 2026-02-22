@@ -21,7 +21,7 @@ const UI = {
     renderLogin() {
         document.getElementById('app').innerHTML = `
             <div class="login-screen">
-                <div class="app-icon">&#127947;</div>
+                <div class="app-icon"><svg viewBox="0 0 40 40" fill="white" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="16" width="3" height="8" rx="1.5"/><rect x="6" y="11" width="4" height="18" rx="2"/><rect x="11" y="14" width="3" height="12" rx="1.5"/><rect x="14" y="18" width="12" height="4" rx="2"/><rect x="26" y="14" width="3" height="12" rx="1.5"/><rect x="30" y="11" width="4" height="18" rx="2"/><rect x="35" y="16" width="3" height="8" rx="1.5"/></svg></div>
                 <h1>Трекер Тренировок</h1>
                 <p class="subtitle">Войдите в свой аккаунт</p>
 
@@ -70,7 +70,7 @@ const UI = {
             const athleteName = PROGRAM.athlete ? `<p class="subtitle" style="opacity:0.5;margin-top:4px">${PROGRAM.athlete}</p>` : '';
             document.getElementById('app').innerHTML = `
                 <div class="setup-screen">
-                    <div class="app-icon">&#127947;</div>
+                    <div class="app-icon"><svg viewBox="0 0 40 40" fill="white" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="16" width="3" height="8" rx="1.5"/><rect x="6" y="11" width="4" height="18" rx="2"/><rect x="11" y="14" width="3" height="12" rx="1.5"/><rect x="14" y="18" width="12" height="4" rx="2"/><rect x="26" y="14" width="3" height="12" rx="1.5"/><rect x="30" y="11" width="4" height="18" rx="2"/><rect x="35" y="16" width="3" height="8" rx="1.5"/></svg></div>
                     <h1>${programTitle}</h1>
                     <p class="subtitle">${totalW}-недельная программа</p>
                     ${athleteName}
@@ -98,7 +98,7 @@ const UI = {
         const hasDefault = typeof DEFAULT_PROGRAM !== 'undefined';
         document.getElementById('app').innerHTML = `
             <div class="setup-screen">
-                <div class="app-icon">&#127947;</div>
+                <div class="app-icon"><svg viewBox="0 0 40 40" fill="white" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="16" width="3" height="8" rx="1.5"/><rect x="6" y="11" width="4" height="18" rx="2"/><rect x="11" y="14" width="3" height="12" rx="1.5"/><rect x="14" y="18" width="12" height="4" rx="2"/><rect x="26" y="14" width="3" height="12" rx="1.5"/><rect x="30" y="11" width="4" height="18" rx="2"/><rect x="35" y="16" width="3" height="8" rx="1.5"/></svg></div>
                 <h1>Трекер Тренировок</h1>
                 <p class="subtitle">Загрузите программу тренировок</p>
 

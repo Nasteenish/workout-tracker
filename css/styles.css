@@ -253,16 +253,20 @@ input, button, select {
 }
 
 .setup-screen .app-icon {
-    width: 80px;
-    height: 80px;
+    width: 96px;
+    height: 96px;
     background: linear-gradient(135deg, var(--accent-primary), #8B6FC0);
     border-radius: var(--radius-xl);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 40px;
     margin-bottom: var(--spacing-lg);
-    box-shadow: 0 8px 32px rgba(167, 139, 250, 0.2);
+    box-shadow: 0 8px 40px rgba(157, 141, 245, 0.45), 0 0 80px rgba(157, 141, 245, 0.15);
+}
+
+.setup-screen .app-icon svg {
+    width: 44px;
+    height: 44px;
 }
 
 .setup-screen h1 {
@@ -400,16 +404,38 @@ input, button, select {
 }
 
 .login-screen .app-icon {
-    width: 80px;
-    height: 80px;
+    width: 96px;
+    height: 96px;
     background: linear-gradient(135deg, var(--accent-primary), #8B6FC0);
     border-radius: var(--radius-xl);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 36px;
     margin-bottom: var(--spacing-lg);
+    box-shadow: 0 8px 40px rgba(157, 141, 245, 0.45), 0 0 80px rgba(157, 141, 245, 0.15);
 }
+
+.login-screen .app-icon svg {
+    width: 44px;
+    height: 44px;
+}
+
+/* Staggered entrance animation */
+@keyframes loginSlideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.login-screen > * {
+    opacity: 0;
+    animation: loginSlideUp 0.5s ease-out forwards;
+}
+.login-screen > *:nth-child(1) { animation-delay: 0s; }
+.login-screen > *:nth-child(2) { animation-delay: 0.08s; }
+.login-screen > *:nth-child(3) { animation-delay: 0.16s; }
+.login-screen > *:nth-child(4) { animation-delay: 0.24s; }
+.login-screen > *:nth-child(5) { animation-delay: 0.32s; }
+.login-screen > *:nth-child(6) { animation-delay: 0.40s; }
+.login-screen > *:nth-child(7) { animation-delay: 0.48s; }
 
 .login-screen h1 {
     font-size: var(--font-size-title);
@@ -458,6 +484,15 @@ input, button, select {
 
 .login-field input::placeholder {
     color: var(--text-tertiary);
+}
+
+.login-field input:-webkit-autofill,
+.login-field input:-webkit-autofill:hover,
+.login-field input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 50px rgba(255, 255, 255, 0.08) inset !important;
+    -webkit-text-fill-color: white !important;
+    caret-color: white;
+    border-color: rgba(157, 141, 245, 0.3);
 }
 
 .login-error {
