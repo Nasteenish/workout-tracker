@@ -174,10 +174,6 @@ input, button, select {
     padding-bottom: calc(var(--spacing-xl) * 3);
 }
 
-body:has(#rest-timer-bar.active) .app-content {
-    padding-bottom: calc(var(--spacing-xl) * 3 + 80px);
-}
-
 .slide-container {
     position: relative;
     animation: none;

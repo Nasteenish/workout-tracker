@@ -80,6 +80,7 @@ const RestTimer = {
         this._swTimer('START_TIMER', this._remaining * 1000);
 
         document.getElementById('rest-timer-bar').classList.add('active');
+        document.body.style.paddingBottom = 'calc(env(safe-area-inset-bottom) + 80px)';
 
         this._interval = setInterval(() => {
             if (!this._paused) {
@@ -99,6 +100,7 @@ const RestTimer = {
         this._pausedAt = null;
         this._swTimer('STOP_TIMER');
         document.getElementById('rest-timer-bar').classList.remove('active');
+        document.body.style.paddingBottom = '';
     },
 
     togglePause() {
@@ -148,6 +150,7 @@ const RestTimer = {
         this._interval = null;
         this._endTime = null;
         document.getElementById('rest-timer-bar').classList.remove('active');
+        document.body.style.paddingBottom = '';
 
         this._swTimer('STOP_TIMER');
         if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
