@@ -8,6 +8,9 @@ const RestTimer = {
     _audioCtx: null,
     _endTime: null,
     _pausedAt: null,
+    _minimized: false,
+    _touchStartY: null,
+    _touchStartX: null,
 
     init() {
         const settings = Storage.getSettings();
@@ -39,6 +42,39 @@ const RestTimer = {
         document.getElementById('rtb-plus').addEventListener('click', () => this.adjust(30));
         document.getElementById('rtb-pause').addEventListener('click', () => this.togglePause());
 
+        // Swipe gestures for minimize/expand
+        bar.addEventListener('touchstart', (e) => {
+            this._touchStartY = e.touches[0].clientY;
+            this._touchStartX = e.touches[0].clientX;
+        }, { passive: true });
+
+        bar.addEventListener('touchmove', (e) => {
+            if (this._touchStartY !== null) e.preventDefault();
+        }, { passive: false });
+
+        bar.addEventListener('touchend', (e) => {
+            if (this._touchStartY === null) return;
+            const dy = e.changedTouches[0].clientY - this._touchStartY;
+            const dx = Math.abs(e.changedTouches[0].clientX - this._touchStartX);
+            this._touchStartY = null;
+            this._touchStartX = null;
+
+            // Swipe down on expanded bar → minimize
+            if (!this._minimized && dy > 40 && dy > dx) {
+                this._animateMinimize();
+                return;
+            }
+            // Swipe up on minimized circle → expand
+            if (this._minimized && dy < -30 && Math.abs(dy) > dx) {
+                this._animateExpand();
+                return;
+            }
+            // Tap on minimized circle → expand
+            if (this._minimized && Math.abs(dy) < 10 && dx < 10) {
+                this._animateExpand();
+            }
+        });
+
         // Unlock AudioContext on first user interaction (required on iOS)
         const unlock = () => this._unlockAudio();
         document.addEventListener('touchstart', unlock, { passive: true, once: false });
@@ -64,10 +100,69 @@ const RestTimer = {
         }
     },
 
+    _animateMinimize() {
+        const bar = document.getElementById('rest-timer-bar');
+        if (!bar) return;
+
+        // FLIP: capture First position
+        const first = bar.getBoundingClientRect();
+
+        // Apply minimized state
+        this._minimized = true;
+        bar.classList.add('minimized');
+
+        // FLIP: capture Last position
+        const last = bar.getBoundingClientRect();
+
+        // FLIP: Invert + Play
+        const dx = first.left + first.width / 2 - (last.left + last.width / 2);
+        const dy = first.top + first.height / 2 - (last.top + last.height / 2);
+        const sx = first.width / last.width;
+        const sy = first.height / last.height;
+
+        bar.animate([
+            { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, opacity: 0.7 },
+            { transform: 'translate(0, 0) scale(1)', opacity: 1 }
+        ], { duration: 350, easing: 'cubic-bezier(0.34, 1.2, 0.64, 1)' });
+
+        this._saveState();
+    },
+
+    _animateExpand() {
+        const bar = document.getElementById('rest-timer-bar');
+        if (!bar) return;
+
+        // FLIP: capture First position (minimized)
+        const first = bar.getBoundingClientRect();
+
+        // Remove minimized state
+        this._minimized = false;
+        bar.classList.remove('minimized');
+
+        // FLIP: capture Last position (expanded)
+        // Note: expanded bar has transform: translateX(-50%) from CSS, so we must account for that
+        const last = bar.getBoundingClientRect();
+
+        // FLIP: Invert + Play
+        const dx = first.left + first.width / 2 - (last.left + last.width / 2);
+        const dy = first.top + first.height / 2 - (last.top + last.height / 2);
+        const sx = first.width / last.width;
+        const sy = first.height / last.height;
+
+        bar.animate([
+            { transform: `translateX(-50%) translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, opacity: 0.7 },
+            { transform: 'translateX(-50%) translate(0, 0) scale(1)', opacity: 1 }
+        ], { duration: 350, easing: 'cubic-bezier(0.34, 1.2, 0.64, 1)' });
+
+        this._saveState();
+    },
+
     start() {
         if (this._interval) clearInterval(this._interval);
         this._paused = false;
         this._pausedAt = null;
+        this._minimized = false;
+        document.getElementById('rest-timer-bar')?.classList.remove('minimized');
         this._remaining = this._defaultDuration;
         this._endTime = Date.now() + this._remaining * 1000;
         this._updateDisplay();
@@ -99,8 +194,10 @@ const RestTimer = {
         this._interval = null;
         this._endTime = null;
         this._pausedAt = null;
+        this._minimized = false;
         this._swTimer('STOP_TIMER');
-        document.getElementById('rest-timer-bar').classList.remove('active');
+        const bar = document.getElementById('rest-timer-bar');
+        bar.classList.remove('active', 'minimized');
         this._saveState();
     },
 
@@ -152,7 +249,9 @@ const RestTimer = {
         clearInterval(this._interval);
         this._interval = null;
         this._endTime = null;
-        document.getElementById('rest-timer-bar').classList.remove('active');
+        this._minimized = false;
+        const bar = document.getElementById('rest-timer-bar');
+        bar.classList.remove('active', 'minimized');
         this._saveState();
 
         this._swTimer('STOP_TIMER');
@@ -270,7 +369,8 @@ const RestTimer = {
             endTime: this._endTime,
             paused: this._paused,
             pausedAt: this._pausedAt,
-            defaultDuration: this._defaultDuration
+            defaultDuration: this._defaultDuration,
+            minimized: this._minimized
         }));
     },
 
@@ -295,6 +395,7 @@ const RestTimer = {
             this._paused = s.paused;
             this._pausedAt = s.pausedAt;
             this._defaultDuration = s.defaultDuration || this._defaultDuration;
+            this._minimized = !!s.minimized;
 
             if (this._paused) {
                 const drift = Date.now() - s.pausedAt;
@@ -302,7 +403,9 @@ const RestTimer = {
                 this._pausedAt = Date.now();
             }
 
-            document.getElementById('rest-timer-bar').classList.add('active');
+            const bar = document.getElementById('rest-timer-bar');
+            bar.classList.add('active');
+            if (this._minimized) bar.classList.add('minimized');
             this._updateDisplay();
             this._updatePauseBtn();
 
