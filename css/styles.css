@@ -387,7 +387,7 @@ input, button, select {
 .btn-compact {
     width: auto;
     padding: 0 var(--spacing-xl);
-    min-width: 160px;
+    min-width: 200px;
 }
 
 /* ===== Login Screen ===== */
