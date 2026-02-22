@@ -1,4 +1,4 @@
-const CACHE_NAME = 'workout-tracker-v190';
+const CACHE_NAME = 'workout-tracker-v191';
 const ASSETS = [
     './',
     './index.html',
@@ -51,12 +51,18 @@ self.addEventListener('message', event => {
             _timerTimeout = setTimeout(() => {
                 _timerTimeout = null;
                 _timerResolve = null;
-                self.registration.showNotification('Пора!', {
-                    body: 'Отдых завершён',
-                    icon: './icons/icon-192.png',
-                    tag: 'rest-timer',
-                    renotify: true,
-                    vibrate: [200, 80, 200, 80, 400]
+                // Only show push notification if no visible client (app in background)
+                self.clients.matchAll({ type: 'window', includeUncontrolled: false }).then(windowClients => {
+                    const hasVisible = windowClients.some(c => c.visibilityState === 'visible');
+                    if (!hasVisible) {
+                        return self.registration.showNotification('Пора!', {
+                            body: 'Отдых завершён',
+                            icon: './icons/icon-192.png',
+                            tag: 'rest-timer',
+                            renotify: true,
+                            vibrate: [200, 80, 200, 80, 400]
+                        });
+                    }
                 }).then(resolve).catch(resolve);
             }, duration);
         }));
