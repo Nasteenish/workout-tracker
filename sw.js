@@ -1,4 +1,4 @@
-const CACHE_NAME = 'workout-tracker-v154';
+const CACHE_NAME = 'workout-tracker-v155';
 const ASSETS = [
     './',
     './index.html',
@@ -55,6 +55,7 @@ self.addEventListener('message', event => {
                     body: 'Отдых завершён',
                     icon: './icons/icon-192.png',
                     tag: 'rest-timer',
+                    renotify: true,
                     vibrate: [200, 80, 200, 80, 400]
                 }).then(resolve).catch(resolve);
             }, duration);

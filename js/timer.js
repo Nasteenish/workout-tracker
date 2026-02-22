@@ -149,12 +149,14 @@ const RestTimer = {
         clearInterval(this._interval);
         this._interval = null;
         this._endTime = null;
-        this._swTimer('STOP_TIMER');
+        // No STOP_TIMER here — let SW notification fire naturally.
+        // STOP_TIMER is only sent from stop() (manual close) and togglePause().
         document.getElementById('rest-timer-bar').classList.remove('active');
 
         if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
         this._playBeep();
         this._showNotification();
+        this._sendSystemNotification();
     },
 
     _playBeep() {
@@ -245,14 +247,16 @@ const RestTimer = {
     },
 
     _sendSystemNotification() {
-        if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('Пора!', {
+        if (!navigator.serviceWorker) return;
+        navigator.serviceWorker.ready.then(reg => {
+            reg.showNotification('Пора!', {
                 body: 'Отдых завершён',
                 icon: './icons/icon-192.png',
                 tag: 'rest-timer',
-                requireInteraction: false
+                renotify: true,
+                vibrate: [200, 80, 200, 80, 400]
             });
-        }
+        }).catch(() => {});
     },
 
     _onVisibilityChange() {
