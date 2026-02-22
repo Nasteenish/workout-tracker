@@ -87,8 +87,7 @@ const RestTimer = {
         }
 
         // DEBUG: show diagnostic + send immediate test notification
-        this._diag('perm=' + (window.Notification ? Notification.permission : 'N/A')
-            + ' ctrl=' + !!navigator.serviceWorker.controller);
+        this._diag('perm=' + (window.Notification ? Notification.permission : 'N/A'));
         this._swTimer('TEST_NOTIFICATION');
         this._swTimer('START_TIMER', this._remaining * 1000);
 
@@ -151,20 +150,15 @@ const RestTimer = {
 
     _swTimer(type, duration) {
         if (!navigator.serviceWorker) { this._diag('NO serviceWorker!'); return; }
-        if (navigator.serviceWorker.controller) {
-            this._diag('→SW ' + type + ' via controller');
-            navigator.serviceWorker.controller.postMessage({ type, duration });
-        } else {
-            this._diag('→SW ' + type + ' via ready (no controller)');
-            navigator.serviceWorker.ready.then(reg => {
-                if (reg.active) {
-                    this._diag('→SW ' + type + ' delivered via ready');
-                    reg.active.postMessage({ type, duration });
-                } else {
-                    this._diag('→SW ERROR: no active worker!');
-                }
-            });
-        }
+        this._diag('→SW ' + type + ' (waiting for ready...)');
+        navigator.serviceWorker.ready.then(reg => {
+            if (reg.active) {
+                this._diag('→SW ' + type + ' delivered to active');
+                reg.active.postMessage({ type, duration });
+            } else {
+                this._diag('→SW ERROR: no active worker!');
+            }
+        });
     },
 
     _finish() {
