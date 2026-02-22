@@ -85,7 +85,7 @@ const RestTimer = {
             if (!this._paused) {
                 this._remaining = Math.ceil((this._endTime - Date.now()) / 1000);
                 this._updateDisplay();
-                if (this._remaining <= 0 && document.visibilityState === 'visible') {
+                if (this._remaining <= 0) {
                     this._finish();
                 }
             }
@@ -250,16 +250,9 @@ const RestTimer = {
     },
 
     _sendSystemNotification() {
-        if (!navigator.serviceWorker) return;
-        navigator.serviceWorker.ready.then(reg => {
-            reg.showNotification('Пора!', {
-                body: 'Отдых завершён',
-                icon: './icons/icon-192.png',
-                tag: 'rest-timer',
-                renotify: true,
-                vibrate: [200, 80, 200, 80, 400]
-            });
-        }).catch(() => {});
+        // Send via SW message handler — iOS requires notifications
+        // to originate from a SW event handler, not from the page directly
+        this._swTimer('SHOW_NOTIFICATION');
     },
 
     _onVisibilityChange() {

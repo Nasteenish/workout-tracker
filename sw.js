@@ -1,4 +1,4 @@
-const CACHE_NAME = 'workout-tracker-v156';
+const CACHE_NAME = 'workout-tracker-v158';
 const ASSETS = [
     './',
     './index.html',
@@ -60,6 +60,18 @@ self.addEventListener('message', event => {
                 }).then(resolve).catch(resolve);
             }, duration);
         }));
+    }
+
+    if (type === 'SHOW_NOTIFICATION') {
+        event.waitUntil(
+            self.registration.showNotification('Пора!', {
+                body: 'Отдых завершён',
+                icon: './icons/icon-192.png',
+                tag: 'rest-timer',
+                renotify: true,
+                vibrate: [200, 80, 200, 80, 400]
+            })
+        );
     }
 
     if (type === 'TEST_NOTIFICATION') {
