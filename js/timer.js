@@ -271,20 +271,23 @@ const RestTimer = {
         this._stopKeepAlive();
         document.getElementById('rest-timer-bar').classList.remove('active');
 
-        // If page is hidden (user on YouTube etc.), let SW notification fire on its own
+        // Always play beep + vibrate (keepalive kept the process alive)
+        if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
+        this._playBeep();
+
         if (document.visibilityState !== 'visible') {
+            // Show in-app overlay when user returns
             this._pendingFinish = true;
             return;
         }
 
         this._swTimer('STOP_TIMER');
-        this._showFinishEffects();
+        this._showNotification();
     },
 
     _showFinishEffects() {
         this._pendingFinish = false;
-        if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
-        this._playBeep();
+        // Beep + vibrate already played in _finish(); just show the overlay
         this._showNotification();
     },
 
