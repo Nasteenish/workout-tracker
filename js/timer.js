@@ -452,12 +452,9 @@ const RestTimer = {
     _sendSystemNotification() {
         if (!navigator.serviceWorker) return;
         navigator.serviceWorker.ready.then(reg => {
-            reg.showNotification('Пора!', {
-                body: 'Отдых завершён',
-                icon: './icons/icon-192.png',
-                tag: 'rest-timer',
-                vibrate: [200, 80, 200, 80, 400]
-            }).catch(() => {});
+            if (reg.active) {
+                reg.active.postMessage({ type: 'SHOW_NOTIFICATION' });
+            }
         });
     },
 
