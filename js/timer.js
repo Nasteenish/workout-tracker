@@ -110,12 +110,20 @@ const RestTimer = {
                     ], { duration: 250, easing: 'ease-in', fill: 'forwards' });
                     anim.onfinish = () => {
                         anim.cancel();
-                        // Skip CSS top-transition so stop() doesn't replay the fly-up
+                        // Stop timer logic without triggering CSS transition
+                        if (this._interval) clearInterval(this._interval);
+                        this._interval = null;
+                        this._endTime = null;
+                        this._pausedAt = null;
+                        this._minimized = false;
+                        this._swTimer('STOP_TIMER');
                         bar.style.transition = 'none';
                         bar.style.transform = '';
-                        this.stop();
-                        // Re-enable transition on next frame
-                        requestAnimationFrame(() => { bar.style.transition = ''; });
+                        bar.classList.remove('active', 'minimized');
+                        this._saveState();
+                        requestAnimationFrame(() => requestAnimationFrame(() => {
+                            bar.style.transition = '';
+                        }));
                     };
                     return;
                 }
