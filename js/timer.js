@@ -51,6 +51,10 @@ const RestTimer = {
             this._touchStartX = e.touches[0].clientX;
             this._dragging = false;
             this._dragDy = 0;
+            // Lock page scroll to prevent pull-to-refresh on iOS
+            this._savedOverflow = document.body.style.overflow;
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
         }, { passive: false });
 
         bar.addEventListener('touchmove', (e) => {
@@ -84,6 +88,10 @@ const RestTimer = {
         }, { passive: false });
 
         bar.addEventListener('touchend', (e) => {
+            // Unlock page scroll
+            document.body.style.overflow = this._savedOverflow || '';
+            document.documentElement.style.overflow = '';
+
             if (this._touchStartY === null) return;
             const dy = e.changedTouches[0].clientY - this._touchStartY;
             const dx = Math.abs(e.changedTouches[0].clientX - this._touchStartX);
@@ -122,6 +130,16 @@ const RestTimer = {
                 bar.style.transform = '';
                 this._animateExpand();
             }
+        });
+
+        bar.addEventListener('touchcancel', () => {
+            document.body.style.overflow = this._savedOverflow || '';
+            document.documentElement.style.overflow = '';
+            this._touchStartY = null;
+            this._dragging = false;
+            bar.style.transition = '';
+            bar.style.opacity = '';
+            bar.style.transform = '';
         });
 
         // Unlock AudioContext on first user interaction (required on iOS)
