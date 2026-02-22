@@ -323,6 +323,12 @@ const App = {
         };
 
         document.addEventListener('touchstart', (e) => {
+            // Ignore touches on the rest timer bar
+            const timerBar = document.getElementById('rest-timer-bar');
+            if (timerBar && (timerBar === e.target || timerBar.contains(e.target))) {
+                pullLocked = true;
+                return;
+            }
             startY = e.touches[0].clientY;
             startX_pull = e.touches[0].clientX;
             pulling = window.scrollY <= 2;
