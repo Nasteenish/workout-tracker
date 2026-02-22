@@ -1154,7 +1154,9 @@ const UI = {
                     </div>
                 </div>
 
-                <button class="btn-primary" id="settings-save">Сохранить</button>
+                <div style="text-align:center;margin:var(--spacing-lg) 0">
+                    <button class="btn-primary btn-compact" id="settings-save">Сохранить</button>
+                </div>
 
                 <div class="settings-card" style="margin-top: var(--spacing-lg);">
                     <div class="settings-card-label">Оборудование</div>

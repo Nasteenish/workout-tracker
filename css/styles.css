@@ -384,6 +384,11 @@ input, button, select {
 .btn-primary:active {
     opacity: 0.7;
 }
+.btn-compact {
+    width: auto;
+    padding: 0 var(--spacing-xl);
+    min-width: 160px;
+}
 
 /* ===== Login Screen ===== */
 .login-screen {
