@@ -809,6 +809,11 @@ input, button, select {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
+    transition: opacity 0.3s;
+}
+
+.set-row.done {
+    opacity: 0.45;
 }
 
 .set-info {

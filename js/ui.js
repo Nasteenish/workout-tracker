@@ -507,7 +507,7 @@ const UI = {
             : '<svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18.5" stroke="rgba(157,141,245,0.4)" stroke-width="1.5"/></svg>';
 
         return `
-            <div class="set-row" data-exercise="${ex.id}" data-set="${setIdx}">
+            <div class="set-row${isCompleted ? ' done' : ''}" data-exercise="${ex.id}" data-set="${setIdx}">
                 <div class="set-info">
                     <span class="set-number">П.${setIdx + 1}</span>
                     <span class="set-type-badge ${typeClass}">${typeLabel}</span>
