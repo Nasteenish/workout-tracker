@@ -50,6 +50,15 @@ const RestTimer = {
         // Handle returning from background
         document.addEventListener('visibilitychange', () => this._onVisibilityChange());
 
+        // Listen for diagnostic messages from SW
+        if (navigator.serviceWorker) {
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                if (event.data && event.data.type === 'DIAG') {
+                    this._diag('SW→ ' + event.data.msg);
+                }
+            });
+        }
+
         this._updateDisplay();
     },
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'workout-tracker-v158';
+const CACHE_NAME = 'workout-tracker-v160';
 const ASSETS = [
     './',
     './index.html',
@@ -33,6 +33,13 @@ self.addEventListener('activate', event => {
     );
 });
 
+// Helper: report back to page for diagnostics
+function diagReport(msg) {
+    self.clients.matchAll().then(clients => {
+        clients.forEach(c => c.postMessage({ type: 'DIAG', msg: msg }));
+    });
+}
+
 // ===== Rest Timer Background Notification =====
 let _timerTimeout = null;
 let _timerResolve = null;
@@ -40,24 +47,31 @@ let _timerResolve = null;
 self.addEventListener('message', event => {
     const { type, duration } = event.data || {};
 
+    diagReport('SW got: ' + type);
+
     if (type === 'START_TIMER') {
-        // Cancel previous timer
         if (_timerTimeout) clearTimeout(_timerTimeout);
         if (_timerResolve) { _timerResolve(); _timerResolve = null; }
 
-        // waitUntil keeps the SW alive until the timer fires
         event.waitUntil(new Promise(resolve => {
             _timerResolve = resolve;
             _timerTimeout = setTimeout(() => {
                 _timerTimeout = null;
                 _timerResolve = null;
+                diagReport('SW timer fired, calling showNotification...');
                 self.registration.showNotification('Пора!', {
                     body: 'Отдых завершён',
                     icon: './icons/icon-192.png',
                     tag: 'rest-timer',
                     renotify: true,
                     vibrate: [200, 80, 200, 80, 400]
-                }).then(resolve).catch(resolve);
+                }).then(() => {
+                    diagReport('showNotification OK (timer)');
+                    resolve();
+                }).catch(err => {
+                    diagReport('showNotification ERROR (timer): ' + err.message);
+                    resolve();
+                });
             }, duration);
         }));
     }
@@ -70,6 +84,10 @@ self.addEventListener('message', event => {
                 tag: 'rest-timer',
                 renotify: true,
                 vibrate: [200, 80, 200, 80, 400]
+            }).then(() => {
+                diagReport('showNotification OK (SHOW)');
+            }).catch(err => {
+                diagReport('showNotification ERROR (SHOW): ' + err.message);
             })
         );
     }
@@ -80,6 +98,10 @@ self.addEventListener('message', event => {
                 body: 'SW уведомление работает',
                 icon: './icons/icon-192.png',
                 tag: 'test-notif'
+            }).then(() => {
+                diagReport('showNotification OK (TEST)');
+            }).catch(err => {
+                diagReport('showNotification ERROR (TEST): ' + err.message);
             })
         );
     }
@@ -106,7 +128,6 @@ self.addEventListener('fetch', event => {
     event.respondWith(
         fetch(event.request)
             .then(response => {
-                // Update cache with fresh response
                 const clone = response.clone();
                 caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
                 return response;
