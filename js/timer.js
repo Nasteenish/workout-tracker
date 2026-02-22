@@ -85,7 +85,7 @@ const RestTimer = {
             if (!this._paused) {
                 this._remaining = Math.ceil((this._endTime - Date.now()) / 1000);
                 this._updateDisplay();
-                if (this._remaining <= 0) {
+                if (this._remaining <= 0 && document.visibilityState === 'visible') {
                     this._finish();
                 }
             }
