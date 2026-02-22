@@ -481,7 +481,7 @@ const Storage = {
         var maxTs = 0;
         for (var exId of Object.keys(data.log[w][d])) {
             for (var setData of Object.values(data.log[w][d][exId])) {
-                if (setData && setData.timestamp > maxTs) maxTs = setData.timestamp;
+                if (setData && setData.completed && setData.timestamp > maxTs) maxTs = setData.timestamp;
             }
         }
         return maxTs > 0 ? maxTs : null;
