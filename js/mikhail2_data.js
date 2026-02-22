@@ -648,33 +648,60 @@ const MIKHAIL2_PROGRAM = {
       "titleRu": "Спина, задние дельты и бицепс",
       "exerciseGroups": [
         {
-          "type": "single",
+          "type": "choose_one",
+          "choiceKey": "D3_row",
           "sectionTitle": "BACK",
           "sectionTitleRu": "СПИНА",
-          "exercise": {
-            "id": "D3E1",
-            "name": "Supported row",
-            "nameRu": "Тяга с опорой на грудь",
-            "reps": "8-12",
-            "rest": 120,
-            "sets": [
-              {
-                "type": "S",
-                "rpe": "8-7",
-                "techniques": []
-              },
-              {
-                "type": "SH",
-                "rpe": "8-9",
-                "techniques": []
-              },
-              {
-                "type": "H",
-                "rpe": "9",
-                "techniques": []
-              }
-            ]
-          }
+          "options": [
+            {
+              "id": "D3E1_opt1",
+              "name": "Supported row",
+              "nameRu": "Тяга с опорой на грудь",
+              "reps": "8-12",
+              "rest": 120,
+              "sets": [
+                { "type": "S", "rpe": "8-7", "techniques": [] },
+                { "type": "SH", "rpe": "8-9", "techniques": [] },
+                { "type": "H", "rpe": "9", "techniques": [] }
+              ]
+            },
+            {
+              "id": "D3E1_opt2",
+              "name": "T-bar supported row",
+              "nameRu": "Тяга Т-грифа с опорой",
+              "reps": "8-12",
+              "rest": 120,
+              "sets": [
+                { "type": "S", "rpe": "8-7", "techniques": [] },
+                { "type": "SH", "rpe": "8-9", "techniques": [] },
+                { "type": "H", "rpe": "9", "techniques": [] }
+              ]
+            },
+            {
+              "id": "D3E1_opt3",
+              "name": "Incline dumbell rows",
+              "nameRu": "Тяга гантелей на наклонной скамье",
+              "reps": "8-12",
+              "rest": 120,
+              "sets": [
+                { "type": "S", "rpe": "8-7", "techniques": [] },
+                { "type": "SH", "rpe": "8-9", "techniques": [] },
+                { "type": "H", "rpe": "9", "techniques": [] }
+              ]
+            },
+            {
+              "id": "D3E1_opt4",
+              "name": "Supported bar rows",
+              "nameRu": "Тяга штанги с опорой",
+              "reps": "8-12",
+              "rest": 120,
+              "sets": [
+                { "type": "S", "rpe": "8-7", "techniques": [] },
+                { "type": "SH", "rpe": "8-9", "techniques": [] },
+                { "type": "H", "rpe": "9", "techniques": [] }
+              ]
+            }
+          ]
         },
         {
           "type": "single",
