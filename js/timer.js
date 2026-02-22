@@ -8,7 +8,6 @@ const RestTimer = {
     _audioCtx: null,
     _endTime: null,
     _pausedAt: null,
-    _minimized: false,
 
     init() {
         const settings = Storage.getSettings();
@@ -40,57 +39,6 @@ const RestTimer = {
         document.getElementById('rtb-plus').addEventListener('click', () => this.adjust(30));
         document.getElementById('rtb-pause').addEventListener('click', () => this.togglePause());
 
-        // Drag to minimize (swipe up) / expand (swipe down on circle)
-        let _swY = 0;
-        let _dragging = false;
-        bar.addEventListener('touchstart', (e) => {
-            _swY = e.touches[0].clientY;
-            _dragging = false;
-        }, { passive: true });
-        bar.addEventListener('touchmove', (e) => {
-            if (!this._interval) return;
-            const dy = e.touches[0].clientY - _swY;
-            if (this._minimized) {
-                if (dy > 8) {
-                    _dragging = true;
-                    e.preventDefault();
-                    const progress = Math.min(1, dy / 120);
-                    bar.style.transition = 'none';
-                    bar.style.transform = `translateY(${dy * 0.5}px) scale(${1 + progress * 0.15})`;
-                    bar.style.opacity = 1 - progress * 0.15;
-                }
-            } else {
-                if (Math.abs(dy) > 8) {
-                    _dragging = true;
-                    e.preventDefault();
-                    const up = Math.min(0, dy);
-                    const progress = Math.min(1, Math.abs(up) / 120);
-                    bar.style.transition = 'none';
-                    bar.style.transform = `translateX(-50%) translateY(${up * 0.5}px) scale(${1 - progress * 0.1})`;
-                    bar.style.opacity = 1 - progress * 0.15;
-                }
-            }
-        }, { passive: false });
-        bar.addEventListener('touchend', (e) => {
-            if (!_dragging) return;
-            const dy = e.changedTouches[0].clientY - _swY;
-            if (this._minimized && dy > 40) {
-                this._animateExpand();
-            } else if (!this._minimized && dy < -40) {
-                this._animateMinimize();
-            } else {
-                bar.style.transition = 'transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.35s ease';
-                bar.style.transform = '';
-                bar.style.opacity = '';
-                setTimeout(() => { bar.style.transition = ''; bar.style.transform = ''; bar.style.opacity = ''; }, 400);
-            }
-            setTimeout(() => { _dragging = false; }, 50);
-        }, { passive: true });
-        bar.addEventListener('click', (e) => {
-            if (_dragging) { e.stopPropagation(); return; }
-            if (this._minimized) { e.stopPropagation(); this._animateExpand(); }
-        });
-
         // Unlock AudioContext on first user interaction (required on iOS)
         const unlock = () => this._unlockAudio();
         document.addEventListener('touchstart', unlock, { passive: true, once: false });
@@ -103,7 +51,6 @@ const RestTimer = {
         document.addEventListener('visibilitychange', () => this._onVisibilityChange());
 
         this._updateDisplay();
-        this._restoreState();
     },
 
     // Call this whenever settings change
@@ -132,12 +79,7 @@ const RestTimer = {
 
         this._swTimer('START_TIMER', this._remaining * 1000);
 
-        const timerBar = document.getElementById('rest-timer-bar');
-        timerBar.classList.remove('minimized');
-        this._minimized = false;
-        timerBar.classList.add('active');
-
-        this._saveState();
+        document.getElementById('rest-timer-bar').classList.add('active');
 
         this._interval = setInterval(() => {
             if (!this._paused) {
@@ -155,11 +97,8 @@ const RestTimer = {
         this._interval = null;
         this._endTime = null;
         this._pausedAt = null;
-        this._minimized = false;
         this._swTimer('STOP_TIMER');
-        this._saveState();
-        const stopBar = document.getElementById('rest-timer-bar');
-        stopBar.classList.remove('active', 'minimized');
+        document.getElementById('rest-timer-bar').classList.remove('active');
     },
 
     togglePause() {
@@ -175,7 +114,6 @@ const RestTimer = {
             this._swTimer('START_TIMER', (this._endTime - Date.now()));
         }
         this._updatePauseBtn();
-        this._saveState();
     },
 
     adjust(delta) {
@@ -185,71 +123,6 @@ const RestTimer = {
             this._swTimer('START_TIMER', this._remaining * 1000);
         }
         this._updateDisplay();
-        this._saveState();
-    },
-
-    _animateMinimize() {
-        const bar = document.getElementById('rest-timer-bar');
-        // Capture current visual position (includes drag offset)
-        const first = bar.getBoundingClientRect();
-
-        // Apply minimized state instantly
-        bar.style.transition = 'none';
-        bar.style.transform = '';
-        bar.style.opacity = '';
-        this._minimized = true;
-        bar.classList.add('minimized');
-        void bar.offsetHeight;
-
-        // Capture target position
-        const last = bar.getBoundingClientRect();
-
-        // FLIP: minimized CSS has transform:none, so raw = visual
-        const dx = (first.left + first.width / 2) - (last.left + last.width / 2);
-        const dy = (first.top + first.height / 2) - (last.top + last.height / 2);
-        const sx = first.width / last.width;
-        const sy = first.height / last.height;
-
-        const anim1 = bar.animate([
-            { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, borderRadius: '28px', opacity: 0.85 },
-            { transform: 'none', borderRadius: '50%', opacity: 1 }
-        ], { duration: 420, easing: 'cubic-bezier(0.22, 0.9, 0.36, 1)' });
-        anim1.onfinish = () => { bar.style.transition = ''; };
-        this._saveState();
-    },
-
-    _animateExpand() {
-        const bar = document.getElementById('rest-timer-bar');
-        // Capture minimized position
-        const first = bar.getBoundingClientRect();
-
-        // Apply expanded state instantly
-        bar.style.transition = 'none';
-        this._minimized = false;
-        bar.classList.remove('minimized');
-        void bar.offsetHeight;
-
-        // Capture expanded position
-        const last = bar.getBoundingClientRect();
-
-        // Expanded CSS has transform: translateX(-50%)
-        // Raw center X = visual center X + width/2 (undoing the -50%)
-        const rawCx = last.left + last.width;
-        const rawCy = last.top + last.height / 2;
-        const firstCx = first.left + first.width / 2;
-        const firstCy = first.top + first.height / 2;
-
-        const tx = firstCx - rawCx;
-        const ty = firstCy - rawCy;
-        const sx = first.width / last.width;
-        const sy = first.height / last.height;
-
-        const anim2 = bar.animate([
-            { transform: `translate(${tx}px, ${ty}px) scale(${sx}, ${sy})`, borderRadius: '50%', opacity: 0.85 },
-            { transform: `translateX(${-last.width / 2}px)`, borderRadius: '28px', opacity: 1 }
-        ], { duration: 420, easing: 'cubic-bezier(0.22, 0.9, 0.36, 1)' });
-        anim2.onfinish = () => { bar.style.transition = ''; };
-        this._saveState();
     },
 
     _unlockAudio() {
@@ -274,12 +147,9 @@ const RestTimer = {
         clearInterval(this._interval);
         this._interval = null;
         this._endTime = null;
-        const finBar = document.getElementById('rest-timer-bar');
-        finBar.classList.remove('active', 'minimized');
-        this._minimized = false;
+        document.getElementById('rest-timer-bar').classList.remove('active');
 
         this._swTimer('STOP_TIMER');
-        this._saveState();
         if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
         this._playBeep();
         this._showNotification();
@@ -382,68 +252,6 @@ const RestTimer = {
             this._finish();
         } else {
             this._updateDisplay();
-        }
-    },
-
-    _saveState() {
-        if (!this._endTime) {
-            localStorage.removeItem('_wt_timer');
-            return;
-        }
-        localStorage.setItem('_wt_timer', JSON.stringify({
-            endTime: this._endTime,
-            paused: this._paused,
-            pausedAt: this._pausedAt,
-            minimized: this._minimized,
-            defaultDuration: this._defaultDuration
-        }));
-    },
-
-    _restoreState() {
-        try {
-            const saved = localStorage.getItem('_wt_timer');
-            if (!saved) return;
-            const s = JSON.parse(saved);
-
-            if (s.paused) {
-                this._remaining = Math.ceil((s.endTime - s.pausedAt) / 1000);
-            } else {
-                this._remaining = Math.ceil((s.endTime - Date.now()) / 1000);
-            }
-
-            if (this._remaining <= 0) {
-                localStorage.removeItem('_wt_timer');
-                return;
-            }
-
-            this._endTime = s.endTime;
-            this._paused = s.paused;
-            this._pausedAt = s.pausedAt;
-            this._minimized = s.minimized || false;
-            this._defaultDuration = s.defaultDuration || this._defaultDuration;
-
-            if (this._paused) {
-                // Shift endTime so remaining stays correct when unpaused
-                const drift = Date.now() - s.pausedAt;
-                this._endTime += drift;
-                this._pausedAt = Date.now();
-            }
-
-            const bar = document.getElementById('rest-timer-bar');
-            bar.classList.add('active');
-            if (this._minimized) bar.classList.add('minimized');
-            this._updateDisplay();
-            this._updatePauseBtn();
-
-            this._interval = setInterval(() => {
-                if (!this._paused) {
-                    this._remaining = Math.ceil((this._endTime - Date.now()) / 1000);
-                    this._updateDisplay();
-                    if (this._remaining <= 0) this._finish();
-                }
-            }, 1000);
-        } catch (e) {
-            localStorage.removeItem('_wt_timer');
         }
     },
 
