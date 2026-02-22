@@ -550,6 +550,7 @@ const App = {
 
     route() {
         document.getElementById('app').classList.remove('no-animate');
+        window.scrollTo(0, 0);
         const hash = location.hash || '';
 
         // Login screen
