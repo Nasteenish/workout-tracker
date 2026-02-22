@@ -42,13 +42,18 @@ const RestTimer = {
 
         // Swipe up to minimize, tap to expand
         let _swY = 0;
-        bar.addEventListener('touchstart', (e) => { _swY = e.touches[0].clientY; }, { passive: true });
+        let _swiping = false;
+        bar.addEventListener('touchstart', (e) => { _swY = e.touches[0].clientY; _swiping = false; }, { passive: true });
+        bar.addEventListener('touchmove', (e) => {
+            const dy = e.touches[0].clientY - _swY;
+            if (Math.abs(dy) > 10) { _swiping = true; e.preventDefault(); }
+        }, { passive: false });
         bar.addEventListener('touchend', (e) => {
             const dy = e.changedTouches[0].clientY - _swY;
             if (dy < -30 && !this._minimized) this.minimize();
         }, { passive: true });
         bar.addEventListener('click', (e) => {
-            if (this._minimized) { e.stopPropagation(); this.expand(); }
+            if (this._minimized || _swiping) { e.stopPropagation(); if (this._minimized) this.expand(); }
         });
 
         // Unlock AudioContext on first user interaction (required on iOS)
