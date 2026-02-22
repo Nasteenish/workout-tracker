@@ -42,35 +42,84 @@ const RestTimer = {
         document.getElementById('rtb-plus').addEventListener('click', () => this.adjust(30));
         document.getElementById('rtb-pause').addEventListener('click', () => this.togglePause());
 
-        // Swipe gestures for minimize/expand
+        // Drag gestures for minimize/expand
+        this._dragging = false;
+        this._dragDy = 0;
+
         bar.addEventListener('touchstart', (e) => {
             this._touchStartY = e.touches[0].clientY;
             this._touchStartX = e.touches[0].clientX;
-        }, { passive: true });
+            this._dragging = false;
+            this._dragDy = 0;
+        }, { passive: false });
 
         bar.addEventListener('touchmove', (e) => {
-            if (this._touchStartY !== null) e.preventDefault();
+            e.preventDefault();
+            if (this._touchStartY === null) return;
+            const dy = e.touches[0].clientY - this._touchStartY;
+            const dx = Math.abs(e.touches[0].clientX - this._touchStartX);
+
+            // Start dragging after small threshold
+            if (!this._dragging && Math.abs(dy) > 8 && Math.abs(dy) > dx) {
+                this._dragging = true;
+                bar.style.transition = 'none';
+            }
+
+            if (this._dragging) {
+                this._dragDy = dy;
+                // Expanded: only allow drag down; minimized: only allow drag up
+                if (!this._minimized && dy > 0) {
+                    const dampened = dy * 0.6;
+                    const scale = Math.max(0.4, 1 - dy / 600);
+                    const opacity = Math.max(0.5, 1 - dy / 400);
+                    bar.style.transform = `translateX(-50%) translateY(${dampened}px) scale(${scale})`;
+                    bar.style.opacity = opacity;
+                } else if (this._minimized && dy < 0) {
+                    const dampened = dy * 0.6;
+                    const scale = Math.min(1.3, 1 + Math.abs(dy) / 400);
+                    bar.style.transform = `translateY(${dampened}px) scale(${scale})`;
+                    bar.style.opacity = Math.max(0.5, 1 - Math.abs(dy) / 400);
+                }
+            }
         }, { passive: false });
 
         bar.addEventListener('touchend', (e) => {
             if (this._touchStartY === null) return;
             const dy = e.changedTouches[0].clientY - this._touchStartY;
             const dx = Math.abs(e.changedTouches[0].clientX - this._touchStartX);
+            const wasDragging = this._dragging;
             this._touchStartY = null;
             this._touchStartX = null;
+            this._dragging = false;
 
-            // Swipe down on expanded bar → minimize
-            if (!this._minimized && dy > 40 && dy > dx) {
-                this._animateMinimize();
+            // Reset inline styles
+            bar.style.transition = '';
+            bar.style.opacity = '';
+
+            if (wasDragging) {
+                if (!this._minimized && dy > 60) {
+                    // Dragged down enough → minimize
+                    bar.style.transform = '';
+                    this._animateMinimize();
+                    return;
+                } else if (this._minimized && dy < -40) {
+                    // Dragged up enough → expand
+                    bar.style.transform = '';
+                    this._animateExpand();
+                    return;
+                }
+                // Snap back
+                bar.style.transform = '';
+                bar.animate([
+                    { transform: this._minimized ? `translateY(${dy * 0.6}px)` : `translateX(-50%) translateY(${dy * 0.6}px)` },
+                    { transform: this._minimized ? 'translate(0)' : 'translateX(-50%)' }
+                ], { duration: 250, easing: 'cubic-bezier(0.34, 1.2, 0.64, 1)' });
                 return;
             }
-            // Swipe up on minimized circle → expand
-            if (this._minimized && dy < -30 && Math.abs(dy) > dx) {
-                this._animateExpand();
-                return;
-            }
+
             // Tap on minimized circle → expand
             if (this._minimized && Math.abs(dy) < 10 && dx < 10) {
+                bar.style.transform = '';
                 this._animateExpand();
             }
         });
