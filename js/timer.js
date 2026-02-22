@@ -8,6 +8,8 @@ const RestTimer = {
     _audioCtx: null,
     _endTime: null,
     _pausedAt: null,
+    _keepAliveAudio: null,
+    _keepAliveUrl: null,
 
     init() {
         const settings = Storage.getSettings();
@@ -79,6 +81,9 @@ const RestTimer = {
 
         this._swTimer('START_TIMER', this._remaining * 1000);
 
+        // Silent audio keeps iOS process alive in background
+        this._startKeepAlive();
+
         document.getElementById('rest-timer-bar').classList.add('active');
 
         this._interval = setInterval(() => {
@@ -98,6 +103,7 @@ const RestTimer = {
         this._endTime = null;
         this._pausedAt = null;
         this._swTimer('STOP_TIMER');
+        this._stopKeepAlive();
         document.getElementById('rest-timer-bar').classList.remove('active');
     },
 
@@ -106,12 +112,14 @@ const RestTimer = {
             this._paused = true;
             this._pausedAt = Date.now();
             this._swTimer('STOP_TIMER');
+            this._stopKeepAlive();
         } else {
             this._paused = false;
             const pausedDuration = Date.now() - this._pausedAt;
             this._endTime += pausedDuration;
             this._pausedAt = null;
             this._swTimer('START_TIMER', (this._endTime - Date.now()));
+            this._startKeepAlive();
         }
         this._updatePauseBtn();
     },
@@ -145,12 +153,56 @@ const RestTimer = {
         });
     },
 
+    // ===== Background keep-alive via silent audio =====
+    // iOS suspends PWA processes in background, killing SW timers.
+    // Playing audio prevents suspension — process stays alive.
+    _startKeepAlive() {
+        this._stopKeepAlive();
+        try {
+            // Generate 1-second nearly-silent WAV and loop it
+            const sr = 8000, samples = sr;
+            const buf = new ArrayBuffer(44 + samples * 2);
+            const v = new DataView(buf);
+            const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+            w(0, 'RIFF'); v.setUint32(4, 36 + samples * 2, true);
+            w(8, 'WAVE'); w(12, 'fmt ');
+            v.setUint32(16, 16, true); v.setUint16(20, 1, true);
+            v.setUint16(22, 1, true); v.setUint32(24, sr, true);
+            v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true);
+            v.setUint16(34, 16, true); w(36, 'data');
+            v.setUint32(40, samples * 2, true);
+            // Near-silence: tiny nonzero samples so iOS detects audio output
+            for (let i = 0; i < samples; i++) v.setInt16(44 + i * 2, 1, true);
+
+            const blob = new Blob([buf], { type: 'audio/wav' });
+            this._keepAliveUrl = URL.createObjectURL(blob);
+            const audio = new Audio(this._keepAliveUrl);
+            audio.loop = true;
+            audio.volume = 0.01;
+            audio.play().catch(() => {});
+            this._keepAliveAudio = audio;
+        } catch(e) {}
+    },
+
+    _stopKeepAlive() {
+        if (this._keepAliveAudio) {
+            this._keepAliveAudio.pause();
+            this._keepAliveAudio.src = '';
+            this._keepAliveAudio = null;
+        }
+        if (this._keepAliveUrl) {
+            URL.revokeObjectURL(this._keepAliveUrl);
+            this._keepAliveUrl = null;
+        }
+    },
+
     _finish() {
         clearInterval(this._interval);
         this._interval = null;
         this._endTime = null;
         // No STOP_TIMER here — let SW notification fire naturally.
         // STOP_TIMER is only sent from stop() (manual close) and togglePause().
+        this._stopKeepAlive();
         document.getElementById('rest-timer-bar').classList.remove('active');
 
         if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
