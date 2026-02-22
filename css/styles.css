@@ -972,15 +972,15 @@ input, button, select {
 
 .split-reps input.split-main {
     flex: 1;
-    min-width: 0;
+    min-width: 36px;
 }
 
 .split-reps input.split-extra {
     flex: 1;
-    min-width: 0;
+    min-width: 28px;
     opacity: 0.75;
     font-size: 16px;
-    padding: 0 3px;
+    padding: 0 2px;
 }
 
 .split-sep {
