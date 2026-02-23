@@ -101,23 +101,19 @@ const UI = {
             return;
         }
 
-        // Phase 1: no program — show import screen
-        const hasDefault = typeof DEFAULT_PROGRAM !== 'undefined';
+        // Phase 1: no program — show setup screen
         document.getElementById('app').innerHTML = `
             <div class="setup-screen">
                 <div class="app-icon"><svg viewBox="0 0 40 40" fill="white" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="16" width="3" height="8" rx="1.5"/><rect x="6" y="11" width="4" height="18" rx="2"/><rect x="11" y="14" width="3" height="12" rx="1.5"/><rect x="14" y="18" width="12" height="4" rx="2"/><rect x="26" y="14" width="3" height="12" rx="1.5"/><rect x="30" y="11" width="4" height="18" rx="2"/><rect x="35" y="16" width="3" height="8" rx="1.5"/></svg></div>
                 <h1>Трекер Тренировок</h1>
-                <p class="subtitle">Загрузите программу тренировок</p>
+                <p class="subtitle">Создайте свою программу тренировок</p>
 
-                <div class="setup-field">
-                    <button class="btn-primary" id="setup-import-program">
-                        ЗАГРУЗИТЬ ПРОГРАММУ
-                    </button>
+                <button class="btn-primary" id="setup-create-program">СОЗДАТЬ ПРОГРАММУ</button>
+
+                <div class="setup-field" style="margin-top:16px">
+                    <button class="btn-link" id="setup-import-program" style="font-size:14px">Загрузить из файла</button>
                     <div id="program-status" style="min-height:24px;margin-top:8px;font-size:13px;text-align:center"></div>
                 </div>
-
-                <button class="btn-secondary" id="setup-create-program" style="margin-top:8px">СОЗДАТЬ ПРОГРАММУ</button>
-                ${hasDefault ? '<button class="btn-secondary" id="setup-use-default" style="margin-top:8px;opacity:0.6">Программа по умолчанию</button>' : ''}
             </div>
         `;
     },
