@@ -136,7 +136,7 @@ const Builder = {
 
     // ===== WIZARD STEP 1 =====
     renderWizardStep1() {
-        var cfg = this._config || { title: '', totalWeeks: 12, numDays: 5 };
+        var cfg = this._config || { title: '', totalWeeks: 4, numDays: 4 };
         document.getElementById('app').innerHTML = `
             <div class="setup-screen" style="justify-content:flex-start;padding-top:var(--spacing-xl)">
                 <h1>Новая программа</h1>
@@ -148,8 +148,10 @@ const Builder = {
                 </div>
 
                 <div class="setup-field">
-                    <label>КОЛИЧЕСТВО НЕДЕЛЬ</label>
+                    <label>ДЛИТЕЛЬНОСТЬ (НЕДЕЛЬ)</label>
                     <div class="builder-toggle" id="builder-weeks-toggle">
+                        <button data-val="1" ${cfg.totalWeeks===1?'class="active"':''}>1</button>
+                        <button data-val="2" ${cfg.totalWeeks===2?'class="active"':''}>2</button>
                         <button data-val="4" ${cfg.totalWeeks===4?'class="active"':''}>4</button>
                         <button data-val="8" ${cfg.totalWeeks===8?'class="active"':''}>8</button>
                         <button data-val="12" ${cfg.totalWeeks===12?'class="active"':''}>12</button>
@@ -159,7 +161,7 @@ const Builder = {
                 </div>
 
                 <div class="setup-field">
-                    <label>ДНЕЙ В НЕДЕЛЕ</label>
+                    <label>ТРЕНИРОВОЧНЫХ ДНЕЙ В НЕДЕЛЕ</label>
                     <div class="builder-toggle" id="builder-days-toggle">
                         ${[1,2,3,4,5,6,7].map(n => `<button data-val="${n}" ${cfg.numDays===n?'class="active"':''}>${n}</button>`).join('')}
                     </div>
@@ -177,7 +179,7 @@ const Builder = {
         var daysBtn = document.querySelector('#builder-days-toggle button.active');
         this._config = {
             title: title,
-            totalWeeks: weeksBtn ? parseInt(weeksBtn.dataset.val) : 12,
+            totalWeeks: weeksBtn ? parseInt(weeksBtn.dataset.val) : 4,
             numDays: daysBtn ? parseInt(daysBtn.dataset.val) : 5
         };
     },
