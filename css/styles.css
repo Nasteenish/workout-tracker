@@ -497,6 +497,32 @@ input, button, select {
     transition: background-color 5000s ease-in-out 0s;
 }
 
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+.password-wrapper input {
+    padding-right: 48px;
+}
+.password-toggle {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    padding: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+}
+.password-toggle:active {
+    color: var(--accent);
+}
+
 .login-error {
     color: #FF4D6A;
     font-size: var(--font-size-sm);

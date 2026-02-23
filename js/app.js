@@ -763,6 +763,19 @@ const App = {
             return;
         }
 
+        // Password visibility toggle
+        var togBtn = target.closest('.password-toggle');
+        if (togBtn) {
+            var inp = document.getElementById(togBtn.dataset.target);
+            if (inp) {
+                var show = inp.type === 'password';
+                inp.type = show ? 'text' : 'password';
+                togBtn.querySelector('.eye-icon').style.display = show ? 'none' : '';
+                togBtn.querySelector('.eye-off-icon').style.display = show ? '' : 'none';
+            }
+            return;
+        }
+
         // Go to registration
         if (target.id === 'btn-register' || target.closest('#btn-register')) {
             location.hash = '#/register';
