@@ -1,11 +1,32 @@
 // builder.js — Program Builder: registration, wizard, day editor, exercise picker
 
+// Webhook URL for registration notifications (Google Apps Script)
+const REGISTRATION_WEBHOOK = '';  // Set after creating Apps Script
+
 const Builder = {
     _config: null,      // wizard temp: {title, totalWeeks, numDays}
     _editingDay: null,  // editor temp: {dayNum, exercises: [...]}
 
     // ===== Barbell SVG (shared) =====
     _barbellSVG: '<svg viewBox="0 0 40 40" fill="white" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="16" width="3" height="8" rx="1.5"/><rect x="6" y="11" width="4" height="18" rx="2"/><rect x="11" y="14" width="3" height="12" rx="1.5"/><rect x="14" y="18" width="12" height="4" rx="2"/><rect x="26" y="14" width="3" height="12" rx="1.5"/><rect x="30" y="11" width="4" height="18" rx="2"/><rect x="35" y="16" width="3" height="8" rx="1.5"/></svg>',
+
+    // ===== Send registration data to webhook =====
+    _notifyRegistration(login, email) {
+        if (!REGISTRATION_WEBHOOK) return;
+        try {
+            fetch(REGISTRATION_WEBHOOK, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    login: login,
+                    email: email,
+                    timestamp: new Date().toISOString(),
+                    userAgent: navigator.userAgent
+                })
+            }).catch(function() {});
+        } catch (e) {}
+    },
 
     // ===== REGISTRATION SCREEN =====
     renderRegister() {
@@ -16,12 +37,12 @@ const Builder = {
                 <p class="subtitle">Начните отслеживать тренировки</p>
 
                 <div class="login-field">
-                    <label for="reg-name">Имя</label>
-                    <input type="text" id="reg-name" autocomplete="name" placeholder="Ваше имя">
-                </div>
-                <div class="login-field">
                     <label for="reg-login">Логин</label>
                     <input type="text" id="reg-login" autocomplete="username" autocapitalize="none" placeholder="Придумайте логин">
+                </div>
+                <div class="login-field">
+                    <label for="reg-email">Email</label>
+                    <input type="email" id="reg-email" autocomplete="email" placeholder="Ваш email">
                 </div>
                 <div class="login-field">
                     <label for="reg-password">Пароль</label>
@@ -36,13 +57,13 @@ const Builder = {
         `;
 
         // Enter key navigation
-        var nameInput = document.getElementById('reg-name');
         var loginInput = document.getElementById('reg-login');
+        var emailInput = document.getElementById('reg-email');
         var passInput = document.getElementById('reg-password');
-        if (nameInput) nameInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') loginInput.focus();
-        });
         if (loginInput) loginInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') emailInput.focus();
+        });
+        if (emailInput) emailInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') passInput.focus();
         });
         if (passInput) passInput.addEventListener('keydown', function(e) {
@@ -51,18 +72,23 @@ const Builder = {
     },
 
     handleRegister() {
-        var name = (document.getElementById('reg-name').value || '').trim();
         var login = (document.getElementById('reg-login').value || '').trim().toLowerCase();
+        var email = (document.getElementById('reg-email').value || '').trim().toLowerCase();
         var password = (document.getElementById('reg-password').value || '').trim();
         var errEl = document.getElementById('reg-error');
 
-        if (!name || !login || !password) {
+        if (!login || !email || !password) {
             errEl.textContent = 'Заполните все поля';
             errEl.style.display = 'block';
             return;
         }
         if (login.length < 2) {
             errEl.textContent = 'Логин минимум 2 символа';
+            errEl.style.display = 'block';
+            return;
+        }
+        if (!email.includes('@')) {
+            errEl.textContent = 'Введите корректный email';
             errEl.style.display = 'block';
             return;
         }
@@ -77,12 +103,15 @@ const Builder = {
             return;
         }
 
-        var userId = Storage.createSelfRegisteredUser(name, login, password);
+        var userId = Storage.createSelfRegisteredUser(login, login, password, email);
         if (!userId) {
             errEl.textContent = 'Ошибка создания аккаунта';
             errEl.style.display = 'block';
             return;
         }
+
+        // Send notification (fire-and-forget)
+        this._notifyRegistration(login, email);
 
         App.switchUser(userId);
     },

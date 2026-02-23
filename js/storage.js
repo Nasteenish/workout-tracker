@@ -97,11 +97,11 @@ const Storage = {
         return id;
     },
 
-    // Self-registration: create new user with login/password stored in wt_users
-    createSelfRegisteredUser(name, login, password) {
+    // Self-registration: create new user with login/password/email stored in wt_users
+    createSelfRegisteredUser(name, login, password, email) {
         var users = this.getUsers();
         var id = 'user_' + Date.now();
-        users.push({ id: id, name: name, login: login, password: password, programId: null, selfRegistered: true, createdAt: Date.now() });
+        users.push({ id: id, name: name, login: login, password: password, email: email || '', programId: null, selfRegistered: true, createdAt: Date.now() });
         this._saveUsers(users);
         return id;
     },
