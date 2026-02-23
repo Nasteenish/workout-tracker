@@ -14,6 +14,8 @@ const App = {
         const currentUser = Storage.getCurrentUser();
         if (currentUser) {
             this._loadProgramForUser(currentUser);
+            // Restore Supabase sync for supa_ users
+            this._initSupaSync(currentUser.id);
         } else {
             // Legacy fallback: try loading stored program directly
             const storedProgram = Storage.getProgram();
@@ -45,6 +47,20 @@ const App = {
 
         // Initial route
         this.route();
+    },
+
+    // Initialize Supabase sync for supa_ users
+    _initSupaSync(userId) {
+        if (!userId || userId.indexOf('supa_') !== 0) return;
+        if (typeof SupaSync === 'undefined') return;
+        var supaUserId = localStorage.getItem('wt_supa_' + userId);
+        if (!supaUserId) return;
+        SupaSync._currentSupaUserId = supaUserId;
+        SupaSync._currentStorageKey = 'wt_data_' + userId;
+        // Background sync
+        SupaSync.syncOnLogin(supaUserId, 'wt_data_' + userId).catch(function(e) {
+            console.error('Init sync error:', e);
+        });
     },
 
     _initSwipeNav() {
@@ -471,14 +487,62 @@ const App = {
             return true;
         }
 
-        // 2. Try self-registered users
+        // 2. Try local self-registered users (by login or email)
         var selfUser = Storage.loginSelfRegistered(loginStr, passwordStr);
         if (selfUser) {
             this.switchUser(selfUser.id);
+            this._initSupaSync(selfUser.id);
             return true;
         }
 
         return false;
+    },
+
+    // Async login via Supabase (for email+password)
+    loginSupabase(email, password) {
+        var self = this;
+        var errEl = document.getElementById('login-error');
+        var btn = document.getElementById('login-submit');
+        if (btn) { btn.disabled = true; btn.textContent = 'ВХОД...'; }
+
+        return SupaSync.signIn(email, password).then(function(data) {
+            if (!data || !data.user) throw new Error('Ошибка входа');
+            var supaUserId = data.user.id;
+            var localId = 'supa_' + supaUserId;
+
+            // Check if local profile exists
+            var users = Storage.getUsers();
+            var existing = users.find(function(u) { return u.id === localId; });
+            if (!existing) {
+                var login = data.user.user_metadata && data.user.user_metadata.login || email.split('@')[0];
+                Storage.createSelfRegisteredUser(login, login, '', email, localId);
+                localStorage.setItem('wt_supa_' + localId, supaUserId);
+            }
+
+            // Set up sync
+            SupaSync._currentSupaUserId = supaUserId;
+            SupaSync._currentStorageKey = 'wt_data_' + localId;
+
+            self.switchUser(localId);
+
+            // Sync data from cloud
+            SupaSync.syncOnLogin(supaUserId, 'wt_data_' + localId).then(function() {
+                // Reload data after sync
+                Storage._invalidateCache();
+                var user = Storage.getCurrentUser();
+                if (user) self._loadProgramForUser(user);
+                self.route();
+            }).catch(function() {});
+
+            return true;
+        }).catch(function(err) {
+            if (errEl) {
+                errEl.textContent = err.message || 'Неверный email или пароль';
+                errEl.style.display = 'block';
+            }
+            if (btn) { btn.disabled = false; btn.textContent = 'ВОЙТИ'; }
+            return false;
+        });
     },
 
     logout() {
@@ -684,12 +748,17 @@ const App = {
             var loginVal = loginInput ? loginInput.value.trim() : '';
             var passVal = passInput ? passInput.value.trim() : '';
             if (!loginVal || !passVal) return;
-            if (!this.login(loginVal, passVal)) {
-                var err = document.getElementById('login-error');
-                if (err) {
-                    err.textContent = 'Неверный логин или пароль';
-                    err.style.display = 'block';
-                }
+            // Try local login first (hardcoded + local self-registered)
+            if (this.login(loginVal, passVal)) return;
+            // Try Supabase login (email + password)
+            if (typeof SupaSync !== 'undefined' && loginVal.includes('@')) {
+                this.loginSupabase(loginVal, passVal);
+                return;
+            }
+            var err = document.getElementById('login-error');
+            if (err) {
+                err.textContent = 'Неверный логин или пароль';
+                err.style.display = 'block';
             }
             return;
         }

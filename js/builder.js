@@ -76,6 +76,7 @@ const Builder = {
         var email = (document.getElementById('reg-email').value || '').trim().toLowerCase();
         var password = (document.getElementById('reg-password').value || '').trim();
         var errEl = document.getElementById('reg-error');
+        var submitBtn = document.getElementById('reg-submit');
 
         if (!login || !email || !password) {
             errEl.textContent = 'Заполните все поля';
@@ -92,28 +93,39 @@ const Builder = {
             errEl.style.display = 'block';
             return;
         }
-        if (password.length < 3) {
-            errEl.textContent = 'Пароль минимум 3 символа';
-            errEl.style.display = 'block';
-            return;
-        }
-        if (Storage.isLoginTaken(login)) {
-            errEl.textContent = 'Этот логин уже занят';
+        if (password.length < 6) {
+            errEl.textContent = 'Пароль минимум 6 символов';
             errEl.style.display = 'block';
             return;
         }
 
-        var userId = Storage.createSelfRegisteredUser(login, login, password, email);
-        if (!userId) {
-            errEl.textContent = 'Ошибка создания аккаунта';
+        // Disable button while registering
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'СОЗДАНИЕ...'; }
+        errEl.style.display = 'none';
+
+        // Register via Supabase Auth
+        SupaSync.signUp(email, password, login).then(function(data) {
+            if (!data || !data.user) throw new Error('Не удалось создать аккаунт');
+
+            var supaUserId = data.user.id;
+            var localId = 'supa_' + supaUserId;
+
+            // Create local user profile
+            Storage.createSelfRegisteredUser(login, login, password, email, localId);
+
+            // Store Supabase user mapping
+            localStorage.setItem('wt_supa_' + localId, supaUserId);
+
+            // Set up sync
+            SupaSync._currentSupaUserId = supaUserId;
+            SupaSync._currentStorageKey = 'wt_data_' + localId;
+
+            App.switchUser(localId);
+        }).catch(function(err) {
+            errEl.textContent = err.message || 'Ошибка регистрации';
             errEl.style.display = 'block';
-            return;
-        }
-
-        // Send notification (fire-and-forget)
-        this._notifyRegistration(login, email);
-
-        App.switchUser(userId);
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'СОЗДАТЬ АККАУНТ'; }
+        });
     },
 
     // ===== WIZARD STEP 1 =====

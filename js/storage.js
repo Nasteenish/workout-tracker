@@ -40,7 +40,10 @@ const Storage = {
 
     _save() {
         try {
+            if (this._data) this._data._lastModified = Date.now();
             localStorage.setItem(_storageKey(), JSON.stringify(this._data));
+            // Trigger cloud sync if available
+            if (typeof SupaSync !== 'undefined') SupaSync.onLocalSave();
         } catch (e) {
             console.error('Storage save error:', e);
         }
@@ -98,9 +101,9 @@ const Storage = {
     },
 
     // Self-registration: create new user with login/password/email stored in wt_users
-    createSelfRegisteredUser(name, login, password, email) {
+    createSelfRegisteredUser(name, login, password, email, customId) {
         var users = this.getUsers();
-        var id = 'user_' + Date.now();
+        var id = customId || ('user_' + Date.now());
         users.push({ id: id, name: name, login: login, password: password, email: email || '', programId: null, selfRegistered: true, createdAt: Date.now() });
         this._saveUsers(users);
         return id;

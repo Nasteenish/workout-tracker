@@ -26,8 +26,8 @@ const UI = {
                 <p class="subtitle">Войдите в свой аккаунт</p>
 
                 <div class="login-field">
-                    <label for="login-input">Логин</label>
-                    <input type="text" id="login-input" autocomplete="username" autocapitalize="none" placeholder="Введите логин">
+                    <label for="login-input">Логин или Email</label>
+                    <input type="text" id="login-input" autocomplete="username" autocapitalize="none" placeholder="Логин или email">
                 </div>
 
                 <div class="login-field">
