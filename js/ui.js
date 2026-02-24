@@ -115,7 +115,7 @@ const UI = {
                     <div id="program-status" style="min-height:24px;margin-top:8px;font-size:13px;text-align:center"></div>
                 </div>
 
-                <button class="btn-link" id="btn-logout" style="margin-top:auto;padding-top:32px;font-size:13px;opacity:0.5">Выйти</button>
+                <button class="btn-link" id="btn-logout" style="margin-top:auto;padding-top:32px;font-size:13px;opacity:0.5">Назад</button>
             </div>
         `;
     },
