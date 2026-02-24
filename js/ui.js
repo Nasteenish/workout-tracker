@@ -109,9 +109,8 @@ const UI = {
                 <p class="subtitle">Создайте свою программу тренировок</p>
 
                 <button class="btn-primary" id="setup-create-program">СОЗДАТЬ ПРОГРАММУ</button>
-
                 <button class="btn-link" id="setup-import-program">Загрузить из файла</button>
-                <div id="program-status" style="min-height:24px;margin-top:8px;font-size:13px;text-align:center"></div>
+                <div id="program-status" style="font-size:13px;text-align:center"></div>
                 <button class="btn-link" id="btn-logout">Назад</button>
             </div>
         `;
