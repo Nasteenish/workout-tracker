@@ -170,8 +170,10 @@ const RestTimer = {
         // Request notification permission early
         this._requestNotificationPermission();
 
-        // Handle returning from background
+        // Handle returning from background — multiple listeners for iOS reliability
         document.addEventListener('visibilitychange', () => this._onVisibilityChange());
+        window.addEventListener('focus', () => this._onVisibilityChange());
+        window.addEventListener('pageshow', () => this._onVisibilityChange());
 
         this._updateDisplay();
         this._restoreState();
@@ -273,7 +275,7 @@ const RestTimer = {
                     this._finish();
                 }
             }
-        }, 1000);
+        }, 250);
     },
 
     stop() {
@@ -538,7 +540,7 @@ const RestTimer = {
                     this._updateDisplay();
                     if (this._remaining <= 0) this._finish();
                 }
-            }, 1000);
+            }, 250);
         } catch (e) {
             localStorage.removeItem('_wt_timer');
         }
