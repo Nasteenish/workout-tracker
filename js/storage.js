@@ -399,6 +399,7 @@ const Storage = {
                 completed: true,
                 timestamp: Date.now()
             };
+            if (current.segs) data.log[w][d][exerciseId][s].segs = current.segs;
             if (equipmentId) data.log[w][d][exerciseId][s].equipmentId = equipmentId;
             this._save();
             return true;
