@@ -367,12 +367,14 @@ const Storage = {
         if (!data.log[w]) data.log[w] = {};
         if (!data.log[w][d]) data.log[w][d] = {};
         if (!data.log[w][d][exerciseId]) data.log[w][d][exerciseId] = {};
+        var existing = data.log[w][d][exerciseId][s] || {};
         data.log[w][d][exerciseId][s] = {
             weight: weight,
             reps: reps,
             completed: true,
             timestamp: Date.now()
         };
+        if (existing.segs) data.log[w][d][exerciseId][s].segs = existing.segs;
         if (equipmentId) data.log[w][d][exerciseId][s].equipmentId = equipmentId;
         this._save();
     },
