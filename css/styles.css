@@ -1711,9 +1711,20 @@ body.modal-open {
 }
 
 /* ===== Substitution Modal ===== */
+#substitution-modal {
+    justify-content: flex-start;
+}
+
 .substitution-modal {
     max-height: 80vh;
-    animation: slide-up-modal 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    padding-top: calc(var(--spacing-md) + env(safe-area-inset-top, 0px));
+    animation: slide-down-modal 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes slide-down-modal {
+    from { transform: translateY(-100%); }
+    to   { transform: translateY(0); }
 }
 
 .sub-search-row {
@@ -1738,7 +1749,8 @@ body.modal-open {
 }
 
 .sub-list {
-    max-height: 45vh;
+    flex: 1;
+    max-height: 50vh;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;

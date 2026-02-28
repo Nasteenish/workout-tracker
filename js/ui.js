@@ -1004,27 +1004,11 @@ const UI = {
             });
         });
 
-        // Adjust modal when iOS keyboard appears
-        const modal = overlay.querySelector('.substitution-modal');
-        if (window.visualViewport) {
-            const onResize = function() {
-                var vh = window.visualViewport.height;
-                overlay.style.height = vh + 'px';
-                overlay.style.top = window.visualViewport.offsetTop + 'px';
-            };
-            window.visualViewport.addEventListener('resize', onResize);
-            overlay._vpCleanup = function() {
-                window.visualViewport.removeEventListener('resize', onResize);
-            };
-        }
     },
 
     hideSubstitutionModal() {
         const modal = document.getElementById('substitution-modal');
-        if (modal) {
-            if (modal._vpCleanup) modal._vpCleanup();
-            modal.remove();
-        }
+        if (modal) modal.remove();
         if (!document.querySelector('.modal-overlay')) {
             unlockBodyScroll();
         }
