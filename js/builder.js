@@ -191,7 +191,7 @@ const Builder = {
         var dayNames = cfg.dayNames || [];
 
         var fieldsHtml = '';
-        var dayPlaceholders = ['Грудь и трицепс', 'Спина и бицепс', 'Ноги и плечи', 'Руки и пресс', 'Кардио', 'Всё тело', 'Верх тела'];
+        var dayPlaceholders = ['Грудь и трицепс', 'Спина и бицепс', 'Ноги и ягодицы', 'Плечи и руки', 'Грудь и спина', 'Ноги и плечи', 'Спина и трицепс'];
         for (var i = 1; i <= cfg.numDays; i++) {
             var val = dayNames[i - 1] || '';
             var ph = dayPlaceholders[(i - 1) % dayPlaceholders.length];
