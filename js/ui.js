@@ -378,6 +378,15 @@ const UI = {
         `;
     },
 
+    _getExerciseDisplayName(ex) {
+        const sub = Storage.getSubstitution(ex.id);
+        return sub || ex.nameRu || ex.name;
+    },
+
+    _isSubstituted(exerciseId) {
+        return !!Storage.getSubstitution(exerciseId);
+    },
+
     _renderExercise(ex, weekNum, dayNum, choiceKey = null) {
         let setsHtml = '';
         for (let i = 0; i < ex.sets.length; i++) {
@@ -401,10 +410,17 @@ const UI = {
             </div>
         `;
 
+        const displayName = this._getExerciseDisplayName(ex);
+        const isSubbed = this._isSubstituted(ex.id);
+        const subBtnSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>';
+
         return `
             <div class="exercise-card ${choiceKey ? 'is-chooser' : ''}">
                 <div class="exercise-header">
-                    <div class="exercise-name ${choiceKey ? 'exercise-name-chooser' : ''}" ${choiceKey ? `data-choice-key="${choiceKey}"` : ''}>${choiceKey ? this._nameWithBadge(ex.nameRu || ex.name) : (ex.nameRu || ex.name)}</div>
+                    <div class="exercise-name-row">
+                        <div class="exercise-name ${isSubbed ? 'exercise-substituted' : ''} ${choiceKey ? 'exercise-name-chooser' : ''}" ${choiceKey ? `data-choice-key="${choiceKey}"` : ''}>${choiceKey ? this._nameWithBadge(displayName) : displayName}</div>
+                        <button class="substitute-btn" data-exercise="${ex.id}">${subBtnSvg}</button>
+                    </div>
                     <div class="exercise-meta">
                         <span>${ex.reps} reps</span>
                         ${restText ? `<span>${restText}</span>` : ''}
@@ -623,6 +639,9 @@ const UI = {
                 }
             }
         }
+        // Apply substitution if exists
+        const subName = Storage.getSubstitution(exerciseId);
+        if (subName) exerciseName = subName;
 
         // Filter history by current equipment if selected
         let history, otherHistory;
@@ -878,6 +897,118 @@ const UI = {
 
     hideChoiceModal() {
         const modal = document.getElementById('choice-modal');
+        if (modal) modal.remove();
+        if (!document.querySelector('.modal-overlay')) {
+            unlockBodyScroll();
+        }
+    },
+
+    // ===== SUBSTITUTION MODAL =====
+    showSubstitutionModal(exerciseId) {
+        // Find original exercise name
+        let originalName = exerciseId;
+        for (let d = 1; d <= getTotalDays(); d++) {
+            const tmpl = PROGRAM.dayTemplates[d];
+            if (!tmpl) continue;
+            for (const group of tmpl.exerciseGroups) {
+                const exercises = getGroupExercises(group);
+                for (const ex of exercises) {
+                    if (ex.id === exerciseId) {
+                        originalName = ex.nameRu || ex.name;
+                        break;
+                    }
+                }
+            }
+        }
+
+        const currentSub = Storage.getSubstitution(exerciseId);
+        const isSubbed = !!currentSub;
+
+        // Collect ALL exercises from ALL days (unique by name, exclude current)
+        const allExercises = [];
+        const seenNames = new Set();
+        for (let d = 1; d <= getTotalDays(); d++) {
+            const tmpl = PROGRAM.dayTemplates[d];
+            if (!tmpl) continue;
+            for (const group of tmpl.exerciseGroups) {
+                const exercises = getGroupExercises(group);
+                for (const ex of exercises) {
+                    const name = ex.nameRu || ex.name;
+                    if (ex.id !== exerciseId && !seenNames.has(name)) {
+                        seenNames.add(name);
+                        allExercises.push(name);
+                    }
+                }
+            }
+        }
+
+        // Sort alphabetically
+        allExercises.sort((a, b) => a.localeCompare(b, 'ru'));
+
+        // Build exercise list HTML
+        let listHtml = '';
+        for (const name of allExercises) {
+            const isActive = currentSub === name;
+            listHtml += `<div class="eq-option sub-option${isActive ? ' selected' : ''}" data-sub-name="${name}" data-target-exercise="${exerciseId}">${name}${isActive ? ' <span class="eq-check">\u2713</span>' : ''}</div>`;
+        }
+
+        // Revert button (only if currently substituted)
+        const revertHtml = isSubbed ? `
+            <div class="sub-revert-row">
+                <button class="sub-revert-btn" data-exercise="${exerciseId}">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    Вернуть оригинал (${originalName})
+                </button>
+            </div>
+        ` : '';
+
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.id = 'substitution-modal';
+        overlay.innerHTML = `
+            <div class="equipment-modal substitution-modal">
+                <div class="modal-header">
+                    <h3>Заменить упражнение</h3>
+                </div>
+                ${revertHtml}
+                <div class="sub-search-row">
+                    <input type="text" id="sub-search-input" placeholder="Поиск..." autocomplete="off">
+                </div>
+                <div class="eq-list sub-list" id="sub-exercise-list">
+                    ${listHtml}
+                </div>
+                <div class="eq-add-row">
+                    <input type="text" id="sub-custom-name" placeholder="Своё название...">
+                    <button class="eq-add-btn" id="sub-add-custom-btn">+</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        lockBodyScroll();
+
+        overlay._exerciseId = exerciseId;
+
+        blockOverlayScroll(overlay, '.substitution-modal');
+        overlay.addEventListener('click', function(e) {
+            App.handleClick(e);
+        });
+
+        // Wire up search/filter
+        const searchInput = document.getElementById('sub-search-input');
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            const items = document.querySelectorAll('#sub-exercise-list .sub-option');
+            items.forEach(function(item) {
+                const name = item.dataset.subName.toLowerCase();
+                item.style.display = name.includes(query) ? '' : 'none';
+            });
+        });
+
+        setTimeout(function() { searchInput.focus(); }, 100);
+    },
+
+    hideSubstitutionModal() {
+        const modal = document.getElementById('substitution-modal');
         if (modal) modal.remove();
         if (!document.querySelector('.modal-overlay')) {
             unlockBodyScroll();

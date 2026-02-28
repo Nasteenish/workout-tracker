@@ -23,6 +23,7 @@ const Storage = {
             if (!this._data.exerciseEquipment) this._data.exerciseEquipment = {};
             if (!this._data.exerciseUnits) this._data.exerciseUnits = {};
             if (this._data.program === undefined) this._data.program = null;
+            if (!this._data.exerciseSubstitutions) this._data.exerciseSubstitutions = {};
             if (!this._data.exerciseEquipmentOptions) {
                 this._data.exerciseEquipmentOptions = {};
                 // Auto-migrate: link currently assigned equipment to their exercises
@@ -62,6 +63,7 @@ const Storage = {
             exerciseEquipmentOptions: {},
             exerciseUnits: {},
             exerciseChoices: {},
+            exerciseSubstitutions: {},
             log: {}
         };
     },
@@ -348,6 +350,21 @@ const Storage = {
 
     saveChoice(groupKey, exerciseId) {
         this._load().exerciseChoices[groupKey] = exerciseId;
+        this._save();
+    },
+
+    // Exercise substitutions (display name override)
+    getSubstitution(exerciseId) {
+        return this._load().exerciseSubstitutions[exerciseId] || null;
+    },
+
+    setSubstitution(exerciseId, displayName) {
+        this._load().exerciseSubstitutions[exerciseId] = displayName;
+        this._save();
+    },
+
+    removeSubstitution(exerciseId) {
+        delete this._load().exerciseSubstitutions[exerciseId];
         this._save();
     },
 
