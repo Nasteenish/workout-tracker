@@ -306,113 +306,145 @@ const UI = {
     _initSlotDragDrop(weekNum) {
         const container = document.querySelector('.week-slide');
         if (!container) return;
-        const settings = Storage.getSettings();
-        const cycleType = settings.cycleType || 7;
-        const numDays = getTotalDays();
 
-        let dragEl = null, dragIdx = -1, startY = 0, startX = 0, longPressTimer = null;
-        let dragging = false, cards = [], placeholder = null, clone = null;
+        let dragEl = null, startY = 0, startX = 0, longPressTimer = null;
+        let dragging = false, clone = null, touchOffsetY = 0;
+        let cachedRects = [], swapCooldown = false, rafId = 0;
 
-        const getCards = () => Array.from(container.querySelectorAll('[data-slot-idx]'));
+        function cacheRects() {
+            cachedRects = [];
+            var els = container.querySelectorAll('[data-slot-idx]');
+            for (var i = 0; i < els.length; i++) {
+                var r = els[i].getBoundingClientRect();
+                cachedRects.push({ el: els[i], top: r.top, bottom: r.bottom, midY: r.top + r.height / 2, height: r.height });
+            }
+        }
+
+        function cleanup() {
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+            if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+            if (clone) { clone.remove(); clone = null; }
+            if (dragEl) {
+                dragEl.style.opacity = '';
+                dragEl.style.pointerEvents = '';
+                dragEl.style.transition = '';
+            }
+            // Restore all card transitions
+            var els = container.querySelectorAll('[data-slot-idx]');
+            for (var i = 0; i < els.length; i++) {
+                els[i].style.transform = '';
+                els[i].style.transition = '';
+            }
+            document.body.style.overflow = '';
+            document.body.style.touchAction = '';
+            container.style.overscrollBehavior = '';
+            dragging = false;
+            dragEl = null;
+            cachedRects = [];
+        }
 
         container.addEventListener('touchstart', function(e) {
-            const card = e.target.closest('[data-slot-idx]');
+            var card = e.target.closest('[data-slot-idx]');
             if (!card) return;
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
             dragEl = card;
-            dragIdx = parseInt(card.dataset.slotIdx);
 
             longPressTimer = setTimeout(function() {
                 dragging = true;
-                cards = getCards();
+                // Block scrolling
+                document.body.style.overflow = 'hidden';
+                document.body.style.touchAction = 'none';
+                container.style.overscrollBehavior = 'none';
                 // Prevent link navigation
                 card.style.pointerEvents = 'none';
-                // Create clone for dragging
-                const rect = card.getBoundingClientRect();
+                // Create clone
+                var rect = card.getBoundingClientRect();
+                touchOffsetY = startY - rect.top;
                 clone = card.cloneNode(true);
-                clone.className = card.className + ' drag-clone';
-                clone.style.cssText = 'position:fixed;left:' + rect.left + 'px;top:' + rect.top + 'px;width:' + rect.width + 'px;z-index:999;opacity:0.9;transform:scale(1.03);box-shadow:0 8px 32px rgba(0,0,0,0.4);pointer-events:none;transition:none;';
+                clone.style.cssText = 'position:fixed;left:' + rect.left + 'px;top:' + rect.top + 'px;width:' + rect.width + 'px;height:' + rect.height + 'px;z-index:999;opacity:0.92;pointer-events:none;will-change:transform;transition:none;transform:scale(1.04);box-shadow:0 8px 24px rgba(0,0,0,0.35);border-radius:16px;';
                 document.body.appendChild(clone);
-                // Add placeholder
-                card.style.opacity = '0.2';
-                // Haptic feedback
+                // Ghost original
+                card.style.opacity = '0.15';
+                card.style.transition = 'none';
+                // Cache positions
+                cacheRects();
                 if (navigator.vibrate) navigator.vibrate(30);
             }, 400);
         }, { passive: true });
 
         container.addEventListener('touchmove', function(e) {
-            const dx = e.touches[0].clientX - startX;
-            const dy = e.touches[0].clientY - startY;
-            if (!dragging && longPressTimer && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
+            if (!dragging && longPressTimer) {
+                var dx = e.touches[0].clientX - startX;
+                var dy = e.touches[0].clientY - startY;
+                if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
                 return;
             }
             if (!dragging) return;
             e.preventDefault();
-            // Move clone
-            const touch = e.touches[0];
-            if (clone) {
-                clone.style.top = (touch.clientY - 40) + 'px';
-            }
-            // Find which card we're over
-            cards = getCards();
-            for (const c of cards) {
-                if (c === dragEl) continue;
-                const r = c.getBoundingClientRect();
-                const midY = r.top + r.height / 2;
-                if (touch.clientY > r.top && touch.clientY < r.bottom) {
-                    const targetIdx = parseInt(c.dataset.slotIdx);
-                    if (targetIdx !== dragIdx) {
-                        // Swap in DOM
-                        if (touch.clientY < midY) {
-                            container.insertBefore(dragEl, c);
-                        } else {
-                            container.insertBefore(dragEl, c.nextSibling);
-                        }
-                        // Update indices
-                        getCards().forEach(function(el, i) { el.dataset.slotIdx = i; });
-                        dragIdx = parseInt(dragEl.dataset.slotIdx);
-                        break;
+
+            var touchY = e.touches[0].clientY;
+
+            // Move clone via rAF
+            if (rafId) cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(function() {
+                if (clone) {
+                    clone.style.top = (touchY - touchOffsetY) + 'px';
+                }
+            });
+
+            // Swap detection with cooldown
+            if (swapCooldown) return;
+            for (var i = 0; i < cachedRects.length; i++) {
+                var cr = cachedRects[i];
+                if (cr.el === dragEl) continue;
+                if (touchY > cr.top + cr.height * 0.2 && touchY < cr.bottom - cr.height * 0.2) {
+                    // Swap in DOM
+                    if (touchY < cr.midY) {
+                        container.insertBefore(dragEl, cr.el);
+                    } else {
+                        container.insertBefore(dragEl, cr.el.nextSibling);
                     }
+                    // Update indices
+                    var allCards = container.querySelectorAll('[data-slot-idx]');
+                    for (var j = 0; j < allCards.length; j++) {
+                        allCards[j].dataset.slotIdx = j;
+                    }
+                    // Re-cache after swap
+                    swapCooldown = true;
+                    cacheRects();
+                    if (navigator.vibrate) navigator.vibrate(15);
+                    setTimeout(function() { swapCooldown = false; }, 150);
+                    break;
                 }
             }
         }, { passive: false });
 
-        container.addEventListener('touchend', function(e) {
+        container.addEventListener('touchend', function() {
             if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
             if (!dragging) return;
-            dragging = false;
-            if (clone) { clone.remove(); clone = null; }
-            if (dragEl) {
-                dragEl.style.opacity = '';
-                dragEl.style.pointerEvents = '';
-            }
             // Save new slot order
-            const newSlots = [];
-            getCards().forEach(function(el) {
+            var newSlots = [];
+            var allCards = container.querySelectorAll('[data-slot-idx]');
+            for (var i = 0; i < allCards.length; i++) {
+                var el = allCards[i];
                 if (el.classList.contains('rest-day-card')) {
                     newSlots.push({ type: 'rest' });
                 } else if (el.classList.contains('day-card')) {
-                    const href = el.getAttribute('href') || '';
-                    const m = href.match(/day\/(\d+)/);
+                    var href = el.getAttribute('href') || '';
+                    var m = href.match(/day\/(\d+)/);
                     if (m) newSlots.push({ type: 'day', dayNum: parseInt(m[1]) });
                 }
-            });
-            if (newSlots.length > 0) {
-                Storage.saveWeekSlots(newSlots);
             }
-            dragEl = null;
+            if (newSlots.length > 0) Storage.saveWeekSlots(newSlots);
+            cleanup();
         }, { passive: true });
 
-        // Cancel drag on touchcancel
         container.addEventListener('touchcancel', function() {
-            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-            if (clone) { clone.remove(); clone = null; }
-            if (dragEl) { dragEl.style.opacity = ''; dragEl.style.pointerEvents = ''; }
-            dragging = false;
-            dragEl = null;
+            cleanup();
         });
     },
 
