@@ -136,7 +136,7 @@ const Builder = {
 
     // ===== WIZARD STEP 1 =====
     renderWizardStep1() {
-        var cfg = this._config || { title: '', totalWeeks: 1, numDays: 4 };
+        var cfg = this._config || { title: '', totalWeeks: 4, numDays: 4 };
         document.getElementById('app').innerHTML = `
             <div class="setup-screen" style="justify-content:flex-start;padding-top:var(--spacing-xl)">
                 <h1>Новая программа</h1>
@@ -148,12 +148,26 @@ const Builder = {
                 </div>
 
                 <div class="setup-field">
+                    <label>ДЛИТЕЛЬНОСТЬ (НЕДЕЛЬ)</label>
+                    <div class="builder-toggle" id="builder-weeks-toggle">
+                        <button data-val="1" ${cfg.totalWeeks===1?'class="active"':''}>1</button>
+                        <button data-val="2" ${cfg.totalWeeks===2?'class="active"':''}>2</button>
+                        <button data-val="4" ${cfg.totalWeeks===4?'class="active"':''}>4</button>
+                        <button data-val="8" ${cfg.totalWeeks===8?'class="active"':''}>8</button>
+                        <button data-val="12" ${cfg.totalWeeks===12?'class="active"':''}>12</button>
+                        <button data-val="16" ${cfg.totalWeeks===16?'class="active"':''}>16</button>
+                        <button data-val="999" ${cfg.totalWeeks===999?'class="active"':''}>∞</button>
+                    </div>
+                </div>
+
+                <div class="setup-field">
                     <label>ТРЕНИРОВОК В НЕДЕЛЮ</label>
                     <div class="builder-toggle" id="builder-days-toggle">
                         ${[1,2,3,4,5,6,7].map(n => `<button data-val="${n}" ${cfg.numDays===n?'class="active"':''}>${n}</button>`).join('')}
                     </div>
-                    <p class="builder-hint">Количество тренировок и недель всегда можно изменить позже</p>
                 </div>
+
+                <p class="builder-hint">Всё можно изменить позже</p>
 
                 <button class="btn-primary" id="builder-next" style="margin-top:var(--spacing-lg)">ДАЛЕЕ</button>
                 <button class="btn-link" id="builder-back-setup">Назад</button>
@@ -163,10 +177,11 @@ const Builder = {
 
     saveStep1() {
         var title = (document.getElementById('builder-title').value || '').trim() || 'Моя программа';
+        var weeksBtn = document.querySelector('#builder-weeks-toggle button.active');
         var daysBtn = document.querySelector('#builder-days-toggle button.active');
         this._config = {
             title: title,
-            totalWeeks: 1,
+            totalWeeks: weeksBtn ? parseInt(weeksBtn.dataset.val) : 4,
             numDays: daysBtn ? parseInt(daysBtn.dataset.val) : 4
         };
     },
