@@ -893,9 +893,25 @@ const App = {
 
         // Setup summary: back to initial setup
         if (target.id === 'setup-back-builder' || target.closest('#setup-back-builder')) {
-            Storage.saveProgram(null, false);
-            PROGRAM = null;
-            UI.renderSetup();
+            // Go back to builder step2 (day names), preserving the program config
+            if (Builder._config) {
+                location.hash = '#/builder/step2';
+            } else {
+                // Reconstruct config from existing program
+                var numDays = getTotalDays();
+                var dayNames = [];
+                for (var d = 1; d <= numDays; d++) {
+                    var tmpl = PROGRAM && PROGRAM.dayTemplates[d];
+                    dayNames.push(tmpl ? (tmpl.titleRu || tmpl.title || '') : '');
+                }
+                Builder._config = {
+                    title: PROGRAM ? (PROGRAM.title || '') : '',
+                    totalWeeks: PROGRAM ? (PROGRAM.totalWeeks || 4) : 4,
+                    numDays: numDays,
+                    dayNames: dayNames
+                };
+                location.hash = '#/builder/step2';
+            }
             return;
         }
 
