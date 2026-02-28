@@ -2376,6 +2376,13 @@ body.modal-open {
     border-color: var(--accent-primary);
 }
 
+.builder-hint {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    margin-top: 8px;
+    text-align: center;
+}
+
 /* Day editor */
 .editor-exercise-list {
     position: relative;
