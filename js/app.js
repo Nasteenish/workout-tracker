@@ -474,17 +474,24 @@ const App = {
         app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
         app.style.transform = 'translateX(40px)';
         app.style.opacity = '0';
+        var dayNum = Builder._editingDay ? Builder._editingDay.dayNum : App._currentDay;
+        var weekNum = App._currentWeek;
         setTimeout(function() {
             app.style.transition = 'none';
             app.style.transform = '';
             app.style.opacity = '';
             window.scrollTo(0, 0);
+            Builder._editingDay = null;
             if (Storage.isSetup()) {
-                location.hash = '#/week/' + App._currentWeek + '/day/' + (Builder._editingDay ? Builder._editingDay.dayNum : App._currentDay);
+                var target = '#/week/' + weekNum + '/day/' + dayNum;
+                if (location.hash === target) {
+                    App.route();
+                } else {
+                    location.hash = target;
+                }
             } else {
                 location.hash = '#/setup';
             }
-            Builder._editingDay = null;
         }, 190);
     },
 
