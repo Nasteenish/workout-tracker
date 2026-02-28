@@ -465,6 +465,25 @@ const App = {
         location.hash = `#/week/${PROGRAM.totalWeeks}`;
     },
 
+    _handleEditorBack() {
+        var app = document.getElementById('app');
+        app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
+        app.style.transform = 'translateX(40px)';
+        app.style.opacity = '0';
+        setTimeout(function() {
+            app.style.transition = 'none';
+            app.style.transform = '';
+            app.style.opacity = '';
+            window.scrollTo(0, 0);
+            if (Storage.isSetup()) {
+                location.hash = '#/week/' + App._currentWeek + '/day/' + (Builder._editingDay ? Builder._editingDay.dayNum : App._currentDay);
+            } else {
+                location.hash = '#/setup';
+            }
+            Builder._editingDay = null;
+        }, 190);
+    },
+
     _addDayToCustomProgram() {
         if (!PROGRAM || !PROGRAM.isCustom) return;
         var numDays = getTotalDays();
@@ -970,22 +989,7 @@ const App = {
 
         // Day editor: back
         if (target.id === 'btn-back-editor' || target.closest('#btn-back-editor')) {
-            var app = document.getElementById('app');
-            app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
-            app.style.transform = 'translateX(40px)';
-            app.style.opacity = '0';
-            setTimeout(function() {
-                app.style.transition = 'none';
-                app.style.transform = '';
-                app.style.opacity = '';
-                window.scrollTo(0, 0);
-                if (Storage.isSetup()) {
-                    location.hash = '#/week/' + App._currentWeek + '/day/' + (Builder._editingDay ? Builder._editingDay.dayNum : App._currentDay);
-                } else {
-                    location.hash = '#/setup';
-                }
-                Builder._editingDay = null;
-            }, 190);
+            this._handleEditorBack();
             return;
         }
 

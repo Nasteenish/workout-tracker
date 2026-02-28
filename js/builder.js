@@ -328,6 +328,13 @@ const Builder = {
             </div>
         `;
 
+        var backBtn = document.getElementById('btn-back-editor');
+        if (backBtn) {
+            backBtn.addEventListener('click', function() {
+                App._handleEditorBack();
+            });
+        }
+
         this._initExerciseDragDrop();
     },
 
