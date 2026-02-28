@@ -2377,6 +2377,9 @@ body.modal-open {
 }
 
 /* Day editor */
+.editor-exercise-list {
+    position: relative;
+}
 .editor-exercise-card {
     display: flex;
     align-items: center;
@@ -2387,6 +2390,9 @@ body.modal-open {
     padding: var(--spacing-md);
     margin-bottom: var(--spacing-sm);
     min-height: var(--touch-min);
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
 }
 .editor-ex-info {
     flex: 1;

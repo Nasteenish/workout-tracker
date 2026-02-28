@@ -292,14 +292,12 @@ const Builder = {
         for (var i = 0; i < ed.exercises.length; i++) {
             var ex = ed.exercises[i];
             listHtml += `
-                <div class="editor-exercise-card">
+                <div class="editor-exercise-card" data-ex-idx="${i}">
                     <div class="editor-ex-info">
                         <div class="editor-ex-name">${ex.nameRu || ex.name}</div>
-                        <div class="editor-ex-meta">${ex.setsCount} × ${ex.reps} · ${ex.rest ? ex.rest + 'с' : '—'}</div>
+                        <div class="editor-ex-meta">${ex.setsCount} × ${ex.reps}</div>
                     </div>
                     <div class="editor-ex-actions">
-                        ${i > 0 ? `<button class="editor-action-btn editor-move-up" data-idx="${i}">↑</button>` : '<span class="editor-action-spacer"></span>'}
-                        ${i < ed.exercises.length - 1 ? `<button class="editor-action-btn editor-move-down" data-idx="${i}">↓</button>` : '<span class="editor-action-spacer"></span>'}
                         <button class="editor-action-btn editor-delete" data-idx="${i}">✕</button>
                     </div>
                 </div>
@@ -321,13 +319,141 @@ const Builder = {
                 </div>
             </div>
             <div class="app-content">
-                <div id="editor-exercises">${listHtml}</div>
+                <div class="editor-exercise-list" id="editor-exercises">${listHtml}</div>
                 <button class="btn-primary editor-add-btn" id="editor-add-exercise">
                     <span style="font-size:20px;margin-right:6px">+</span> ДОБАВИТЬ УПРАЖНЕНИЕ
                 </button>
-                ${ed.exercises.length > 0 ? '<button class="btn-primary editor-save-btn" id="editor-save">СОХРАНИТЬ</button>' : ''}
             </div>
         `;
+
+        this._initExerciseDragDrop();
+    },
+
+    _initExerciseDragDrop() {
+        var container = document.getElementById('editor-exercises');
+        if (!container) return;
+        var self = this;
+
+        var dragEl = null, startY = 0, startX = 0, longPressTimer = null;
+        var dragging = false, clone = null, touchOffsetY = 0;
+        var cachedRects = [], swapCooldown = false, rafId = 0;
+
+        function cacheRects() {
+            cachedRects = [];
+            var els = container.querySelectorAll('[data-ex-idx]');
+            for (var i = 0; i < els.length; i++) {
+                var r = els[i].getBoundingClientRect();
+                cachedRects.push({ el: els[i], top: r.top, bottom: r.bottom, midY: r.top + r.height / 2, height: r.height });
+            }
+        }
+
+        function cleanup() {
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+            if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+            if (clone) { clone.remove(); clone = null; }
+            if (dragEl) {
+                dragEl.style.opacity = '';
+                dragEl.style.pointerEvents = '';
+            }
+            document.body.style.overflow = '';
+            document.body.style.touchAction = '';
+            document.body.style.userSelect = '';
+            document.body.style.webkitUserSelect = '';
+            dragging = false;
+            window._slotDragging = false;
+            dragEl = null;
+            cachedRects = [];
+        }
+
+        container.addEventListener('touchstart', function(e) {
+            var card = e.target.closest('[data-ex-idx]');
+            if (!card || e.target.closest('.editor-action-btn')) return;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            dragEl = card;
+
+            longPressTimer = setTimeout(function() {
+                dragging = true;
+                window._slotDragging = true;
+                document.body.style.overflow = 'hidden';
+                document.body.style.touchAction = 'none';
+                document.body.style.userSelect = 'none';
+                document.body.style.webkitUserSelect = 'none';
+                card.style.pointerEvents = 'none';
+                var rect = card.getBoundingClientRect();
+                touchOffsetY = startY - rect.top;
+                clone = card.cloneNode(true);
+                clone.style.cssText = 'position:fixed;left:' + rect.left + 'px;top:' + rect.top + 'px;width:' + rect.width + 'px;height:' + rect.height + 'px;z-index:999;opacity:0.92;pointer-events:none;will-change:transform;transition:none;transform:scale(1.04);box-shadow:0 8px 24px rgba(0,0,0,0.35);border-radius:16px;';
+                document.body.appendChild(clone);
+                card.style.opacity = '0.15';
+                cacheRects();
+                if (navigator.vibrate) navigator.vibrate(30);
+            }, 400);
+        }, { passive: true });
+
+        container.addEventListener('touchmove', function(e) {
+            if (!dragging && longPressTimer) {
+                var dx = e.touches[0].clientX - startX;
+                var dy = e.touches[0].clientY - startY;
+                if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+                return;
+            }
+            if (!dragging) return;
+            e.preventDefault();
+            var touchY = e.touches[0].clientY;
+            if (rafId) cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(function() {
+                if (clone) clone.style.top = (touchY - touchOffsetY) + 'px';
+            });
+            if (swapCooldown) return;
+            for (var i = 0; i < cachedRects.length; i++) {
+                var cr = cachedRects[i];
+                if (cr.el === dragEl) continue;
+                if (touchY > cr.top + cr.height * 0.2 && touchY < cr.bottom - cr.height * 0.2) {
+                    if (touchY < cr.midY) {
+                        container.insertBefore(dragEl, cr.el);
+                    } else {
+                        container.insertBefore(dragEl, cr.el.nextSibling);
+                    }
+                    var allCards = container.querySelectorAll('[data-ex-idx]');
+                    for (var j = 0; j < allCards.length; j++) allCards[j].dataset.exIdx = j;
+                    swapCooldown = true;
+                    cacheRects();
+                    if (navigator.vibrate) navigator.vibrate(15);
+                    setTimeout(function() { swapCooldown = false; }, 150);
+                    break;
+                }
+            }
+        }, { passive: false });
+
+        container.addEventListener('touchend', function() {
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+            if (!dragging) return;
+            // Read new order from DOM
+            var newExercises = [];
+            var allCards = container.querySelectorAll('[data-ex-idx]');
+            for (var i = 0; i < allCards.length; i++) {
+                var origIdx = parseInt(allCards[i].dataset.exIdx);
+                // Find by current DOM position — indices were updated during swap
+                // We need to map back to the exercise by the card's delete button idx
+                var delBtn = allCards[i].querySelector('.editor-delete');
+                var dataIdx = delBtn ? parseInt(delBtn.dataset.idx) : i;
+                if (self._editingDay && self._editingDay.exercises[dataIdx]) {
+                    newExercises.push(self._editingDay.exercises[dataIdx]);
+                }
+            }
+            if (self._editingDay && newExercises.length === self._editingDay.exercises.length) {
+                self._editingDay.exercises = newExercises;
+                self._autoSave();
+            }
+            cleanup();
+            self._renderDayEditorHTML();
+        }, { passive: true });
+
+        container.addEventListener('touchcancel', function() { cleanup(); });
     },
 
     moveExercise(idx, dir) {
@@ -345,10 +471,11 @@ const Builder = {
         var ed = this._editingDay;
         if (!ed) return;
         ed.exercises.splice(idx, 1);
+        this._autoSave();
         this._renderDayEditorHTML();
     },
 
-    saveDayEdits() {
+    _autoSave() {
         var ed = this._editingDay;
         if (!ed || !PROGRAM) return;
 
@@ -376,11 +503,16 @@ const Builder = {
 
         PROGRAM.dayTemplates[ed.dayNum].exerciseGroups = groups;
         Storage.saveProgram(PROGRAM, false);
+    },
+
+    saveDayEdits() {
+        this._autoSave();
+        var ed = this._editingDay;
         this._editingDay = null;
 
         // Navigate back
         if (Storage.isSetup()) {
-            location.hash = '#/week/' + App._currentWeek + '/day/' + ed.dayNum;
+            location.hash = '#/week/' + App._currentWeek + '/day/' + (ed ? ed.dayNum : App._currentDay);
         } else {
             location.hash = '#/setup';
         }
@@ -615,6 +747,7 @@ const Builder = {
         });
 
         this._closeExerciseConfig();
+        this._autoSave();
         this._renderDayEditorHTML();
     },
 

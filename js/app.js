@@ -927,20 +927,6 @@ const App = {
             return;
         }
 
-        // Day editor: move up
-        if (target.classList.contains('editor-move-up') || target.closest('.editor-move-up')) {
-            var btn = target.classList.contains('editor-move-up') ? target : target.closest('.editor-move-up');
-            Builder.moveExercise(parseInt(btn.dataset.idx), -1);
-            return;
-        }
-
-        // Day editor: move down
-        if (target.classList.contains('editor-move-down') || target.closest('.editor-move-down')) {
-            var btn = target.classList.contains('editor-move-down') ? target : target.closest('.editor-move-down');
-            Builder.moveExercise(parseInt(btn.dataset.idx), 1);
-            return;
-        }
-
         // Day editor: delete exercise
         if (target.classList.contains('editor-delete') || target.closest('.editor-delete')) {
             var btn = target.classList.contains('editor-delete') ? target : target.closest('.editor-delete');
