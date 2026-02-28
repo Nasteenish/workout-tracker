@@ -1005,9 +1005,10 @@ const UI = {
             });
         });
 
-        // Swipe right to close
+        // Swipe right to close with parallax
         var swStartX = 0, swStartY = 0, swDragging = false, swLocked = false;
         var modalEl = overlay.querySelector('.substitution-modal');
+        var appEl = document.getElementById('app');
 
         overlay.addEventListener('touchstart', function(e) {
             swStartX = e.touches[0].clientX;
@@ -1026,11 +1027,16 @@ const UI = {
                 if (dx < 0) { swLocked = true; return; }
                 swDragging = true;
                 modalEl.style.transition = 'none';
+                appEl.style.transition = 'none';
             }
             if (swDragging) {
                 e.preventDefault();
                 modalEl.style.transform = 'translateX(' + dx + 'px)';
-                overlay.style.background = 'rgba(4,4,10,' + (0.62 * Math.max(0, 1 - dx / 300)) + ')';
+                // Parallax: background content moves at 0.28x speed from -28% offset
+                var W = window.innerWidth;
+                var parallax = -0.28 * W + 0.28 * dx;
+                appEl.style.transform = 'translateX(' + parallax + 'px)';
+                overlay.style.background = 'rgba(4,4,10,' + (0.62 * Math.max(0, 1 - dx / W)) + ')';
             }
         }, { passive: false });
 
@@ -1040,14 +1046,25 @@ const UI = {
             if (dx > 80) {
                 modalEl.style.transition = 'transform 0.25s ease-out';
                 modalEl.style.transform = 'translateX(100%)';
+                appEl.style.transition = 'transform 0.25s ease-out';
+                appEl.style.transform = '';
                 overlay.style.transition = 'background 0.25s';
                 overlay.style.background = 'rgba(4,4,10,0)';
-                setTimeout(function() { UI.hideSubstitutionModal(); }, 260);
+                setTimeout(function() {
+                    appEl.style.transition = '';
+                    appEl.style.transform = '';
+                    UI.hideSubstitutionModal();
+                }, 260);
             } else {
                 modalEl.style.transition = 'transform 0.2s ease-out';
                 modalEl.style.transform = '';
+                appEl.style.transition = 'transform 0.2s ease-out';
+                appEl.style.transform = '';
                 overlay.style.transition = 'background 0.2s';
                 overlay.style.background = '';
+                setTimeout(function() {
+                    appEl.style.transition = '';
+                }, 220);
             }
             swDragging = false;
         }, { passive: true });
