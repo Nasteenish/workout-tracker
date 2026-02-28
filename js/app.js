@@ -1171,6 +1171,56 @@ const App = {
             return;
         }
 
+        // Substitution button — open substitution picker
+        if (target.matches('.substitute-btn') || target.closest('.substitute-btn')) {
+            const btn = target.matches('.substitute-btn') ? target : target.closest('.substitute-btn');
+            const exId = btn.dataset.exercise;
+            UI.showSubstitutionModal(exId);
+            return;
+        }
+
+        // Substitution modal — select exercise from list (must be before eq-option handler)
+        if (target.matches('.sub-option') || target.closest('.sub-option')) {
+            const opt = target.matches('.sub-option') ? target : target.closest('.sub-option');
+            const exId = opt.dataset.targetExercise;
+            const subName = opt.dataset.subName;
+            Storage.setSubstitution(exId, subName);
+            UI.hideSubstitutionModal();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return;
+        }
+
+        // Substitution modal — add custom name
+        if (target.id === 'sub-add-custom-btn' || target.closest('#sub-add-custom-btn')) {
+            const input = document.getElementById('sub-custom-name');
+            const name = input ? input.value.trim() : '';
+            if (!name) return;
+            const modal = document.getElementById('substitution-modal');
+            const exId = modal ? modal._exerciseId : null;
+            if (exId) {
+                Storage.setSubstitution(exId, name);
+                UI.hideSubstitutionModal();
+                UI.renderDay(this._currentWeek, this._currentDay);
+            }
+            return;
+        }
+
+        // Substitution modal — revert to original
+        if (target.matches('.sub-revert-btn') || target.closest('.sub-revert-btn')) {
+            const btn = target.matches('.sub-revert-btn') ? target : target.closest('.sub-revert-btn');
+            const exId = btn.dataset.exercise;
+            Storage.removeSubstitution(exId);
+            UI.hideSubstitutionModal();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return;
+        }
+
+        // Substitution modal — close on overlay
+        if (target.id === 'substitution-modal') {
+            UI.hideSubstitutionModal();
+            return;
+        }
+
         // Choice modal: select option (must be before eq-option handler)
         if (target.matches('.eq-option[data-choice-key]') || target.closest('.eq-option[data-choice-key]')) {
             const opt = target.matches('.eq-option[data-choice-key]') ? target : target.closest('.eq-option[data-choice-key]');
@@ -1264,56 +1314,6 @@ const App = {
                 row.classList.add('done');
                 RestTimer.start();
             }
-            return;
-        }
-
-        // Substitution button — open substitution picker
-        if (target.matches('.substitute-btn') || target.closest('.substitute-btn')) {
-            const btn = target.matches('.substitute-btn') ? target : target.closest('.substitute-btn');
-            const exId = btn.dataset.exercise;
-            UI.showSubstitutionModal(exId);
-            return;
-        }
-
-        // Substitution modal — select exercise from list
-        if (target.matches('.sub-option') || target.closest('.sub-option')) {
-            const opt = target.matches('.sub-option') ? target : target.closest('.sub-option');
-            const exId = opt.dataset.targetExercise;
-            const subName = opt.dataset.subName;
-            Storage.setSubstitution(exId, subName);
-            UI.hideSubstitutionModal();
-            UI.renderDay(this._currentWeek, this._currentDay);
-            return;
-        }
-
-        // Substitution modal — add custom name
-        if (target.id === 'sub-add-custom-btn' || target.closest('#sub-add-custom-btn')) {
-            const input = document.getElementById('sub-custom-name');
-            const name = input ? input.value.trim() : '';
-            if (!name) return;
-            const modal = document.getElementById('substitution-modal');
-            const exId = modal ? modal._exerciseId : null;
-            if (exId) {
-                Storage.setSubstitution(exId, name);
-                UI.hideSubstitutionModal();
-                UI.renderDay(this._currentWeek, this._currentDay);
-            }
-            return;
-        }
-
-        // Substitution modal — revert to original
-        if (target.matches('.sub-revert-btn') || target.closest('.sub-revert-btn')) {
-            const btn = target.matches('.sub-revert-btn') ? target : target.closest('.sub-revert-btn');
-            const exId = btn.dataset.exercise;
-            Storage.removeSubstitution(exId);
-            UI.hideSubstitutionModal();
-            UI.renderDay(this._currentWeek, this._currentDay);
-            return;
-        }
-
-        // Substitution modal — close on overlay
-        if (target.id === 'substitution-modal') {
-            UI.hideSubstitutionModal();
             return;
         }
 
