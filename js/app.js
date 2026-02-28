@@ -148,6 +148,11 @@ const App = {
                 document.body.style.overflow = 'hidden';
 
                 if (isWeekView) {
+                    // For custom programs on last week swiping left — add week
+                    if (swipingLeft && PROGRAM && PROGRAM.isCustom && this._currentWeek === getTotalWeeks()) {
+                        this._addWeekToCustomProgram();
+                        return;
+                    }
                     const targetWeek = swipingLeft
                         ? (this._currentWeek === getTotalWeeks() ? 1 : this._currentWeek + 1)
                         : (this._currentWeek === 1 ? getTotalWeeks() : this._currentWeek - 1);
@@ -445,6 +450,13 @@ const App = {
             active = false;
             bottomActive = false;
         });
+    },
+
+    _addWeekToCustomProgram() {
+        if (!PROGRAM || !PROGRAM.isCustom) return;
+        PROGRAM.totalWeeks = (PROGRAM.totalWeeks || 1) + 1;
+        Storage.saveProgram(PROGRAM, false);
+        location.hash = `#/week/${PROGRAM.totalWeeks}`;
     },
 
     _loadProgramForUser(user) {
@@ -971,7 +983,16 @@ const App = {
             return;
         }
         if (target.id === 'next-week' || target.closest('#next-week')) {
-            location.hash = `#/week/${this._currentWeek === getTotalWeeks() ? 1 : this._currentWeek + 1}`;
+            if (PROGRAM && PROGRAM.isCustom && this._currentWeek === getTotalWeeks()) {
+                this._addWeekToCustomProgram();
+            } else {
+                location.hash = `#/week/${this._currentWeek === getTotalWeeks() ? 1 : this._currentWeek + 1}`;
+            }
+            return;
+        }
+        // Add week button for custom programs
+        if (target.id === 'btn-add-week' || target.closest('#btn-add-week')) {
+            this._addWeekToCustomProgram();
             return;
         }
 

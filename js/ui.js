@@ -293,6 +293,7 @@ const UI = {
                     ${cardsHtml}
                     </div>
                 </div>
+                ${(PROGRAM && PROGRAM.isCustom && weekNum === getTotalWeeks()) ? `<button class="add-week-btn" id="btn-add-week"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Добавить неделю</button>` : ''}
                 <div class="data-actions">
                     <button id="btn-export">Экспорт</button>
                     <button id="btn-import">Импорт</button>
@@ -1488,13 +1489,13 @@ const UI = {
 
                 <div class="settings-card">
                     <div class="settings-card-label">Программа</div>
-                    <div class="setup-field" style="margin-bottom: var(--spacing-md);">
+                    ${!(PROGRAM && PROGRAM.isCustom) ? `<div class="setup-field" style="margin-bottom: var(--spacing-md);">
                         <label>Тип цикла</label>
                         <div class="cycle-toggle">
                             <button data-cycle="7" ${settings.cycleType === 7 ? 'class="active"' : ''}>7 дней</button>
                             <button data-cycle="8" ${settings.cycleType === 8 ? 'class="active"' : ''}>8 дней</button>
                         </div>
-                    </div>
+                    </div>` : ''}
                     <div class="setup-field" style="margin-bottom: 0;">
                         <label>Дата начала</label>
                         <div class="date-wrapper">

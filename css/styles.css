@@ -1384,6 +1384,28 @@ body.modal-open {
     display: block;
 }
 
+.add-week-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px;
+    margin-bottom: var(--spacing-md);
+    border-radius: var(--radius-md);
+    border: 1.5px dashed rgba(157, 141, 245, 0.35);
+    background: transparent;
+    color: var(--accent-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+.add-week-btn:active {
+    background: rgba(157, 141, 245, 0.1);
+    border-color: var(--accent-primary);
+}
+
 .rest-label {
     font-size: var(--font-size-sm);
     font-weight: 400;
