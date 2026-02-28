@@ -967,8 +967,9 @@ const UI = {
         overlay.id = 'substitution-modal';
         overlay.innerHTML = `
             <div class="equipment-modal substitution-modal">
-                <div class="modal-header">
+                <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;">
                     <h3>Заменить упражнение</h3>
+                    <button class="sub-close-btn" id="sub-close-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
                 </div>
                 ${revertHtml}
                 <div class="sub-search-row">

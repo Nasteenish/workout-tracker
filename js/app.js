@@ -1215,8 +1215,8 @@ const App = {
             return;
         }
 
-        // Substitution modal — close on overlay
-        if (target.id === 'substitution-modal') {
+        // Substitution modal — close button or overlay
+        if (target.id === 'sub-close-btn' || target.closest('#sub-close-btn') || target.id === 'substitution-modal') {
             UI.hideSubstitutionModal();
             return;
         }
