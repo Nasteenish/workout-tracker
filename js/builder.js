@@ -432,25 +432,27 @@ const Builder = {
         container.addEventListener('touchend', function() {
             if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
             if (!dragging) return;
-            // Read new order from DOM
+            // Read new order from DOM using original indices stored on delete buttons
             var newExercises = [];
             var allCards = container.querySelectorAll('[data-ex-idx]');
             for (var i = 0; i < allCards.length; i++) {
-                var origIdx = parseInt(allCards[i].dataset.exIdx);
-                // Find by current DOM position — indices were updated during swap
-                // We need to map back to the exercise by the card's delete button idx
                 var delBtn = allCards[i].querySelector('.editor-delete');
-                var dataIdx = delBtn ? parseInt(delBtn.dataset.idx) : i;
-                if (self._editingDay && self._editingDay.exercises[dataIdx]) {
-                    newExercises.push(self._editingDay.exercises[dataIdx]);
+                var origIdx = delBtn ? parseInt(delBtn.dataset.idx) : i;
+                if (self._editingDay && self._editingDay.exercises[origIdx]) {
+                    newExercises.push(self._editingDay.exercises[origIdx]);
                 }
             }
             if (self._editingDay && newExercises.length === self._editingDay.exercises.length) {
                 self._editingDay.exercises = newExercises;
                 self._autoSave();
+                // Update data attributes to match new order (no re-render needed)
+                for (var i = 0; i < allCards.length; i++) {
+                    allCards[i].dataset.exIdx = i;
+                    var btn = allCards[i].querySelector('.editor-delete');
+                    if (btn) btn.dataset.idx = i;
+                }
             }
             cleanup();
-            self._renderDayEditorHTML();
         }, { passive: true });
 
         container.addEventListener('touchcancel', function() { cleanup(); });
