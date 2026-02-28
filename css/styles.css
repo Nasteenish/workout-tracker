@@ -1384,14 +1384,18 @@ body.modal-open {
     display: block;
 }
 
-.add-week-btn {
+.week-actions-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: var(--spacing-md);
+}
+.add-week-btn, .remove-week-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    width: 100%;
+    gap: 6px;
+    flex: 1;
     padding: 12px;
-    margin-bottom: var(--spacing-md);
     border-radius: var(--radius-md);
     border: 1.5px dashed rgba(157, 141, 245, 0.35);
     background: transparent;
@@ -1401,9 +1405,17 @@ body.modal-open {
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s;
 }
+.remove-week-btn {
+    border-color: rgba(255, 80, 80, 0.3);
+    color: var(--accent-danger, #ff5050);
+}
 .add-week-btn:active {
     background: rgba(157, 141, 245, 0.1);
     border-color: var(--accent-primary);
+}
+.remove-week-btn:active {
+    background: rgba(255, 80, 80, 0.1);
+    border-color: var(--accent-danger, #ff5050);
 }
 
 .rest-label {

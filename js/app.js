@@ -463,6 +463,16 @@ const App = {
         location.hash = `#/week/${PROGRAM.totalWeeks}`;
     },
 
+    _removeWeekFromCustomProgram() {
+        if (!PROGRAM || !PROGRAM.isCustom || PROGRAM.totalWeeks <= 1) return;
+        var removedWeek = PROGRAM.totalWeeks;
+        PROGRAM.totalWeeks -= 1;
+        Storage.saveProgram(PROGRAM, false);
+        // Clear logged data for the removed week
+        Storage.clearWeekLog(removedWeek);
+        location.hash = `#/week/${PROGRAM.totalWeeks}`;
+    },
+
     _loadProgramForUser(user) {
         var storedProgram = Storage.getProgram();
         if (storedProgram) {
@@ -997,6 +1007,11 @@ const App = {
         // Add week button for custom programs
         if (target.id === 'btn-add-week' || target.closest('#btn-add-week')) {
             this._addWeekToCustomProgram();
+            return;
+        }
+        // Remove week button for custom programs
+        if (target.id === 'btn-remove-week' || target.closest('#btn-remove-week')) {
+            this._removeWeekFromCustomProgram();
             return;
         }
 

@@ -388,6 +388,12 @@ const Storage = {
         return null;
     },
 
+    clearWeekLog(week) {
+        var data = this._load();
+        delete data.log[String(week)];
+        this._save();
+    },
+
     saveSetLog(week, day, exerciseId, setIdx, weight, reps, equipmentId) {
         var data = this._load();
         var w = String(week), d = String(day), s = String(setIdx);
