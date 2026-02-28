@@ -595,11 +595,8 @@ const App = {
     startSetup() {
         const cycleBtn = document.querySelector('.cycle-toggle button.active');
         const cycleType = cycleBtn ? parseInt(cycleBtn.dataset.cycle) : 7;
-        const startDate = document.getElementById('start-date').value;
-        if (!startDate) {
-            alert('Выберите дату начала');
-            return;
-        }
+        const dateInput = document.getElementById('start-date');
+        const startDate = dateInput ? dateInput.value : formatDateISO(new Date());
         Storage.saveSettings({ cycleType, startDate });
         location.hash = '#/week/1';
     },
@@ -867,6 +864,14 @@ const App = {
         // Builder wizard: create program
         if (target.id === 'builder-create' || target.closest('#builder-create')) {
             Builder.createProgram();
+            location.hash = '#/setup';
+            return;
+        }
+
+        // Setup summary: back to builder
+        if (target.id === 'setup-back-builder' || target.closest('#setup-back-builder')) {
+            Storage.saveProgram(null, false);
+            PROGRAM = null;
             location.hash = '#/setup';
             return;
         }
