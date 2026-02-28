@@ -559,15 +559,6 @@ const Builder = {
                     <input type="text" id="cfg-reps" class="form-input" value="8-12" placeholder="8-12" style="text-align:center">
                 </div>
 
-                <div class="config-field">
-                    <label>ОТДЫХ (СЕК)</label>
-                    <div class="config-stepper">
-                        <button class="config-step" id="cfg-rest-minus">−</button>
-                        <span class="config-val" id="cfg-rest-val">120</span>
-                        <button class="config-step" id="cfg-rest-plus">+</button>
-                    </div>
-                </div>
-
                 <button class="btn-primary" id="cfg-confirm" style="margin-top:var(--spacing-md)">ДОБАВИТЬ</button>
                 <button class="btn-link" id="cfg-cancel">Отмена</button>
             </div>
@@ -593,16 +584,6 @@ const Builder = {
             return;
         }
 
-        // Rest stepper
-        if (target.id === 'cfg-rest-minus' || target.id === 'cfg-rest-plus') {
-            var valEl = document.getElementById('cfg-rest-val');
-            var val = parseInt(valEl.textContent) || 120;
-            if (target.id === 'cfg-rest-minus') val = Math.max(15, val - 15);
-            if (target.id === 'cfg-rest-plus') val = Math.min(600, val + 15);
-            valEl.textContent = val;
-            return;
-        }
-
         // Confirm
         if (target.id === 'cfg-confirm' || target.closest('#cfg-confirm')) {
             this.confirmExercise();
@@ -622,14 +603,13 @@ const Builder = {
         var cfg = this._configExercise;
         var setsVal = document.getElementById('cfg-sets-val');
         var repsInput = document.getElementById('cfg-reps');
-        var restVal = document.getElementById('cfg-rest-val');
 
         this._editingDay.exercises.push({
             nameRu: cfg.nameRu,
             name: cfg.name,
             setsCount: parseInt(setsVal.textContent) || 3,
             reps: (repsInput.value || '').trim() || '8-12',
-            rest: parseInt(restVal.textContent) || 120,
+            rest: 120,
             note: '',
             noteRu: ''
         });
