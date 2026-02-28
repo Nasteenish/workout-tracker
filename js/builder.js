@@ -316,7 +316,7 @@ const Builder = {
                 </button>
                 <div class="header-title">
                     <h1>Редактирование</h1>
-                    <div class="header-subtitle">${dayTitle}</div>
+                    <div class="header-subtitle" id="editor-day-title" style="cursor:pointer">${dayTitle} <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;opacity:0.4"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
                 </div>
             </div>
             <div class="app-content">
@@ -331,6 +331,22 @@ const Builder = {
         if (backBtn) {
             backBtn.addEventListener('click', function() {
                 App._handleEditorBack();
+            });
+        }
+
+        var self = this;
+        var titleEl = document.getElementById('editor-day-title');
+        if (titleEl) {
+            titleEl.addEventListener('click', function() {
+                var tmpl = PROGRAM.dayTemplates[ed.dayNum];
+                var current = tmpl.titleRu || tmpl.title || '';
+                var newName = prompt('Название дня:', current);
+                if (newName !== null && newName.trim()) {
+                    tmpl.titleRu = newName.trim();
+                    tmpl.title = newName.trim();
+                    Storage.saveProgram(PROGRAM, false);
+                    self._renderDayEditorHTML();
+                }
             });
         }
 
