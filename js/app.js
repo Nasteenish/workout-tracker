@@ -467,20 +467,29 @@ const App = {
 
     _addDayToCustomProgram() {
         if (!PROGRAM || !PROGRAM.isCustom) return;
+        var slots = Storage.getWeekSlots();
+        if (!slots) slots = UI._generateDefaultSlots(getTotalDays(), 7);
+        var restCount = slots.filter(function(s) { return s.type === 'rest'; }).length;
+        if (restCount === 0) {
+            alert('Все 7 дней заняты тренировками');
+            return;
+        }
+        if (!confirm('Убрать день отдыха и добавить тренировку?')) return;
         var numDays = getTotalDays();
         var newDayNum = numDays + 1;
-        if (!confirm(`Добавить день ${newDayNum}?`)) return;
         PROGRAM.dayTemplates[newDayNum] = {
             title: 'Day ' + newDayNum,
             titleRu: 'День ' + newDayNum,
             exerciseGroups: []
         };
-        // Update weekSlots — add new day before last rest
-        var slots = Storage.getWeekSlots();
-        if (slots) {
-            slots.push({ type: 'day', dayNum: newDayNum });
-            Storage.saveWeekSlots(slots);
+        // Replace last rest slot with the new training day
+        for (var i = slots.length - 1; i >= 0; i--) {
+            if (slots[i].type === 'rest') {
+                slots[i] = { type: 'day', dayNum: newDayNum };
+                break;
+            }
         }
+        Storage.saveWeekSlots(slots);
         Storage.saveProgram(PROGRAM, false);
         UI.renderWeek(this._currentWeek);
     },
@@ -489,12 +498,17 @@ const App = {
         if (!PROGRAM || !PROGRAM.isCustom) return;
         var numDays = getTotalDays();
         if (numDays <= 1) return;
-        if (!confirm(`Удалить день ${numDays}? Данные этого дня будут потеряны.`)) return;
+        if (!confirm('Удалить день ' + numDays + '? На его место встанет день отдыха.')) return;
         delete PROGRAM.dayTemplates[numDays];
-        // Update weekSlots — remove slot for this day
+        // Replace this day's slot with a rest day
         var slots = Storage.getWeekSlots();
         if (slots) {
-            slots = slots.filter(function(s) { return !(s.type === 'day' && s.dayNum === numDays); });
+            for (var i = 0; i < slots.length; i++) {
+                if (slots[i].type === 'day' && slots[i].dayNum === numDays) {
+                    slots[i] = { type: 'rest' };
+                    break;
+                }
+            }
             Storage.saveWeekSlots(slots);
         }
         Storage.saveProgram(PROGRAM, false);
