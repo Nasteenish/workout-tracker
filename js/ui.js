@@ -690,8 +690,8 @@ const UI = {
             <div class="set-row${isCompleted ? ' done' : ''}" data-exercise="${ex.id}" data-set="${setIdx}">
                 <div class="set-info">
                     <span class="set-number">П.${setIdx + 1}</span>
-                    <span class="set-type-badge ${typeClass}">${typeLabel}</span>
-                    <span class="rpe-badge">${set.rpe}</span>
+                    ${!(PROGRAM && PROGRAM.isCustom) ? `<span class="set-type-badge ${typeClass}">${typeLabel}</span>
+                    <span class="rpe-badge">${set.rpe}</span>` : ''}
                     ${techHtml}
                 </div>
                 <div class="set-inputs">
