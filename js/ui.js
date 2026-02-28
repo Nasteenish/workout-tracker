@@ -560,13 +560,14 @@ const UI = {
         const displayName = this._getExerciseDisplayName(ex);
         const isSubbed = this._isSubstituted(ex.id);
         const subBtnSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>';
+        const showSubBtn = !(PROGRAM && PROGRAM.isCustom);
 
         return `
             <div class="exercise-card ${choiceKey ? 'is-chooser' : ''}">
                 <div class="exercise-header">
                     <div class="exercise-name-row">
                         <div class="exercise-name ${isSubbed ? 'exercise-substituted' : ''} ${choiceKey ? 'exercise-name-chooser' : ''}" ${choiceKey ? `data-choice-key="${choiceKey}"` : ''}>${choiceKey ? this._nameWithBadge(displayName) : displayName}</div>
-                        <button class="substitute-btn" data-exercise="${ex.id}">${subBtnSvg}</button>
+                        ${showSubBtn ? `<button class="substitute-btn" data-exercise="${ex.id}">${subBtnSvg}</button>` : ''}
                     </div>
                     <div class="exercise-meta">
                         <span>${ex.reps} reps</span>
