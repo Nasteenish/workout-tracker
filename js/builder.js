@@ -167,7 +167,7 @@ const Builder = {
                     </div>
                 </div>
 
-                <p class="builder-hint">Всё можно изменить позже</p>
+                <p class="builder-hint">Количество тренировок и недель всегда можно изменить позже</p>
 
                 <button class="btn-primary" id="builder-next" style="margin-top:var(--spacing-lg)">ДАЛЕЕ</button>
                 <button class="btn-link" id="builder-back-setup">Назад</button>
