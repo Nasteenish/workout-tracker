@@ -465,6 +465,42 @@ const App = {
         location.hash = `#/week/${PROGRAM.totalWeeks}`;
     },
 
+    _addDayToCustomProgram() {
+        if (!PROGRAM || !PROGRAM.isCustom) return;
+        var numDays = getTotalDays();
+        var newDayNum = numDays + 1;
+        if (!confirm(`Добавить день ${newDayNum}?`)) return;
+        PROGRAM.dayTemplates[newDayNum] = {
+            title: 'Day ' + newDayNum,
+            titleRu: 'День ' + newDayNum,
+            exerciseGroups: []
+        };
+        // Update weekSlots — add new day before last rest
+        var slots = Storage.getWeekSlots();
+        if (slots) {
+            slots.push({ type: 'day', dayNum: newDayNum });
+            Storage.saveWeekSlots(slots);
+        }
+        Storage.saveProgram(PROGRAM, false);
+        UI.renderWeek(this._currentWeek);
+    },
+
+    _removeDayFromCustomProgram() {
+        if (!PROGRAM || !PROGRAM.isCustom) return;
+        var numDays = getTotalDays();
+        if (numDays <= 1) return;
+        if (!confirm(`Удалить день ${numDays}? Данные этого дня будут потеряны.`)) return;
+        delete PROGRAM.dayTemplates[numDays];
+        // Update weekSlots — remove slot for this day
+        var slots = Storage.getWeekSlots();
+        if (slots) {
+            slots = slots.filter(function(s) { return !(s.type === 'day' && s.dayNum === numDays); });
+            Storage.saveWeekSlots(slots);
+        }
+        Storage.saveProgram(PROGRAM, false);
+        UI.renderWeek(this._currentWeek);
+    },
+
     _loadProgramForUser(user) {
         var storedProgram = Storage.getProgram();
         if (storedProgram) {
@@ -992,6 +1028,15 @@ const App = {
         }
         if (target.id === 'next-week' || target.closest('#next-week')) {
             location.hash = `#/week/${this._currentWeek === getTotalWeeks() ? 1 : this._currentWeek + 1}`;
+            return;
+        }
+        // Add/remove day for custom programs
+        if (target.id === 'btn-add-day' || target.closest('#btn-add-day')) {
+            this._addDayToCustomProgram();
+            return;
+        }
+        if (target.id === 'btn-remove-day' || target.closest('#btn-remove-day')) {
+            this._removeDayFromCustomProgram();
             return;
         }
         // Add week button for custom programs
