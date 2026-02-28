@@ -467,28 +467,20 @@ const App = {
 
     _addDayToCustomProgram() {
         if (!PROGRAM || !PROGRAM.isCustom) return;
-        var slots = Storage.getWeekSlots();
-        if (!slots) slots = UI._generateDefaultSlots(getTotalDays(), 7);
-        var restCount = slots.filter(function(s) { return s.type === 'rest'; }).length;
-        if (restCount === 0) {
+        var numDays = getTotalDays();
+        if (numDays >= 7) {
             alert('Все 7 дней заняты тренировками');
             return;
         }
         if (!confirm('Убрать день отдыха и добавить тренировку?')) return;
-        var numDays = getTotalDays();
         var newDayNum = numDays + 1;
         PROGRAM.dayTemplates[newDayNum] = {
             title: 'Day ' + newDayNum,
             titleRu: 'День ' + newDayNum,
             exerciseGroups: []
         };
-        // Replace last rest slot with the new training day
-        for (var i = slots.length - 1; i >= 0; i--) {
-            if (slots[i].type === 'rest') {
-                slots[i] = { type: 'day', dayNum: newDayNum };
-                break;
-            }
-        }
+        // Regenerate slots for new day count (always 7 total)
+        var slots = UI._generateDefaultSlots(newDayNum, 7);
         Storage.saveWeekSlots(slots);
         Storage.saveProgram(PROGRAM, false);
         UI.renderWeek(this._currentWeek);
@@ -500,17 +492,9 @@ const App = {
         if (numDays <= 1) return;
         if (!confirm('Удалить день ' + numDays + '? На его место встанет день отдыха.')) return;
         delete PROGRAM.dayTemplates[numDays];
-        // Replace this day's slot with a rest day
-        var slots = Storage.getWeekSlots();
-        if (slots) {
-            for (var i = 0; i < slots.length; i++) {
-                if (slots[i].type === 'day' && slots[i].dayNum === numDays) {
-                    slots[i] = { type: 'rest' };
-                    break;
-                }
-            }
-            Storage.saveWeekSlots(slots);
-        }
+        // Regenerate slots for new day count (always 7 total)
+        var slots = UI._generateDefaultSlots(numDays - 1, 7);
+        Storage.saveWeekSlots(slots);
         Storage.saveProgram(PROGRAM, false);
         UI.renderWeek(this._currentWeek);
     },
