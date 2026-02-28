@@ -123,6 +123,28 @@ const UI = {
         `;
     },
 
+    _generateDefaultSlots(numDays, cycleType) {
+        const slots = [];
+        const restCount = Math.max(0, cycleType - numDays);
+        if (restCount === 0) {
+            for (let d = 1; d <= numDays; d++) slots.push({ type: 'day', dayNum: d });
+        } else {
+            // Distribute rest days evenly between training days
+            let restPlaced = 0;
+            for (let d = 1; d <= numDays; d++) {
+                slots.push({ type: 'day', dayNum: d });
+                const remainingTraining = numDays - d;
+                const remainingRest = restCount - restPlaced;
+                const restHere = Math.round(remainingRest / (remainingTraining + 1));
+                for (let r = 0; r < restHere; r++) {
+                    slots.push({ type: 'rest' });
+                    restPlaced++;
+                }
+            }
+        }
+        return slots;
+    },
+
     // ===== WEEK VIEW =====
     // Returns just the week day-cards HTML (used by swipe companion too)
     _weekCardsHTML(weekNum) {
@@ -132,54 +154,24 @@ const UI = {
 
         const numDays = getTotalDays();
         let slots;
-        if (cycleType === 8 && numDays === 5) {
-            // Original 8-day layout for 5-day programs
-            slots = [
-                { type: 'day', dayNum: 1 },
-                { type: 'day', dayNum: 2 },
-                { type: 'rest' },
-                { type: 'day', dayNum: 3 },
-                { type: 'day', dayNum: 4 },
-                { type: 'rest' },
-                { type: 'day', dayNum: 5 },
-                { type: 'rest' },
-            ];
-        } else if (cycleType === 7 && numDays === 5) {
-            // Original 7-day layout for 5-day programs
-            slots = [
-                { type: 'day', dayNum: 1 },
-                { type: 'day', dayNum: 2 },
-                { type: 'day', dayNum: 3 },
-                { type: 'rest' },
-                { type: 'day', dayNum: 4 },
-                { type: 'day', dayNum: 5 },
-                { type: 'rest' },
-            ];
+        const savedSlots = Storage.getWeekSlots();
+        if (savedSlots && savedSlots.length === cycleType) {
+            slots = savedSlots;
         } else {
-            // Dynamic layout: N training days + rest days to fill cycle
-            slots = [];
-            for (let d = 1; d <= numDays; d++) {
-                slots.push({ type: 'day', dayNum: d });
-            }
-            const restDays = Math.max(0, cycleType - numDays);
-            for (let r = 0; r < restDays; r++) {
-                slots.push({ type: 'rest' });
-            }
+            // Generate default layout: distribute rest days evenly
+            slots = this._generateDefaultSlots(numDays, cycleType);
         }
 
-        const restCardHtml = `
-            <div class="rest-day-card">
-                <svg class="rest-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span class="rest-label">Отдых</span>
-            </div>
-        `;
-
         let cardsHtml = '';
-        for (const slot of slots) {
+        for (let si = 0; si < slots.length; si++) {
+            const slot = slots[si];
             if (slot.type === 'rest') {
-                cardsHtml += restCardHtml;
+                cardsHtml += `<div class="rest-day-card" data-slot-idx="${si}">
+                    <svg class="rest-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="rest-label">Отдых</span>
+                </div>`;
             } else {
                 const dayNum = slot.dayNum;
                 const { completed, total } = getCompletedSets(weekNum, dayNum);
@@ -202,7 +194,7 @@ const UI = {
                 }
 
                 cardsHtml += `
-                    <a class="${cardClass}" href="#/week/${weekNum}/day/${dayNum}">
+                    <a class="${cardClass}" href="#/week/${weekNum}/day/${dayNum}" data-slot-idx="${si}">
                         <div class="day-header">
                             <span class="day-number">${isDone ? '<svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="vertical-align:-2px;margin-right:2px"><path d="M2.5 6.5l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}День ${dayNum}</span>
                             <span class="day-date">${pct}%</span>
@@ -308,6 +300,120 @@ const UI = {
             </div>
         `;
 
+        this._initSlotDragDrop(weekNum);
+    },
+
+    _initSlotDragDrop(weekNum) {
+        const container = document.querySelector('.week-slide');
+        if (!container) return;
+        const settings = Storage.getSettings();
+        const cycleType = settings.cycleType || 7;
+        const numDays = getTotalDays();
+
+        let dragEl = null, dragIdx = -1, startY = 0, startX = 0, longPressTimer = null;
+        let dragging = false, cards = [], placeholder = null, clone = null;
+
+        const getCards = () => Array.from(container.querySelectorAll('[data-slot-idx]'));
+
+        container.addEventListener('touchstart', function(e) {
+            const card = e.target.closest('[data-slot-idx]');
+            if (!card) return;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            dragEl = card;
+            dragIdx = parseInt(card.dataset.slotIdx);
+
+            longPressTimer = setTimeout(function() {
+                dragging = true;
+                cards = getCards();
+                // Prevent link navigation
+                card.style.pointerEvents = 'none';
+                // Create clone for dragging
+                const rect = card.getBoundingClientRect();
+                clone = card.cloneNode(true);
+                clone.className = card.className + ' drag-clone';
+                clone.style.cssText = 'position:fixed;left:' + rect.left + 'px;top:' + rect.top + 'px;width:' + rect.width + 'px;z-index:999;opacity:0.9;transform:scale(1.03);box-shadow:0 8px 32px rgba(0,0,0,0.4);pointer-events:none;transition:none;';
+                document.body.appendChild(clone);
+                // Add placeholder
+                card.style.opacity = '0.2';
+                // Haptic feedback
+                if (navigator.vibrate) navigator.vibrate(30);
+            }, 400);
+        }, { passive: true });
+
+        container.addEventListener('touchmove', function(e) {
+            const dx = e.touches[0].clientX - startX;
+            const dy = e.touches[0].clientY - startY;
+            if (!dragging && longPressTimer && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+                return;
+            }
+            if (!dragging) return;
+            e.preventDefault();
+            // Move clone
+            const touch = e.touches[0];
+            if (clone) {
+                clone.style.top = (touch.clientY - 40) + 'px';
+            }
+            // Find which card we're over
+            cards = getCards();
+            for (const c of cards) {
+                if (c === dragEl) continue;
+                const r = c.getBoundingClientRect();
+                const midY = r.top + r.height / 2;
+                if (touch.clientY > r.top && touch.clientY < r.bottom) {
+                    const targetIdx = parseInt(c.dataset.slotIdx);
+                    if (targetIdx !== dragIdx) {
+                        // Swap in DOM
+                        if (touch.clientY < midY) {
+                            container.insertBefore(dragEl, c);
+                        } else {
+                            container.insertBefore(dragEl, c.nextSibling);
+                        }
+                        // Update indices
+                        getCards().forEach(function(el, i) { el.dataset.slotIdx = i; });
+                        dragIdx = parseInt(dragEl.dataset.slotIdx);
+                        break;
+                    }
+                }
+            }
+        }, { passive: false });
+
+        container.addEventListener('touchend', function(e) {
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+            if (!dragging) return;
+            dragging = false;
+            if (clone) { clone.remove(); clone = null; }
+            if (dragEl) {
+                dragEl.style.opacity = '';
+                dragEl.style.pointerEvents = '';
+            }
+            // Save new slot order
+            const newSlots = [];
+            getCards().forEach(function(el) {
+                if (el.classList.contains('rest-day-card')) {
+                    newSlots.push({ type: 'rest' });
+                } else if (el.classList.contains('day-card')) {
+                    const href = el.getAttribute('href') || '';
+                    const m = href.match(/day\/(\d+)/);
+                    if (m) newSlots.push({ type: 'day', dayNum: parseInt(m[1]) });
+                }
+            });
+            if (newSlots.length > 0) {
+                Storage.saveWeekSlots(newSlots);
+            }
+            dragEl = null;
+        }, { passive: true });
+
+        // Cancel drag on touchcancel
+        container.addEventListener('touchcancel', function() {
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+            if (clone) { clone.remove(); clone = null; }
+            if (dragEl) { dragEl.style.opacity = ''; dragEl.style.pointerEvents = ''; }
+            dragging = false;
+            dragEl = null;
+        });
     },
 
     // ===== DAY VIEW =====

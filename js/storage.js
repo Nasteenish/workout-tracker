@@ -227,6 +227,16 @@ const Storage = {
         return s.startDate !== null;
     },
 
+    // Week slot layout (custom day/rest order)
+    getWeekSlots() {
+        return this._load().weekSlots || null;
+    },
+
+    saveWeekSlots(slots) {
+        this._load().weekSlots = slots;
+        this._save();
+    },
+
     // ===== Program =====
     hasProgram() {
         return this._load().program !== null;
