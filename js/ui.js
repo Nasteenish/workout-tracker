@@ -1005,6 +1005,52 @@ const UI = {
             });
         });
 
+        // Swipe right to close
+        var swStartX = 0, swStartY = 0, swDragging = false, swLocked = false;
+        var modalEl = overlay.querySelector('.substitution-modal');
+
+        overlay.addEventListener('touchstart', function(e) {
+            swStartX = e.touches[0].clientX;
+            swStartY = e.touches[0].clientY;
+            swDragging = false;
+            swLocked = false;
+        }, { passive: true });
+
+        overlay.addEventListener('touchmove', function(e) {
+            if (swLocked) return;
+            var dx = e.touches[0].clientX - swStartX;
+            var dy = e.touches[0].clientY - swStartY;
+            if (!swDragging) {
+                if (Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
+                if (Math.abs(dy) > Math.abs(dx)) { swLocked = true; return; }
+                if (dx < 0) { swLocked = true; return; }
+                swDragging = true;
+                modalEl.style.transition = 'none';
+            }
+            if (swDragging) {
+                e.preventDefault();
+                modalEl.style.transform = 'translateX(' + dx + 'px)';
+                overlay.style.background = 'rgba(4,4,10,' + (0.62 * Math.max(0, 1 - dx / 300)) + ')';
+            }
+        }, { passive: false });
+
+        overlay.addEventListener('touchend', function(e) {
+            if (!swDragging) return;
+            var dx = e.changedTouches[0].clientX - swStartX;
+            if (dx > 80) {
+                modalEl.style.transition = 'transform 0.25s ease-out';
+                modalEl.style.transform = 'translateX(100%)';
+                overlay.style.transition = 'background 0.25s';
+                overlay.style.background = 'rgba(4,4,10,0)';
+                setTimeout(function() { UI.hideSubstitutionModal(); }, 260);
+            } else {
+                modalEl.style.transition = 'transform 0.2s ease-out';
+                modalEl.style.transform = '';
+                overlay.style.transition = 'background 0.2s';
+                overlay.style.background = '';
+            }
+            swDragging = false;
+        }, { passive: true });
     },
 
     hideSubstitutionModal() {
