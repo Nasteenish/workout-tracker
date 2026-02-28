@@ -339,6 +339,11 @@ const App = {
         };
 
         document.addEventListener('touchstart', (e) => {
+            // Ignore touches during slot drag-and-drop
+            if (window._slotDragging) {
+                pullLocked = true;
+                return;
+            }
             // Ignore touches inside modal overlays
             if (e.target.closest('.modal-overlay')) {
                 pullLocked = true;
@@ -360,7 +365,7 @@ const App = {
         }, { passive: true });
 
         document.addEventListener('touchmove', (e) => {
-            if (pullLocked) return;
+            if (pullLocked || window._slotDragging) return;
             if (!pulling && !atBottom()) return;
             const dy = e.touches[0].clientY - startY;
             const dx = e.touches[0].clientX - startX_pull;

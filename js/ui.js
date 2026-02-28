@@ -339,6 +339,7 @@ const UI = {
             document.body.style.touchAction = '';
             container.style.overscrollBehavior = '';
             dragging = false;
+            window._slotDragging = false;
             dragEl = null;
             cachedRects = [];
         }
@@ -352,6 +353,7 @@ const UI = {
 
             longPressTimer = setTimeout(function() {
                 dragging = true;
+                window._slotDragging = true;
                 // Block scrolling
                 document.body.style.overflow = 'hidden';
                 document.body.style.touchAction = 'none';
