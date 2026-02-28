@@ -311,7 +311,7 @@ const Builder = {
         document.getElementById('app').innerHTML = `
             <div class="app-header">
                 <button class="back-btn" id="btn-back-editor">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
                 <div class="header-title">
                     <h1>Редактирование</h1>
