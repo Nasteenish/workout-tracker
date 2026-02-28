@@ -82,9 +82,10 @@ const UI = {
                 const tmpl = PROGRAM.dayTemplates[d];
                 const dayTitle = (tmpl && (tmpl.titleRu || tmpl.title)) || ('День ' + d);
                 const exCount = tmpl ? tmpl.exerciseGroups.length : 0;
+                const exText = exCount > 0 ? ` · ${exCount} упражнений` : '';
                 daysHtml += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border-color);">
                     <span style="font-weight:600;">День ${d}</span>
-                    <span style="color:var(--text-muted);font-size:var(--font-size-xs);">${dayTitle} · ${exCount} упр.</span>
+                    <span style="color:var(--text-muted);font-size:var(--font-size-xs);">${dayTitle}${exText}</span>
                 </div>`;
             }
 
@@ -92,7 +93,7 @@ const UI = {
                 <div class="setup-screen">
                     <div class="app-icon"><svg viewBox="0 0 40 40" fill="white" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="16" width="3" height="8" rx="1.5"/><rect x="6" y="11" width="4" height="18" rx="2"/><rect x="11" y="14" width="3" height="12" rx="1.5"/><rect x="14" y="18" width="12" height="4" rx="2"/><rect x="26" y="14" width="3" height="12" rx="1.5"/><rect x="30" y="11" width="4" height="18" rx="2"/><rect x="35" y="16" width="3" height="8" rx="1.5"/></svg></div>
                     <h1>${programTitle}</h1>
-                    <p class="subtitle">${totalW} нед. · ${totalD} дн. в неделе</p>
+                    <p class="subtitle">${totalW} недель · ${totalD} дней в неделе</p>
                     ${athleteName}
 
                     <div style="text-align:left;width:100%;margin:var(--spacing-md) 0;">

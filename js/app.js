@@ -868,11 +868,11 @@ const App = {
             return;
         }
 
-        // Setup summary: back to builder
+        // Setup summary: back to initial setup
         if (target.id === 'setup-back-builder' || target.closest('#setup-back-builder')) {
             Storage.saveProgram(null, false);
             PROGRAM = null;
-            location.hash = '#/setup';
+            UI.renderSetup();
             return;
         }
 
