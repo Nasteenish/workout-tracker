@@ -449,6 +449,7 @@ const App = {
 
     _addWeekToCustomProgram() {
         if (!PROGRAM || !PROGRAM.isCustom) return;
+        if (!confirm(`Добавить неделю ${PROGRAM.totalWeeks + 1}?`)) return;
         PROGRAM.totalWeeks = (PROGRAM.totalWeeks || 1) + 1;
         Storage.saveProgram(PROGRAM, false);
         location.hash = `#/week/${PROGRAM.totalWeeks}`;
@@ -456,10 +457,10 @@ const App = {
 
     _removeWeekFromCustomProgram() {
         if (!PROGRAM || !PROGRAM.isCustom || PROGRAM.totalWeeks <= 1) return;
+        if (!confirm(`Удалить неделю ${PROGRAM.totalWeeks}? Данные этой недели будут потеряны.`)) return;
         var removedWeek = PROGRAM.totalWeeks;
         PROGRAM.totalWeeks -= 1;
         Storage.saveProgram(PROGRAM, false);
-        // Clear logged data for the removed week
         Storage.clearWeekLog(removedWeek);
         location.hash = `#/week/${PROGRAM.totalWeeks}`;
     },
