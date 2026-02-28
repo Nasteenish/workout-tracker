@@ -286,15 +286,6 @@ const App = {
             }
 
             const week = this._currentWeek;
-            // Custom program on last week swiping left — add week
-            if (swipingLeft && PROGRAM && PROGRAM.isCustom && week === getTotalWeeks()) {
-                setTimeout(() => {
-                    unlockScroll();
-                    removeCompanion();
-                    this._addWeekToCustomProgram();
-                }, 190);
-                return;
-            }
             const next = swipingLeft
                 ? (week === getTotalWeeks() ? 1 : week + 1)
                 : (week === 1 ? getTotalWeeks() : week - 1);
@@ -997,11 +988,7 @@ const App = {
             return;
         }
         if (target.id === 'next-week' || target.closest('#next-week')) {
-            if (PROGRAM && PROGRAM.isCustom && this._currentWeek === getTotalWeeks()) {
-                this._addWeekToCustomProgram();
-            } else {
-                location.hash = `#/week/${this._currentWeek === getTotalWeeks() ? 1 : this._currentWeek + 1}`;
-            }
+            location.hash = `#/week/${this._currentWeek === getTotalWeeks() ? 1 : this._currentWeek + 1}`;
             return;
         }
         // Add week button for custom programs
