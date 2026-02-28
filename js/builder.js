@@ -191,12 +191,14 @@ const Builder = {
         var dayNames = cfg.dayNames || [];
 
         var fieldsHtml = '';
+        var dayPlaceholders = ['Грудь и трицепс', 'Спина и бицепс', 'Ноги и плечи', 'Руки и пресс', 'Кардио', 'Всё тело', 'Верх тела'];
         for (var i = 1; i <= cfg.numDays; i++) {
             var val = dayNames[i - 1] || '';
+            var ph = dayPlaceholders[(i - 1) % dayPlaceholders.length];
             fieldsHtml += `
                 <div class="setup-field">
                     <label>ДЕНЬ ${i}</label>
-                    <input type="text" class="form-input builder-day-name" data-day="${i}" placeholder="Например: Грудь и трицепс" value="${val}">
+                    <input type="text" class="form-input builder-day-name" data-day="${i}" placeholder="Например: ${ph}" value="${val}">
                 </div>
             `;
         }
