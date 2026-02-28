@@ -1404,6 +1404,9 @@ body.modal-open {
     font-weight: 500;
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
 }
 .remove-week-btn {
     border-color: rgba(255, 80, 80, 0.3);

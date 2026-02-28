@@ -341,6 +341,8 @@ const UI = {
             }
             document.body.style.overflow = '';
             document.body.style.touchAction = '';
+            document.body.style.userSelect = '';
+            document.body.style.webkitUserSelect = '';
             container.style.overscrollBehavior = '';
             dragging = false;
             window._slotDragging = false;
@@ -358,9 +360,11 @@ const UI = {
             longPressTimer = setTimeout(function() {
                 dragging = true;
                 window._slotDragging = true;
-                // Block scrolling
+                // Block scrolling and text selection
                 document.body.style.overflow = 'hidden';
                 document.body.style.touchAction = 'none';
+                document.body.style.userSelect = 'none';
+                document.body.style.webkitUserSelect = 'none';
                 container.style.overscrollBehavior = 'none';
                 // Prevent link navigation
                 card.style.pointerEvents = 'none';
