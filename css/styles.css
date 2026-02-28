@@ -2525,7 +2525,9 @@ body.modal-open {
     display: flex;
     gap: var(--spacing-xs);
     overflow-x: auto;
-    padding: var(--spacing-xs) 0 var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-md) var(--spacing-sm) 0;
+    margin: 0 calc(-1 * var(--spacing-md));
+    padding-left: var(--spacing-md);
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
 }
