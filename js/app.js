@@ -449,6 +449,10 @@ const App = {
 
     _addWeekToCustomProgram() {
         if (!PROGRAM || !PROGRAM.isCustom) return;
+        if (PROGRAM.totalWeeks >= 16) {
+            alert('Максимум 16 недель');
+            return;
+        }
         if (!confirm(`Добавить неделю ${PROGRAM.totalWeeks + 1}?`)) return;
         PROGRAM.totalWeeks = (PROGRAM.totalWeeks || 1) + 1;
         Storage.saveProgram(PROGRAM, false);

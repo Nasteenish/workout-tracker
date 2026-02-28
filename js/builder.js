@@ -156,7 +156,6 @@ const Builder = {
                         <button data-val="8" ${cfg.totalWeeks===8?'class="active"':''}>8</button>
                         <button data-val="12" ${cfg.totalWeeks===12?'class="active"':''}>12</button>
                         <button data-val="16" ${cfg.totalWeeks===16?'class="active"':''}>16</button>
-                        <button data-val="999" ${cfg.totalWeeks===999?'class="active"':''}>∞</button>
                     </div>
                 </div>
 
