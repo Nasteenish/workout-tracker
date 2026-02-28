@@ -991,6 +991,13 @@ const App = {
             return;
         }
 
+        // Empty day: add exercise → open editor + picker directly
+        if (target.id === 'btn-add-exercise-empty' || target.closest('#btn-add-exercise-empty')) {
+            Builder.renderDayEditor(this._currentDay);
+            Builder.showExercisePicker();
+            return;
+        }
+
         // Edit day (pencil on training day view)
         if (target.id === 'btn-edit-day' || target.closest('#btn-edit-day')) {
             location.hash = '#/edit/day/' + this._currentDay;

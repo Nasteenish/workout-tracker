@@ -513,7 +513,7 @@ const UI = {
                 <div class="empty-day">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3"><path d="M12 5v14M5 12h14"/></svg>
                     <p>Нет упражнений</p>
-                    <button class="btn-primary" id="btn-edit-day" style="margin-top:var(--spacing-md)">ДОБАВИТЬ УПРАЖНЕНИЯ</button>
+                    <button class="btn-primary" id="btn-add-exercise-empty" style="margin-top:var(--spacing-md)">ДОБАВИТЬ УПРАЖНЕНИЯ</button>
                 </div>
             `;
         }
