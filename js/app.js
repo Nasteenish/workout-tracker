@@ -339,6 +339,11 @@ const App = {
         };
 
         document.addEventListener('touchstart', (e) => {
+            // Ignore touches inside modal overlays
+            if (e.target.closest('.modal-overlay')) {
+                pullLocked = true;
+                return;
+            }
             // Ignore touches on the rest timer bar
             const timerBar = document.getElementById('rest-timer-bar');
             if (timerBar && (timerBar === e.target || timerBar.contains(e.target))) {
