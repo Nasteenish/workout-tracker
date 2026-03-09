@@ -1541,19 +1541,19 @@ const App = {
 
 /* ===== Workout Complete Celebration ===== */
 const Celebration = {
-    _emojis: ['🏋️', '💪', '🔥', '⭐', '🏆', '🎯', '💥', '⚡', '🥇', '🏅', '💣', '🚀'],
+    _colors: ['#9D8DF5', '#B5F22A', '#FF6D28', '#30D4C8', '#FF2D55', '#C3FF3C', '#4A96FF', '#fff'],
+    _shapes: ['circle', 'star', 'square', 'diamond'],
     _phrases: [
         'Отличная работа!',
         'Ты — машина!',
         'Мощная тренировка!',
         'Так держать!',
-        'Красавчик!'
+        'Огонь!'
     ],
 
     show() {
         if (document.querySelector('.celebration-overlay')) return;
 
-        // Vibrate
         if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 150]);
 
         var phrase = this._phrases[Math.floor(Math.random() * this._phrases.length)];
@@ -1561,17 +1561,14 @@ const Celebration = {
         var overlay = document.createElement('div');
         overlay.className = 'celebration-overlay';
         overlay.innerHTML = '<div class="celebration-text">' +
-            '<span class="celeb-emoji">🏆</span>' +
+            '<div class="celeb-icon-ring"><svg width="72" height="72" viewBox="0 0 72 72"><defs><linearGradient id="cg-done" x1="0" y1="0" x2="72" y2="72" gradientUnits="userSpaceOnUse"><stop stop-color="#C3FF3C"/><stop offset="1" stop-color="#5AA00A"/></linearGradient></defs><circle cx="36" cy="36" r="36" fill="url(#cg-done)"/><path d="M22 36l9 9 19-19" fill="none" stroke="#000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>' +
             '<p class="celeb-title">' + phrase + '</p>' +
             '<p class="celeb-sub">Тренировка завершена на 100%</p>' +
             '</div>';
         document.body.appendChild(overlay);
 
-        // Launch fireworks
-        this._launchFireworks(3);
+        this._launchConfetti();
 
-        // Close on tap or after 4s
-        var self = this;
         var closed = false;
         function close() {
             if (closed) return;
@@ -1580,55 +1577,50 @@ const Celebration = {
             setTimeout(function() { overlay.remove(); }, 400);
         }
         overlay.addEventListener('click', close);
-        setTimeout(close, 4000);
+        setTimeout(close, 4500);
     },
 
-    _launchFireworks(count) {
+    _launchConfetti() {
         var self = this;
-        for (var i = 0; i < count; i++) {
-            setTimeout(function() {
-                self._firework();
-            }, i * 600);
+        var total = 60;
+        for (var i = 0; i < total; i++) {
+            setTimeout(function() { self._createConfetti(); }, i * 40);
         }
     },
 
-    _firework() {
-        var cx = 30 + Math.random() * 40; // 30-70% of screen width
-        var cy = 25 + Math.random() * 30; // 25-55% of screen height
-        var numParticles = 12;
+    _createConfetti() {
+        var color = this._colors[Math.floor(Math.random() * this._colors.length)];
+        var size = 6 + Math.random() * 6;
+        var isRect = Math.random() > 0.4;
 
-        for (var i = 0; i < numParticles; i++) {
-            this._createParticle(cx, cy, i, numParticles);
-        }
-    },
-
-    _createParticle(cxPct, cyPct, index, total) {
         var el = document.createElement('div');
         el.className = 'firework-particle';
-        el.textContent = this._emojis[Math.floor(Math.random() * this._emojis.length)];
-        el.style.left = cxPct + 'vw';
-        el.style.top = cyPct + 'vh';
-        el.style.fontSize = (18 + Math.random() * 14) + 'px';
+        el.style.left = (5 + Math.random() * 90) + 'vw';
+        el.style.top = '-20px';
+        el.style.width = (isRect ? size * 0.6 : size) + 'px';
+        el.style.height = (isRect ? size * 1.6 : size) + 'px';
+        el.style.borderRadius = isRect ? '2px' : '50%';
+        el.style.background = color;
         document.body.appendChild(el);
 
-        var angle = (index / total) * Math.PI * 2;
-        var dist = 80 + Math.random() * 120;
-        var dx = Math.cos(angle) * dist;
-        var dy = Math.sin(angle) * dist;
-        var duration = 900 + Math.random() * 400;
-        var rotation = (Math.random() - 0.5) * 720;
+        var swayAmp = 40 + Math.random() * 80;
+        var swayFreq = 2 + Math.random() * 3;
+        var fallSpeed = 1.5 + Math.random() * 2;
+        var rotSpeed = (Math.random() - 0.5) * 720;
+        var duration = 2500 + Math.random() * 1500;
+        var startDelay = Math.random() * 0.15;
 
         var start = performance.now();
+        var screenH = window.innerHeight;
         function animate(now) {
             var t = Math.min((now - start) / duration, 1);
-            // ease-out cubic
-            var ease = 1 - Math.pow(1 - t, 3);
-            var gravity = t * t * 60;
-            var x = dx * ease;
-            var y = dy * ease + gravity;
-            var opacity = t < 0.7 ? 1 : 1 - ((t - 0.7) / 0.3);
-            var scale = t < 0.2 ? t / 0.2 : (t < 0.7 ? 1 : 1 - (t - 0.7) / 0.3 * 0.5);
-            el.style.transform = 'translate(' + x + 'px, ' + y + 'px) scale(' + scale + ') rotate(' + (rotation * ease) + 'deg)';
+            if (t < startDelay) { requestAnimationFrame(animate); return; }
+            var p = (t - startDelay) / (1 - startDelay);
+            var y = p * (screenH + 40);
+            var x = Math.sin(p * swayFreq * Math.PI) * swayAmp;
+            var rot = rotSpeed * p;
+            var opacity = p > 0.85 ? 1 - (p - 0.85) / 0.15 : 1;
+            el.style.transform = 'translate(' + x + 'px, ' + y + 'px) rotate(' + rot + 'deg)';
             el.style.opacity = opacity;
             if (t < 1) {
                 requestAnimationFrame(animate);
