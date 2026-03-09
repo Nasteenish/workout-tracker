@@ -2702,3 +2702,58 @@ body.modal-open {
     font-size: var(--font-size-lg);
     margin: 0;
 }
+
+/* ===== Workout Complete Celebration ===== */
+.celebration-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.85);
+    animation: celebFadeIn 0.3s ease-out;
+    -webkit-tap-highlight-color: transparent;
+}
+@keyframes celebFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.celebration-overlay.hiding {
+    animation: celebFadeOut 0.4s ease-in forwards;
+}
+@keyframes celebFadeOut {
+    to { opacity: 0; }
+}
+.celebration-text {
+    text-align: center;
+    z-index: 2;
+    animation: celebTextIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+}
+@keyframes celebTextIn {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: scale(1); }
+}
+.celebration-text .celeb-emoji {
+    font-size: 64px;
+    display: block;
+    margin-bottom: 12px;
+}
+.celebration-text .celeb-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 8px;
+}
+.celebration-text .celeb-sub {
+    font-size: 16px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+.firework-particle {
+    position: fixed;
+    font-size: 24px;
+    z-index: 10001;
+    pointer-events: none;
+    will-change: transform, opacity;
+}
