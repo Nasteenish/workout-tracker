@@ -599,6 +599,16 @@ const Builder = {
             });
         }
 
+        // Scroll custom input into view when keyboard opens
+        var customInput = document.getElementById('picker-custom-name');
+        if (customInput) {
+            customInput.addEventListener('focus', function() {
+                setTimeout(function() {
+                    customInput.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                }, 300);
+            });
+        }
+
         // Click delegation
         overlay.addEventListener('click', function(e) { Builder._handlePickerClick(e); });
 
@@ -774,7 +784,9 @@ const Builder = {
 
         this._closeExerciseConfig();
         this._autoSave();
+        var scrollY = window.scrollY;
         this._renderDayEditorHTML();
+        window.scrollTo(0, scrollY);
     },
 
     _closeExerciseConfig() {
