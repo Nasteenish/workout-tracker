@@ -512,6 +512,7 @@ const Storage = {
             }
         }
         // Fallback: search sibling exercises (same name, different day)
+        // No equipment filter — different days may use different machines
         if (siblings && siblings.length > 0) {
             var best = null, bestTime = 0;
             for (var w = week; w >= 1; w--) {
@@ -521,10 +522,8 @@ const Storage = {
                     if (w === week && sib.day >= day) continue;
                     var log = this.getSetLog(w, sib.day, sib.id, setIdx);
                     if (log && log.completed && log.timestamp > bestTime) {
-                        if (!equipmentId || log.equipmentId === equipmentId) {
-                            best = log;
-                            bestTime = log.timestamp;
-                        }
+                        best = log;
+                        bestTime = log.timestamp;
                     }
                 }
             }
