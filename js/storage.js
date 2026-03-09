@@ -499,7 +499,8 @@ const Storage = {
         this._save();
     },
 
-    getPreviousLog(week, day, exerciseId, setIdx, equipmentId) {
+    getPreviousLog(week, day, exerciseId, setIdx, equipmentId, siblings) {
+        // Standard: same exerciseId, same day, previous weeks
         for (var w = week - 1; w >= 1; w--) {
             var log = this.getSetLog(w, day, exerciseId, setIdx);
             if (log && log.completed) {
@@ -509,6 +510,25 @@ const Storage = {
                     return log;
                 }
             }
+        }
+        // Fallback: search sibling exercises (same name, different day)
+        if (siblings && siblings.length > 0) {
+            var best = null, bestTime = 0;
+            for (var w = week; w >= 1; w--) {
+                for (var si = 0; si < siblings.length; si++) {
+                    var sib = siblings[si];
+                    // Skip future/current day in current week
+                    if (w === week && sib.day >= day) continue;
+                    var log = this.getSetLog(w, sib.day, sib.id, setIdx);
+                    if (log && log.completed && log.timestamp > bestTime) {
+                        if (!equipmentId || log.equipmentId === equipmentId) {
+                            best = log;
+                            bestTime = log.timestamp;
+                        }
+                    }
+                }
+            }
+            if (best) return best;
         }
         return null;
     },

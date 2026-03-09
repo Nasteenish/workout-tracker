@@ -596,11 +596,56 @@ const UI = {
         `;
     },
 
+    _findSiblingExercises(ex, currentDayNum) {
+        if (!PROGRAM || !PROGRAM.dayTemplates) return null;
+        var name = ex.nameRu || ex.name;
+        if (!name) return null;
+        var siblings = [];
+        for (var dNum in PROGRAM.dayTemplates) {
+            var tmpl = PROGRAM.dayTemplates[dNum];
+            var groups = tmpl.exerciseGroups || [];
+            for (var g = 0; g < groups.length; g++) {
+                var group = groups[g];
+                // Single exercise
+                if (group.exercise) {
+                    if ((group.exercise.nameRu === name || group.exercise.name === name) &&
+                        (group.exercise.id !== ex.id || parseInt(dNum) !== currentDayNum)) {
+                        siblings.push({ id: group.exercise.id, day: parseInt(dNum) });
+                    }
+                }
+                // Choose one options
+                if (group.options) {
+                    for (var o = 0; o < group.options.length; o++) {
+                        var opt = group.options[o];
+                        if ((opt.nameRu === name || opt.name === name) &&
+                            (opt.id !== ex.id || parseInt(dNum) !== currentDayNum)) {
+                            siblings.push({ id: opt.id, day: parseInt(dNum) });
+                        }
+                    }
+                }
+                // Superset exercises
+                if (group.exercises) {
+                    for (var s = 0; s < group.exercises.length; s++) {
+                        var ssItem = group.exercises[s];
+                        var ssEx = ssItem.exercise || ssItem;
+                        if ((ssEx.nameRu === name || ssEx.name === name) &&
+                            (ssEx.id !== ex.id || parseInt(dNum) !== currentDayNum)) {
+                            siblings.push({ id: ssEx.id, day: parseInt(dNum) });
+                        }
+                    }
+                }
+            }
+        }
+        return siblings.length > 0 ? siblings : null;
+    },
+
     _renderSetRow(ex, setIdx, weekNum, dayNum) {
         const set = ex.sets[setIdx];
         const log = Storage.getSetLog(weekNum, dayNum, ex.id, setIdx);
         const eqId = Storage.getExerciseEquipment(ex.id);
-        const prev = Storage.getPreviousLog(weekNum, dayNum, ex.id, setIdx, eqId);
+        // Find sibling exercises (same name in other days)
+        const siblings = this._findSiblingExercises(ex, dayNum);
+        const prev = Storage.getPreviousLog(weekNum, dayNum, ex.id, setIdx, eqId, siblings);
         const isCompleted = log && log.completed;
         const weightVal = log ? log.weight : '';
         const repsVal = log ? log.reps : '';
