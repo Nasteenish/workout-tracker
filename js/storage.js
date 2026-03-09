@@ -307,20 +307,75 @@ const Storage = {
         return this.getEquipmentList().find(function(e) { return e.id === id; }) || null;
     },
 
+    // Find all exercise IDs with the same name across all days
+    _getSiblingIds(exerciseId) {
+        if (!PROGRAM || !PROGRAM.dayTemplates) return [];
+        var name = null;
+        // Find this exercise's name
+        for (var dNum in PROGRAM.dayTemplates) {
+            var groups = PROGRAM.dayTemplates[dNum].exerciseGroups || [];
+            for (var g = 0; g < groups.length; g++) {
+                var gr = groups[g];
+                if (gr.exercise && gr.exercise.id === exerciseId) { name = gr.exercise.nameRu || gr.exercise.name; break; }
+                if (gr.options) { for (var o = 0; o < gr.options.length; o++) { if (gr.options[o].id === exerciseId) { name = gr.options[o].nameRu || gr.options[o].name; break; } } }
+                if (gr.exercises) { for (var s = 0; s < gr.exercises.length; s++) { var se = gr.exercises[s].exercise || gr.exercises[s]; if (se.id === exerciseId) { name = se.nameRu || se.name; break; } } }
+                if (name) break;
+            }
+            if (name) break;
+        }
+        if (!name) return [];
+        // Collect all IDs with same name
+        var ids = [];
+        for (var dNum in PROGRAM.dayTemplates) {
+            var groups = PROGRAM.dayTemplates[dNum].exerciseGroups || [];
+            for (var g = 0; g < groups.length; g++) {
+                var gr = groups[g];
+                if (gr.exercise && (gr.exercise.nameRu === name || gr.exercise.name === name) && gr.exercise.id !== exerciseId) ids.push(gr.exercise.id);
+                if (gr.options) { for (var o = 0; o < gr.options.length; o++) { var opt = gr.options[o]; if ((opt.nameRu === name || opt.name === name) && opt.id !== exerciseId) ids.push(opt.id); } }
+                if (gr.exercises) { for (var s = 0; s < gr.exercises.length; s++) { var se = gr.exercises[s].exercise || gr.exercises[s]; if ((se.nameRu === name || se.name === name) && se.id !== exerciseId) ids.push(se.id); } }
+            }
+        }
+        return ids;
+    },
+
     getExerciseEquipment(exerciseId) {
-        return this._load().exerciseEquipment[exerciseId] || null;
+        var data = this._load();
+        var eq = data.exerciseEquipment[exerciseId];
+        if (eq) return eq;
+        // Check siblings
+        var sibs = this._getSiblingIds(exerciseId);
+        for (var i = 0; i < sibs.length; i++) {
+            if (data.exerciseEquipment[sibs[i]]) return data.exerciseEquipment[sibs[i]];
+        }
+        return null;
     },
 
     setExerciseEquipment(exerciseId, equipmentId) {
-        this._load().exerciseEquipment[exerciseId] = equipmentId;
+        var data = this._load();
+        data.exerciseEquipment[exerciseId] = equipmentId;
         if (equipmentId) this.linkEquipmentToExercise(exerciseId, equipmentId);
+        // Apply to siblings
+        var sibs = this._getSiblingIds(exerciseId);
+        for (var i = 0; i < sibs.length; i++) {
+            data.exerciseEquipment[sibs[i]] = equipmentId;
+            if (equipmentId) this.linkEquipmentToExercise(sibs[i], equipmentId);
+        }
         this._save();
     },
 
     getExerciseEquipmentOptions(exerciseId) {
         var data = this._load();
-        var ids = data.exerciseEquipmentOptions[exerciseId] || [];
-        return ids.map(function(id) { return Storage.getEquipmentById(id); }).filter(Boolean);
+        // Merge options from this exercise and all siblings
+        var allIds = [exerciseId].concat(this._getSiblingIds(exerciseId));
+        var seen = {};
+        var merged = [];
+        for (var a = 0; a < allIds.length; a++) {
+            var ids = data.exerciseEquipmentOptions[allIds[a]] || [];
+            for (var i = 0; i < ids.length; i++) {
+                if (!seen[ids[i]]) { seen[ids[i]] = true; merged.push(ids[i]); }
+            }
+        }
+        return merged.map(function(id) { return Storage.getEquipmentById(id); }).filter(Boolean);
     },
 
     linkEquipmentToExercise(exerciseId, equipmentId) {
@@ -335,21 +390,38 @@ const Storage = {
 
     unlinkEquipmentFromExercise(exerciseId, equipmentId) {
         var data = this._load();
-        if (data.exerciseEquipmentOptions[exerciseId]) {
-            data.exerciseEquipmentOptions[exerciseId] = data.exerciseEquipmentOptions[exerciseId].filter(function(id) { return id !== equipmentId; });
-        }
-        if (data.exerciseEquipment[exerciseId] === equipmentId) {
-            data.exerciseEquipment[exerciseId] = null;
+        // Unlink from this exercise and all siblings
+        var allIds = [exerciseId].concat(this._getSiblingIds(exerciseId));
+        for (var a = 0; a < allIds.length; a++) {
+            var id = allIds[a];
+            if (data.exerciseEquipmentOptions[id]) {
+                data.exerciseEquipmentOptions[id] = data.exerciseEquipmentOptions[id].filter(function(eqId) { return eqId !== equipmentId; });
+            }
+            if (data.exerciseEquipment[id] === equipmentId) {
+                data.exerciseEquipment[id] = null;
+            }
         }
         this._save();
     },
 
     getExerciseUnit(exerciseId) {
-        return this._load().exerciseUnits[exerciseId] || null;
+        var data = this._load();
+        var u = data.exerciseUnits[exerciseId];
+        if (u) return u;
+        var sibs = this._getSiblingIds(exerciseId);
+        for (var i = 0; i < sibs.length; i++) {
+            if (data.exerciseUnits[sibs[i]]) return data.exerciseUnits[sibs[i]];
+        }
+        return null;
     },
 
     setExerciseUnit(exerciseId, unit) {
-        this._load().exerciseUnits[exerciseId] = unit;
+        var data = this._load();
+        data.exerciseUnits[exerciseId] = unit;
+        var sibs = this._getSiblingIds(exerciseId);
+        for (var i = 0; i < sibs.length; i++) {
+            data.exerciseUnits[sibs[i]] = unit;
+        }
         this._save();
     },
 
