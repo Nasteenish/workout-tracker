@@ -1417,12 +1417,13 @@ const App = {
                 btn.classList.add('pop');
                 btn.addEventListener('animationend', () => btn.classList.remove('pop'), { once: true });
                 row.classList.add('done');
-                RestTimer.start();
 
                 // Check if workout is 100% complete
                 var progress = getCompletedSets(this._currentWeek, this._currentDay);
                 if (progress.total > 0 && progress.completed >= progress.total) {
                     setTimeout(function() { Celebration.show(); }, 500);
+                } else {
+                    RestTimer.start();
                 }
             }
             return;
