@@ -607,7 +607,9 @@ const UI = {
         const unitLabels = { kg: 'кг', lbs: 'lbs', plates: 'пл' };
         const unit = Storage.getExerciseUnit(ex.id) || Storage.getWeightUnit();
         const unitLabel = unitLabels[unit] || 'кг';
-        const prevText = prev ? `пред: ${prev.weight}<span class="set-prev-unit" data-exercise="${ex.id}">${unitLabel}</span> x ${prev.reps}` : '';
+        const prevUnitLabels = { kg: 'кг', lbs: 'lbs', plates: 'пл' };
+        const prevUnitLabel = prev && prev.unit ? (prevUnitLabels[prev.unit] || 'кг') : unitLabel;
+        const prevText = prev ? `пред: ${prev.weight}<span class="set-prev-unit" data-exercise="${ex.id}">${prevUnitLabel}</span> x ${prev.reps}` : '';
 
         // Type badge
         const typeClass = `type-${set.type}`;
@@ -654,18 +656,18 @@ const UI = {
         // Build weight input area (split only for DROP, not for pauses)
         let weightInputHtml;
         if (weightSegCount === 1) {
-            weightInputHtml = `<input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*"
+            weightInputHtml = `<input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
                 class="weight-input"
                 data-exercise="${ex.id}" data-set="${setIdx}"
                 value="${weightVal}" placeholder="${placeholderW}">`;
         } else {
-            let parts = `<input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*"
+            let parts = `<input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
                 class="weight-input seg-weight-input split-main"
                 data-exercise="${ex.id}" data-set="${setIdx}" data-seg="0"
                 value="${weightVal}" placeholder="${placeholderW}">`;
             for (let i = 1; i < weightSegCount; i++) {
                 const sv = getSegData(i).weight;
-                parts += `<span class="split-sep">+</span><input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*"
+                parts += `<span class="split-sep">+</span><input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
                     class="seg-weight-input split-extra"
                     data-exercise="${ex.id}" data-set="${setIdx}" data-seg="${i}"
                     value="${sv}" placeholder="">`;

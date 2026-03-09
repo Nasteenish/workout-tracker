@@ -25,7 +25,7 @@ const App = {
         }
 
         this._saveDebounced = debounce((week, day, exId, setIdx, field, value) => {
-            Storage.updateSetValue(week, day, exId, setIdx, field, parseFloat(value) || 0);
+            Storage.updateSetValue(week, day, exId, setIdx, field, parseFloat(String(value).replace(',', '.')) || 0);
         }, 300);
 
         // Route handling
@@ -1381,7 +1381,7 @@ const App = {
             const row = btn.closest('.set-row');
             const weightInput = row.querySelector('.weight-input');
             const repsInput = row.querySelector('.reps-input');
-            const weight = parseFloat(weightInput.value) || parseFloat(weightInput.placeholder) || 0;
+            const weight = parseFloat(String(weightInput.value).replace(',', '.')) || parseFloat(String(weightInput.placeholder).replace(',', '.')) || 0;
             const reps = parseInt(repsInput.value) || parseInt(repsInput.placeholder) || 0;
 
             const existing = Storage.getSetLog(this._currentWeek, this._currentDay, exId, setIdx);

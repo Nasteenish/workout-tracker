@@ -401,11 +401,13 @@ const Storage = {
         if (!data.log[w][d]) data.log[w][d] = {};
         if (!data.log[w][d][exerciseId]) data.log[w][d][exerciseId] = {};
         var existing = data.log[w][d][exerciseId][s] || {};
+        var unit = this.getExerciseUnit(exerciseId) || this.getWeightUnit();
         data.log[w][d][exerciseId][s] = {
             weight: weight,
             reps: reps,
             completed: true,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            unit: unit
         };
         if (existing.segs) data.log[w][d][exerciseId][s].segs = existing.segs;
         if (equipmentId) data.log[w][d][exerciseId][s].equipmentId = equipmentId;
@@ -480,17 +482,19 @@ const Storage = {
     },
 
     saveSegReps(week, day, exerciseId, setIdx, segIdx, value) {
-        if (segIdx === 0) { this.updateSetValue(week, day, exerciseId, setIdx, 'reps', value); return; }
+        var v = parseInt(value) || 0;
+        if (segIdx === 0) { this.updateSetValue(week, day, exerciseId, setIdx, 'reps', v); return; }
         var r = this._ensureSegEntry(week, day, exerciseId, setIdx, segIdx);
-        r.entry.segs[r.si].reps = value;
+        r.entry.segs[r.si].reps = v;
         r.entry.timestamp = Date.now();
         this._save();
     },
 
     saveSegWeight(week, day, exerciseId, setIdx, segIdx, value) {
-        if (segIdx === 0) { this.updateSetValue(week, day, exerciseId, setIdx, 'weight', value); return; }
+        var v = parseFloat(String(value).replace(',', '.')) || 0;
+        if (segIdx === 0) { this.updateSetValue(week, day, exerciseId, setIdx, 'weight', v); return; }
         var r = this._ensureSegEntry(week, day, exerciseId, setIdx, segIdx);
-        r.entry.segs[r.si].weight = value;
+        r.entry.segs[r.si].weight = v;
         r.entry.timestamp = Date.now();
         this._save();
     },

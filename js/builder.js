@@ -553,6 +553,7 @@ const Builder = {
         if (!ed) return;
         this._pickerDayNum = ed.dayNum;
         this._pickerCategory = 'all';
+        this._savedScrollY = window.scrollY;
 
         var overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
@@ -784,7 +785,7 @@ const Builder = {
 
         this._closeExerciseConfig();
         this._autoSave();
-        var scrollY = window.scrollY;
+        var scrollY = this._savedScrollY || 0;
         this._renderDayEditorHTML();
         window.scrollTo(0, scrollY);
     },
