@@ -115,7 +115,7 @@ const EXERCISE_DB = [
     { nameRu: 'Планка',                         name: 'Plank',                       category: 'core' },
     { nameRu: 'Боковая планка',                 name: 'Side Plank',                  category: 'core' },
     { nameRu: 'Русские скручивания',             name: 'Russian Twist',               category: 'core' },
-    { nameRu: 'Дровосек на блоке',              name: 'Cable Woodchop',              category: 'core' },
+
 
     // === Кардио (6) ===
     { nameRu: 'Беговая дорожка',                name: 'Treadmill',                   category: 'cardio' },
