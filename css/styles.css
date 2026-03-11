@@ -2775,6 +2775,26 @@ body.modal-open {
 .btn-start-workout:active {
     background: rgba(157, 141, 245, 0.15);
 }
+.workout-timer-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    margin-bottom: 16px;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+.workout-timer-icon {
+    font-size: 18px;
+}
+#workout-timer {
+    font-size: 20px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent-primary);
+}
 .celeb-time {
     font-size: 20px;
     font-weight: 600;
