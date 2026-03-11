@@ -5,7 +5,6 @@ const App = {
     _currentDay: 1,
     _saveDebounced: null,
     _swipeDir: null,
-    _workoutTimerInterval: null,
 
     init() {
         // Multi-user migration (once)
@@ -1675,40 +1674,11 @@ const App = {
         var key = this._getTimerKey();
         if (sessionStorage.getItem(key)) return; // already running
         sessionStorage.setItem(key, String(Date.now()));
-        this._startTimerDisplay();
-    },
-
-    _startTimerDisplay() {
-        var self = this;
-        if (this._workoutTimerInterval) clearInterval(this._workoutTimerInterval);
-        var key = this._getTimerKey();
-        var startTime = parseInt(sessionStorage.getItem(key));
-        if (!startTime) return;
-
-        // Show timer in header
-        this._updateTimerUI(startTime);
-        this._workoutTimerInterval = setInterval(function() {
-            self._updateTimerUI(startTime);
-        }, 1000);
-    },
-
-    _updateTimerUI(startTime) {
-        var el = document.getElementById('workout-timer');
-        if (!el) return;
-        var elapsed = Math.floor((Date.now() - startTime) / 1000);
-        var h = Math.floor(elapsed / 3600);
-        var m = Math.floor((elapsed % 3600) / 60);
-        var s = elapsed % 60;
-        el.textContent = (h > 0 ? h + ':' : '') + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
     },
 
     _stopWorkoutTimer() {
         var key = this._getTimerKey();
         var startTime = parseInt(sessionStorage.getItem(key));
-        if (this._workoutTimerInterval) {
-            clearInterval(this._workoutTimerInterval);
-            this._workoutTimerInterval = null;
-        }
         sessionStorage.removeItem(key);
         if (!startTime) return null;
         return Math.floor((Date.now() - startTime) / 1000);
@@ -1716,12 +1686,6 @@ const App = {
 
     isWorkoutTimerRunning() {
         return !!sessionStorage.getItem(this._getTimerKey());
-    },
-
-    resumeWorkoutTimer() {
-        if (this.isWorkoutTimerRunning()) {
-            this._startTimerDisplay();
-        }
     }
 };
 
