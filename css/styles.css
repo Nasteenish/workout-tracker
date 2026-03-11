@@ -3106,6 +3106,20 @@ body.modal-open {
     font-variant-numeric: tabular-nums;
     color: var(--accent-primary);
 }
+.workout-timer-stop {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    padding: 4px 8px;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+}
+.workout-timer-stop:active {
+    opacity: 1;
+}
 .celeb-time {
     font-size: 20px;
     font-weight: 600;

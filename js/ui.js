@@ -522,7 +522,7 @@ const UI = {
         const { completed: doneCount, total: totalCount } = getCompletedSets(weekNum, dayNum);
         const allDone = totalCount > 0 && doneCount >= totalCount;
         const timerHtml = timerRunning
-            ? '<div class="workout-timer-row"><span class="workout-timer-icon">&#9201;</span><span id="workout-timer">00:00</span></div>'
+            ? '<div class="workout-timer-row"><span class="workout-timer-icon">&#9201;</span><span id="workout-timer">00:00</span><button class="workout-timer-stop" id="btn-stop-workout">&#10005;</button></div>'
             : (!allDone && !isEmpty ? '<button class="btn-start-workout" id="btn-start-workout">НАЧАТЬ ТРЕНИРОВКУ</button>' : '');
 
         document.getElementById('app').innerHTML = `

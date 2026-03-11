@@ -1297,6 +1297,12 @@ const App = {
             return;
         }
 
+        if (target.id === 'btn-stop-workout' || target.closest('#btn-stop-workout')) {
+            this._stopWorkoutTimer();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return;
+        }
+
         // Add set button
         if (target.matches('.add-set-btn') || target.closest('.add-set-btn')) {
             const btn = target.matches('.add-set-btn') ? target : target.closest('.add-set-btn');
