@@ -67,7 +67,7 @@ const App = {
     _initSwipeNav() {
         let startX = 0, startY = 0;
         let dragging = false, locked = false;
-        let isWeekView = false, isDayView = false, isSettingsView = false, isMenuSubPage = false;
+        let isWeekView = false, isDayView = false, isSettingsView = false, isMenuSubPage = false, isEditorView = false;
         let swipingLeft = false;
         let companion = null;
         let isDayBack = false;
@@ -109,12 +109,32 @@ const App = {
             return c;
         };
 
+        const createDayBackCompanion = (weekNum, dayNum) => {
+            const c = document.createElement('div');
+            c.className = 'back-companion';
+            const workout = resolveWorkout(weekNum, dayNum);
+            const dayTitle = workout ? (workout.titleRu || workout.title || 'День ' + dayNum) : 'День ' + dayNum;
+            c.innerHTML = `
+                <div class="app-header">
+                    <button class="back-btn"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                    <div class="header-title">
+                        <h1>Неделя ${weekNum} / День ${dayNum}</h1>
+                        <div class="header-subtitle">${dayTitle}</div>
+                    </div>
+                </div>
+                <div class="app-content"></div>
+            `;
+            document.body.appendChild(c);
+            return c;
+        };
+
         document.addEventListener('touchstart', (e) => {
             isWeekView = !!location.hash.match(/^#\/week\/\d+$/);
             isDayView = !!location.hash.match(/^#\/week\/\d+\/day\/\d+$/);
             isMenuSubPage = location.hash === '#/settings' || location.hash === '#/guide' || location.hash === '#/calculator';
             isSettingsView = location.hash === '#/menu' || isMenuSubPage;
-            if (!isWeekView && !isDayView && !isSettingsView) return;
+            isEditorView = !!location.hash.match(/^#\/edit\/day\/\d+$/);
+            if (!isWeekView && !isDayView && !isSettingsView && !isEditorView) return;
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
             dragging = false;
@@ -133,7 +153,7 @@ const App = {
         }, { passive: true });
 
         document.addEventListener('touchmove', (e) => {
-            if (!isWeekView && !isDayView && !isSettingsView) return;
+            if (!isWeekView && !isDayView && !isSettingsView && !isEditorView) return;
             if (locked) return;
             const dx = e.touches[0].clientX - startX;
             const dy = e.touches[0].clientY - startY;
@@ -141,7 +161,7 @@ const App = {
             if (!dragging) {
                 if (Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
                 if (Math.abs(dy) > Math.abs(dx)) { locked = true; return; }
-                if ((isDayView || isSettingsView) && dx < 0) { locked = true; return; }
+                if ((isDayView || isSettingsView || isEditorView) && dx < 0) { locked = true; return; }
                 dragging = true;
                 swipingLeft = dx < 0;
                 savedScrollY = window.scrollY;
@@ -155,13 +175,21 @@ const App = {
                     companion = createCompanion(targetWeek);
                     companion.style.transition = 'none';
                     companion.style.transform = `translateX(${swipingLeft ? W() : -W()}px)`;
+                } else if (isEditorView) {
+                    // Editor back-swipe: show day view companion
+                    isDayBack = true;
+                    var edDayNum = Builder._editingDay ? Builder._editingDay.dayNum : this._currentDay;
+                    companion = createDayBackCompanion(this._currentWeek, edDayNum);
                 } else if (isDayView || isSettingsView) {
                     // Day/Settings back-swipe: full-screen companion + move entire #app
                     isDayBack = true;
                     if (!isMenuSubPage) {
                         companion = createBackCompanion(this._currentWeek);
                     }
-                    // Position companion (pre-created for menu sub-pages, just created for day/menu)
+                }
+
+                if (isDayBack) {
+                    // Position companion
                     if (companion) {
                         companion.style.transition = 'none';
                         companion.style.transform = `translateX(${-0.28 * W()}px)`;
@@ -198,7 +226,7 @@ const App = {
         }, { passive: false });
 
         document.addEventListener('touchend', (e) => {
-            if (!isWeekView && !isDayView && !isSettingsView) return;
+            if (!isWeekView && !isDayView && !isSettingsView && !isEditorView) return;
             // Clean up pre-created companion if touch wasn't a horizontal swipe
             if (!dragging && !isDayBack && companion) removeCompanion();
             const dx = e.changedTouches[0].clientX - startX;
@@ -237,12 +265,16 @@ const App = {
                     companion.style.transition = commit;
                     companion.style.transform = 'translateX(0)';
                 }
-                const swipeTarget = isMenuSubPage ? '#/menu' : `#/week/${this._currentWeek}`;
+                var editorDayNum = isEditorView ? (Builder._editingDay ? Builder._editingDay.dayNum : this._currentDay) : 0;
+                const swipeTarget = isEditorView ? `#/week/${this._currentWeek}/day/${editorDayNum}` : (isMenuSubPage ? '#/menu' : `#/week/${this._currentWeek}`);
                 setTimeout(() => {
                     app.classList.add('no-animate');
+                    if (isEditorView) Builder._editingDay = null;
                     history.replaceState(null, '', swipeTarget);
                     // Render while #app is still off-screen (position:fixed + translated)
-                    if (isMenuSubPage) {
+                    if (isEditorView) {
+                        UI.renderDay(this._currentWeek, editorDayNum);
+                    } else if (isMenuSubPage) {
                         UI.renderMenu();
                     } else {
                         UI.renderWeek(this._currentWeek);
