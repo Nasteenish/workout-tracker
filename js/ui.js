@@ -293,11 +293,11 @@ const UI = {
                     ${cardsHtml}
                     </div>
                 </div>
-                ${(PROGRAM && PROGRAM.isCustom) ? `<div class="week-actions-row">
+                <div class="week-actions-row">
                     <button class="add-week-btn" id="btn-add-day"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> День</button>
                     ${getTotalDays() > 1 ? `<button class="remove-week-btn" id="btn-remove-day"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg> День</button>` : ''}
-                </div>` : ''}
-                ${(PROGRAM && PROGRAM.isCustom && weekNum === getTotalWeeks()) ? `<div class="week-actions-row">
+                </div>
+                ${weekNum === getTotalWeeks() ? `<div class="week-actions-row">
                     <button class="add-week-btn" id="btn-add-week"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Неделю</button>
                     ${getTotalWeeks() > 1 ? `<button class="remove-week-btn" id="btn-remove-week"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg> Неделю</button>` : ''}
                 </div>` : ''}
@@ -504,11 +504,10 @@ const UI = {
         }
 
         const dayTitle = workout.titleRu || workout.title || `День ${dayNum}`;
-        const isCustom = PROGRAM && PROGRAM.isCustom;
-        const editBtn = isCustom ? '<button class="edit-mode-btn" id="btn-edit-day"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' : '';
+        const editBtn = '<button class="edit-mode-btn" id="btn-edit-day"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
 
-        // Empty day state for custom programs
-        const isEmpty = isCustom && workout.exerciseGroups.length === 0;
+        // Empty day state
+        const isEmpty = workout.exerciseGroups.length === 0;
         if (isEmpty) {
             html = `
                 <div class="empty-day">
@@ -582,13 +581,10 @@ const UI = {
         const displayName = this._getExerciseDisplayName(ex);
         const isSubbed = this._isSubstituted(ex.id);
         const subBtnSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>';
-        const showSubBtn = !(PROGRAM && PROGRAM.isCustom);
-
-        const isCustom = PROGRAM && PROGRAM.isCustom;
-        const nameClass = isCustom ? 'exercise-name exercise-name-editable' : `exercise-name ${isSubbed ? 'exercise-substituted' : ''} ${choiceKey ? 'exercise-name-chooser' : ''}`;
-        const nameAttrs = isCustom ? `data-exercise="${ex.id}"` : (choiceKey ? `data-choice-key="${choiceKey}"` : '');
+        const nameClass = `exercise-name exercise-name-editable ${isSubbed ? 'exercise-substituted' : ''} ${choiceKey ? 'exercise-name-chooser' : ''}`;
+        const nameAttrs = `data-exercise="${ex.id}" ${choiceKey ? `data-choice-key="${choiceKey}"` : ''}`;
         const nameContent = choiceKey ? this._nameWithBadge(displayName) : displayName;
-        const editIcon = isCustom ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" opacity="0.4" style="margin-left:6px;flex-shrink:0"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' : '';
+        const editIcon = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" opacity="0.4" style="margin-left:6px;flex-shrink:0"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
 
         const setControls = `<div class="set-controls">
             <button class="set-ctrl-btn remove-set-btn" data-exercise="${ex.id}">− подход</button>
@@ -600,12 +596,13 @@ const UI = {
                 <div class="exercise-header">
                     <div class="exercise-name-row">
                         <div class="${nameClass}" ${nameAttrs}>${nameContent}${editIcon}</div>
-                        ${showSubBtn ? `<button class="substitute-btn" data-exercise="${ex.id}">${subBtnSvg}</button>` : ''}
+                        <button class="substitute-btn" data-exercise="${ex.id}">${subBtnSvg}</button>
                     </div>
                     <div class="exercise-meta">
                         <span>${ex.reps} reps</span>
                         ${restText ? `<span>${restText}</span>` : ''}
                     </div>
+                    ${ex.noteRu || ex.note ? `<div class="exercise-note">${ex.noteRu || ex.note}</div>` : ''}
                 </div>
                 ${eqHtml}
                 ${setsHtml}
@@ -771,7 +768,7 @@ const UI = {
             <div class="set-row${isCompleted ? ' done' : ''}" data-exercise="${ex.id}" data-set="${setIdx}">
                 <div class="set-info">
                     <span class="set-number">П.${setIdx + 1}</span>
-                    ${!(PROGRAM && PROGRAM.isCustom) ? `<span class="set-type-badge ${typeClass}">${typeLabel}</span>
+                    ${(set.type && set.type !== 'H') || (set.rpe && set.rpe !== '8') ? `<span class="set-type-badge ${typeClass}">${typeLabel}</span>
                     <span class="rpe-badge">${set.rpe}</span>` : ''}
                     ${techHtml}
                 </div>
@@ -1569,13 +1566,13 @@ const UI = {
 
                 <div class="settings-card">
                     <div class="settings-card-label">Программа</div>
-                    ${!(PROGRAM && PROGRAM.isCustom) ? `<div class="setup-field" style="margin-bottom: var(--spacing-md);">
+                    <div class="setup-field" style="margin-bottom: var(--spacing-md);">
                         <label>Тип цикла</label>
                         <div class="cycle-toggle">
                             <button data-cycle="7" ${settings.cycleType === 7 ? 'class="active"' : ''}>7 дней</button>
                             <button data-cycle="8" ${settings.cycleType === 8 ? 'class="active"' : ''}>8 дней</button>
                         </div>
-                    </div>` : ''}
+                    </div>
                     <div class="setup-field" style="margin-bottom: 0;">
                         <label>Дата начала</label>
                         <div class="date-wrapper">

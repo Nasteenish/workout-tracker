@@ -263,18 +263,35 @@ const Builder = {
         var dayTemplate = PROGRAM.dayTemplates[dayNum];
         var exercises = [];
 
-        // Extract exercises from exerciseGroups
+        // Extract exercises from all group types
         for (var i = 0; i < dayTemplate.exerciseGroups.length; i++) {
             var group = dayTemplate.exerciseGroups[i];
             if (group.type === 'single' || group.type === 'warmup') {
+                var e = group.exercise;
                 exercises.push({
-                    nameRu: group.exercise.nameRu || group.exercise.name,
-                    name: group.exercise.name || group.exercise.nameRu,
-                    reps: group.exercise.reps,
-                    rest: group.exercise.rest,
-                    setsCount: group.exercise.sets.length,
-                    note: group.exercise.note || '',
-                    noteRu: group.exercise.noteRu || ''
+                    nameRu: e.nameRu || e.name, name: e.name || e.nameRu,
+                    reps: e.reps, rest: e.rest, note: e.note || '', noteRu: e.noteRu || '',
+                    sets: JSON.parse(JSON.stringify(e.sets || [])),
+                    _id: e.id
+                });
+            } else if (group.type === 'superset' && group.exercises) {
+                for (var j = 0; j < group.exercises.length; j++) {
+                    var e = group.exercises[j];
+                    exercises.push({
+                        nameRu: e.nameRu || e.name, name: e.name || e.nameRu,
+                        reps: e.reps, rest: e.rest, note: e.note || '', noteRu: e.noteRu || '',
+                        sets: JSON.parse(JSON.stringify(e.sets || [])),
+                        _id: e.id
+                    });
+                }
+            } else if (group.type === 'choose_one' && group.options) {
+                // Show first option (or chosen one) as editable
+                var e = group.options[0];
+                exercises.push({
+                    nameRu: e.nameRu || e.name, name: e.name || e.nameRu,
+                    reps: e.reps, rest: e.rest, note: e.note || '', noteRu: e.noteRu || '',
+                    sets: JSON.parse(JSON.stringify(e.sets || [])),
+                    _id: e.id
                 });
             }
         }
@@ -296,7 +313,7 @@ const Builder = {
                 <div class="editor-exercise-card" data-ex-idx="${i}">
                     <div class="editor-ex-info">
                         <div class="editor-ex-name">${ex.nameRu || ex.name}</div>
-                        <div class="editor-ex-meta">${ex.setsCount} × ${ex.reps}</div>
+                        <div class="editor-ex-meta">${ex.sets ? ex.sets.length : 3} × ${ex.reps}</div>
                     </div>
                     <div class="editor-ex-actions">
                         <button class="editor-action-btn editor-delete" data-idx="${i}">✕</button>
@@ -508,14 +525,16 @@ const Builder = {
         var groups = [];
         for (var i = 0; i < ed.exercises.length; i++) {
             var ex = ed.exercises[i];
-            var sets = [];
-            for (var s = 0; s < ex.setsCount; s++) {
-                sets.push({ type: 'H', rpe: '8', techniques: [] });
-            }
+            // Use stored sets or create defaults
+            var sets = ex.sets && ex.sets.length > 0
+                ? ex.sets
+                : [{ type: 'H', rpe: '8', techniques: [] }, { type: 'H', rpe: '8', techniques: [] }, { type: 'H', rpe: '8', techniques: [] }];
+            // Preserve original ID or generate new
+            var id = ex._id || ('D' + ed.dayNum + 'E' + (i + 1));
             groups.push({
                 type: 'single',
                 exercise: {
-                    id: 'D' + ed.dayNum + 'E' + (i + 1),
+                    id: id,
                     name: ex.name || ex.nameRu,
                     nameRu: ex.nameRu || ex.name,
                     reps: ex.reps,
@@ -779,10 +798,15 @@ const Builder = {
         var setsVal = document.getElementById('cfg-sets-val');
         var repsInput = document.getElementById('cfg-reps');
 
+        var numSets = parseInt(setsVal.textContent) || 3;
+        var setsArr = [];
+        for (var s = 0; s < numSets; s++) {
+            setsArr.push({ type: 'H', rpe: '8', techniques: [] });
+        }
         this._editingDay.exercises.push({
             nameRu: cfg.nameRu,
             name: cfg.name,
-            setsCount: parseInt(setsVal.textContent) || 3,
+            sets: setsArr,
             reps: (repsInput.value || '').trim() || '8-12',
             rest: 120,
             note: '',

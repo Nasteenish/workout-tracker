@@ -811,6 +811,14 @@ input, button, select {
     padding: 3px 8px;
     border-radius: var(--radius-pill);
 }
+.exercise-note {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 4px 0 0;
+    line-height: 1.4;
+    opacity: 0.7;
+}
 
 /* Exercise Name Row (wraps name + substitute button) */
 .exercise-name-row {

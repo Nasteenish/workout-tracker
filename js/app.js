@@ -449,7 +449,7 @@ const App = {
     },
 
     _addWeekToCustomProgram() {
-        if (!PROGRAM || !PROGRAM.isCustom) return;
+        if (!PROGRAM) return;
         if (PROGRAM.totalWeeks >= 16) {
             alert('Максимум 16 недель');
             return;
@@ -461,7 +461,7 @@ const App = {
     },
 
     _removeWeekFromCustomProgram() {
-        if (!PROGRAM || !PROGRAM.isCustom || PROGRAM.totalWeeks <= 1) return;
+        if (!PROGRAM || PROGRAM.totalWeeks <= 1) return;
         if (!confirm(`Удалить неделю ${PROGRAM.totalWeeks}? Данные этой недели будут потеряны.`)) return;
         var removedWeek = PROGRAM.totalWeeks;
         PROGRAM.totalWeeks -= 1;
@@ -497,7 +497,7 @@ const App = {
     },
 
     _addDayToCustomProgram() {
-        if (!PROGRAM || !PROGRAM.isCustom) return;
+        if (!PROGRAM) return;
         var numDays = getTotalDays();
         if (numDays >= 7) {
             alert('Все 7 дней заняты тренировками');
@@ -518,7 +518,7 @@ const App = {
     },
 
     _removeDayFromCustomProgram() {
-        if (!PROGRAM || !PROGRAM.isCustom) return;
+        if (!PROGRAM) return;
         var numDays = getTotalDays();
         if (numDays <= 1) return;
         if (!confirm('Удалить день ' + numDays + '? На его место встанет день отдыха.')) return;
@@ -534,23 +534,18 @@ const App = {
         var storedProgram = Storage.getProgram();
         if (storedProgram) {
             PROGRAM = storedProgram;
-            // Update built-in program only if same athlete and newer version
-            var builtin = BUILTIN_PROGRAMS[user.programId];
-            if (builtin) {
-                var latestProgram = builtin.getProgram();
-                var sameAthlete = latestProgram && storedProgram.athlete
-                    && latestProgram.athlete === storedProgram.athlete;
-                if (sameAthlete && latestProgram.version
-                    && (!storedProgram.version || storedProgram.version < latestProgram.version)) {
-                    PROGRAM = latestProgram;
-                    Storage.saveProgram(latestProgram, false);
-                }
+            // Migrate to custom if not yet migrated
+            if (!PROGRAM.isCustom) {
+                PROGRAM.isCustom = true;
+                Storage.saveProgram(PROGRAM, false);
             }
+            // No longer auto-update from built-in — program is user's own
         } else {
-            // No stored program — load from built-in
+            // No stored program — load from built-in template
             var builtin = BUILTIN_PROGRAMS[user.programId];
             if (builtin) {
-                PROGRAM = builtin.getProgram();
+                PROGRAM = JSON.parse(JSON.stringify(builtin.getProgram()));
+                PROGRAM.isCustom = true;
                 if (PROGRAM) Storage.saveProgram(PROGRAM, false);
             }
         }
@@ -1292,12 +1287,14 @@ const App = {
             return;
         }
 
-        // Rename exercise (tap on exercise name in custom programs)
+        // Rename exercise (tap on exercise name — skip if it's a choose_one exercise)
         if (target.matches('.exercise-name-editable') || target.closest('.exercise-name-editable')) {
             const el = target.matches('.exercise-name-editable') ? target : target.closest('.exercise-name-editable');
-            const exId = el.dataset.exercise;
-            this._renameExercise(exId);
-            return;
+            if (!el.dataset.choiceKey) {
+                const exId = el.dataset.exercise;
+                this._renameExercise(exId);
+                return;
+            }
         }
 
         // Equipment button — show equipment picker
@@ -1571,80 +1568,55 @@ const App = {
         }
     },
 
-    _addSet(exerciseId) {
-        if (!PROGRAM) return;
+    _findExerciseInProgram(exerciseId) {
+        if (!PROGRAM) return null;
         for (var dNum in PROGRAM.dayTemplates) {
             var groups = PROGRAM.dayTemplates[dNum].exerciseGroups || [];
             for (var g = 0; g < groups.length; g++) {
-                var ex = groups[g].exercise;
-                if (ex && ex.id === exerciseId) {
-                    var lastSet = ex.sets[ex.sets.length - 1] || { type: 'H', rpe: '8', techniques: [] };
-                    ex.sets.push({ type: lastSet.type, rpe: lastSet.rpe, techniques: lastSet.techniques ? lastSet.techniques.slice() : [] });
-                    Storage.saveProgram(PROGRAM, false);
-                    UI.renderDay(this._currentWeek, this._currentDay);
-                    return;
+                var gr = groups[g];
+                if (gr.exercise && gr.exercise.id === exerciseId) return gr.exercise;
+                if (gr.exercises) {
+                    for (var j = 0; j < gr.exercises.length; j++) {
+                        if (gr.exercises[j].id === exerciseId) return gr.exercises[j];
+                    }
                 }
-                if (groups[g].options) {
-                    for (var o = 0; o < groups[g].options.length; o++) {
-                        var opt = groups[g].options[o];
-                        if (opt.id === exerciseId) {
-                            var lastSet = opt.sets[opt.sets.length - 1] || { type: 'H', rpe: '8', techniques: [] };
-                            opt.sets.push({ type: lastSet.type, rpe: lastSet.rpe, techniques: lastSet.techniques ? lastSet.techniques.slice() : [] });
-                            Storage.saveProgram(PROGRAM, false);
-                            UI.renderDay(this._currentWeek, this._currentDay);
-                            return;
-                        }
+                if (gr.options) {
+                    for (var o = 0; o < gr.options.length; o++) {
+                        if (gr.options[o].id === exerciseId) return gr.options[o];
                     }
                 }
             }
         }
+        return null;
+    },
+
+    _addSet(exerciseId) {
+        var ex = this._findExerciseInProgram(exerciseId);
+        if (!ex) return;
+        var lastSet = ex.sets[ex.sets.length - 1] || { type: 'H', rpe: '8', techniques: [] };
+        ex.sets.push({ type: lastSet.type, rpe: lastSet.rpe, techniques: lastSet.techniques ? lastSet.techniques.slice() : [] });
+        Storage.saveProgram(PROGRAM, false);
+        UI.renderDay(this._currentWeek, this._currentDay);
     },
 
     _removeSet(exerciseId) {
-        if (!PROGRAM) return;
-        for (var dNum in PROGRAM.dayTemplates) {
-            var groups = PROGRAM.dayTemplates[dNum].exerciseGroups || [];
-            for (var g = 0; g < groups.length; g++) {
-                var ex = groups[g].exercise;
-                if (ex && ex.id === exerciseId && ex.sets.length > 1) {
-                    ex.sets.pop();
-                    Storage.saveProgram(PROGRAM, false);
-                    UI.renderDay(this._currentWeek, this._currentDay);
-                    return;
-                }
-                if (groups[g].options) {
-                    for (var o = 0; o < groups[g].options.length; o++) {
-                        var opt = groups[g].options[o];
-                        if (opt.id === exerciseId && opt.sets.length > 1) {
-                            opt.sets.pop();
-                            Storage.saveProgram(PROGRAM, false);
-                            UI.renderDay(this._currentWeek, this._currentDay);
-                            return;
-                        }
-                    }
-                }
-            }
-        }
+        var ex = this._findExerciseInProgram(exerciseId);
+        if (!ex || ex.sets.length <= 1) return;
+        ex.sets.pop();
+        Storage.saveProgram(PROGRAM, false);
+        UI.renderDay(this._currentWeek, this._currentDay);
     },
 
     _renameExercise(exerciseId) {
-        if (!PROGRAM) return;
-        for (var dNum in PROGRAM.dayTemplates) {
-            var groups = PROGRAM.dayTemplates[dNum].exerciseGroups || [];
-            for (var g = 0; g < groups.length; g++) {
-                var ex = groups[g].exercise;
-                if (ex && ex.id === exerciseId) {
-                    var current = ex.nameRu || ex.name || '';
-                    var newName = prompt('Название упражнения:', current);
-                    if (newName !== null && newName.trim()) {
-                        ex.nameRu = newName.trim();
-                        ex.name = newName.trim();
-                        Storage.saveProgram(PROGRAM, false);
-                        UI.renderDay(this._currentWeek, this._currentDay);
-                    }
-                    return;
-                }
-            }
+        var ex = this._findExerciseInProgram(exerciseId);
+        if (!ex) return;
+        var current = ex.nameRu || ex.name || '';
+        var newName = prompt('Название упражнения:', current);
+        if (newName !== null && newName.trim()) {
+            ex.nameRu = newName.trim();
+            ex.name = newName.trim();
+            Storage.saveProgram(PROGRAM, false);
+            UI.renderDay(this._currentWeek, this._currentDay);
         }
     },
 
