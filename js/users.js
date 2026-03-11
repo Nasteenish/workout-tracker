@@ -25,7 +25,7 @@ const BUILTIN_PROGRAMS = {
 // User accounts (login/password)
 // To add a new user: add an entry here + optionally add their program
 const ACCOUNTS = [
-    { id: 'anastasia', login: 'nastya', password: '1234', name: 'Анастасия', programId: 'anastasia_default', premium: true },
+    { id: 'anastasia', login: 'nastya', password: '1234', name: 'nasteenish', programId: 'anastasia_default', premium: true },
     { id: 'mikhail',   login: 'misha',  password: '1234', name: 'Дима',       programId: 'mikhail_default' },
     { id: 'mikhail2',  login: 'thegealaks', password: '2026', name: 'Михаил', programId: 'mikhail2_default' }
 ];

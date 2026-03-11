@@ -14,6 +14,15 @@ const App = {
         // Load program for current user
         const currentUser = Storage.getCurrentUser();
         if (currentUser) {
+            // Sync name from ACCOUNTS if changed
+            if (typeof ACCOUNTS !== 'undefined') {
+                var acct = ACCOUNTS.find(function(a) { return a.id === currentUser.id; });
+                if (acct && acct.name !== currentUser.name) {
+                    var users = Storage.getUsers();
+                    var u = users.find(function(x) { return x.id === currentUser.id; });
+                    if (u) { u.name = acct.name; Storage._saveUsers(users); }
+                }
+            }
             this._loadProgramForUser(currentUser);
             // Restore Supabase sync for supa_ users
             this._initSupaSync(currentUser.id);
@@ -602,6 +611,9 @@ const App = {
             var existing = users.find(function(u) { return u.id === account.id; });
             if (!existing) {
                 Storage.createUser(account.id, account.name, account.programId);
+            } else if (existing.name !== account.name) {
+                existing.name = account.name;
+                Storage._saveUsers(users);
             }
             this.switchUser(account.id);
             return true;
