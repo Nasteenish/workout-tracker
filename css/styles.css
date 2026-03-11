@@ -2463,11 +2463,6 @@ body.modal-open {
 .editor-add-btn {
     margin-top: var(--spacing-md);
 }
-.editor-save-btn {
-    margin-top: var(--spacing-sm);
-    background: linear-gradient(160deg, rgba(181, 242, 42, 0.55) 0%, rgba(90, 160, 10, 0.65) 100%) !important;
-}
-
 .empty-day-hint {
     text-align: center;
     padding: var(--spacing-xl) 0;

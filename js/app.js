@@ -981,12 +981,6 @@ const App = {
             return;
         }
 
-        // Day editor: save
-        if (target.id === 'editor-save' || target.closest('#editor-save')) {
-            Builder.saveDayEdits();
-            return;
-        }
-
         // Day editor: delete exercise
         if (target.classList.contains('editor-delete') || target.closest('.editor-delete')) {
             var btn = target.classList.contains('editor-delete') ? target : target.closest('.editor-delete');

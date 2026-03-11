@@ -487,7 +487,6 @@ const Builder = {
                 <button class="btn-primary editor-add-btn" id="editor-add-exercise">
                     <span style="font-size:20px;margin-right:6px">+</span> \u0414\u041E\u0411\u0410\u0412\u0418\u0422\u042C \u0423\u041F\u0420\u0410\u0416\u041D\u0415\u041D\u0418\u0415
                 </button>
-                <button class="btn-primary editor-save-btn" id="editor-save-btn">\u0421\u041E\u0425\u0420\u0410\u041D\u0418\u0422\u042C</button>
             </div>
         `;
 
@@ -527,8 +526,8 @@ const Builder = {
                     return;
                 }
 
-                // Technique counter (tap cycles 0→1→2→3→0)
-                if (target.matches('.editor-tech-btn')) {
+                // Technique counter (tap cycles 0→1→2→3→0) — only per-set buttons (have data-set)
+                if (target.matches('.editor-tech-btn') && target.dataset.set !== undefined) {
                     var ex = self._getExercise(parseInt(target.dataset.item), parseInt(target.dataset.sub));
                     if (!ex) return;
                     var setIdx = parseInt(target.dataset.set);
@@ -669,9 +668,6 @@ const Builder = {
         var cBtn = document.getElementById('btn-make-choose');
         if (sBtn) sBtn.addEventListener('click', function() { self._mergeItems('superset'); });
         if (cBtn) cBtn.addEventListener('click', function() { self._mergeItems('choose_one'); });
-
-        var saveBtn = document.getElementById('editor-save-btn');
-        if (saveBtn) saveBtn.addEventListener('click', function() { self.saveDayEdits(); });
 
         this._initExerciseDragDrop();
     },
