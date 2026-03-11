@@ -584,7 +584,7 @@ const UI = {
         const nameClass = `exercise-name exercise-name-editable ${isSubbed ? 'exercise-substituted' : ''} ${choiceKey ? 'exercise-name-chooser' : ''}`;
         const nameAttrs = `data-exercise="${ex.id}" ${choiceKey ? `data-choice-key="${choiceKey}"` : ''}`;
         const nameContent = choiceKey ? this._nameWithBadge(displayName) : displayName;
-        const editIcon = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" opacity="0.4" style="margin-left:6px;flex-shrink:0"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+        const editIcon = '';
 
         const setControls = `<div class="set-controls">
             <button class="set-ctrl-btn remove-set-btn" data-exercise="${ex.id}">− подход</button>
