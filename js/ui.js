@@ -519,11 +519,24 @@ const UI = {
         }
 
         const timerRunning = App.isWorkoutTimerRunning();
+        const timerPaused = App.isWorkoutTimerPaused();
         const { completed: doneCount, total: totalCount } = getCompletedSets(weekNum, dayNum);
         const allDone = totalCount > 0 && doneCount >= totalCount;
-        const timerHtml = timerRunning
-            ? '<div class="workout-timer-row"><span class="workout-timer-icon">&#9201;</span><span id="workout-timer">00:00</span><button class="workout-timer-stop" id="btn-stop-workout">&#10005;</button></div>'
-            : (!allDone && !isEmpty ? '<button class="btn-start-workout" id="btn-start-workout">НАЧАТЬ ТРЕНИРОВКУ</button>' : '');
+        let timerHtml = '';
+        if (timerPaused) {
+            const elapsed = App._getTimerElapsed();
+            const h = Math.floor(elapsed / 3600);
+            const m = Math.floor((elapsed % 3600) / 60);
+            const s = elapsed % 60;
+            const timeStr = (h > 0 ? h + ':' : '') + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+            timerHtml = '<div class="workout-timer-row paused"><span class="workout-timer-icon">&#9208;</span><span id="workout-timer">' + timeStr + '</span></div>'
+                + '<div class="workout-timer-actions"><button class="btn-timer-resume" id="btn-resume-workout">ПРОДОЛЖИТЬ</button><button class="btn-timer-cancel" id="btn-cancel-workout">ОТМЕНИТЬ</button></div>';
+        } else if (timerRunning) {
+            timerHtml = '<div class="workout-timer-row"><span class="workout-timer-icon">&#9201;</span><span id="workout-timer">00:00</span></div>'
+                + '<button class="btn-timer-pause" id="btn-pause-workout">ПАУЗА</button>';
+        } else if (!allDone && !isEmpty) {
+            timerHtml = '<button class="btn-start-workout" id="btn-start-workout">НАЧАТЬ ТРЕНИРОВКУ</button>';
+        }
 
         document.getElementById('app').innerHTML = `
             <div class="app-header">

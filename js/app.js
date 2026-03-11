@@ -1297,8 +1297,20 @@ const App = {
             return;
         }
 
-        if (target.id === 'btn-stop-workout' || target.closest('#btn-stop-workout')) {
-            this._stopWorkoutTimer();
+        if (target.id === 'btn-pause-workout') {
+            this.pauseWorkoutTimer();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return;
+        }
+
+        if (target.id === 'btn-resume-workout') {
+            this.unpauseWorkoutTimer();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return;
+        }
+
+        if (target.id === 'btn-cancel-workout') {
+            this.cancelWorkoutTimer();
             UI.renderDay(this._currentWeek, this._currentDay);
             return;
         }
@@ -1668,11 +1680,50 @@ const App = {
         return 'wt_timer_' + this._currentWeek + '_' + this._currentDay;
     },
 
+    _getPauseKey() {
+        return this._getTimerKey() + '_paused';
+    },
+
     startWorkoutTimer() {
         var key = this._getTimerKey();
         if (sessionStorage.getItem(key)) return; // already running
         sessionStorage.setItem(key, String(Date.now()));
+        sessionStorage.removeItem(this._getPauseKey());
         this._startTimerDisplay();
+    },
+
+    pauseWorkoutTimer() {
+        var pauseKey = this._getPauseKey();
+        if (sessionStorage.getItem(pauseKey)) return; // already paused
+        sessionStorage.setItem(pauseKey, String(Date.now()));
+        if (this._workoutTimerInterval) {
+            clearInterval(this._workoutTimerInterval);
+            this._workoutTimerInterval = null;
+        }
+    },
+
+    unpauseWorkoutTimer() {
+        var key = this._getTimerKey();
+        var pauseKey = this._getPauseKey();
+        var pausedAt = parseInt(sessionStorage.getItem(pauseKey));
+        if (!pausedAt) return;
+        var startTime = parseInt(sessionStorage.getItem(key));
+        if (startTime) {
+            // Shift start forward by pause duration so elapsed stays correct
+            var pauseDuration = Date.now() - pausedAt;
+            sessionStorage.setItem(key, String(startTime + pauseDuration));
+        }
+        sessionStorage.removeItem(pauseKey);
+        this._startTimerDisplay();
+    },
+
+    cancelWorkoutTimer() {
+        if (this._workoutTimerInterval) {
+            clearInterval(this._workoutTimerInterval);
+            this._workoutTimerInterval = null;
+        }
+        sessionStorage.removeItem(this._getTimerKey());
+        sessionStorage.removeItem(this._getPauseKey());
     },
 
     _startTimerDisplay() {
@@ -1699,22 +1750,39 @@ const App = {
 
     _stopWorkoutTimer() {
         var key = this._getTimerKey();
+        var pauseKey = this._getPauseKey();
         var startTime = parseInt(sessionStorage.getItem(key));
         if (this._workoutTimerInterval) {
             clearInterval(this._workoutTimerInterval);
             this._workoutTimerInterval = null;
         }
+        // Account for pause time
+        var pausedAt = parseInt(sessionStorage.getItem(pauseKey));
         sessionStorage.removeItem(key);
+        sessionStorage.removeItem(pauseKey);
         if (!startTime) return null;
-        return Math.floor((Date.now() - startTime) / 1000);
+        var end = pausedAt || Date.now();
+        return Math.floor((end - startTime) / 1000);
     },
 
     isWorkoutTimerRunning() {
         return !!sessionStorage.getItem(this._getTimerKey());
     },
 
+    isWorkoutTimerPaused() {
+        return this.isWorkoutTimerRunning() && !!sessionStorage.getItem(this._getPauseKey());
+    },
+
+    _getTimerElapsed() {
+        var startTime = parseInt(sessionStorage.getItem(this._getTimerKey()));
+        if (!startTime) return 0;
+        var pausedAt = parseInt(sessionStorage.getItem(this._getPauseKey()));
+        var end = pausedAt || Date.now();
+        return Math.floor((end - startTime) / 1000);
+    },
+
     resumeWorkoutTimer() {
-        if (this.isWorkoutTimerRunning()) {
+        if (this.isWorkoutTimerRunning() && !this.isWorkoutTimerPaused()) {
             this._startTimerDisplay();
         }
     }
