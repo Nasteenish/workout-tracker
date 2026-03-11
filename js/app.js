@@ -5,6 +5,7 @@ const App = {
     _currentDay: 1,
     _saveDebounced: null,
     _swipeDir: null,
+    _workoutTimerInterval: null,
 
     init() {
         // Multi-user migration (once)
@@ -1268,6 +1269,13 @@ const App = {
             return;
         }
 
+        // Start workout timer
+        if (target.id === 'btn-start-workout') {
+            this.startWorkoutTimer();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return;
+        }
+
         // Add set button
         if (target.matches('.add-set-btn') || target.closest('.add-set-btn')) {
             const btn = target.matches('.add-set-btn') ? target : target.closest('.add-set-btn');
@@ -1650,10 +1658,70 @@ const App = {
         btn.textContent = 'ЗАВЕРШИТЬ ТРЕНИРОВКУ';
         container.appendChild(btn);
         setTimeout(function() { btn.classList.add('visible'); }, 50);
+        var self = this;
         btn.addEventListener('click', function() {
             btn.remove();
-            Celebration.show();
+            var elapsed = self._stopWorkoutTimer();
+            Celebration.show(elapsed);
         });
+    },
+
+    // Workout session timer
+    _getTimerKey() {
+        return 'wt_timer_' + this._currentWeek + '_' + this._currentDay;
+    },
+
+    startWorkoutTimer() {
+        var key = this._getTimerKey();
+        if (sessionStorage.getItem(key)) return; // already running
+        sessionStorage.setItem(key, String(Date.now()));
+        this._startTimerDisplay();
+    },
+
+    _startTimerDisplay() {
+        var self = this;
+        if (this._workoutTimerInterval) clearInterval(this._workoutTimerInterval);
+        var key = this._getTimerKey();
+        var startTime = parseInt(sessionStorage.getItem(key));
+        if (!startTime) return;
+
+        // Show timer in header
+        this._updateTimerUI(startTime);
+        this._workoutTimerInterval = setInterval(function() {
+            self._updateTimerUI(startTime);
+        }, 1000);
+    },
+
+    _updateTimerUI(startTime) {
+        var el = document.getElementById('workout-timer');
+        if (!el) return;
+        var elapsed = Math.floor((Date.now() - startTime) / 1000);
+        var h = Math.floor(elapsed / 3600);
+        var m = Math.floor((elapsed % 3600) / 60);
+        var s = elapsed % 60;
+        el.textContent = (h > 0 ? h + ':' : '') + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    },
+
+    _stopWorkoutTimer() {
+        var key = this._getTimerKey();
+        var startTime = parseInt(sessionStorage.getItem(key));
+        if (this._workoutTimerInterval) {
+            clearInterval(this._workoutTimerInterval);
+            this._workoutTimerInterval = null;
+        }
+        sessionStorage.removeItem(key);
+        if (!startTime) return null;
+        return Math.floor((Date.now() - startTime) / 1000);
+    },
+
+    isWorkoutTimerRunning() {
+        return !!sessionStorage.getItem(this._getTimerKey());
+    },
+
+    resumeWorkoutTimer() {
+        if (this.isWorkoutTimerRunning()) {
+            this._startTimerDisplay();
+        }
     }
 };
 
@@ -1669,19 +1737,30 @@ const Celebration = {
         'Огонь!'
     ],
 
-    show() {
+    show(elapsedSec) {
         if (document.querySelector('.celebration-overlay')) return;
 
         if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 150]);
 
         var phrase = this._phrases[Math.floor(Math.random() * this._phrases.length)];
+        var timeText = '';
+        if (elapsedSec && elapsedSec > 0) {
+            var h = Math.floor(elapsedSec / 3600);
+            var m = Math.floor((elapsedSec % 3600) / 60);
+            if (h > 0) {
+                timeText = '<p class="celeb-time">' + h + ' ч ' + m + ' мин</p>';
+            } else {
+                timeText = '<p class="celeb-time">' + m + ' мин</p>';
+            }
+        }
 
         var overlay = document.createElement('div');
         overlay.className = 'celebration-overlay';
         overlay.innerHTML = '<div class="celebration-text">' +
             '<div class="celeb-icon-ring"><svg width="72" height="72" viewBox="0 0 72 72"><defs><linearGradient id="cg-done" x1="0" y1="0" x2="72" y2="72" gradientUnits="userSpaceOnUse"><stop stop-color="#C3FF3C"/><stop offset="1" stop-color="#5AA00A"/></linearGradient></defs><circle cx="36" cy="36" r="36" fill="url(#cg-done)"/><path d="M22 36l9 9 19-19" fill="none" stroke="#000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>' +
             '<p class="celeb-title">' + phrase + '</p>' +
-            '<p class="celeb-sub">Тренировка завершена на 100%</p>' +
+            '<p class="celeb-sub">Тренировка завершена</p>' +
+            timeText +
             '</div>';
         document.body.appendChild(overlay);
 

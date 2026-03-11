@@ -519,6 +519,13 @@ const UI = {
             `;
         }
 
+        const timerRunning = App.isWorkoutTimerRunning();
+        const { completed: doneCount, total: totalCount } = getCompletedSets(weekNum, dayNum);
+        const allDone = totalCount > 0 && doneCount >= totalCount;
+        const timerHtml = timerRunning
+            ? '<div class="workout-timer-row"><span class="workout-timer-icon">&#9201;</span><span id="workout-timer">00:00</span></div>'
+            : (!allDone && !isEmpty ? '<button class="btn-start-workout" id="btn-start-workout">НАЧАТЬ ТРЕНИРОВКУ</button>' : '');
+
         document.getElementById('app').innerHTML = `
             <div class="app-header">
                 <button class="back-btn" id="btn-back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -531,11 +538,13 @@ const UI = {
             <div class="app-content">
                 <div class="slide-container">
                     <div class="day-slide">
+                    ${timerHtml}
                     ${html}
                     </div>
                 </div>
             </div>
         `;
+        if (timerRunning) App.resumeWorkoutTimer();
     },
 
     _getExerciseDisplayName(ex) {
