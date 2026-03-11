@@ -351,8 +351,10 @@ const Builder = {
             techHtml += '<div class="editor-set-techs"><span class="editor-set-label">\u041F.' + (s + 1) + '</span>';
             var tt = [['DROP', 'DROP'], ['REST_PAUSE', 'R-P'], ['MP', 'MP']];
             for (var t = 0; t < tt.length; t++) {
-                var ac = techs.indexOf(tt[t][0]) >= 0 ? ' active' : '';
-                techHtml += '<button class="editor-tech-btn' + ac + '" data-item="' + itemIdx + '" data-sub="' + subIdx + '" data-set="' + s + '" data-tech="' + tt[t][0] + '">' + tt[t][1] + '</button>';
+                var count = techs.filter(function(x) { return x === tt[t][0]; }).length;
+                var ac = count > 0 ? ' active' : '';
+                var label = tt[t][1] + (count > 1 ? ' \u00D7' + count : '');
+                techHtml += '<button class="editor-tech-btn' + ac + '" data-item="' + itemIdx + '" data-sub="' + subIdx + '" data-set="' + s + '" data-tech="' + tt[t][0] + '">' + label + '</button>';
             }
             techHtml += '</div>';
         }
@@ -383,6 +385,22 @@ const Builder = {
             techHtml += '<button class="editor-prog-del" data-item="' + itemIdx + '" data-sub="' + subIdx + '" data-rule="' + p + '">\u2715</button></div>';
         }
         techHtml += '<button class="editor-prog-add" data-item="' + itemIdx + '" data-sub="' + subIdx + '">+ \u041F\u0440\u0430\u0432\u0438\u043B\u043E</button>';
+        // Inline progression form (hidden by default)
+        var maxSets = setsArr.length || 3;
+        var formId = 'prog-form-' + panelId;
+        techHtml += '<div class="editor-prog-form" id="' + formId + '" style="display:none" data-item="' + itemIdx + '" data-sub="' + subIdx + '">';
+        techHtml += '<div class="editor-prog-form-row"><span>\u0421 \u043D\u0435\u0434\u0435\u043B\u0438</span>';
+        techHtml += '<div class="prog-stepper"><button class="prog-step prog-week-minus">\u2212</button><span class="prog-week-val">3</span><button class="prog-step prog-week-plus">+</button></div></div>';
+        techHtml += '<div class="editor-prog-form-row"><span>\u041F\u043E\u0434\u0445\u043E\u0434</span>';
+        techHtml += '<div class="prog-stepper"><button class="prog-step prog-set-minus">\u2212</button><span class="prog-set-val">' + maxSets + '</span><button class="prog-step prog-set-plus" data-max="' + maxSets + '">+</button></div></div>';
+        techHtml += '<div class="editor-prog-form-row"><span>\u0422\u0435\u0445\u043D\u0438\u043A\u0430</span>';
+        techHtml += '<div class="prog-tech-select">';
+        techHtml += '<button class="editor-tech-btn prog-tech-opt" data-val="DROP">DROP</button>';
+        techHtml += '<button class="editor-tech-btn prog-tech-opt" data-val="REST_PAUSE">R-P</button>';
+        techHtml += '<button class="editor-tech-btn prog-tech-opt active" data-val="MP">MP</button>';
+        techHtml += '</div></div>';
+        techHtml += '<button class="btn-primary prog-confirm">\u0414\u041E\u0411\u0410\u0412\u0418\u0422\u042C</button>';
+        techHtml += '</div>';
 
         var hasTechs = setsArr.some(function(s) { return s.techniques && s.techniques.length > 0; });
         var delAttr = subIdx >= 0
@@ -469,6 +487,7 @@ const Builder = {
                 <button class="btn-primary editor-add-btn" id="editor-add-exercise">
                     <span style="font-size:20px;margin-right:6px">+</span> \u0414\u041E\u0411\u0410\u0412\u0418\u0422\u042C \u0423\u041F\u0420\u0410\u0416\u041D\u0415\u041D\u0418\u0415
                 </button>
+                <button class="btn-primary editor-save-btn" id="editor-save-btn">\u0421\u041E\u0425\u0420\u0410\u041D\u0418\u0422\u042C</button>
             </div>
         `;
 
@@ -508,17 +527,23 @@ const Builder = {
                     return;
                 }
 
-                // Technique toggle
+                // Technique counter (tap cycles 0→1→2→3→0)
                 if (target.matches('.editor-tech-btn')) {
                     var ex = self._getExercise(parseInt(target.dataset.item), parseInt(target.dataset.sub));
                     if (!ex) return;
                     var setIdx = parseInt(target.dataset.set);
                     if (!ex.sets || !ex.sets[setIdx]) return;
+                    var tech = target.dataset.tech;
                     var techs = ex.sets[setIdx].techniques || [];
-                    var pos = techs.indexOf(target.dataset.tech);
-                    if (pos >= 0) techs.splice(pos, 1); else techs.push(target.dataset.tech);
-                    ex.sets[setIdx].techniques = techs;
-                    target.classList.toggle('active');
+                    var count = techs.filter(function(x) { return x === tech; }).length;
+                    var next = count >= 3 ? 0 : count + 1;
+                    // Remove all of this tech, then add 'next' copies
+                    ex.sets[setIdx].techniques = techs.filter(function(x) { return x !== tech; });
+                    for (var n = 0; n < next; n++) ex.sets[setIdx].techniques.push(tech);
+                    // Update button
+                    var techLabels = { DROP: 'DROP', REST_PAUSE: 'R-P', MP: 'MP' };
+                    target.textContent = techLabels[tech] + (next > 1 ? ' \u00D7' + next : '');
+                    target.classList.toggle('active', next > 0);
                     var card = target.closest('.editor-exercise-card');
                     if (card) {
                         var gear = card.querySelector('.editor-toggle-tech');
@@ -557,9 +582,58 @@ const Builder = {
                     return;
                 }
 
-                // Progression: add rule
+                // Progression: toggle form
                 if (target.matches('.editor-prog-add')) {
-                    self._addProgressionRule(parseInt(target.dataset.item), parseInt(target.dataset.sub));
+                    var fid = 'prog-form-' + target.dataset.item + '-' + (parseInt(target.dataset.sub) >= 0 ? target.dataset.sub : 'x');
+                    var form = document.getElementById(fid);
+                    if (form) form.style.display = form.style.display === 'none' ? '' : 'none';
+                    return;
+                }
+
+                // Progression form: steppers
+                if (target.matches('.prog-week-minus')) {
+                    var val = target.parentElement.querySelector('.prog-week-val');
+                    val.textContent = Math.max(1, parseInt(val.textContent) - 1);
+                    return;
+                }
+                if (target.matches('.prog-week-plus')) {
+                    var val = target.parentElement.querySelector('.prog-week-val');
+                    val.textContent = Math.min(PROGRAM.totalWeeks, parseInt(val.textContent) + 1);
+                    return;
+                }
+                if (target.matches('.prog-set-minus')) {
+                    var val = target.parentElement.querySelector('.prog-set-val');
+                    val.textContent = Math.max(1, parseInt(val.textContent) - 1);
+                    return;
+                }
+                if (target.matches('.prog-set-plus')) {
+                    var val = target.parentElement.querySelector('.prog-set-val');
+                    var max = parseInt(target.dataset.max) || 10;
+                    val.textContent = Math.min(max, parseInt(val.textContent) + 1);
+                    return;
+                }
+
+                // Progression form: tech select
+                if (target.matches('.prog-tech-opt')) {
+                    target.parentElement.querySelectorAll('.prog-tech-opt').forEach(function(b) { b.classList.remove('active'); });
+                    target.classList.add('active');
+                    return;
+                }
+
+                // Progression form: confirm
+                if (target.matches('.prog-confirm')) {
+                    var form = target.closest('.editor-prog-form');
+                    if (!form) return;
+                    var ex = self._getExercise(parseInt(form.dataset.item), parseInt(form.dataset.sub));
+                    if (!ex) return;
+                    var startWeek = parseInt(form.querySelector('.prog-week-val').textContent);
+                    var setIdx = parseInt(form.querySelector('.prog-set-val').textContent) - 1;
+                    var techBtn = form.querySelector('.prog-tech-opt.active');
+                    var technique = techBtn ? techBtn.dataset.val : 'MP';
+                    if (!ex.progression) ex.progression = [];
+                    ex.progression.push({ startWeek: startWeek, setIdx: setIdx, technique: technique });
+                    self._autoSave();
+                    self._renderDayEditorHTML();
                     return;
                 }
 
@@ -595,6 +669,9 @@ const Builder = {
         var cBtn = document.getElementById('btn-make-choose');
         if (sBtn) sBtn.addEventListener('click', function() { self._mergeItems('superset'); });
         if (cBtn) cBtn.addEventListener('click', function() { self._mergeItems('choose_one'); });
+
+        var saveBtn = document.getElementById('editor-save-btn');
+        if (saveBtn) saveBtn.addEventListener('click', function() { self.saveDayEdits(); });
 
         this._initExerciseDragDrop();
     },
@@ -663,34 +740,6 @@ const Builder = {
         } else {
             arr.splice(subIdx, 1);
         }
-
-        this._autoSave();
-        this._renderDayEditorHTML();
-    },
-
-    _addProgressionRule(itemIdx, subIdx) {
-        var ex = this._getExercise(itemIdx, subIdx);
-        if (!ex) return;
-
-        var weekStr = prompt('\u0421 \u043A\u0430\u043A\u043E\u0439 \u043D\u0435\u0434\u0435\u043B\u0438? (1-' + PROGRAM.totalWeeks + ')', '3');
-        if (!weekStr) return;
-        var startWeek = parseInt(weekStr);
-        if (isNaN(startWeek) || startWeek < 1 || startWeek > PROGRAM.totalWeeks) return;
-
-        var numSets = ex.sets ? ex.sets.length : 3;
-        var setStr = prompt('\u041D\u0430 \u043A\u0430\u043A\u043E\u0439 \u043F\u043E\u0434\u0445\u043E\u0434? (1-' + numSets + ')', String(numSets));
-        if (!setStr) return;
-        var setIdx = parseInt(setStr) - 1;
-        if (isNaN(setIdx) || setIdx < 0 || setIdx >= numSets) return;
-
-        var techStr = prompt('\u0422\u0435\u0445\u043D\u0438\u043A\u0430?\n1. DROP\n2. R-P (Rest-pause)\n3. MP (Myoreps)', '3');
-        if (!techStr) return;
-        var techIdx = parseInt(techStr) - 1;
-        var techOptions = ['DROP', 'REST_PAUSE', 'MP'];
-        if (isNaN(techIdx) || techIdx < 0 || techIdx >= techOptions.length) return;
-
-        if (!ex.progression) ex.progression = [];
-        ex.progression.push({ startWeek: startWeek, setIdx: setIdx, technique: techOptions[techIdx] });
 
         this._autoSave();
         this._renderDayEditorHTML();

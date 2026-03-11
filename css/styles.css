@@ -3019,6 +3019,59 @@ body.modal-open {
     font-family: inherit;
 }
 
+/* Progression inline form */
+.editor-prog-form {
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: rgba(255,255,255,0.03);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255,255,255,0.06);
+}
+.editor-prog-form-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+.prog-stepper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.prog-step {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+}
+.prog-step:active { background: rgba(255,255,255,0.1); }
+.prog-week-val, .prog-set-val {
+    min-width: 24px;
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.prog-tech-select {
+    display: flex;
+    gap: 4px;
+}
+.editor-prog-form .prog-confirm {
+    width: 100%;
+    margin-top: 4px;
+    padding: 8px;
+    font-size: 12px;
+}
+
 /* ===== Workout Timer ===== */
 .btn-start-workout {
     display: block;
