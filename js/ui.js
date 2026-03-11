@@ -602,7 +602,6 @@ const UI = {
                         <span>${ex.reps} reps</span>
                         ${restText ? `<span>${restText}</span>` : ''}
                     </div>
-                    ${ex.noteRu || ex.note ? `<div class="exercise-note">${ex.noteRu || ex.note}</div>` : ''}
                 </div>
                 ${eqHtml}
                 ${setsHtml}
