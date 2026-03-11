@@ -5,7 +5,7 @@ const REGISTRATION_WEBHOOK = '';  // Set after creating Apps Script
 
 const Builder = {
     _config: null,      // wizard temp: {title, totalWeeks, numDays}
-    _editingDay: null,  // editor temp: {dayNum, exercises: [...]}
+    _editingDay: null,  // editor temp: {dayNum, items: [{type, exercise|exercises|options}]}
 
     // ===== Barbell SVG (shared) =====
     _barbellSVG: '<svg viewBox="0 0 40 40" fill="white" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="16" width="3" height="8" rx="1.5"/><rect x="6" y="11" width="4" height="18" rx="2"/><rect x="11" y="14" width="3" height="12" rx="1.5"/><rect x="14" y="18" width="12" height="4" rx="2"/><rect x="26" y="14" width="3" height="12" rx="1.5"/><rect x="30" y="11" width="4" height="18" rx="2"/><rect x="35" y="16" width="3" height="8" rx="1.5"/></svg>',
@@ -261,43 +261,148 @@ const Builder = {
         }
 
         var dayTemplate = PROGRAM.dayTemplates[dayNum];
-        var exercises = [];
+        var items = [];
 
-        // Extract exercises from all group types
         for (var i = 0; i < dayTemplate.exerciseGroups.length; i++) {
             var group = dayTemplate.exerciseGroups[i];
             if (group.type === 'single' || group.type === 'warmup') {
-                var e = group.exercise;
-                exercises.push({
-                    nameRu: e.nameRu || e.name, name: e.name || e.nameRu,
-                    reps: e.reps, rest: e.rest, note: e.note || '', noteRu: e.noteRu || '',
-                    sets: JSON.parse(JSON.stringify(e.sets || [])),
-                    _id: e.id
-                });
+                items.push({ type: 'single', exercise: this._extractExForEdit(group.exercise, dayNum) });
             } else if (group.type === 'superset' && group.exercises) {
+                var exs = [];
                 for (var j = 0; j < group.exercises.length; j++) {
                     var e = group.exercises[j];
-                    exercises.push({
-                        nameRu: e.nameRu || e.name, name: e.name || e.nameRu,
-                        reps: e.reps, rest: e.rest, note: e.note || '', noteRu: e.noteRu || '',
-                        sets: JSON.parse(JSON.stringify(e.sets || [])),
-                        _id: e.id
-                    });
+                    if (e._chooseOne && e.options) {
+                        var chosenId = Storage.getChoice(e.choiceKey);
+                        var chosen = chosenId ? e.options.find(function(o) { return o.id === chosenId; }) : null;
+                        exs.push(this._extractExForEdit(chosen || e.options[0], dayNum));
+                    } else {
+                        exs.push(this._extractExForEdit(e, dayNum));
+                    }
                 }
+                items.push({ type: 'superset', exercises: exs });
             } else if (group.type === 'choose_one' && group.options) {
-                // Show first option (or chosen one) as editable
-                var e = group.options[0];
-                exercises.push({
-                    nameRu: e.nameRu || e.name, name: e.name || e.nameRu,
-                    reps: e.reps, rest: e.rest, note: e.note || '', noteRu: e.noteRu || '',
-                    sets: JSON.parse(JSON.stringify(e.sets || [])),
-                    _id: e.id
-                });
+                var opts = [];
+                for (var j = 0; j < group.options.length; j++) {
+                    opts.push(this._extractExForEdit(group.options[j], dayNum));
+                }
+                items.push({ type: 'choose_one', choiceKey: group.choiceKey || ('c_' + Date.now()), options: opts });
             }
         }
 
-        this._editingDay = { dayNum: dayNum, exercises: exercises };
+        this._editingDay = { dayNum: dayNum, items: items };
         this._renderDayEditorHTML();
+    },
+
+    _extractExForEdit(e, dayNum) {
+        if (!e) return { nameRu: '?', name: '?', reps: '8-12', rest: 120, sets: [], _id: '', note: '', noteRu: '', progression: [] };
+        return {
+            nameRu: e.nameRu || e.name, name: e.name || e.nameRu,
+            reps: e.reps, rest: e.rest,
+            note: e.note || '', noteRu: e.noteRu || '',
+            sets: JSON.parse(JSON.stringify(e.sets || [])),
+            _id: e.id,
+            progression: e.progression ? JSON.parse(JSON.stringify(e.progression)) : this._extractProgression(dayNum, e.id)
+        };
+    },
+
+    _extractProgression(dayNum, exerciseId) {
+        if (!PROGRAM || !PROGRAM.weeklyOverrides || !exerciseId) return [];
+        var rules = [];
+        for (var w = 1; w <= PROGRAM.totalWeeks; w++) {
+            var dayOver = PROGRAM.weeklyOverrides[w] && PROGRAM.weeklyOverrides[w][dayNum];
+            if (!dayOver || !dayOver[exerciseId] || !dayOver[exerciseId].sets) continue;
+            var setsOver = dayOver[exerciseId].sets;
+            for (var s in setsOver) {
+                if (!setsOver[s].techniques) continue;
+                for (var t = 0; t < setsOver[s].techniques.length; t++) {
+                    var tech = setsOver[s].techniques[t];
+                    var exists = rules.some(function(r) { return r.setIdx === parseInt(s) && r.technique === tech; });
+                    if (!exists) rules.push({ startWeek: w, setIdx: parseInt(s), technique: tech });
+                }
+            }
+        }
+        return rules;
+    },
+
+    _isPremium() {
+        var user = Storage.getCurrentUser();
+        if (!user) return false;
+        var account = ACCOUNTS.find(function(a) { return a.id === user.id; });
+        return !!(account && account.premium);
+    },
+
+    _getExercise(itemIdx, subIdx) {
+        var item = this._editingDay && this._editingDay.items[itemIdx];
+        if (!item) return null;
+        if (item.type === 'single') return item.exercise;
+        if (item.type === 'superset') return item.exercises && item.exercises[subIdx];
+        if (item.type === 'choose_one') return item.options && item.options[subIdx];
+        return null;
+    },
+
+    _exerciseCardHTML(ex, itemIdx, subIdx, isPremium) {
+        var setsArr = ex.sets || [];
+        var panelId = itemIdx + '-' + (subIdx >= 0 ? subIdx : 'x');
+
+        // Technique toggles
+        var techHtml = '';
+        for (var s = 0; s < setsArr.length; s++) {
+            var techs = setsArr[s].techniques || [];
+            techHtml += '<div class="editor-set-techs"><span class="editor-set-label">\u041F.' + (s + 1) + '</span>';
+            var tt = [['DROP', 'DROP'], ['REST_PAUSE', 'R-P'], ['MP', 'MP']];
+            for (var t = 0; t < tt.length; t++) {
+                var ac = techs.indexOf(tt[t][0]) >= 0 ? ' active' : '';
+                techHtml += '<button class="editor-tech-btn' + ac + '" data-item="' + itemIdx + '" data-sub="' + subIdx + '" data-set="' + s + '" data-tech="' + tt[t][0] + '">' + tt[t][1] + '</button>';
+            }
+            techHtml += '</div>';
+        }
+
+        // Premium: type/RPE per set
+        if (isPremium && setsArr.length > 0) {
+            techHtml += '<div class="editor-section-divider">\u0422\u0418\u041F \u0418 RPE</div>';
+            for (var s = 0; s < setsArr.length; s++) {
+                var st = setsArr[s];
+                techHtml += '<div class="editor-set-techs"><span class="editor-set-label">\u041F.' + (s + 1) + '</span>';
+                var types = ['S', 'SH', 'H'];
+                for (var ti = 0; ti < types.length; ti++) {
+                    var ac = st.type === types[ti] ? ' active' : '';
+                    techHtml += '<button class="editor-type-btn' + ac + '" data-item="' + itemIdx + '" data-sub="' + subIdx + '" data-set="' + s + '" data-type="' + types[ti] + '">' + types[ti] + '</button>';
+                }
+                techHtml += '<input class="editor-rpe-input" type="text" placeholder="RPE" value="' + (st.rpe || '') + '" data-item="' + itemIdx + '" data-sub="' + subIdx + '" data-set="' + s + '">';
+                techHtml += '</div>';
+            }
+        }
+
+        // Progression rules
+        var prog = ex.progression || [];
+        techHtml += '<div class="editor-section-divider">\u041F\u0420\u041E\u0413\u0420\u0415\u0421\u0421\u0418\u042F</div>';
+        for (var p = 0; p < prog.length; p++) {
+            var r = prog[p];
+            var techLabel = r.technique === 'REST_PAUSE' ? 'R-P' : r.technique;
+            techHtml += '<div class="editor-prog-rule"><span>\u0421 \u043D\u0435\u0434. ' + r.startWeek + ' \u2192 \u041F.' + (r.setIdx + 1) + ' + ' + techLabel + '</span>';
+            techHtml += '<button class="editor-prog-del" data-item="' + itemIdx + '" data-sub="' + subIdx + '" data-rule="' + p + '">\u2715</button></div>';
+        }
+        techHtml += '<button class="editor-prog-add" data-item="' + itemIdx + '" data-sub="' + subIdx + '">+ \u041F\u0440\u0430\u0432\u0438\u043B\u043E</button>';
+
+        var hasTechs = setsArr.some(function(s) { return s.techniques && s.techniques.length > 0; });
+        var delAttr = subIdx >= 0
+            ? 'data-del-sub-item="' + itemIdx + '" data-del-sub="' + subIdx + '"'
+            : 'data-idx="' + itemIdx + '"';
+        var delClass = subIdx >= 0 ? 'editor-del-sub' : 'editor-delete';
+
+        return '<div class="editor-exercise-card" data-sub-idx="' + subIdx + '">'
+            + '<div class="editor-ex-main">'
+            + '<div class="editor-ex-info">'
+            + '<div class="editor-ex-name">' + (ex.nameRu || ex.name) + '</div>'
+            + '<div class="editor-ex-meta">' + (setsArr.length || 3) + ' \u00D7 ' + ex.reps
+            + (ex.rest && ex.rest !== 120 ? ' \u00B7 ' + Math.floor(ex.rest / 60) + ':' + String(ex.rest % 60).padStart(2, '0') : '')
+            + '</div></div>'
+            + '<div class="editor-ex-actions">'
+            + '<button class="editor-action-btn editor-toggle-tech' + (hasTechs ? ' has-techs' : '') + '" data-item="' + itemIdx + '" data-sub="' + subIdx + '">\u2699</button>'
+            + '<button class="editor-action-btn ' + delClass + '" ' + delAttr + '>\u2715</button>'
+            + '</div></div>'
+            + '<div class="editor-tech-panel" id="tech-panel-' + panelId + '" style="display:none">' + techHtml + '</div>'
+            + '</div>';
     },
 
     _renderDayEditorHTML() {
@@ -306,24 +411,43 @@ const Builder = {
 
         var dayTitle = PROGRAM.dayTemplates[ed.dayNum].titleRu || PROGRAM.dayTemplates[ed.dayNum].title;
         var listHtml = '';
+        var isPremium = this._isPremium();
 
-        for (var i = 0; i < ed.exercises.length; i++) {
-            var ex = ed.exercises[i];
-            listHtml += `
-                <div class="editor-exercise-card" data-ex-idx="${i}">
-                    <div class="editor-ex-info">
-                        <div class="editor-ex-name">${ex.nameRu || ex.name}</div>
-                        <div class="editor-ex-meta">${ex.sets ? ex.sets.length : 3} × ${ex.reps}</div>
-                    </div>
-                    <div class="editor-ex-actions">
-                        <button class="editor-action-btn editor-delete" data-idx="${i}">✕</button>
-                    </div>
-                </div>
-            `;
+        for (var i = 0; i < ed.items.length; i++) {
+            var item = ed.items[i];
+            listHtml += '<div class="editor-item' + (item.type !== 'single' ? ' editor-item-group' : '') + '" data-item-idx="' + i + '" data-orig-idx="' + i + '">';
+
+            // Checkbox for grouping
+            listHtml += '<label class="editor-item-check"><input type="checkbox" class="editor-check" data-check-idx="' + i + '"><span class="editor-check-mark"></span></label>';
+
+            if (item.type === 'single') {
+                listHtml += this._exerciseCardHTML(item.exercise, i, -1, isPremium);
+            } else if (item.type === 'superset') {
+                listHtml += '<div class="editor-group-wrapper editor-superset-wrapper">';
+                listHtml += '<div class="editor-group-header"><span class="editor-group-label superset-label">\u0421\u0423\u041F\u0415\u0420\u0421\u0415\u0422</span>';
+                listHtml += '<div class="editor-group-actions"><button class="editor-split-btn" data-split-idx="' + i + '">\u0420\u0430\u0437\u0434\u0435\u043B\u0438\u0442\u044C</button>';
+                listHtml += '<button class="editor-action-btn editor-delete" data-idx="' + i + '">\u2715</button></div></div>';
+                for (var j = 0; j < item.exercises.length; j++) {
+                    listHtml += this._exerciseCardHTML(item.exercises[j], i, j, isPremium);
+                }
+                listHtml += '</div>';
+            } else if (item.type === 'choose_one') {
+                listHtml += '<div class="editor-group-wrapper editor-choose-wrapper">';
+                listHtml += '<div class="editor-group-header"><span class="editor-group-label choose-label">\u0412\u042B\u0411\u041E\u0420</span>';
+                listHtml += '<div class="editor-group-actions"><button class="editor-split-btn" data-split-idx="' + i + '">\u0420\u0430\u0437\u0434\u0435\u043B\u0438\u0442\u044C</button>';
+                listHtml += '<button class="editor-action-btn editor-delete" data-idx="' + i + '">\u2715</button></div></div>';
+                for (var j = 0; j < item.options.length; j++) {
+                    if (j > 0) listHtml += '<div class="editor-or-divider">\u0418\u041B\u0418</div>';
+                    listHtml += this._exerciseCardHTML(item.options[j], i, j, isPremium);
+                }
+                listHtml += '</div>';
+            }
+
+            listHtml += '</div>';
         }
 
-        if (ed.exercises.length === 0) {
-            listHtml = `<div class="empty-day-hint">Нет упражнений. Добавьте первое!</div>`;
+        if (ed.items.length === 0) {
+            listHtml = '<div class="empty-day-hint">\u041D\u0435\u0442 \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u0439. \u0414\u043E\u0431\u0430\u0432\u044C\u0442\u0435 \u043F\u0435\u0440\u0432\u043E\u0435!</div>';
         }
 
         document.getElementById('app').innerHTML = `
@@ -332,32 +456,32 @@ const Builder = {
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
                 <div class="header-title">
-                    <h1>Редактирование</h1>
+                    <h1>\u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435</h1>
                     <div class="header-subtitle" id="editor-day-title" style="cursor:pointer">${dayTitle} <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;opacity:0.4"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
                 </div>
             </div>
             <div class="app-content">
                 <div class="editor-exercise-list" id="editor-exercises">${listHtml}</div>
+                <div class="editor-group-bar" id="editor-group-bar" style="display:none">
+                    <button class="editor-group-action" id="btn-make-superset">\u0421\u0423\u041F\u0415\u0420\u0421\u0415\u0422</button>
+                    <button class="editor-group-action" id="btn-make-choose">\u0418\u041B\u0418 (\u0412\u042B\u0411\u041E\u0420)</button>
+                </div>
                 <button class="btn-primary editor-add-btn" id="editor-add-exercise">
-                    <span style="font-size:20px;margin-right:6px">+</span> ДОБАВИТЬ УПРАЖНЕНИЕ
+                    <span style="font-size:20px;margin-right:6px">+</span> \u0414\u041E\u0411\u0410\u0412\u0418\u0422\u042C \u0423\u041F\u0420\u0410\u0416\u041D\u0415\u041D\u0418\u0415
                 </button>
             </div>
         `;
 
-        var backBtn = document.getElementById('btn-back-editor');
-        if (backBtn) {
-            backBtn.addEventListener('click', function() {
-                App._handleEditorBack();
-            });
-        }
-
+        // Event handlers
         var self = this;
+        var backBtn = document.getElementById('btn-back-editor');
+        if (backBtn) backBtn.addEventListener('click', function() { App._handleEditorBack(); });
+
         var titleEl = document.getElementById('editor-day-title');
         if (titleEl) {
             titleEl.addEventListener('click', function() {
                 var tmpl = PROGRAM.dayTemplates[ed.dayNum];
-                var current = tmpl.titleRu || tmpl.title || '';
-                var newName = prompt('Название дня:', current);
+                var newName = prompt('\u041D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u0434\u043D\u044F:', tmpl.titleRu || tmpl.title || '');
                 if (newName !== null && newName.trim()) {
                     tmpl.titleRu = newName.trim();
                     tmpl.title = newName.trim();
@@ -367,7 +491,209 @@ const Builder = {
             });
         }
 
+        // Exercise list click delegation
+        var exList = document.getElementById('editor-exercises');
+        if (exList) {
+            exList.addEventListener('click', function(e) {
+                var target = e.target;
+
+                // Checkbox
+                if (target.matches('.editor-check')) { self._updateGroupBar(); return; }
+
+                // Toggle tech panel
+                if (target.matches('.editor-toggle-tech')) {
+                    var id = target.dataset.item + '-' + (parseInt(target.dataset.sub) >= 0 ? target.dataset.sub : 'x');
+                    var panel = document.getElementById('tech-panel-' + id);
+                    if (panel) panel.style.display = panel.style.display === 'none' ? '' : 'none';
+                    return;
+                }
+
+                // Technique toggle
+                if (target.matches('.editor-tech-btn')) {
+                    var ex = self._getExercise(parseInt(target.dataset.item), parseInt(target.dataset.sub));
+                    if (!ex) return;
+                    var setIdx = parseInt(target.dataset.set);
+                    if (!ex.sets || !ex.sets[setIdx]) return;
+                    var techs = ex.sets[setIdx].techniques || [];
+                    var pos = techs.indexOf(target.dataset.tech);
+                    if (pos >= 0) techs.splice(pos, 1); else techs.push(target.dataset.tech);
+                    ex.sets[setIdx].techniques = techs;
+                    target.classList.toggle('active');
+                    var card = target.closest('.editor-exercise-card');
+                    if (card) {
+                        var gear = card.querySelector('.editor-toggle-tech');
+                        var anyTech = ex.sets.some(function(s) { return s.techniques && s.techniques.length > 0; });
+                        if (gear) gear.classList.toggle('has-techs', anyTech);
+                    }
+                    self._autoSave();
+                    return;
+                }
+
+                // Type toggle (premium)
+                if (target.matches('.editor-type-btn')) {
+                    var ex = self._getExercise(parseInt(target.dataset.item), parseInt(target.dataset.sub));
+                    if (!ex) return;
+                    var setIdx = parseInt(target.dataset.set);
+                    if (ex.sets && ex.sets[setIdx]) {
+                        ex.sets[setIdx].type = target.dataset.type;
+                        var row = target.closest('.editor-set-techs');
+                        if (row) row.querySelectorAll('.editor-type-btn').forEach(function(b) { b.classList.remove('active'); });
+                        target.classList.add('active');
+                        self._autoSave();
+                    }
+                    return;
+                }
+
+                // Delete sub-exercise from group
+                if (target.matches('.editor-del-sub') || target.closest('.editor-del-sub')) {
+                    var btn = target.matches('.editor-del-sub') ? target : target.closest('.editor-del-sub');
+                    self._deleteSubExercise(parseInt(btn.dataset.delSubItem), parseInt(btn.dataset.delSub));
+                    return;
+                }
+
+                // Split group
+                if (target.matches('.editor-split-btn')) {
+                    self._splitItem(parseInt(target.dataset.splitIdx));
+                    return;
+                }
+
+                // Progression: add rule
+                if (target.matches('.editor-prog-add')) {
+                    self._addProgressionRule(parseInt(target.dataset.item), parseInt(target.dataset.sub));
+                    return;
+                }
+
+                // Progression: delete rule
+                if (target.matches('.editor-prog-del')) {
+                    var ex = self._getExercise(parseInt(target.dataset.item), parseInt(target.dataset.sub));
+                    if (ex && ex.progression) {
+                        ex.progression.splice(parseInt(target.dataset.rule), 1);
+                        self._autoSave();
+                        self._renderDayEditorHTML();
+                    }
+                    return;
+                }
+            });
+
+            // RPE input changes
+            exList.addEventListener('input', function(e) {
+                if (e.target.matches('.editor-rpe-input')) {
+                    var ex = self._getExercise(parseInt(e.target.dataset.item), parseInt(e.target.dataset.sub));
+                    if (ex && ex.sets) {
+                        var setIdx = parseInt(e.target.dataset.set);
+                        if (ex.sets[setIdx]) {
+                            ex.sets[setIdx].rpe = e.target.value.trim();
+                            self._autoSave();
+                        }
+                    }
+                }
+            });
+        }
+
+        // Group bar buttons
+        var sBtn = document.getElementById('btn-make-superset');
+        var cBtn = document.getElementById('btn-make-choose');
+        if (sBtn) sBtn.addEventListener('click', function() { self._mergeItems('superset'); });
+        if (cBtn) cBtn.addEventListener('click', function() { self._mergeItems('choose_one'); });
+
         this._initExerciseDragDrop();
+    },
+
+    _updateGroupBar() {
+        var checked = document.querySelectorAll('.editor-check:checked').length;
+        var bar = document.getElementById('editor-group-bar');
+        if (bar) bar.style.display = checked >= 2 ? '' : 'none';
+    },
+
+    _mergeItems(type) {
+        var checkboxes = document.querySelectorAll('.editor-check:checked');
+        var indices = [];
+        checkboxes.forEach(function(cb) { indices.push(parseInt(cb.dataset.checkIdx)); });
+        if (indices.length < 2) return;
+
+        indices.sort(function(a, b) { return a - b; });
+
+        var exercises = [];
+        for (var i = 0; i < indices.length; i++) {
+            var item = this._editingDay.items[indices[i]];
+            if (item.type === 'single') exercises.push(item.exercise);
+            else if (item.type === 'superset') exercises = exercises.concat(item.exercises);
+            else if (item.type === 'choose_one') exercises = exercises.concat(item.options);
+        }
+
+        var newItem;
+        if (type === 'superset') {
+            newItem = { type: 'superset', exercises: exercises };
+        } else {
+            newItem = { type: 'choose_one', choiceKey: 'choice_' + Date.now(), options: exercises };
+        }
+
+        this._editingDay.items[indices[0]] = newItem;
+        for (var i = indices.length - 1; i >= 1; i--) {
+            this._editingDay.items.splice(indices[i], 1);
+        }
+
+        this._autoSave();
+        this._renderDayEditorHTML();
+    },
+
+    _splitItem(idx) {
+        var item = this._editingDay.items[idx];
+        if (!item) return;
+        var arr = item.type === 'superset' ? item.exercises : (item.type === 'choose_one' ? item.options : null);
+        if (!arr) return;
+
+        var singles = arr.map(function(ex) { return { type: 'single', exercise: ex }; });
+        var args = [idx, 1].concat(singles);
+        Array.prototype.splice.apply(this._editingDay.items, args);
+
+        this._autoSave();
+        this._renderDayEditorHTML();
+    },
+
+    _deleteSubExercise(itemIdx, subIdx) {
+        var item = this._editingDay.items[itemIdx];
+        if (!item) return;
+        var arr = item.type === 'superset' ? item.exercises : (item.type === 'choose_one' ? item.options : null);
+        if (!arr) return;
+
+        if (arr.length <= 2) {
+            arr.splice(subIdx, 1);
+            this._editingDay.items[itemIdx] = { type: 'single', exercise: arr[0] };
+        } else {
+            arr.splice(subIdx, 1);
+        }
+
+        this._autoSave();
+        this._renderDayEditorHTML();
+    },
+
+    _addProgressionRule(itemIdx, subIdx) {
+        var ex = this._getExercise(itemIdx, subIdx);
+        if (!ex) return;
+
+        var weekStr = prompt('\u0421 \u043A\u0430\u043A\u043E\u0439 \u043D\u0435\u0434\u0435\u043B\u0438? (1-' + PROGRAM.totalWeeks + ')', '3');
+        if (!weekStr) return;
+        var startWeek = parseInt(weekStr);
+        if (isNaN(startWeek) || startWeek < 1 || startWeek > PROGRAM.totalWeeks) return;
+
+        var numSets = ex.sets ? ex.sets.length : 3;
+        var setStr = prompt('\u041D\u0430 \u043A\u0430\u043A\u043E\u0439 \u043F\u043E\u0434\u0445\u043E\u0434? (1-' + numSets + ')', String(numSets));
+        if (!setStr) return;
+        var setIdx = parseInt(setStr) - 1;
+        if (isNaN(setIdx) || setIdx < 0 || setIdx >= numSets) return;
+
+        var techStr = prompt('\u0422\u0435\u0445\u043D\u0438\u043A\u0430?\n1. DROP\n2. R-P (Rest-pause)\n3. MP (Myoreps)', '3');
+        if (!techStr) return;
+        var techIdx = parseInt(techStr) - 1;
+        var techOptions = ['DROP', 'REST_PAUSE', 'MP'];
+        if (isNaN(techIdx) || techIdx < 0 || techIdx >= techOptions.length) return;
+
+        if (!ex.progression) ex.progression = [];
+        ex.progression.push({ startWeek: startWeek, setIdx: setIdx, technique: techOptions[techIdx] });
+
+        this._autoSave();
+        this._renderDayEditorHTML();
     },
 
     _initExerciseDragDrop() {
@@ -381,7 +707,7 @@ const Builder = {
 
         function cacheRects() {
             cachedRects = [];
-            var els = container.querySelectorAll('[data-ex-idx]');
+            var els = container.querySelectorAll('[data-item-idx]');
             for (var i = 0; i < els.length; i++) {
                 var r = els[i].getBoundingClientRect();
                 cachedRects.push({ el: els[i], top: r.top, bottom: r.bottom, midY: r.top + r.height / 2, height: r.height });
@@ -407,8 +733,8 @@ const Builder = {
         }
 
         container.addEventListener('touchstart', function(e) {
-            var card = e.target.closest('[data-ex-idx]');
-            if (!card || e.target.closest('.editor-action-btn')) return;
+            var card = e.target.closest('[data-item-idx]');
+            if (!card || e.target.closest('.editor-action-btn') || e.target.closest('.editor-item-check') || e.target.closest('.editor-split-btn') || e.target.closest('.editor-tech-panel')) return;
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
             dragEl = card;
@@ -459,8 +785,8 @@ const Builder = {
                     } else {
                         container.insertBefore(dragEl, cr.el.nextSibling);
                     }
-                    var allCards = container.querySelectorAll('[data-ex-idx]');
-                    for (var j = 0; j < allCards.length; j++) allCards[j].dataset.exIdx = j;
+                    var allCards = container.querySelectorAll('[data-item-idx]');
+                    for (var j = 0; j < allCards.length; j++) allCards[j].dataset.itemIdx = j;
                     swapCooldown = true;
                     cacheRects();
                     if (navigator.vibrate) navigator.vibrate(15);
@@ -473,24 +799,20 @@ const Builder = {
         container.addEventListener('touchend', function() {
             if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
             if (!dragging) return;
-            // Read new order from DOM using original indices stored on delete buttons
-            var newExercises = [];
-            var allCards = container.querySelectorAll('[data-ex-idx]');
+            var newItems = [];
+            var allCards = container.querySelectorAll('[data-item-idx]');
             for (var i = 0; i < allCards.length; i++) {
-                var delBtn = allCards[i].querySelector('.editor-delete');
-                var origIdx = delBtn ? parseInt(delBtn.dataset.idx) : i;
-                if (self._editingDay && self._editingDay.exercises[origIdx]) {
-                    newExercises.push(self._editingDay.exercises[origIdx]);
+                var origIdx = parseInt(allCards[i].dataset.origIdx);
+                if (self._editingDay && self._editingDay.items[origIdx]) {
+                    newItems.push(self._editingDay.items[origIdx]);
                 }
             }
-            if (self._editingDay && newExercises.length === self._editingDay.exercises.length) {
-                self._editingDay.exercises = newExercises;
+            if (self._editingDay && newItems.length === self._editingDay.items.length) {
+                self._editingDay.items = newItems;
                 self._autoSave();
-                // Update data attributes to match new order (no re-render needed)
                 for (var i = 0; i < allCards.length; i++) {
-                    allCards[i].dataset.exIdx = i;
-                    var btn = allCards[i].querySelector('.editor-delete');
-                    if (btn) btn.dataset.idx = i;
+                    allCards[i].dataset.itemIdx = i;
+                    allCards[i].dataset.origIdx = i;
                 }
             }
             cleanup();
@@ -503,17 +825,17 @@ const Builder = {
         var ed = this._editingDay;
         if (!ed) return;
         var newIdx = idx + dir;
-        if (newIdx < 0 || newIdx >= ed.exercises.length) return;
-        var tmp = ed.exercises[idx];
-        ed.exercises[idx] = ed.exercises[newIdx];
-        ed.exercises[newIdx] = tmp;
+        if (newIdx < 0 || newIdx >= ed.items.length) return;
+        var tmp = ed.items[idx];
+        ed.items[idx] = ed.items[newIdx];
+        ed.items[newIdx] = tmp;
         this._renderDayEditorHTML();
     },
 
     deleteExercise(idx) {
         var ed = this._editingDay;
         if (!ed) return;
-        ed.exercises.splice(idx, 1);
+        ed.items.splice(idx, 1);
         this._autoSave();
         this._renderDayEditorHTML();
     },
@@ -523,31 +845,92 @@ const Builder = {
         if (!ed || !PROGRAM) return;
 
         var groups = [];
-        for (var i = 0; i < ed.exercises.length; i++) {
-            var ex = ed.exercises[i];
-            // Use stored sets or create defaults
-            var sets = ex.sets && ex.sets.length > 0
-                ? ex.sets
-                : [{ type: 'H', rpe: '8', techniques: [] }, { type: 'H', rpe: '8', techniques: [] }, { type: 'H', rpe: '8', techniques: [] }];
-            // Preserve original ID or generate new
-            var id = ex._id || ('D' + ed.dayNum + 'E' + (i + 1));
-            groups.push({
-                type: 'single',
-                exercise: {
-                    id: id,
-                    name: ex.name || ex.nameRu,
-                    nameRu: ex.nameRu || ex.name,
-                    reps: ex.reps,
-                    rest: ex.rest,
-                    sets: sets,
-                    note: ex.note || '',
-                    noteRu: ex.noteRu || ''
+        for (var i = 0; i < ed.items.length; i++) {
+            var item = ed.items[i];
+            if (item.type === 'single') {
+                groups.push({ type: 'single', exercise: this._serializeExercise(item.exercise, ed.dayNum, i) });
+            } else if (item.type === 'superset') {
+                var exs = [];
+                for (var j = 0; j < item.exercises.length; j++) {
+                    exs.push(this._serializeExercise(item.exercises[j], ed.dayNum, i));
                 }
-            });
+                groups.push({ type: 'superset', exercises: exs });
+            } else if (item.type === 'choose_one') {
+                var opts = [];
+                for (var j = 0; j < item.options.length; j++) {
+                    opts.push(this._serializeExercise(item.options[j], ed.dayNum, i));
+                }
+                groups.push({ type: 'choose_one', choiceKey: item.choiceKey, options: opts });
+            }
         }
 
         PROGRAM.dayTemplates[ed.dayNum].exerciseGroups = groups;
+        this._syncProgressionToOverrides(ed.dayNum);
         Storage.saveProgram(PROGRAM, false);
+    },
+
+    _serializeExercise(ex, dayNum, itemIdx) {
+        var sets = ex.sets && ex.sets.length > 0
+            ? ex.sets
+            : [{ type: 'H', rpe: '8', techniques: [] }, { type: 'H', rpe: '8', techniques: [] }, { type: 'H', rpe: '8', techniques: [] }];
+        var id = ex._id || ('D' + dayNum + 'E' + (itemIdx + 1));
+        var result = {
+            id: id,
+            name: ex.name || ex.nameRu,
+            nameRu: ex.nameRu || ex.name,
+            reps: ex.reps,
+            rest: ex.rest,
+            sets: sets,
+            note: ex.note || '',
+            noteRu: ex.noteRu || ''
+        };
+        if (ex.progression && ex.progression.length > 0) result.progression = ex.progression;
+        return result;
+    },
+
+    _syncProgressionToOverrides(dayNum) {
+        if (!PROGRAM.weeklyOverrides) PROGRAM.weeklyOverrides = {};
+
+        var template = PROGRAM.dayTemplates[dayNum];
+        var allRules = [];
+
+        for (var g = 0; g < template.exerciseGroups.length; g++) {
+            var group = template.exerciseGroups[g];
+            var exercises = getGroupExercises(group);
+            for (var e = 0; e < exercises.length; e++) {
+                if (exercises[e].progression && exercises[e].progression.length > 0) {
+                    for (var r = 0; r < exercises[e].progression.length; r++) {
+                        allRules.push({ exerciseId: exercises[e].id, rule: exercises[e].progression[r] });
+                    }
+                }
+            }
+        }
+
+        // If no rules at all, don't touch existing overrides
+        if (allRules.length === 0) return;
+
+        // Clear this day's overrides across all weeks
+        for (var w = 1; w <= PROGRAM.totalWeeks; w++) {
+            if (PROGRAM.weeklyOverrides[w]) {
+                delete PROGRAM.weeklyOverrides[w][dayNum];
+            }
+        }
+
+        // Generate overrides from rules
+        for (var i = 0; i < allRules.length; i++) {
+            var exId = allRules[i].exerciseId;
+            var rule = allRules[i].rule;
+            for (var w = rule.startWeek; w <= PROGRAM.totalWeeks; w++) {
+                if (!PROGRAM.weeklyOverrides[w]) PROGRAM.weeklyOverrides[w] = {};
+                if (!PROGRAM.weeklyOverrides[w][dayNum]) PROGRAM.weeklyOverrides[w][dayNum] = {};
+                if (!PROGRAM.weeklyOverrides[w][dayNum][exId]) PROGRAM.weeklyOverrides[w][dayNum][exId] = { sets: {} };
+                if (!PROGRAM.weeklyOverrides[w][dayNum][exId].sets[rule.setIdx]) {
+                    PROGRAM.weeklyOverrides[w][dayNum][exId].sets[rule.setIdx] = { techniques: [] };
+                }
+                var techs = PROGRAM.weeklyOverrides[w][dayNum][exId].sets[rule.setIdx].techniques;
+                if (techs.indexOf(rule.technique) === -1) techs.push(rule.technique);
+            }
+        }
     },
 
     saveDayEdits() {
@@ -578,7 +961,7 @@ const Builder = {
         overlay.className = 'modal-overlay';
         overlay.id = 'exercise-picker-modal';
 
-        var catsHtml = '<button class="picker-cat active" data-cat="all">Все</button>';
+        var catsHtml = '<button class="picker-cat active" data-cat="all">\u0412\u0441\u0435</button>';
         for (var i = 0; i < EXERCISE_CATEGORIES.length; i++) {
             var cat = EXERCISE_CATEGORIES[i];
             catsHtml += `<button class="picker-cat" data-cat="${cat.id}">${cat.nameRu}</button>`;
@@ -589,17 +972,17 @@ const Builder = {
         overlay.innerHTML = `
             <div class="picker-modal">
                 <div class="picker-header">
-                    <h3>Добавить упражнение</h3>
-                    <button class="picker-close-btn" id="picker-close">✕</button>
+                    <h3>\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u0435</h3>
+                    <button class="picker-close-btn" id="picker-close">\u2715</button>
                 </div>
                 <div class="picker-search">
-                    <input type="text" id="picker-search-input" placeholder="Поиск упражнения..." autocomplete="off">
+                    <input type="text" id="picker-search-input" placeholder="\u041F\u043E\u0438\u0441\u043A \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u044F..." autocomplete="off">
                 </div>
                 <div class="picker-categories" id="picker-categories">${catsHtml}</div>
                 <div class="picker-list" id="picker-list">${listHtml}</div>
                 <div class="picker-custom">
-                    <input type="text" id="picker-custom-name" class="form-input" placeholder="Своё упражнение..." autocomplete="off">
-                    <button class="btn-primary picker-custom-btn" id="picker-add-custom">ДОБАВИТЬ</button>
+                    <input type="text" id="picker-custom-name" class="form-input" placeholder="\u0421\u0432\u043E\u0451 \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u0435..." autocomplete="off">
+                    <button class="btn-primary picker-custom-btn" id="picker-add-custom">\u0414\u041E\u0411\u0410\u0412\u0418\u0422\u042C</button>
                 </div>
             </div>
         `;
@@ -656,7 +1039,7 @@ const Builder = {
         }
 
         if (filtered.length === 0) {
-            return '<div class="picker-empty">Ничего не найдено</div>';
+            return '<div class="picker-empty">\u041D\u0438\u0447\u0435\u0433\u043E \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E</div>';
         }
 
         var html = '';
@@ -740,21 +1123,21 @@ const Builder = {
                 </div>
 
                 <div class="config-field">
-                    <label>ПОДХОДЫ</label>
+                    <label>\u041F\u041E\u0414\u0425\u041E\u0414\u042B</label>
                     <div class="config-stepper">
-                        <button class="config-step" id="cfg-sets-minus">−</button>
+                        <button class="config-step" id="cfg-sets-minus">\u2212</button>
                         <span class="config-val" id="cfg-sets-val">3</span>
                         <button class="config-step" id="cfg-sets-plus">+</button>
                     </div>
                 </div>
 
                 <div class="config-field">
-                    <label>ПОВТОРЕНИЯ</label>
+                    <label>\u041F\u041E\u0412\u0422\u041E\u0420\u0415\u041D\u0418\u042F</label>
                     <input type="text" id="cfg-reps" class="form-input" value="8-12" placeholder="8-12" style="text-align:center">
                 </div>
 
-                <button class="btn-primary" id="cfg-confirm" style="margin-top:var(--spacing-md)">ДОБАВИТЬ</button>
-                <button class="btn-link" id="cfg-cancel">Отмена</button>
+                <button class="btn-primary" id="cfg-confirm" style="margin-top:var(--spacing-md)">\u0414\u041E\u0411\u0410\u0412\u0418\u0422\u042C</button>
+                <button class="btn-link" id="cfg-cancel">\u041E\u0442\u043C\u0435\u043D\u0430</button>
             </div>
         `;
 
@@ -803,14 +1186,17 @@ const Builder = {
         for (var s = 0; s < numSets; s++) {
             setsArr.push({ type: 'H', rpe: '8', techniques: [] });
         }
-        this._editingDay.exercises.push({
-            nameRu: cfg.nameRu,
-            name: cfg.name,
-            sets: setsArr,
-            reps: (repsInput.value || '').trim() || '8-12',
-            rest: 120,
-            note: '',
-            noteRu: ''
+        this._editingDay.items.push({
+            type: 'single',
+            exercise: {
+                nameRu: cfg.nameRu,
+                name: cfg.name,
+                sets: setsArr,
+                reps: (repsInput.value || '').trim() || '8-12',
+                rest: 120,
+                note: '',
+                noteRu: ''
+            }
         });
 
         this._closeExerciseConfig();

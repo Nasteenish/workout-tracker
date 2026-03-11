@@ -2397,17 +2397,20 @@ body.modal-open {
 }
 .editor-exercise-card {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
     background: var(--bg-card);
     border: var(--glass-border);
     border-radius: var(--radius-md);
     padding: var(--spacing-md);
-    margin-bottom: var(--spacing-sm);
     min-height: var(--touch-min);
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
+}
+.editor-ex-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 .editor-ex-info {
     flex: 1;
@@ -2760,6 +2763,260 @@ body.modal-open {
 /* Editable exercise name */
 .exercise-name-editable {
     cursor: pointer;
+}
+
+/* Editor technique panel */
+.editor-tech-panel {
+    border-top: 1px solid rgba(255,255,255,0.06);
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+}
+.editor-set-techs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+.editor-set-techs:last-child { margin-bottom: 0; }
+.editor-set-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    width: 28px;
+    flex-shrink: 0;
+}
+.editor-tech-btn {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(255,255,255,0.12);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.editor-tech-btn.active {
+    background: rgba(157, 141, 245, 0.2);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+.editor-toggle-tech {
+    opacity: 0.4;
+    transition: opacity 0.15s;
+}
+.editor-toggle-tech.has-techs {
+    opacity: 1;
+    color: var(--accent-primary);
+}
+
+/* Editor items (with checkbox) */
+.editor-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: var(--spacing-sm);
+}
+.editor-item > .editor-exercise-card,
+.editor-item > .editor-group-wrapper {
+    flex: 1;
+    min-width: 0;
+}
+.editor-item-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    min-height: var(--touch-min);
+    cursor: pointer;
+    flex-shrink: 0;
+    padding-top: 12px;
+}
+.editor-check { display: none; }
+.editor-check-mark {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.15);
+    transition: all 0.15s;
+}
+.editor-check:checked + .editor-check-mark {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+
+/* Group wrappers (superset, choose_one) */
+.editor-group-wrapper {
+    background: var(--bg-card);
+    border: var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    overflow: hidden;
+}
+.editor-superset-wrapper {
+    border-left: 3px solid var(--accent-primary);
+}
+.editor-choose-wrapper {
+    border-left: 3px solid var(--accent-info);
+}
+.editor-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-sm);
+    padding: 4px 0;
+}
+.editor-group-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+}
+.superset-label {
+    background: rgba(157, 141, 245, 0.15);
+    color: var(--accent-primary);
+}
+.choose-label {
+    background: rgba(48, 212, 200, 0.15);
+    color: var(--accent-info);
+}
+.editor-group-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+}
+.editor-split-btn {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(255,255,255,0.15);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: inherit;
+}
+.editor-or-divider {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent-info);
+    padding: 4px 0;
+    letter-spacing: 1px;
+}
+.editor-group-wrapper .editor-exercise-card {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: var(--spacing-xs) 0;
+    margin-bottom: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.editor-group-wrapper .editor-exercise-card:last-child,
+.editor-group-wrapper .editor-exercise-card:last-of-type {
+    border-bottom: none;
+}
+
+/* Floating group action bar */
+.editor-group-bar {
+    position: fixed;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--bg-card);
+    border: var(--glass-border);
+    border-radius: var(--radius-md);
+    backdrop-filter: var(--glass-blur);
+    z-index: 50;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.editor-group-action {
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+}
+#btn-make-superset {
+    background: rgba(157, 141, 245, 0.2);
+    color: var(--accent-primary);
+}
+#btn-make-choose {
+    background: rgba(48, 212, 200, 0.2);
+    color: var(--accent-info);
+}
+
+/* Premium: type/RPE */
+.editor-section-divider {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin: var(--spacing-sm) 0 var(--spacing-xs);
+    padding-top: var(--spacing-xs);
+    border-top: 1px solid rgba(255,255,255,0.04);
+}
+.editor-type-btn {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(255,255,255,0.12);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.editor-type-btn.active {
+    background: rgba(181, 242, 42, 0.15);
+    border-color: var(--accent-success);
+    color: var(--accent-success);
+}
+.editor-rpe-input {
+    width: 50px;
+    font-size: 11px;
+    padding: 4px 6px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255,255,255,0.12);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    text-align: center;
+    font-family: inherit;
+    margin-left: 4px;
+}
+
+/* Progression rules */
+.editor-prog-rule {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding: 4px 0;
+}
+.editor-prog-del {
+    background: none;
+    border: none;
+    color: var(--accent-red);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 6px;
+}
+.editor-prog-add {
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: var(--radius-pill);
+    border: 1px dashed rgba(255,255,255,0.15);
+    background: transparent;
+    color: var(--accent-primary);
+    cursor: pointer;
+    margin-top: 4px;
+    width: 100%;
+    font-family: inherit;
 }
 
 /* ===== Workout Timer ===== */
