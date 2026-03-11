@@ -1268,6 +1268,30 @@ const App = {
             return;
         }
 
+        // Add set button
+        if (target.matches('.add-set-btn') || target.closest('.add-set-btn')) {
+            const btn = target.matches('.add-set-btn') ? target : target.closest('.add-set-btn');
+            const exId = btn.dataset.exercise;
+            this._addSet(exId);
+            return;
+        }
+
+        // Remove set button
+        if (target.matches('.remove-set-btn') || target.closest('.remove-set-btn')) {
+            const btn = target.matches('.remove-set-btn') ? target : target.closest('.remove-set-btn');
+            const exId = btn.dataset.exercise;
+            this._removeSet(exId);
+            return;
+        }
+
+        // Rename exercise (tap on exercise name in custom programs)
+        if (target.matches('.exercise-name-editable') || target.closest('.exercise-name-editable')) {
+            const el = target.matches('.exercise-name-editable') ? target : target.closest('.exercise-name-editable');
+            const exId = el.dataset.exercise;
+            this._renameExercise(exId);
+            return;
+        }
+
         // Equipment button — show equipment picker
         if (target.matches('.equipment-btn') || target.closest('.equipment-btn')) {
             const btn = target.matches('.equipment-btn') ? target : target.closest('.equipment-btn');
@@ -1418,10 +1442,10 @@ const App = {
                 btn.addEventListener('animationend', () => btn.classList.remove('pop'), { once: true });
                 row.classList.add('done');
 
-                // Check if workout is 100% complete
+                // Check if workout is 100% complete — show finish button
                 var progress = getCompletedSets(this._currentWeek, this._currentDay);
                 if (progress.total > 0 && progress.completed >= progress.total) {
-                    setTimeout(function() { Celebration.show(); }, 500);
+                    this._showFinishButton();
                 } else {
                     RestTimer.start();
                 }
@@ -1537,6 +1561,99 @@ const App = {
                 target.setSelectionRange(len, len);
             });
         }
+    },
+
+    _addSet(exerciseId) {
+        if (!PROGRAM) return;
+        for (var dNum in PROGRAM.dayTemplates) {
+            var groups = PROGRAM.dayTemplates[dNum].exerciseGroups || [];
+            for (var g = 0; g < groups.length; g++) {
+                var ex = groups[g].exercise;
+                if (ex && ex.id === exerciseId) {
+                    var lastSet = ex.sets[ex.sets.length - 1] || { type: 'H', rpe: '8', techniques: [] };
+                    ex.sets.push({ type: lastSet.type, rpe: lastSet.rpe, techniques: lastSet.techniques ? lastSet.techniques.slice() : [] });
+                    Storage.saveProgram(PROGRAM, false);
+                    UI.renderDay(this._currentWeek, this._currentDay);
+                    return;
+                }
+                if (groups[g].options) {
+                    for (var o = 0; o < groups[g].options.length; o++) {
+                        var opt = groups[g].options[o];
+                        if (opt.id === exerciseId) {
+                            var lastSet = opt.sets[opt.sets.length - 1] || { type: 'H', rpe: '8', techniques: [] };
+                            opt.sets.push({ type: lastSet.type, rpe: lastSet.rpe, techniques: lastSet.techniques ? lastSet.techniques.slice() : [] });
+                            Storage.saveProgram(PROGRAM, false);
+                            UI.renderDay(this._currentWeek, this._currentDay);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    _removeSet(exerciseId) {
+        if (!PROGRAM) return;
+        for (var dNum in PROGRAM.dayTemplates) {
+            var groups = PROGRAM.dayTemplates[dNum].exerciseGroups || [];
+            for (var g = 0; g < groups.length; g++) {
+                var ex = groups[g].exercise;
+                if (ex && ex.id === exerciseId && ex.sets.length > 1) {
+                    ex.sets.pop();
+                    Storage.saveProgram(PROGRAM, false);
+                    UI.renderDay(this._currentWeek, this._currentDay);
+                    return;
+                }
+                if (groups[g].options) {
+                    for (var o = 0; o < groups[g].options.length; o++) {
+                        var opt = groups[g].options[o];
+                        if (opt.id === exerciseId && opt.sets.length > 1) {
+                            opt.sets.pop();
+                            Storage.saveProgram(PROGRAM, false);
+                            UI.renderDay(this._currentWeek, this._currentDay);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    _renameExercise(exerciseId) {
+        if (!PROGRAM) return;
+        for (var dNum in PROGRAM.dayTemplates) {
+            var groups = PROGRAM.dayTemplates[dNum].exerciseGroups || [];
+            for (var g = 0; g < groups.length; g++) {
+                var ex = groups[g].exercise;
+                if (ex && ex.id === exerciseId) {
+                    var current = ex.nameRu || ex.name || '';
+                    var newName = prompt('Название упражнения:', current);
+                    if (newName !== null && newName.trim()) {
+                        ex.nameRu = newName.trim();
+                        ex.name = newName.trim();
+                        Storage.saveProgram(PROGRAM, false);
+                        UI.renderDay(this._currentWeek, this._currentDay);
+                    }
+                    return;
+                }
+            }
+        }
+    },
+
+    _showFinishButton() {
+        if (document.getElementById('finish-workout-btn')) return;
+        var container = document.querySelector('.day-slide');
+        if (!container) return;
+        var btn = document.createElement('button');
+        btn.id = 'finish-workout-btn';
+        btn.className = 'btn-finish-workout';
+        btn.textContent = 'ЗАВЕРШИТЬ ТРЕНИРОВКУ';
+        container.appendChild(btn);
+        setTimeout(function() { btn.classList.add('visible'); }, 50);
+        btn.addEventListener('click', function() {
+            btn.remove();
+            Celebration.show();
+        });
     }
 };
 

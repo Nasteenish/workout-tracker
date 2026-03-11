@@ -2703,6 +2703,59 @@ body.modal-open {
     margin: 0;
 }
 
+/* ===== Set Controls (add/remove set) ===== */
+.set-controls {
+    display: flex;
+    gap: 8px;
+    padding: 8px 0 4px;
+}
+.set-ctrl-btn {
+    flex: 1;
+    background: var(--bg-secondary);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 13px;
+    padding: 6px 0;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.set-ctrl-btn:active {
+    background: rgba(255,255,255,0.12);
+}
+
+/* ===== Finish Workout Button ===== */
+.btn-finish-workout {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    margin: 24px 0;
+    background: linear-gradient(135deg, #5AA00A, #B5F22A);
+    color: #000;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s, transform 0.3s;
+}
+.btn-finish-workout.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+.btn-finish-workout:active {
+    filter: brightness(0.9);
+}
+
+/* Editable exercise name */
+.exercise-name-editable {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
 /* ===== Workout Complete Celebration ===== */
 .celebration-overlay {
     position: fixed;

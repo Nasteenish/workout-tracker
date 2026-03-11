@@ -596,7 +596,13 @@ const Builder = {
                 var query = searchInput.value.trim();
                 var activeCat = document.querySelector('.picker-cat.active');
                 var cat = activeCat ? activeCat.dataset.cat : 'all';
-                document.getElementById('picker-list').innerHTML = Builder._buildPickerList(cat, query);
+                var listHtml = Builder._buildPickerList(cat, query);
+                document.getElementById('picker-list').innerHTML = listHtml;
+                // Auto-fill custom input when no results found
+                var customInput = document.getElementById('picker-custom-name');
+                if (customInput && query && listHtml.indexOf('picker-empty') !== -1) {
+                    customInput.value = query;
+                }
             });
         }
 

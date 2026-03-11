@@ -575,11 +575,22 @@ const UI = {
         const subBtnSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>';
         const showSubBtn = !(PROGRAM && PROGRAM.isCustom);
 
+        const isCustom = PROGRAM && PROGRAM.isCustom;
+        const nameClass = isCustom ? 'exercise-name exercise-name-editable' : `exercise-name ${isSubbed ? 'exercise-substituted' : ''} ${choiceKey ? 'exercise-name-chooser' : ''}`;
+        const nameAttrs = isCustom ? `data-exercise="${ex.id}"` : (choiceKey ? `data-choice-key="${choiceKey}"` : '');
+        const nameContent = choiceKey ? this._nameWithBadge(displayName) : displayName;
+        const editIcon = isCustom ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" opacity="0.4" style="margin-left:6px;flex-shrink:0"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' : '';
+
+        const setControls = `<div class="set-controls">
+            <button class="set-ctrl-btn remove-set-btn" data-exercise="${ex.id}">− подход</button>
+            <button class="set-ctrl-btn add-set-btn" data-exercise="${ex.id}">+ подход</button>
+        </div>`;
+
         return `
             <div class="exercise-card ${choiceKey ? 'is-chooser' : ''}">
                 <div class="exercise-header">
                     <div class="exercise-name-row">
-                        <div class="exercise-name ${isSubbed ? 'exercise-substituted' : ''} ${choiceKey ? 'exercise-name-chooser' : ''}" ${choiceKey ? `data-choice-key="${choiceKey}"` : ''}>${choiceKey ? this._nameWithBadge(displayName) : displayName}</div>
+                        <div class="${nameClass}" ${nameAttrs}>${nameContent}${editIcon}</div>
                         ${showSubBtn ? `<button class="substitute-btn" data-exercise="${ex.id}">${subBtnSvg}</button>` : ''}
                     </div>
                     <div class="exercise-meta">
@@ -589,6 +600,7 @@ const UI = {
                 </div>
                 ${eqHtml}
                 ${setsHtml}
+                ${setControls}
                 <button class="history-btn" data-exercise="${ex.id}">
                     История
                 </button>
