@@ -579,12 +579,9 @@ const UI = {
         `;
 
         const displayName = this._getExerciseDisplayName(ex);
-        const isSubbed = this._isSubstituted(ex.id);
-        const subBtnSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>';
-        const nameClass = `exercise-name exercise-name-editable ${isSubbed ? 'exercise-substituted' : ''} ${choiceKey ? 'exercise-name-chooser' : ''}`;
+        const nameClass = `exercise-name exercise-name-editable ${choiceKey ? 'exercise-name-chooser' : ''}`;
         const nameAttrs = `data-exercise="${ex.id}" ${choiceKey ? `data-choice-key="${choiceKey}"` : ''}`;
         const nameContent = choiceKey ? this._nameWithBadge(displayName) : displayName;
-        const editIcon = '';
 
         const setControls = `<div class="set-controls">
             <button class="set-ctrl-btn remove-set-btn" data-exercise="${ex.id}">− подход</button>
@@ -595,8 +592,7 @@ const UI = {
             <div class="exercise-card ${choiceKey ? 'is-chooser' : ''}">
                 <div class="exercise-header">
                     <div class="exercise-name-row">
-                        <div class="${nameClass}" ${nameAttrs}>${nameContent}${editIcon}</div>
-                        <button class="substitute-btn" data-exercise="${ex.id}">${subBtnSvg}</button>
+                        <div class="${nameClass}" ${nameAttrs}>${nameContent}</div>
                     </div>
                     <div class="exercise-meta">
                         <span>${ex.reps} reps</span>

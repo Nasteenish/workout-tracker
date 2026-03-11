@@ -1305,13 +1305,6 @@ const App = {
             return;
         }
 
-        // Substitution button — open substitution picker
-        if (target.matches('.substitute-btn') || target.closest('.substitute-btn')) {
-            const btn = target.matches('.substitute-btn') ? target : target.closest('.substitute-btn');
-            const exId = btn.dataset.exercise;
-            UI.showSubstitutionModal(exId);
-            return;
-        }
 
         // Substitution modal — select exercise from list (must be before eq-option handler)
         if (target.matches('.sub-option') || target.closest('.sub-option')) {
