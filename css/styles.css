@@ -2760,8 +2760,6 @@ body.modal-open {
 /* Editable exercise name */
 .exercise-name-editable {
     cursor: pointer;
-    display: flex;
-    align-items: center;
 }
 
 /* ===== Workout Timer ===== */
