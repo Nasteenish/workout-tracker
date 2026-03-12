@@ -468,6 +468,7 @@ const UI = {
         const workout = resolveWorkout(weekNum, dayNum);
         const dayTitle = workout ? (workout.titleRu || workout.title || 'День ' + dayNum) : 'День ' + dayNum;
         let exerciseHtml = '';
+        let timerHtml = '';
         if (workout && workout.exerciseGroups) {
             let currentSection = '';
             for (const group of workout.exerciseGroups) {
@@ -487,6 +488,26 @@ const UI = {
                     exerciseHtml += this._renderExercise(group.exercise, weekNum, dayNum);
                 }
             }
+            // Match timer/button state from renderDay
+            const isEmpty = workout.exerciseGroups.length === 0;
+            if (!isEmpty) {
+                const timerRunning = App.isWorkoutTimerRunning();
+                const timerPaused = App.isWorkoutTimerPaused();
+                const { completed: doneCount, total: totalCount } = getCompletedSets(weekNum, dayNum);
+                const allDone = totalCount > 0 && doneCount >= totalCount;
+                if (timerPaused) {
+                    const elapsed = App._getTimerElapsed();
+                    const h = Math.floor(elapsed / 3600);
+                    const m = Math.floor((elapsed % 3600) / 60);
+                    const s = elapsed % 60;
+                    const timeStr = (h > 0 ? h + ':' : '') + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+                    timerHtml = '<div class="workout-timer-row paused"><span class="workout-timer-icon">&#9208;</span><span>' + timeStr + '</span></div>';
+                } else if (timerRunning) {
+                    timerHtml = '<div class="workout-timer-row"><span class="workout-timer-icon">&#9201;</span><span>00:00</span></div>';
+                } else if (!allDone) {
+                    timerHtml = '<button class="btn-start-workout">НАЧАТЬ ТРЕНИРОВКУ</button>';
+                }
+            }
         }
         return `
             <div class="app-header">
@@ -497,7 +518,7 @@ const UI = {
                 </div>
             </div>
             <div class="app-content">
-                <div class="slide-container"><div class="day-slide">${exerciseHtml}</div></div>
+                <div class="slide-container"><div class="day-slide">${timerHtml}${exerciseHtml}</div></div>
             </div>
         `;
     },

@@ -8,6 +8,7 @@ const App = {
     _workoutTimerInterval: null,
     _pendingMigration: null,
     _pendingCheckinWorkout: null,
+    _softRefresh: false,
 
     init() {
         // Multi-user migration (once)
@@ -495,18 +496,16 @@ const App = {
             }
             if (indicator) {
                 if (ready) {
-                    indicator.classList.add('spinning');
-                    // Social pages: re-render without full page reload to avoid async flash
-                    var isSocialRoute = /^#\/(feed|profile|checkin|discover|u\/)/.test(location.hash);
-                    if (isSocialRoute) {
-                        var indRef = indicator;
-                        setTimeout(function() { indRef.remove(); }, 500);
-                        indicator = null;
-                        App.route();
-                        pulling = false; ready = false; active = false; bottomActive = false;
-                        return;
-                    }
-                    location.reload();
+                    // Smooth re-render instead of full page reload
+                    var indRef = indicator;
+                    setTimeout(function() { indRef.remove(); }, 500);
+                    indicator = null;
+                    // Crossfade: briefly dim, re-render, then restore
+                    app.style.transition = 'opacity 0.12s';
+                    app.style.opacity = '0.4';
+                    App._softRefresh = true;
+                    setTimeout(function() { App.route(); }, 130);
+                    pulling = false; ready = false; active = false; bottomActive = false;
                     return;
                 }
                 const cur = indicator.style.transform || 'translateX(-50%)';
@@ -522,6 +521,14 @@ const App = {
             active = false;
             bottomActive = false;
         });
+    },
+
+    _endSoftRefresh() {
+        if (!this._softRefresh) return;
+        this._softRefresh = false;
+        var app = document.getElementById('app');
+        app.style.opacity = '1';
+        setTimeout(function() { app.style.transition = ''; }, 150);
     },
 
     _addWeekToCustomProgram() {
@@ -947,6 +954,7 @@ const App = {
         document.getElementById('app').classList.remove('no-animate');
         window.scrollTo(0, 0);
         const hash = location.hash || '';
+        var sr = this._endSoftRefresh.bind(this);
 
         // Login screen
         if (hash === '#/login') {
@@ -977,18 +985,18 @@ const App = {
         }
 
         // Social routes (need user, no program required)
-        if (hash === '#/feed') { SocialUI.renderFeed(); return; }
-        if (hash === '#/profile') { SocialUI.renderProfile(); return; }
-        if (hash === '#/profile/edit') { SocialUI.renderProfileEdit(); return; }
-        if (hash === '#/checkin') { SocialUI.renderCheckinForm(this._pendingCheckinWorkout); this._pendingCheckinWorkout = null; return; }
-        if (hash === '#/discover') { SocialUI.renderDiscover(); return; }
+        if (hash === '#/feed') { SocialUI.renderFeed().then(sr); return; }
+        if (hash === '#/profile') { SocialUI.renderProfile().then(sr); return; }
+        if (hash === '#/profile/edit') { SocialUI.renderProfileEdit().then(sr); return; }
+        if (hash === '#/checkin') { SocialUI.renderCheckinForm(this._pendingCheckinWorkout); this._pendingCheckinWorkout = null; sr(); return; }
+        if (hash === '#/discover') { SocialUI.renderDiscover().then(sr); return; }
         var checkinDetailMatch = hash.match(/^#\/checkin\/(.+)$/);
-        if (checkinDetailMatch) { SocialUI.renderCheckinDetail(checkinDetailMatch[1]); return; }
+        if (checkinDetailMatch) { SocialUI.renderCheckinDetail(checkinDetailMatch[1]).then(sr); return; }
         var usernameMatch = hash.match(/^#\/u\/(.+)$/);
         if (usernameMatch) {
             Social.getProfileByUsername(decodeURIComponent(usernameMatch[1])).then(function(p) {
-                if (p) SocialUI.renderProfile(p.user_id);
-                else document.getElementById('app').innerHTML = '<div class="social-screen"><div class="social-empty">Профиль не найден</div></div>';
+                if (p) SocialUI.renderProfile(p.user_id).then(sr);
+                else { document.getElementById('app').innerHTML = '<div class="social-screen"><div class="social-empty">Профиль не найден</div></div>'; sr(); }
             });
             return;
         }
@@ -1034,29 +1042,29 @@ const App = {
         }
 
         if (hash === '#/menu') {
-            UI.renderMenu();
+            UI.renderMenu(); sr();
             return;
         }
 
         if (hash === '#/settings') {
-            UI.renderSettings();
+            UI.renderSettings(); sr();
             return;
         }
 
         if (hash === '#/guide') {
-            UI.renderGuide();
+            UI.renderGuide(); sr();
             return;
         }
 
         if (hash === '#/calculator') {
-            UI.renderCalculator();
+            UI.renderCalculator(); sr();
             return;
         }
 
         // History view: #/history/{exerciseId}
         const historyMatch = hash.match(/^#\/history\/(.+)$/);
         if (historyMatch) {
-            UI.renderHistory(decodeURIComponent(historyMatch[1]));
+            UI.renderHistory(decodeURIComponent(historyMatch[1])); sr();
             return;
         }
 
@@ -1065,7 +1073,7 @@ const App = {
         if (dayMatch) {
             this._currentWeek = parseInt(dayMatch[1]);
             this._currentDay = parseInt(dayMatch[2]);
-            UI.renderDay(this._currentWeek, this._currentDay);
+            UI.renderDay(this._currentWeek, this._currentDay); sr();
             return;
         }
 
@@ -1075,7 +1083,7 @@ const App = {
             this._currentWeek = parseInt(weekMatch[1]);
             this._swipeDir = null;
             UI.renderWeek(this._currentWeek);
-            this._showNotificationPrompt();
+            this._showNotificationPrompt(); sr();
             return;
         }
 
