@@ -306,6 +306,7 @@ const UI = {
                     <button id="btn-import">Импорт</button>
                 </div>
             </div>
+            ${typeof SocialUI !== 'undefined' && Social._hasSupaAuth() ? SocialUI._tabBarHTML('workouts') : ''}
         `;
 
         this._initSlotDragDrop(weekNum);
@@ -555,6 +556,7 @@ const UI = {
                     </div>
                 </div>
             </div>
+            ${typeof SocialUI !== 'undefined' && Social._hasSupaAuth() ? SocialUI._tabBarHTML('workouts') : ''}
         `;
         if (timerRunning) App.resumeWorkoutTimer();
     },

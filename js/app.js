@@ -7,6 +7,7 @@ const App = {
     _swipeDir: null,
     _workoutTimerInterval: null,
     _pendingMigration: null,
+    _pendingCheckinWorkout: null,
 
     init() {
         // Multi-user migration (once)
@@ -51,6 +52,34 @@ const App = {
         document.getElementById('app').addEventListener('click', (e) => this.handleClick(e));
         document.getElementById('app').addEventListener('input', (e) => this.handleInput(e));
         document.getElementById('app').addEventListener('focus', (e) => this.handleFocus(e), true);
+
+        // File input change handlers (delegated)
+        document.getElementById('app').addEventListener('change', (e) => {
+            if (e.target.id === 'avatar-file-input' && e.target.files[0]) {
+                var preview = document.getElementById('edit-avatar-preview');
+                if (preview) {
+                    var url = URL.createObjectURL(e.target.files[0]);
+                    if (preview.tagName === 'IMG') {
+                        preview.src = url;
+                    } else {
+                        preview.outerHTML = '<img class="edit-avatar" id="edit-avatar-preview" src="' + url + '" alt="">';
+                    }
+                }
+            }
+            if (e.target.id === 'checkin-photo-input' && e.target.files) {
+                var files = Array.from(e.target.files);
+                var total = this._checkinPhotos.length + files.length;
+                if (total > 3) { alert('Максимум 3 фото'); return; }
+                this._checkinPhotos = this._checkinPhotos.concat(files);
+                var grid = document.getElementById('checkin-photos-grid');
+                if (grid) {
+                    files.forEach(function(f) {
+                        var url = URL.createObjectURL(f);
+                        grid.insertAdjacentHTML('beforeend', '<div class="checkin-photo-thumb"><img src="' + url + '" alt=""></div>');
+                    });
+                }
+            }
+        });
 
         // Swipe navigation: left/right weeks + right-swipe to go back from day view
         this._initSwipeNav();
@@ -762,6 +791,92 @@ const App = {
         });
     },
 
+    // ===== SOCIAL METHODS =====
+
+    _saveProfile() {
+        var btn = document.getElementById('btn-profile-save');
+        if (btn) { btn.disabled = true; btn.textContent = 'Сохранение...'; }
+
+        var data = {
+            display_name: (document.getElementById('edit-display-name').value || '').trim(),
+            username: (document.getElementById('edit-username').value || '').trim().toLowerCase(),
+            bio: (document.getElementById('edit-bio').value || '').trim(),
+            is_athlete: document.getElementById('edit-is-athlete').checked,
+            category: document.getElementById('edit-category') ? document.getElementById('edit-category').value : '',
+            weight_class: document.getElementById('edit-weight-class') ? document.getElementById('edit-weight-class').value.trim() : '',
+            coach: document.getElementById('edit-coach') ? document.getElementById('edit-coach').value.trim() : '',
+            phase: document.getElementById('edit-phase') ? document.getElementById('edit-phase').value : ''
+        };
+
+        if (!data.username || data.username.length < 2) {
+            alert('Username минимум 2 символа');
+            if (btn) { btn.disabled = false; btn.textContent = 'Сохранить'; }
+            return;
+        }
+
+        // Upload avatar if changed
+        var avatarInput = document.getElementById('avatar-file-input');
+        var avatarPromise = (avatarInput && avatarInput.files && avatarInput.files[0])
+            ? Social.uploadAvatar(avatarInput.files[0])
+            : Promise.resolve(null);
+
+        avatarPromise.then(function(avatarUrl) {
+            if (avatarUrl) data.avatar_url = avatarUrl;
+            return Social.upsertProfile(data);
+        }).then(function() {
+            location.hash = '#/profile';
+        }).catch(function(err) {
+            alert(err.message || 'Ошибка сохранения');
+            if (btn) { btn.disabled = false; btn.textContent = 'Сохранить'; }
+        });
+    },
+
+    _checkinPhotos: [],
+
+    _submitCheckin() {
+        var btn = document.getElementById('btn-checkin-submit');
+        var errEl = document.getElementById('checkin-error');
+        if (btn) { btn.disabled = true; btn.textContent = 'ПУБЛИКАЦИЯ...'; }
+        if (errEl) errEl.style.display = 'none';
+
+        var weight = parseFloat(document.getElementById('checkin-weight').value) || null;
+        var note = (document.getElementById('checkin-note').value || '').trim();
+        var measurements = {};
+        var waist = parseFloat(document.getElementById('m-waist').value); if (waist) measurements.waist = waist;
+        var bicep = parseFloat(document.getElementById('m-bicep').value); if (bicep) measurements.bicep = bicep;
+        var chest = parseFloat(document.getElementById('m-chest').value); if (chest) measurements.chest = chest;
+        var thigh = parseFloat(document.getElementById('m-thigh').value); if (thigh) measurements.thigh = thigh;
+
+        var workoutDataEl = document.getElementById('checkin-workout-data');
+        var workoutSummary = null;
+        if (workoutDataEl) {
+            try { workoutSummary = JSON.parse(workoutDataEl.value); } catch (e) {}
+        }
+
+        // Upload photos first
+        var photoPromises = this._checkinPhotos.map(function(file) {
+            return Social.uploadCheckinPhoto(file);
+        });
+
+        var self = this;
+        Promise.all(photoPromises).then(function(photoUrls) {
+            var data = {
+                weight: weight,
+                note: note,
+                measurements: Object.keys(measurements).length > 0 ? measurements : {},
+                photos: photoUrls.filter(Boolean),
+                workout_summary: workoutSummary
+            };
+            return Social.createCheckin(data);
+        }).then(function() {
+            self._checkinPhotos = [];
+            location.hash = '#/profile';
+        }).catch(function(err) {
+            if (errEl) { errEl.textContent = err.message || 'Ошибка публикации'; errEl.style.display = 'block'; }
+            if (btn) { btn.disabled = false; btn.textContent = 'ОПУБЛИКОВАТЬ'; }
+        });
+    },
+
     _showNotificationPrompt() {
         if (!('Notification' in window)) return;
         if (Notification.permission !== 'default') return;
@@ -858,6 +973,23 @@ const App = {
         // If no current user → login
         if (!Storage.getCurrentUserId()) {
             location.hash = '#/login';
+            return;
+        }
+
+        // Social routes (need user, no program required)
+        if (hash === '#/feed') { SocialUI.renderFeed(); return; }
+        if (hash === '#/profile') { SocialUI.renderProfile(); return; }
+        if (hash === '#/profile/edit') { SocialUI.renderProfileEdit(); return; }
+        if (hash === '#/checkin') { SocialUI.renderCheckinForm(this._pendingCheckinWorkout); this._pendingCheckinWorkout = null; return; }
+        if (hash === '#/discover') { SocialUI.renderDiscover(); return; }
+        var checkinDetailMatch = hash.match(/^#\/checkin\/(.+)$/);
+        if (checkinDetailMatch) { SocialUI.renderCheckinDetail(checkinDetailMatch[1]); return; }
+        var usernameMatch = hash.match(/^#\/u\/(.+)$/);
+        if (usernameMatch) {
+            Social.getProfileByUsername(decodeURIComponent(usernameMatch[1])).then(function(p) {
+                if (p) SocialUI.renderProfile(p.user_id);
+                else document.getElementById('app').innerHTML = '<div class="social-screen"><div class="social-empty">Профиль не найден</div></div>';
+            });
             return;
         }
 
@@ -1032,6 +1164,225 @@ const App = {
             this.logout();
             return;
         }
+
+        // ===== SOCIAL CLICK HANDLERS =====
+
+        // Profile edit button
+        if (target.id === 'btn-profile-edit' || target.closest('#btn-profile-edit')) {
+            location.hash = '#/profile/edit';
+            return;
+        }
+
+        // Profile save
+        if (target.id === 'btn-profile-save' || target.closest('#btn-profile-save')) {
+            this._saveProfile();
+            return;
+        }
+
+        // Profile back
+        if (target.id === 'btn-profile-back' || target.closest('#btn-profile-back')) {
+            location.hash = '#/profile';
+            return;
+        }
+
+        // Avatar file input
+        if (target.id === 'avatar-file-input' || target.closest('#avatar-file-input')) {
+            // handled by change event below
+        }
+
+        // Athlete toggle
+        if (target.id === 'edit-is-athlete') {
+            var fields = document.getElementById('edit-athlete-fields');
+            if (fields) fields.style.display = target.checked ? '' : 'none';
+            return;
+        }
+
+        // Follow/unfollow
+        if (target.id === 'btn-follow' || target.closest('#btn-follow')) {
+            var btn = target.id === 'btn-follow' ? target : target.closest('#btn-follow');
+            var userId = btn.dataset.user;
+            if (!userId) return;
+            btn.disabled = true;
+            if (btn.classList.contains('following')) {
+                Social.unfollow(userId).then(function() {
+                    btn.classList.remove('following');
+                    btn.textContent = 'Подписаться';
+                    btn.disabled = false;
+                }).catch(function() { btn.disabled = false; });
+            } else {
+                Social.follow(userId).then(function() {
+                    btn.classList.add('following');
+                    btn.textContent = 'Отписаться';
+                    btn.disabled = false;
+                }).catch(function() { btn.disabled = false; });
+            }
+            return;
+        }
+
+        // Follow (small btn in discover)
+        if (target.classList.contains('btn-follow-sm')) {
+            var userId = target.dataset.user;
+            if (!userId) return;
+            target.disabled = true;
+            Social.follow(userId).then(function() {
+                target.textContent = 'Подписан';
+                target.classList.add('followed');
+            }).catch(function() { target.disabled = false; });
+            return;
+        }
+
+        // Discover navigation
+        if (target.id === 'btn-discover' || target.closest('#btn-discover') || target.id === 'btn-discover-empty' || target.closest('#btn-discover-empty')) {
+            location.hash = '#/discover';
+            return;
+        }
+
+        // Discover back
+        if (target.id === 'btn-discover-back' || target.closest('#btn-discover-back')) {
+            location.hash = '#/feed';
+            return;
+        }
+
+        // Discover search
+        if (target.id === 'btn-discover-search' || target.closest('#btn-discover-search')) {
+            var query = (document.getElementById('discover-search-input').value || '').trim();
+            if (!query) return;
+            var resultsEl = document.getElementById('discover-results');
+            if (resultsEl) resultsEl.innerHTML = '<div class="social-loading">Поиск...</div>';
+            Social.searchUsers(query).then(function(users) {
+                if (resultsEl) resultsEl.innerHTML = SocialUI._renderUserList(users, Social._getSupaUserId());
+            });
+            return;
+        }
+
+        // Discover user click → profile
+        var discoverUser = target.closest('.discover-user');
+        if (discoverUser && !target.classList.contains('btn-follow-sm')) {
+            var userId = discoverUser.querySelector('.btn-follow-sm');
+            if (userId) {
+                var uid = userId.dataset.user;
+                var username = discoverUser.querySelector('.discover-user-username');
+                if (username) {
+                    location.hash = '#/u/' + username.textContent.replace('@', '');
+                }
+            }
+            return;
+        }
+
+        // Checkin card click → detail
+        var checkinCard = target.closest('.checkin-card');
+        if (checkinCard && !checkinCard.classList.contains('checkin-full') && !target.closest('.reaction-btn')) {
+            var checkinId = checkinCard.dataset.checkin;
+            if (checkinId) location.hash = '#/checkin/' + checkinId;
+            return;
+        }
+
+        // Checkin back
+        if (target.id === 'btn-checkin-back' || target.closest('#btn-checkin-back')) {
+            location.hash = '#/profile';
+            return;
+        }
+
+        // Checkin detail back
+        if (target.id === 'btn-checkin-detail-back' || target.closest('#btn-checkin-detail-back')) {
+            history.back();
+            return;
+        }
+
+        // Checkin submit
+        if (target.id === 'btn-checkin-submit' || target.closest('#btn-checkin-submit')) {
+            this._submitCheckin();
+            return;
+        }
+
+        // Checkin photo input trigger
+        if (target.closest('.checkin-add-photo')) {
+            // Let label handle file input click
+        }
+
+        // Reaction button
+        var reactionBtn = target.closest('.reaction-btn');
+        if (reactionBtn) {
+            var emoji = reactionBtn.dataset.emoji;
+            var checkinId = reactionBtn.dataset.checkin;
+            if (emoji && checkinId) {
+                reactionBtn.disabled = true;
+                Social.toggleReaction(checkinId, emoji).then(function(added) {
+                    // Refresh the detail view
+                    SocialUI.renderCheckinDetail(checkinId);
+                }).catch(function() { reactionBtn.disabled = false; });
+            }
+            return;
+        }
+
+        // Send comment
+        if (target.id === 'btn-send-comment' || target.closest('#btn-send-comment')) {
+            var btn = target.id === 'btn-send-comment' ? target : target.closest('#btn-send-comment');
+            var checkinId = btn.dataset.checkin;
+            var input = document.getElementById('comment-input');
+            var text = input ? input.value.trim() : '';
+            if (!text || !checkinId) return;
+            btn.disabled = true;
+            Social.addComment(checkinId, text).then(function() {
+                SocialUI.renderCheckinDetail(checkinId);
+            }).catch(function() { btn.disabled = false; });
+            return;
+        }
+
+        // Delete comment
+        var deleteCommentBtn = target.closest('.comment-delete');
+        if (deleteCommentBtn) {
+            var commentId = deleteCommentBtn.dataset.comment;
+            if (commentId && confirm('Удалить комментарий?')) {
+                Social.deleteComment(commentId).then(function() {
+                    // Find parent checkin and refresh
+                    var sendBtn = document.getElementById('btn-send-comment');
+                    if (sendBtn) SocialUI.renderCheckinDetail(sendBtn.dataset.checkin);
+                });
+            }
+            return;
+        }
+
+        // Load more (feed)
+        if (target.id === 'btn-load-more-feed' || target.closest('#btn-load-more-feed')) {
+            target.disabled = true;
+            target.textContent = 'Загрузка...';
+            Social.getFeed(SocialUI._feedCursor).then(function(more) {
+                SocialUI._feedCursor = more.length >= 20 ? more[more.length - 1].created_at : null;
+                var btn = document.getElementById('btn-load-more-feed');
+                if (btn) {
+                    btn.insertAdjacentHTML('beforebegin', SocialUI._renderCheckinCards(more));
+                    if (!SocialUI._feedCursor) btn.remove();
+                    else { btn.disabled = false; btn.textContent = 'Загрузить ещё'; }
+                }
+            });
+            return;
+        }
+
+        // Load more (profile)
+        if (target.id === 'btn-load-more-profile' || target.closest('#btn-load-more-profile')) {
+            var btn = target.id === 'btn-load-more-profile' ? target : target.closest('#btn-load-more-profile');
+            var userId = btn.dataset.user;
+            btn.disabled = true;
+            btn.textContent = 'Загрузка...';
+            Social.getUserCheckins(userId, SocialUI._profileCheckinsCursor).then(function(more) {
+                SocialUI._profileCheckinsCursor = more.length >= 20 ? more[more.length - 1].created_at : null;
+                btn.insertAdjacentHTML('beforebegin', SocialUI._renderCheckinCards(more));
+                if (!SocialUI._profileCheckinsCursor) btn.remove();
+                else { btn.disabled = false; btn.textContent = 'Загрузить ещё'; }
+            });
+            return;
+        }
+
+        // Checkin author click → profile
+        var checkinAuthor = target.closest('.checkin-author[data-username]');
+        if (checkinAuthor) {
+            var username = checkinAuthor.dataset.username;
+            if (username) location.hash = '#/u/' + username;
+            return;
+        }
+
+        // ===== END SOCIAL HANDLERS =====
 
         // Setup: import program from file
         if (target.id === 'setup-import-program' || target.closest('#setup-import-program')) {
@@ -1787,7 +2138,7 @@ const App = {
         btn.addEventListener('click', function() {
             btn.remove();
             var elapsed = self._stopWorkoutTimer();
-            Celebration.show(elapsed);
+            Celebration.show(elapsed, self._currentWeek, self._currentDay);
         });
     },
 
@@ -1916,7 +2267,7 @@ const Celebration = {
         'Огонь!'
     ],
 
-    show(elapsedSec) {
+    show(elapsedSec, weekNum, dayNum) {
         if (document.querySelector('.celebration-overlay')) return;
 
         if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 150]);
@@ -1933,6 +2284,12 @@ const Celebration = {
             }
         }
 
+        // Share button (only for Supabase-authenticated users)
+        var shareBtn = '';
+        if (typeof Social !== 'undefined' && Social._hasSupaAuth()) {
+            shareBtn = '<button class="celeb-share-btn" id="celeb-share">ПОДЕЛИТЬСЯ</button>';
+        }
+
         var overlay = document.createElement('div');
         overlay.className = 'celebration-overlay';
         overlay.innerHTML = '<div class="celebration-text">' +
@@ -1940,20 +2297,58 @@ const Celebration = {
             '<p class="celeb-title">' + phrase + '</p>' +
             '<p class="celeb-sub">Тренировка завершена</p>' +
             timeText +
+            shareBtn +
             '</div>';
         document.body.appendChild(overlay);
 
         this._launchConfetti();
 
+        // Build workout summary for sharing
+        if (weekNum && dayNum && typeof Social !== 'undefined' && Social._hasSupaAuth()) {
+            var workout = resolveWorkout(weekNum, dayNum);
+            var exercises = [];
+            if (workout && workout.exerciseGroups) {
+                workout.exerciseGroups.forEach(function(g) {
+                    if (g.exercises) {
+                        g.exercises.forEach(function(ex) {
+                            exercises.push({ name: ex.nameRu || ex.name, sets: ex.sets ? ex.sets.length : 0 });
+                        });
+                    }
+                });
+            }
+            this._pendingShare = { week: weekNum, day: dayNum, exercises: exercises, duration_sec: elapsedSec || 0 };
+        }
+
+        var self = this;
         var closed = false;
-        function close() {
+        function close(e) {
+            if (e && e.target && e.target.id === 'celeb-share') return;
             if (closed) return;
             closed = true;
             overlay.classList.add('hiding');
             setTimeout(function() { overlay.remove(); }, 400);
         }
+
+        // Share button handler
+        var shareBtnEl = overlay.querySelector('#celeb-share');
+        if (shareBtnEl) {
+            shareBtnEl.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (self._pendingShare) {
+                    App._pendingCheckinWorkout = self._pendingShare;
+                    self._pendingShare = null;
+                }
+                closed = true;
+                overlay.classList.add('hiding');
+                setTimeout(function() {
+                    overlay.remove();
+                    location.hash = '#/checkin';
+                }, 300);
+            });
+        }
+
         overlay.addEventListener('click', close);
-        setTimeout(close, 4500);
+        setTimeout(close, 6000);
     },
 
     _launchConfetti() {
