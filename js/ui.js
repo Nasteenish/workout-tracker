@@ -32,7 +32,7 @@ const UI = {
                 <h1>Трекер Тренировок</h1>
 
                 <div class="login-features">
-                    <div class="login-feature"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6.5" y1="3" x2="6.5" y2="21"/><line x1="17.5" y1="3" x2="17.5" y2="21"/><line x1="3" y1="6" x2="3" y2="18"/><line x1="21" y1="6" x2="21" y2="18"/><line x1="6.5" y1="12" x2="17.5" y2="12"/></svg><span>Трекинг тренировок</span></div>
+                    <div class="login-feature"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="5" height="16" rx="2"/><rect x="17" y="4" width="5" height="16" rx="2"/><line x1="7" y1="12" x2="17" y2="12" stroke-width="3"/></svg><span>Трекинг тренировок</span></div>
                     <div class="login-feature"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Check-in</span></div>
                     <div class="login-feature"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="2" y1="9" x2="22" y2="9"/><line x1="2" y1="15" x2="22" y2="15"/></svg><span>Лента атлетов</span></div>
                 </div>
