@@ -1204,8 +1204,7 @@ const App = {
         if (genderBtn) {
             if (!Builder._onboardingData) Builder._onboardingData = {};
             Builder._onboardingData.gender = genderBtn.dataset.gender;
-            history.replaceState(null, '', '#/onboarding/2');
-            this.route();
+            location.hash = '#/onboarding/2';
             return;
         }
 
@@ -1215,8 +1214,7 @@ const App = {
             if (!Builder._onboardingData) Builder._onboardingData = {};
             if (athleteBtn.dataset.athlete === 'yes') {
                 Builder._onboardingData.is_athlete = true;
-                history.replaceState(null, '', '#/onboarding/3');
-                this.route();
+                location.hash = '#/onboarding/3';
             } else {
                 Builder._onboardingData.is_athlete = false;
                 Builder._finishOnboarding();
@@ -1229,8 +1227,7 @@ const App = {
         if (proBtn) {
             if (!Builder._onboardingData) Builder._onboardingData = {};
             Builder._onboardingData.is_pro = proBtn.dataset.pro === 'true';
-            history.replaceState(null, '', '#/onboarding/4');
-            this.route();
+            location.hash = '#/onboarding/4';
             return;
         }
 

@@ -177,7 +177,8 @@ const Builder = {
 
             // Start onboarding instead of going straight to app
             Builder._onboardingData = { localId: localId, supaUserId: supaUserId, login: login, isNew: true };
-            location.hash = '#/onboarding/1';
+            history.replaceState(null, '', '#/onboarding/1');
+            App.route();
         }).catch(function(err) {
             errEl.textContent = err.message || 'Ошибка регистрации';
             errEl.style.display = 'block';
@@ -1385,7 +1386,6 @@ const Builder = {
         }
         App._onboardingChecked = true;
         var isNew = d.isNew, localId = d.localId;
-        this._onboardingData = null;
         Social.upsertProfile(profileData).then(function() {
             if (isNew && localId) {
                 App.switchUser(localId);
