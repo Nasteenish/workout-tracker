@@ -169,7 +169,6 @@ const App = {
         const unlockScroll = () => { document.documentElement.style.overflow = ''; document.body.style.overflow = ''; };
         const resetApp = (app) => {
             app.style.transition = 'none'; app.style.transform = '';
-            app.style.position = ''; app.style.top = ''; app.style.left = ''; app.style.right = '';
             app.classList.remove('swiping-back');
         };
         const isSocialHash = (h) => h === '#/feed' || h === '#/profile' || h === '#/discover' || /^#\/u\//.test(h);
@@ -242,7 +241,6 @@ const App = {
                     tabTarget = swipingLeft ? cfg.right : cfg.left;
                     if (!tabTarget) { locked = true; dragging = false; unlockScroll(); return; }
                     isTabSwipe = true;
-                    // Create companion with cached page HTML
                     const c = document.createElement('div');
                     c.className = 'back-companion';
                     if (this._pageCache[tabTarget]) c.innerHTML = this._pageCache[tabTarget];
@@ -251,9 +249,6 @@ const App = {
                     companion.style.transition = 'none';
                     companion.style.transform = `translateX(${swipingLeft ? W() : -W()}px)`;
                     const app = document.getElementById('app');
-                    app.style.position = 'fixed';
-                    app.style.top = `-${savedScrollY}px`;
-                    app.style.left = '0'; app.style.right = '0';
                     app.classList.add('swiping-back');
                     app.style.transition = 'none';
                 } else if (cfg.mode === 'carousel') {
@@ -273,9 +268,6 @@ const App = {
                         companion.style.transform = `translateX(${-0.28 * W()}px)`;
                     }
                     const app = document.getElementById('app');
-                    app.style.position = 'fixed';
-                    app.style.top = `-${savedScrollY}px`;
-                    app.style.left = '0'; app.style.right = '0';
                     app.classList.add('swiping-back');
                     app.style.transition = 'none';
                 }
