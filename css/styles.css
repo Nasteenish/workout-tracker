@@ -3081,6 +3081,70 @@ body.modal-open {
 .btn-start-workout:active {
     background: rgba(157, 141, 245, 0.15);
 }
+/* Gym indicator */
+.gym-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 6px 14px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+.gym-indicator svg { opacity: 0.5; flex-shrink: 0; }
+
+/* Gym geo suggestion & link prompt */
+.gym-geo-card {
+    background: rgba(157, 141, 245, 0.12);
+    border: 1px solid rgba(157, 141, 245, 0.25);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin: 0 16px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.gym-geo-card span { font-size: 14px; color: var(--text-primary); }
+.gym-geo-btns { display: flex; gap: 8px; flex-shrink: 0; }
+.gym-geo-yes {
+    background: var(--accent-primary);
+    color: #000;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+}
+.gym-geo-no {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+/* Gym tag in feed/checkin */
+.share-gym-tag {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+.checkin-gym-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
 .workout-timer-row {
     display: flex;
     align-items: center;

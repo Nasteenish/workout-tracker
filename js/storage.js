@@ -24,6 +24,8 @@ const Storage = {
             if (!this._data.exerciseUnits) this._data.exerciseUnits = {};
             if (this._data.program === undefined) this._data.program = null;
             if (!this._data.exerciseSubstitutions) this._data.exerciseSubstitutions = {};
+            if (!this._data.gyms) this._data.gyms = [];
+            if (!this._data.gymEquipmentMap) this._data.gymEquipmentMap = {};
             if (!this._data.exerciseEquipmentOptions) {
                 this._data.exerciseEquipmentOptions = {};
                 // Auto-migrate: link currently assigned equipment to their exercises
@@ -64,6 +66,8 @@ const Storage = {
             exerciseUnits: {},
             exerciseChoices: {},
             exerciseSubstitutions: {},
+            gyms: [],
+            gymEquipmentMap: {},
             log: {}
         };
     },
@@ -399,6 +403,104 @@ const Storage = {
             }
             if (data.exerciseEquipment[id] === equipmentId) {
                 data.exerciseEquipment[id] = null;
+            }
+        }
+        this._save();
+    },
+
+    // ===== Gyms =====
+    getGyms() {
+        var data = this._load();
+        return (data.gyms || []).slice().sort(function(a, b) { return (b.lastUsed || 0) - (a.lastUsed || 0); });
+    },
+
+    getGymById(id) {
+        if (!id) return null;
+        return (this._load().gyms || []).find(function(g) { return g.id === id; }) || null;
+    },
+
+    addGym(name, lat, lng) {
+        var data = this._load();
+        var id = 'gym_' + Date.now();
+        data.gyms.push({ id: id, name: name, lat: lat || null, lng: lng || null, lastUsed: Date.now() });
+        this._save();
+        return id;
+    },
+
+    removeGym(id) {
+        var data = this._load();
+        data.gyms = data.gyms.filter(function(g) { return g.id !== id; });
+        delete data.gymEquipmentMap[id];
+        this._save();
+    },
+
+    renameGym(id, newName) {
+        var data = this._load();
+        var gym = data.gyms.find(function(g) { return g.id === id; });
+        if (gym) { gym.name = newName; this._save(); }
+    },
+
+    touchGym(id) {
+        var data = this._load();
+        var gym = data.gyms.find(function(g) { return g.id === id; });
+        if (gym) { gym.lastUsed = Date.now(); this._save(); }
+    },
+
+    updateGymCoords(id, lat, lng) {
+        var data = this._load();
+        var gym = data.gyms.find(function(g) { return g.id === id; });
+        if (gym) { gym.lat = lat; gym.lng = lng; this._save(); }
+    },
+
+    getGymExerciseEquipment(gymId, exerciseId) {
+        var data = this._load();
+        var map = data.gymEquipmentMap[gymId];
+        return map ? (map[exerciseId] || null) : null;
+    },
+
+    setGymExerciseEquipment(gymId, exerciseId, equipmentId) {
+        var data = this._load();
+        if (!data.gymEquipmentMap[gymId]) data.gymEquipmentMap[gymId] = {};
+        data.gymEquipmentMap[gymId][exerciseId] = equipmentId;
+        var sibs = this._getSiblingIds(exerciseId);
+        for (var i = 0; i < sibs.length; i++) {
+            data.gymEquipmentMap[gymId][sibs[i]] = equipmentId;
+        }
+        this._save();
+    },
+
+    getGymEquipmentMap(gymId) {
+        var data = this._load();
+        return data.gymEquipmentMap[gymId] || {};
+    },
+
+    gymHasEquipmentMap(gymId) {
+        var map = this.getGymEquipmentMap(gymId);
+        return Object.keys(map).length > 0;
+    },
+
+    applyGymEquipment(gymId) {
+        if (!gymId) return;
+        var data = this._load();
+        var map = data.gymEquipmentMap[gymId];
+        if (!map) return;
+        for (var exerciseId in map) {
+            var eqId = map[exerciseId];
+            if (eqId && this.getEquipmentById(eqId)) {
+                data.exerciseEquipment[exerciseId] = eqId;
+            }
+        }
+        this._save();
+    },
+
+    initGymFromCurrentEquipment(gymId) {
+        if (!gymId) return;
+        var data = this._load();
+        if (!data.gymEquipmentMap[gymId]) data.gymEquipmentMap[gymId] = {};
+        for (var exId in data.exerciseEquipment) {
+            var eqId = data.exerciseEquipment[exId];
+            if (eqId && this.getEquipmentById(eqId)) {
+                data.gymEquipmentMap[gymId][exId] = eqId;
             }
         }
         this._save();

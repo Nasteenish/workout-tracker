@@ -464,6 +464,14 @@ const UI = {
     },
 
     // Returns full day view HTML (for back-swipe companion)
+    _gymIndicatorHTML(weekNum, dayNum) {
+        var gymId = sessionStorage.getItem('wt_gym_' + weekNum + '_' + dayNum);
+        if (!gymId) return '';
+        var gym = Storage.getGymById(gymId);
+        if (!gym) return '';
+        return '<div class="gym-indicator"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + gym.name + '</div>';
+    },
+
     _dayViewHTML(weekNum, dayNum) {
         const workout = resolveWorkout(weekNum, dayNum);
         const dayTitle = workout ? (workout.titleRu || workout.title || 'День ' + dayNum) : 'День ' + dayNum;
@@ -518,7 +526,7 @@ const UI = {
                 </div>
             </div>
             <div class="app-content">
-                <div class="slide-container"><div class="day-slide">${timerHtml}${exerciseHtml}</div></div>
+                <div class="slide-container"><div class="day-slide">${timerHtml}${this._gymIndicatorHTML(weekNum, dayNum)}${exerciseHtml}</div></div>
             </div>
         `;
     },
@@ -612,6 +620,7 @@ const UI = {
                 <div class="slide-container">
                     <div class="day-slide">
                     ${timerHtml}
+                    ${this._gymIndicatorHTML(weekNum, dayNum)}
                     ${html}
                     </div>
                 </div>
@@ -1134,6 +1143,43 @@ const UI = {
         }
     },
 
+    showGymModal(onSelect) {
+        var gyms = Storage.getGyms();
+        var optionsHtml = '<div class="eq-option" data-gym-id="">Без зала</div>';
+        for (var i = 0; i < gyms.length; i++) {
+            var g = gyms[i];
+            optionsHtml += '<div class="eq-option" data-gym-id="' + g.id + '">'
+                + '<span>' + g.name + '</span></div>';
+        }
+
+        var overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.id = 'gym-modal';
+        overlay.innerHTML = '<div class="equipment-modal">'
+            + '<div class="modal-header"><h3>Где тренируешься?</h3></div>'
+            + '<div id="gym-geo-suggestion" style="display:none"></div>'
+            + '<div id="gym-link-prompt" style="display:none"></div>'
+            + '<div class="eq-list">' + optionsHtml + '</div>'
+            + '<div class="eq-add-row">'
+            + '<input type="text" id="gym-new-name" placeholder="Новый зал..." class="eq-new-input">'
+            + '<button class="eq-add-btn" id="gym-add-btn">+</button>'
+            + '</div></div>';
+        document.body.appendChild(overlay);
+        lockBodyScroll();
+
+        overlay._onSelect = onSelect;
+        blockOverlayScroll(overlay, '.equipment-modal');
+        overlay.addEventListener('click', function(e) { App.handleClick(e); });
+
+        App._suggestNearbyGym();
+    },
+
+    hideGymModal() {
+        var modal = document.getElementById('gym-modal');
+        if (modal) modal.remove();
+        if (!document.querySelector('.modal-overlay')) unlockBodyScroll();
+    },
+
     // ===== CHOICE MODAL (choose one exercise) =====
     showChoiceModal(choiceKey) {
         // Find the group across all day templates
@@ -1625,6 +1671,23 @@ const UI = {
             eqListHtml = '<div class="settings-eq-empty">Нет оборудования</div>';
         }
 
+        const gymList = Storage.getGyms();
+        let gymListHtml = '';
+        for (const g of gymList) {
+            gymListHtml += `
+                <div class="settings-eq-item">
+                    <span>${g.name}</span>
+                    <div class="eq-item-actions">
+                        <button class="gym-edit-btn" data-gym-id="${g.id}">${svgPencil}</button>
+                        <button class="gym-remove-btn" data-gym-id="${g.id}"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+                    </div>
+                </div>
+            `;
+        }
+        if (gymList.length === 0) {
+            gymListHtml = '<div class="settings-eq-empty">Нет залов</div>';
+        }
+
         document.getElementById('app').innerHTML = `
             <div class="app-header">
                 <button class="back-btn" id="btn-back-settings"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -1701,6 +1764,17 @@ const UI = {
                     <div class="eq-add-row">
                         <input type="text" id="settings-eq-name" placeholder="Название..." class="eq-new-input">
                         <button class="eq-add-btn" id="settings-eq-add"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 3v12M3 9h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+                    </div>
+                </div>
+
+                <div class="settings-card" style="margin-top: var(--spacing-lg);">
+                    <div class="settings-card-label">Залы</div>
+                    <div class="settings-eq-list">
+                        ${gymListHtml}
+                    </div>
+                    <div class="eq-add-row">
+                        <input type="text" id="settings-gym-name" placeholder="Название зала..." class="eq-new-input">
+                        <button class="eq-add-btn" id="settings-gym-add"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 3v12M3 9h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
                     </div>
                 </div>
 

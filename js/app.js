@@ -1873,6 +1873,42 @@ const App = {
             return;
         }
 
+        // Settings: add gym
+        if (target.id === 'settings-gym-add' || target.closest('#settings-gym-add')) {
+            var input = document.getElementById('settings-gym-name');
+            var name = input ? input.value.trim() : '';
+            if (!name) return;
+            Storage.addGym(name);
+            UI.renderSettings();
+            return;
+        }
+
+        // Settings: edit gym name
+        if (target.matches('.gym-edit-btn') || target.closest('.gym-edit-btn')) {
+            var btn = target.matches('.gym-edit-btn') ? target : target.closest('.gym-edit-btn');
+            var gymId = btn.dataset.gymId;
+            var gym = Storage.getGymById(gymId);
+            if (gym) {
+                var newName = prompt('Название зала:', gym.name);
+                if (newName && newName.trim()) {
+                    Storage.renameGym(gymId, newName.trim());
+                    UI.renderSettings();
+                }
+            }
+            return;
+        }
+
+        // Settings: remove gym
+        if (target.matches('.gym-remove-btn') || target.closest('.gym-remove-btn')) {
+            var btn = target.matches('.gym-remove-btn') ? target : target.closest('.gym-remove-btn');
+            var gymId = btn.dataset.gymId;
+            if (gymId && confirm('Удалить зал?')) {
+                Storage.removeGym(gymId);
+                UI.renderSettings();
+            }
+            return;
+        }
+
         // Reset data
         if (target.id === 'btn-reset') {
             if (confirm('Вы уверены? Все данные будут удалены.')) {
@@ -1900,10 +1936,36 @@ const App = {
             return;
         }
 
-        // Start workout timer
+        // Start workout timer — show gym modal first
         if (target.id === 'btn-start-workout') {
-            this.startWorkoutTimer();
-            UI.renderDay(this._currentWeek, this._currentDay);
+            var self = this;
+            UI.showGymModal(function(gymId) {
+                var gymKey = 'wt_gym_' + self._currentWeek + '_' + self._currentDay;
+                sessionStorage.setItem(gymKey, gymId || '');
+                if (gymId) {
+                    Storage.touchGym(gymId);
+                    if (Storage.gymHasEquipmentMap(gymId)) {
+                        Storage.applyGymEquipment(gymId);
+                        self.startWorkoutTimer();
+                        UI.renderDay(self._currentWeek, self._currentDay);
+                    } else {
+                        // First time at this gym — offer to link current equipment
+                        var gym = Storage.getGymById(gymId);
+                        var hasAnyEquipment = Object.keys(Storage._load().exerciseEquipment).some(function(k) {
+                            return !!Storage._load().exerciseEquipment[k];
+                        });
+                        if (hasAnyEquipment) {
+                            self._showGymLinkPrompt(gymId, gym ? gym.name : '');
+                        } else {
+                            self.startWorkoutTimer();
+                            UI.renderDay(self._currentWeek, self._currentDay);
+                        }
+                    }
+                } else {
+                    self.startWorkoutTimer();
+                    UI.renderDay(self._currentWeek, self._currentDay);
+                }
+            });
             return;
         }
 
@@ -2002,6 +2064,72 @@ const App = {
             return;
         }
 
+        // Gym modal — select gym
+        if ((target.matches('.eq-option[data-gym-id]') || target.closest('.eq-option[data-gym-id]')) && target.closest('#gym-modal')) {
+            var opt = target.matches('.eq-option[data-gym-id]') ? target : target.closest('.eq-option[data-gym-id]');
+            var gymId = opt.dataset.gymId || null;
+            var modal = document.getElementById('gym-modal');
+            var onSelect = modal ? modal._onSelect : null;
+            UI.hideGymModal();
+            if (onSelect) onSelect(gymId);
+            return;
+        }
+
+        // Gym modal — add new gym
+        if (target.id === 'gym-add-btn' || target.closest('#gym-add-btn')) {
+            var input = document.getElementById('gym-new-name');
+            var name = input ? input.value.trim() : '';
+            if (!name) return;
+            var newId = Storage.addGym(name, App._lastGeoPos ? App._lastGeoPos.lat : null, App._lastGeoPos ? App._lastGeoPos.lng : null);
+            var modal = document.getElementById('gym-modal');
+            var onSelect = modal ? modal._onSelect : null;
+            UI.hideGymModal();
+            if (onSelect) onSelect(newId);
+            return;
+        }
+
+        // Gym modal — close on overlay
+        if (target.id === 'gym-modal') {
+            UI.hideGymModal();
+            return;
+        }
+
+        // Gym geo suggestion — Yes
+        if (target.id === 'gym-geo-yes') {
+            var gymId = target.dataset.gymId;
+            var modal = document.getElementById('gym-modal');
+            var onSelect = modal ? modal._onSelect : null;
+            UI.hideGymModal();
+            if (onSelect) onSelect(gymId);
+            return;
+        }
+
+        // Gym geo suggestion — No
+        if (target.id === 'gym-geo-no') {
+            var el = document.getElementById('gym-geo-suggestion');
+            if (el) el.style.display = 'none';
+            return;
+        }
+
+        // Gym link prompt — Yes (link current equipment to gym)
+        if (target.id === 'gym-link-yes') {
+            var gymId = target.dataset.gymId;
+            Storage.initGymFromCurrentEquipment(gymId);
+            UI.hideGymModal();
+            this.startWorkoutTimer();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return;
+        }
+
+        // Gym link prompt — No (skip linking)
+        if (target.id === 'gym-link-no') {
+            var gymId = target.dataset.gymId;
+            UI.hideGymModal();
+            this.startWorkoutTimer();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return;
+        }
+
         // Choice modal: select option (must be before eq-option handler)
         if (target.matches('.eq-option[data-choice-key]') || target.closest('.eq-option[data-choice-key]')) {
             const opt = target.matches('.eq-option[data-choice-key]') ? target : target.closest('.eq-option[data-choice-key]');
@@ -2019,6 +2147,9 @@ const App = {
             const eqId = opt.dataset.eqId;
             const exId = opt.dataset.exercise;
             Storage.setExerciseEquipment(exId, eqId || null);
+            // Propagate to gym-equipment map
+            var activeGym = this._getActiveGymId();
+            if (activeGym && eqId) Storage.setGymExerciseEquipment(activeGym, exId, eqId);
             UI.hideEquipmentModal();
             UI.renderDay(this._currentWeek, this._currentDay);
             return;
@@ -2034,6 +2165,9 @@ const App = {
             const newId = Storage.addEquipment(name);
             if (exId) {
                 Storage.setExerciseEquipment(exId, newId);
+                // Propagate to gym-equipment map
+                var activeGym = this._getActiveGymId();
+                if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, newId);
                 UI.hideEquipmentModal();
                 UI.renderDay(this._currentWeek, this._currentDay);
             }
@@ -2076,6 +2210,9 @@ const App = {
                     repsInput.value = reps;
                 }
                 Storage.saveSetLog(this._currentWeek, this._currentDay, exId, setIdx, weight, reps, eqId);
+                // Passive gym-equipment learning
+                var activeGym = this._getActiveGymId();
+                if (activeGym && eqId) Storage.setGymExerciseEquipment(activeGym, exId, eqId);
 
                 // Explicitly save all drop set / segment values from DOM
                 row.querySelectorAll('.seg-weight-input[data-seg]').forEach(inp => {
@@ -2334,6 +2471,7 @@ const App = {
         }
         sessionStorage.removeItem(this._getTimerKey());
         sessionStorage.removeItem(this._getPauseKey());
+        sessionStorage.removeItem('wt_gym_' + this._currentWeek + '_' + this._currentDay);
     },
 
     _startTimerDisplay() {
@@ -2370,6 +2508,7 @@ const App = {
         var pausedAt = parseInt(sessionStorage.getItem(pauseKey));
         sessionStorage.removeItem(key);
         sessionStorage.removeItem(pauseKey);
+        // Don't remove gym key here — needed for Celebration._pendingShare
         if (!startTime) return null;
         var end = pausedAt || Date.now();
         return Math.floor((end - startTime) / 1000);
@@ -2395,6 +2534,73 @@ const App = {
         if (this.isWorkoutTimerRunning() && !this.isWorkoutTimerPaused()) {
             this._startTimerDisplay();
         }
+    },
+
+    // ===== Gym helpers =====
+
+    _lastGeoPos: null,
+
+    _showGymLinkPrompt(gymId, gymName) {
+        var prompt = document.getElementById('gym-link-prompt');
+        if (!prompt) {
+            // Modal already closed, just start
+            this.startWorkoutTimer();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return;
+        }
+        prompt.style.display = 'block';
+        prompt.innerHTML = '<div class="gym-geo-card">'
+            + '<span>Привязать оборудование к <b>' + gymName + '</b>?</span>'
+            + '<div class="gym-geo-btns">'
+            + '<button class="gym-geo-yes" id="gym-link-yes" data-gym-id="' + gymId + '">Да</button>'
+            + '<button class="gym-geo-no" id="gym-link-no" data-gym-id="' + gymId + '">Нет</button>'
+            + '</div></div>';
+    },
+
+    _suggestNearbyGym() {
+        if (!navigator.geolocation) return;
+        var gyms = Storage.getGyms().filter(function(g) { return g.lat && g.lng; });
+        if (!gyms.length) return;
+
+        navigator.geolocation.getCurrentPosition(
+            function(pos) {
+                App._lastGeoPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                var nearest = null, minDist = Infinity;
+                for (var i = 0; i < gyms.length; i++) {
+                    var d = App._haversineDistance(pos.coords.latitude, pos.coords.longitude, gyms[i].lat, gyms[i].lng);
+                    if (d < minDist) { minDist = d; nearest = gyms[i]; }
+                }
+                if (nearest && minDist < 500) {
+                    var suggestion = document.getElementById('gym-geo-suggestion');
+                    if (suggestion) {
+                        suggestion.style.display = 'block';
+                        suggestion.innerHTML = '<div class="gym-geo-card">'
+                            + '<span>Ты в <b>' + nearest.name + '</b>?</span>'
+                            + '<div class="gym-geo-btns">'
+                            + '<button class="gym-geo-yes" id="gym-geo-yes" data-gym-id="' + nearest.id + '">Да</button>'
+                            + '<button class="gym-geo-no" id="gym-geo-no">Нет</button>'
+                            + '</div></div>';
+                    }
+                }
+            },
+            function() {},
+            { timeout: 5000, maximumAge: 60000 }
+        );
+    },
+
+    _haversineDistance(lat1, lon1, lat2, lon2) {
+        var R = 6371000;
+        var dLat = (lat2 - lat1) * Math.PI / 180;
+        var dLon = (lon2 - lon1) * Math.PI / 180;
+        var a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+            + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180)
+            * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    },
+
+    _getActiveGymId() {
+        if (!this._currentWeek || !this._currentDay) return null;
+        return sessionStorage.getItem('wt_gym_' + this._currentWeek + '_' + this._currentDay) || null;
     }
 };
 
@@ -2483,12 +2689,21 @@ const Celebration = {
             if (t.indexOf('плеч') !== -1 || t.indexOf('дельт') !== -1 || t.indexOf('shoulder') !== -1) muscleGroup = muscleGroup || 'Плечи';
             if (t.indexOf('бицепс') !== -1 || t.indexOf('трицепс') !== -1 || t.indexOf('рук') !== -1 || t.indexOf('arm') !== -1) muscleGroup = muscleGroup || 'Руки';
             if (!muscleGroup && dayTitle) muscleGroup = dayTitle;
+            var gymName = '';
+            var celebGymId = sessionStorage.getItem('wt_gym_' + weekNum + '_' + dayNum);
+            if (celebGymId) {
+                var celebGym = Storage.getGymById(celebGymId);
+                if (celebGym) gymName = celebGym.name;
+            }
             this._pendingShare = {
                 week: weekNum, day: dayNum, title: dayTitle,
                 muscle_group: muscleGroup,
                 exercises: exercises, total_sets: totalSets,
-                duration_sec: elapsedSec || 0
+                duration_sec: elapsedSec || 0,
+                gym_name: gymName || undefined
             };
+            // Clean up gym session key
+            sessionStorage.removeItem('wt_gym_' + weekNum + '_' + dayNum);
         }
 
         var self = this;

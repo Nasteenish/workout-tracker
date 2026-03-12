@@ -248,6 +248,10 @@ const SocialUI = {
             if (prefillWorkout.total_sets) html += '<span class="share-stat-chip">' + prefillWorkout.total_sets + ' подх.</span>';
             html += '</div>';
 
+            if (prefillWorkout.gym_name) {
+                html += '<div class="share-gym-tag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + prefillWorkout.gym_name + '</div>';
+            }
+
             html += '<input type="hidden" id="checkin-workout-data" value=\'' + JSON.stringify(prefillWorkout).replace(/'/g, '&#39;') + '\'>';
 
             // Photo/video upload
@@ -557,6 +561,7 @@ const SocialUI = {
                 if (ws.exercises) wStats.push(ws.exercises.length + ' упр.');
                 if (ws.total_sets) wStats.push(ws.total_sets + ' подх.');
                 if (wStats.length) html += '<span class="checkin-workout-stats">' + wStats.join(' · ') + '</span>';
+                if (ws.gym_name) html += '<span class="checkin-gym-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + ws.gym_name + '</span>';
                 if (ws.exercises && ws.exercises.length) {
                     html += '<div class="checkin-workout-exercises">' + ws.exercises.slice(0, 4).map(function(e) { return e.name; }).join(', ');
                     if (ws.exercises.length > 4) html += ' +' + (ws.exercises.length - 4);
@@ -635,6 +640,7 @@ const SocialUI = {
             html += '<div class="checkin-workout">';
             html += '<span class="checkin-workout-label">Тренировка</span>';
             if (ws.duration_sec) html += ' ' + Math.round(ws.duration_sec / 60) + ' мин';
+            if (ws.gym_name) html += '<div class="checkin-gym-tag" style="margin-top:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + ws.gym_name + '</div>';
             if (ws.exercises && ws.exercises.length) {
                 html += '<div class="checkin-workout-exercises">';
                 ws.exercises.forEach(function(e) {
