@@ -305,6 +305,7 @@ const App = {
                 setTimeout(() => {
                     if (onCommit) onCommit();
                     history.replaceState(null, '', target);
+                    app.classList.add('no-animate');
                     this.route(true);
                     resetApp(app);
                     unlockScroll();
