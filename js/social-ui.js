@@ -440,7 +440,7 @@ const SocialUI = {
             html += '</div>';
             html += '<div class="comment-body">';
             html += '<span class="comment-author">' + authorName + '</span> ';
-            html += '<span class="comment-text">' + c.text.replace(/</g, '&lt;') + '</span>';
+            html += '<span class="comment-text">' + SocialUI._renderMentionText(c.text) + '</span>';
             html += '<div class="comment-meta">';
             html += '<span class="comment-time">' + SocialUI._timeAgo(c.created_at) + '</span>';
             if (!isMine) html += '<button class="comment-reply-btn" data-username="' + authorUsername + '">Ответить</button>';
@@ -460,6 +460,10 @@ const SocialUI = {
         html += '</div>'; // social-screen
 
         app.innerHTML = html;
+
+        // Init @mention autocomplete on comment input
+        var commentInput = document.getElementById('comment-input');
+        if (commentInput) this._initMentionInput(commentInput);
     },
 
     // ===== DISCOVER =====
@@ -808,6 +812,81 @@ const SocialUI = {
                 overlay.remove();
             }
         };
+    },
+
+    _renderMentionText(text) {
+        var safe = text.replace(/</g, '&lt;');
+        return safe.replace(/@([A-Za-z0-9_]+)/g, '<a class="mention-link" href="#/u/$1">@$1</a>');
+    },
+
+    _initMentionInput(inputEl) {
+        if (!inputEl || inputEl._mentionInit) return;
+        inputEl._mentionInit = true;
+
+        var row = inputEl.closest('.comment-input-row');
+        if (!row) return;
+        row.style.position = 'relative';
+
+        var dropdown = document.createElement('div');
+        dropdown.className = 'mention-dropdown';
+        dropdown.style.display = 'none';
+        row.appendChild(dropdown);
+
+        var searchTimeout;
+        var self = this;
+
+        function getMentionQuery() {
+            var val = inputEl.value;
+            var pos = inputEl.selectionStart || val.length;
+            var before = val.slice(0, pos);
+            var match = before.match(/(^|[^A-Za-z0-9_])@([A-Za-z0-9_]*)$/);
+            if (!match) return null;
+            return { query: match[2], start: before.lastIndexOf('@' + match[2]), len: match[2].length + 1 };
+        }
+
+        function hide() { dropdown.style.display = 'none'; dropdown.innerHTML = ''; }
+
+        inputEl.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            var m = getMentionQuery();
+            if (!m || m.query.length < 1) { hide(); return; }
+            searchTimeout = setTimeout(function() {
+                Social.searchUsers(m.query).then(function(users) {
+                    var myId = Social._getSupaUserId();
+                    var filtered = users.filter(function(u) { return u.user_id !== myId; }).slice(0, 5);
+                    if (!filtered.length) { hide(); return; }
+                    var html = '';
+                    filtered.forEach(function(u) {
+                        html += '<div class="mention-item" data-username="' + u.username + '">';
+                        html += u.avatar_url ? '<img class="mention-avatar" src="' + u.avatar_url + '">' : '<div class="mention-avatar avatar-placeholder-sm"></div>';
+                        html += '<div class="mention-info"><span class="mention-name">' + (u.display_name || u.username) + '</span><span class="mention-username">@' + u.username + '</span></div>';
+                        html += '</div>';
+                    });
+                    dropdown.innerHTML = html;
+                    dropdown.style.display = 'block';
+                });
+            }, 200);
+        });
+
+        dropdown.addEventListener('click', function(e) {
+            var item = e.target.closest('.mention-item');
+            if (!item) return;
+            var username = item.dataset.username;
+            var m = getMentionQuery();
+            if (!m) { hide(); return; }
+            var val = inputEl.value;
+            inputEl.value = val.slice(0, m.start) + '@' + username + ' ' + val.slice(m.start + m.len);
+            hide();
+            inputEl.focus();
+        });
+
+        inputEl.addEventListener('blur', function() {
+            setTimeout(hide, 200);
+        });
+
+        inputEl.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') hide();
+        });
     },
 
     _muscleGroupColor(mg) {
