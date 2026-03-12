@@ -427,7 +427,7 @@ const SocialUI = {
             if (c.photos && c.photos.length > 0) {
                 html += '<div class="checkin-photos' + (c.photos.length > 1 ? ' multi' : '') + '">';
                 c.photos.forEach(function(url) {
-                    html += '<img class="checkin-photo" src="' + url + '" alt="" onload="this.classList.add(\'loaded\')" onerror="this.classList.add(\'loaded\')">';
+                    html += '<img class="checkin-photo" src="' + url + '" alt="">';
                 });
                 html += '</div>';
             }
@@ -492,7 +492,7 @@ const SocialUI = {
         if (c.photos && c.photos.length > 0) {
             html += '<div class="checkin-photos' + (c.photos.length > 1 ? ' multi' : '') + '">';
             c.photos.forEach(function(url) {
-                html += '<img class="checkin-photo" src="' + url + '" alt="" onload="this.classList.add(\'loaded\')" onerror="this.classList.add(\'loaded\')">';
+                html += '<img class="checkin-photo" src="' + url + '" alt="">';
             });
             html += '</div>';
         }
