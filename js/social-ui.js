@@ -78,8 +78,8 @@ const SocialUI = {
 
         // Stats row
         html += '<div class="profile-stats">';
-        html += '<div class="stat"><span class="stat-num">' + (counts.followers || 0) + '</span><span class="stat-label">подписчиков</span></div>';
-        html += '<div class="stat"><span class="stat-num">' + (counts.following || 0) + '</span><span class="stat-label">подписок</span></div>';
+        html += '<a class="stat stat-link" href="#/followers/' + targetId + '"><span class="stat-num">' + (counts.followers || 0) + '</span><span class="stat-label">подписчиков</span></a>';
+        html += '<a class="stat stat-link" href="#/following/' + targetId + '"><span class="stat-num">' + (counts.following || 0) + '</span><span class="stat-label">подписок</span></a>';
         html += '<div class="stat"><span class="stat-num">' + checkins.length + '</span><span class="stat-label">чекинов</span></div>';
         html += '</div>';
 
@@ -558,6 +558,31 @@ const SocialUI = {
             html += '</div>';
         });
         return html;
+    },
+
+    // ===== FOLLOWERS / FOLLOWING LIST =====
+    async renderFollowList(userId, type) {
+        var app = document.getElementById('app');
+        app.innerHTML = '<div class="social-loading">Загрузка...</div>';
+
+        var isFollowers = type === 'followers';
+        var title = isFollowers ? 'Подписчики' : 'Подписки';
+        var results = await Promise.all([
+            isFollowers ? Social.getFollowers(userId) : Social.getFollowing(userId),
+            Social.getMyFollowingIds()
+        ]);
+        var users = results[0];
+        var followingIds = results[1];
+        var myId = Social._getSupaUserId();
+
+        var html = '<div class="social-screen">';
+        html += '<div class="social-header"><button class="social-back" id="btn-followlist-back">&larr;</button><h2>' + title + '</h2></div>';
+        html += '<div class="discover-results">';
+        html += this._renderUserList(users, myId, followingIds);
+        html += '</div>';
+        html += '</div>';
+
+        app.innerHTML = html;
     },
 
     _timeAgo(dateStr) {

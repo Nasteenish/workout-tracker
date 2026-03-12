@@ -142,6 +142,8 @@ const App = {
             return { mode: 'back', target: '#/feed', companion: 'none' };
         if (/^#\/u\/.+$/.test(hash))
             return { mode: 'back', target: '#/discover', companion: 'none' };
+        if (/^#\/(followers|following)\/.+$/.test(hash))
+            return { mode: 'back', target: '#/profile', companion: 'none' };
         return null;
     },
 
@@ -936,6 +938,8 @@ const App = {
         if (hash === '#/discover') { SocialUI.renderDiscover(); return; }
         var checkinDetailMatch = hash.match(/^#\/checkin\/(.+)$/);
         if (checkinDetailMatch) { SocialUI.renderCheckinDetail(checkinDetailMatch[1]); return; }
+        var followListMatch = hash.match(/^#\/(followers|following)\/(.+)$/);
+        if (followListMatch) { SocialUI.renderFollowList(followListMatch[2], followListMatch[1]); return; }
         var usernameMatch = hash.match(/^#\/u\/(.+)$/);
         if (usernameMatch) {
             Social.getProfileByUsername(decodeURIComponent(usernameMatch[1])).then(function(p) {
@@ -1198,6 +1202,12 @@ const App = {
         // Discover back
         if (target.id === 'btn-discover-back' || target.closest('#btn-discover-back')) {
             location.hash = '#/feed';
+            return;
+        }
+
+        // Follow list back
+        if (target.id === 'btn-followlist-back' || target.closest('#btn-followlist-back')) {
+            history.back();
             return;
         }
 

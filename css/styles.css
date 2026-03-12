@@ -3379,6 +3379,8 @@ body:has(.tab-bar) .data-actions { margin-bottom: 10px; }
     border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 .stat { text-align: center; }
+a.stat-link { text-decoration: none; color: inherit; -webkit-tap-highlight-color: transparent; }
+a.stat-link:active { opacity: 0.6; }
 .stat-num { display: block; font-size: 18px; font-weight: 700; }
 .stat-label { display: block; font-size: 12px; color: var(--text-muted); }
 .profile-actions { padding: 12px 0; }
