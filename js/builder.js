@@ -36,7 +36,7 @@ const Builder = {
                 <h1>Создать аккаунт</h1>
 
                 <div class="login-features">
-                    <div class="login-feature"><svg viewBox="0 0 28 14" width="22" height="11" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="0.5" y="4" width="2.5" height="6" rx="1"/><rect x="4" y="2" width="3" height="10" rx="1"/><rect x="8" y="3.5" width="2" height="7" rx="0.8"/><rect x="10" y="5.5" width="8" height="3" rx="1"/><rect x="18" y="3.5" width="2" height="7" rx="0.8"/><rect x="21" y="2" width="3" height="10" rx="1"/><rect x="25" y="4" width="2.5" height="6" rx="1"/></svg><span>Тренировки</span></div>
+                    <div class="login-feature"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="9" width="3" height="6" rx="1.5"/><rect x="5" y="6" width="3" height="12" rx="1.5"/><rect x="9" y="11" width="6" height="2" rx="1"/><rect x="16" y="6" width="3" height="12" rx="1.5"/><rect x="20" y="9" width="3" height="6" rx="1.5"/></svg><span>Тренировки</span></div>
                     <div class="login-feature"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Check-in</span></div>
                     <div class="login-feature"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="2" y1="9" x2="22" y2="9"/><line x1="2" y1="15" x2="22" y2="15"/></svg><span>Лента атлетов</span></div>
                 </div>
