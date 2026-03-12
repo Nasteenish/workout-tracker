@@ -1388,7 +1388,7 @@ const Builder = {
         var isNew = d.isNew, localId = d.localId;
         Social.upsertProfile(profileData).then(function() {
             if (isNew && localId) {
-                App.switchUser(localId);
+                App.switchUser(localId, true);
             } else {
                 history.replaceState(null, '', '#/');
                 App.route();
@@ -1396,7 +1396,7 @@ const Builder = {
         }).catch(function() {
             // Save failed but proceed anyway
             if (isNew && localId) {
-                App.switchUser(localId);
+                App.switchUser(localId, true);
             } else {
                 history.replaceState(null, '', '#/');
                 App.route();

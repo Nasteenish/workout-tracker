@@ -612,12 +612,16 @@ const App = {
         }
     },
 
-    switchUser(userId) {
+    switchUser(userId, pushHistory) {
         Storage.setCurrentUser(userId);
         PROGRAM = null;
         var user = Storage.getCurrentUser();
         if (user) this._loadProgramForUser(user);
-        location.hash = '';
+        if (pushHistory) {
+            location.hash = '';
+        } else {
+            history.replaceState(null, '', window.location.pathname);
+        }
         this.route();
     },
 
@@ -988,9 +992,10 @@ const App = {
             if (step === '4') { Builder.renderOnboarding4(); return; }
         }
 
-        // If no current user → login
+        // If no current user → login (replace, keep history clean)
         if (!Storage.getCurrentUserId()) {
-            location.hash = '#/login';
+            history.replaceState(null, '', '#/login');
+            UI.renderLogin();
             return;
         }
 
@@ -1001,7 +1006,8 @@ const App = {
             Social.getMyProfile().then(function(p) {
                 if (p && !p.gender && !location.hash.startsWith('#/onboarding')) {
                     Builder._onboardingData = Builder._onboardingData || {};
-                    location.hash = '#/onboarding/1';
+                    history.replaceState(null, '', '#/onboarding/1');
+                    self.route();
                 }
             }).catch(function() {});
         }
@@ -1181,9 +1187,10 @@ const App = {
             return;
         }
 
-        // Go to registration
+        // Go to registration (replace login in history)
         if (target.id === 'btn-register' || target.closest('#btn-register')) {
-            location.hash = '#/register';
+            history.replaceState(null, '', '#/register');
+            this.route();
             return;
         }
 
@@ -1193,9 +1200,10 @@ const App = {
             return;
         }
 
-        // Registration: go back to login
+        // Registration: go back to login (replace, don't push)
         if (target.id === 'btn-go-login' || target.closest('#btn-go-login')) {
-            location.hash = '#/login';
+            history.replaceState(null, '', '#/login');
+            this.route();
             return;
         }
 
