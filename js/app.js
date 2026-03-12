@@ -910,6 +910,8 @@ const App = {
         window.scrollTo(0, 0);
         const hash = location.hash || '';
         this._lastRouteHash = hash;
+        // Clear checkin workout data when leaving checkin page
+        if (hash !== '#/checkin') this._activeCheckinWorkout = null;
 
         // Login screen
         if (hash === '#/login') {
@@ -943,7 +945,13 @@ const App = {
         if (hash === '#/feed') { SocialUI.renderFeed(); return; }
         if (hash === '#/profile') { SocialUI.renderProfile(); return; }
         if (hash === '#/profile/edit') { SocialUI.renderProfileEdit(); return; }
-        if (hash === '#/checkin') { SocialUI.renderCheckinForm(this._pendingCheckinWorkout); this._pendingCheckinWorkout = null; return; }
+        if (hash === '#/checkin') {
+            // Keep prefill data alive for P2R re-renders; only clear when leaving page
+            if (this._pendingCheckinWorkout) this._activeCheckinWorkout = this._pendingCheckinWorkout;
+            this._pendingCheckinWorkout = null;
+            SocialUI.renderCheckinForm(this._activeCheckinWorkout);
+            return;
+        }
         if (hash === '#/discover') { SocialUI.renderDiscover(); return; }
         var checkinDetailMatch = hash.match(/^#\/checkin\/(.+)$/);
         if (checkinDetailMatch) { SocialUI.renderCheckinDetail(checkinDetailMatch[1]); return; }
