@@ -460,7 +460,7 @@ input, button, select {
 .login-screen h1 {
     font-size: var(--font-size-title);
     font-weight: 700;
-    margin-bottom: var(--spacing-xs);
+    margin-bottom: var(--spacing-lg);
     letter-spacing: -0.5px;
 }
 
