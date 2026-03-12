@@ -463,6 +463,45 @@ const UI = {
         });
     },
 
+    // Returns full day view HTML (for back-swipe companion)
+    _dayViewHTML(weekNum, dayNum) {
+        const workout = resolveWorkout(weekNum, dayNum);
+        const dayTitle = workout ? (workout.titleRu || workout.title || 'День ' + dayNum) : 'День ' + dayNum;
+        let exerciseHtml = '';
+        if (workout && workout.exerciseGroups) {
+            let currentSection = '';
+            for (const group of workout.exerciseGroups) {
+                const sectionTitle = group.sectionTitleRu || group.sectionTitle || '';
+                if (sectionTitle && sectionTitle !== currentSection) {
+                    currentSection = sectionTitle;
+                    exerciseHtml += `<div class="section-header">${sectionTitle}</div>`;
+                }
+                if (group.type === 'warmup' && group.exercise) {
+                    const wu = group.exercise;
+                    exerciseHtml += `<div class="warmup-section"><div class="warmup-label">Разминка</div><div class="warmup-text">${wu.nameRu || wu.name}</div></div>`;
+                } else if (group.type === 'superset') {
+                    exerciseHtml += this._renderSuperset(group, weekNum, dayNum);
+                } else if (group.type === 'choose_one') {
+                    exerciseHtml += this._renderChooseOne(group, weekNum, dayNum);
+                } else if (group.type === 'single' && group.exercise) {
+                    exerciseHtml += this._renderExercise(group.exercise, weekNum, dayNum);
+                }
+            }
+        }
+        return `
+            <div class="app-header">
+                <button class="back-btn"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                <div class="header-title">
+                    <h1>Неделя ${weekNum} / День ${dayNum}</h1>
+                    <div class="header-subtitle">${dayTitle}</div>
+                </div>
+            </div>
+            <div class="app-content">
+                <div class="slide-container"><div class="day-slide">${exerciseHtml}</div></div>
+            </div>
+        `;
+    },
+
     // ===== DAY VIEW =====
     renderDay(weekNum, dayNum) {
         const workout = resolveWorkout(weekNum, dayNum);

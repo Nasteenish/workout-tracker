@@ -156,18 +156,7 @@ const App = {
         const createDayBackCompanion = (weekNum, dayNum) => {
             const c = document.createElement('div');
             c.className = 'back-companion';
-            const workout = resolveWorkout(weekNum, dayNum);
-            const dayTitle = workout ? (workout.titleRu || workout.title || 'День ' + dayNum) : 'День ' + dayNum;
-            c.innerHTML = `
-                <div class="app-header">
-                    <button class="back-btn"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-                    <div class="header-title">
-                        <h1>Неделя ${weekNum} / День ${dayNum}</h1>
-                        <div class="header-subtitle">${dayTitle}</div>
-                    </div>
-                </div>
-                <div class="app-content"></div>
-            `;
+            c.innerHTML = UI._dayViewHTML(weekNum, dayNum);
             document.body.appendChild(c);
             return c;
         };
@@ -507,6 +496,16 @@ const App = {
             if (indicator) {
                 if (ready) {
                     indicator.classList.add('spinning');
+                    // Social pages: re-render without full page reload to avoid async flash
+                    var isSocialRoute = /^#\/(feed|profile|checkin|discover|u\/)/.test(location.hash);
+                    if (isSocialRoute) {
+                        var ref = indicator;
+                        setTimeout(function() { ref.remove(); }, 500);
+                        indicator = null;
+                        App.route();
+                        pulling = false; ready = false; active = false; bottomActive = false;
+                        return;
+                    }
                     location.reload();
                     return;
                 }
