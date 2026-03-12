@@ -365,8 +365,12 @@ const SocialUI = {
         var myId = Social._getSupaUserId();
         var myReaction = reactions.find(function(r) { return r.user_id === myId; });
 
+        var isOwn = checkin.user_id === myId;
+
         var html = '<div class="social-screen">';
-        html += '<div class="social-header"><button class="social-back" id="btn-checkin-detail-back">&larr;</button><h2>Check-in</h2></div>';
+        html += '<div class="social-header"><button class="social-back" id="btn-checkin-detail-back">&larr;</button><h2>Check-in</h2>';
+        if (isOwn) html += '<button class="checkin-delete-btn" id="btn-delete-checkin" data-checkin="' + checkin.id + '"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>';
+        html += '</div>';
 
         // Full card
         html += this._renderFullCheckin(checkin, reactions, myReaction);

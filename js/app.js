@@ -1297,6 +1297,20 @@ const App = {
             return;
         }
 
+        // Delete checkin
+        if (target.id === 'btn-delete-checkin' || target.closest('#btn-delete-checkin')) {
+            var delBtn = target.closest('#btn-delete-checkin') || target;
+            var cid = delBtn.dataset.checkin;
+            if (cid && confirm('Удалить этот чекин?')) {
+                Social.deleteCheckin(cid).then(function() {
+                    location.hash = '#/profile';
+                }).catch(function(err) {
+                    alert('Ошибка: ' + err.message);
+                });
+            }
+            return;
+        }
+
         // Checkin submit
         if (target.id === 'btn-checkin-submit' || target.closest('#btn-checkin-submit')) {
             this._submitCheckin();
