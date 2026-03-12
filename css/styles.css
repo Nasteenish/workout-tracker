@@ -486,6 +486,7 @@ input, button, select {
     text-align: center;
 }
 .login-feature svg {
+    flex-shrink: 0;
     color: var(--accent-primary);
     opacity: 0.8;
 }
