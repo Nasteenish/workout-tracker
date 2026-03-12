@@ -498,6 +498,7 @@ const App = {
                 setTimeout(function() {
                     app.style.transition = '';
                     app.style.transform = '';
+                    app.classList.add('no-animate');
                     App.route(true);
                 }, 260);
                 pulling = false; ready = false; active = false; bottomActive = false;
