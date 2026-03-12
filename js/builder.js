@@ -166,6 +166,9 @@ const Builder = {
             // Store Supabase user mapping
             localStorage.setItem('wt_supa_' + localId, supaUserId);
 
+            // Set current user so Social.upsertProfile works during onboarding
+            Storage.setCurrentUser(localId);
+
             // Set up sync
             SupaSync._currentSupaUserId = supaUserId;
             SupaSync._currentStorageKey = 'wt_data_' + localId;
