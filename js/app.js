@@ -9,6 +9,7 @@ const App = {
     _pendingMigration: null,
     _pendingCheckinWorkout: null,
     _croppedAvatarBlob: null,
+    _pageCache: {},
 
     init() {
         // Multi-user migration (once)
@@ -174,13 +175,13 @@ const App = {
             return c;
         };
 
-        const createBackCompanion = (type, dayNum) => {
+        const createBackCompanion = (type, dayNum, targetHash) => {
             const c = document.createElement('div');
             c.className = 'back-companion';
             if (type === 'week') c.innerHTML = UI._weekViewHTML(this._currentWeek);
             else if (type === 'menu') c.innerHTML = UI._menuHTML();
             else if (type === 'day') c.innerHTML = UI._dayViewHTML(this._currentWeek, dayNum || this._currentDay);
-            // 'none' type: empty dark backdrop (for async social pages)
+            else if (targetHash && this._pageCache[targetHash]) c.innerHTML = this._pageCache[targetHash];
             document.body.appendChild(c);
             return c;
         };
@@ -193,7 +194,7 @@ const App = {
             dragging = false; locked = false; isBack = false;
             removeCompanion();
             if (cfg.preCreate) {
-                companion = createBackCompanion(cfg.companion, cfg.dayNum);
+                companion = createBackCompanion(cfg.companion, cfg.dayNum, cfg.target);
                 if (companion) companion.style.transform = `translateX(${-W()}px)`;
             }
             if (cfg.mode === 'carousel') {
@@ -228,7 +229,7 @@ const App = {
                 } else {
                     isBack = true;
                     if (!cfg.preCreate) {
-                        companion = createBackCompanion(cfg.companion, cfg.dayNum);
+                        companion = createBackCompanion(cfg.companion, cfg.dayNum, cfg.target);
                     }
                     if (companion) {
                         companion.style.transition = 'none';
@@ -899,9 +900,16 @@ const App = {
     },
 
     route(skipAnimation) {
+        // Cache current page HTML before navigating away
+        var prevHash = this._lastRouteHash || '';
+        if (prevHash) {
+            var appEl = document.getElementById('app');
+            if (appEl && appEl.innerHTML) this._pageCache[prevHash] = appEl.innerHTML;
+        }
         if (!skipAnimation) document.getElementById('app').classList.remove('no-animate');
         window.scrollTo(0, 0);
         const hash = location.hash || '';
+        this._lastRouteHash = hash;
 
         // Login screen
         if (hash === '#/login') {
