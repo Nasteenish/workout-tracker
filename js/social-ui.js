@@ -833,21 +833,31 @@ const SocialUI = {
         if (!inputEl || inputEl._mentionInit) return;
         inputEl._mentionInit = true;
 
-        var row = inputEl.closest('.comment-input-row') || inputEl.closest('.edit-field') || inputEl.parentElement;
-        if (!row) return;
-        row.style.position = 'relative';
-
-        var isComment = !!inputEl.closest('.comment-input-row');
+        // Dropdown appended to body with position:fixed — immune to parent overflow/clipping
         var dropdown = document.createElement('div');
-        dropdown.className = 'mention-dropdown' + (isComment ? '' : ' mention-dropdown-below');
+        dropdown.className = 'mention-dropdown-fixed';
         dropdown.style.display = 'none';
-        row.appendChild(dropdown);
+        document.body.appendChild(dropdown);
 
         var searchTimeout;
 
+        function positionDropdown() {
+            var rect = inputEl.getBoundingClientRect();
+            // Show above input for comment rows (bottom of screen), below for textareas
+            var isComment = !!inputEl.closest('.comment-input-row');
+            if (isComment) {
+                dropdown.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
+                dropdown.style.top = 'auto';
+            } else {
+                dropdown.style.top = (rect.bottom + 4) + 'px';
+                dropdown.style.bottom = 'auto';
+            }
+            dropdown.style.left = rect.left + 'px';
+            dropdown.style.width = rect.width + 'px';
+        }
+
         function getMentionQuery() {
             var val = inputEl.value;
-            // Use selectionStart; fallback to value length (handle iOS quirks)
             var pos = (typeof inputEl.selectionStart === 'number') ? inputEl.selectionStart : val.length;
             var before = val.slice(0, pos);
             var match = before.match(/(^|[^A-Za-z0-9_])@([A-Za-z0-9_]*)$/);
@@ -856,6 +866,15 @@ const SocialUI = {
         }
 
         function hide() { dropdown.style.display = 'none'; dropdown.innerHTML = ''; }
+
+        function selectUser(username) {
+            var m = getMentionQuery();
+            if (!m) { hide(); return; }
+            var val = inputEl.value;
+            inputEl.value = val.slice(0, m.start) + '@' + username + ' ' + val.slice(m.start + m.len);
+            hide();
+            inputEl.focus();
+        }
 
         function renderUsers(users) {
             var myId = Social._getSupaUserId();
@@ -869,10 +888,13 @@ const SocialUI = {
                 html += '</div>';
             });
             dropdown.innerHTML = html;
+            positionDropdown();
             dropdown.style.display = 'block';
         }
 
         function doSearch() {
+            // Clean up if input was removed from DOM
+            if (!inputEl.isConnected) { dropdown.remove(); return; }
             clearTimeout(searchTimeout);
             var m = getMentionQuery();
             if (!m) { hide(); return; }
@@ -881,37 +903,24 @@ const SocialUI = {
                     ? Social.searchUsers(m.query)
                     : Social.getRecentUsers();
                 promise.then(renderUsers).catch(function() { hide(); });
-            }, m.query.length > 0 ? 200 : 100);
+            }, m.query.length > 0 ? 200 : 50);
         }
 
-        // Listen for both input and keyup (iOS backup)
         inputEl.addEventListener('input', doSearch);
         inputEl.addEventListener('keyup', doSearch);
 
-        dropdown.addEventListener('click', function(e) {
-            var item = e.target.closest('.mention-item');
-            if (!item) return;
-            var username = item.dataset.username;
-            var m = getMentionQuery();
-            if (!m) { hide(); return; }
-            var val = inputEl.value;
-            inputEl.value = val.slice(0, m.start) + '@' + username + ' ' + val.slice(m.start + m.len);
-            hide();
-            inputEl.focus();
-        });
-
-        // Use touchend on mobile to prevent blur from hiding dropdown before click registers
+        // touchend for mobile — prevents blur from hiding dropdown before selection
         dropdown.addEventListener('touchend', function(e) {
             var item = e.target.closest('.mention-item');
             if (!item) return;
             e.preventDefault();
-            var username = item.dataset.username;
-            var m = getMentionQuery();
-            if (!m) { hide(); return; }
-            var val = inputEl.value;
-            inputEl.value = val.slice(0, m.start) + '@' + username + ' ' + val.slice(m.start + m.len);
-            hide();
-            inputEl.focus();
+            selectUser(item.dataset.username);
+        });
+
+        dropdown.addEventListener('click', function(e) {
+            var item = e.target.closest('.mention-item');
+            if (!item) return;
+            selectUser(item.dataset.username);
         });
 
         inputEl.addEventListener('blur', function() {
