@@ -6,6 +6,7 @@ const App = {
     _saveDebounced: null,
     _swipeDir: null,
     _workoutTimerInterval: null,
+    _pendingMigration: null,
 
     init() {
         // Multi-user migration (once)
@@ -14,18 +15,23 @@ const App = {
         // Load program for current user
         const currentUser = Storage.getCurrentUser();
         if (currentUser) {
-            // Sync name from ACCOUNTS if changed
-            if (typeof ACCOUNTS !== 'undefined') {
-                var acct = ACCOUNTS.find(function(a) { return a.id === currentUser.id; });
-                if (acct && acct.name !== currentUser.name) {
+            // Check if hardcoded user needs migration to Supabase Auth
+            var acct = typeof ACCOUNTS !== 'undefined' ? ACCOUNTS.find(function(a) { return a.id === currentUser.id; }) : null;
+            if (acct) {
+                // Sync name
+                if (acct.name !== currentUser.name) {
                     var users = Storage.getUsers();
                     var u = users.find(function(x) { return x.id === currentUser.id; });
                     if (u) { u.name = acct.name; Storage._saveUsers(users); }
                 }
+                // Load program but redirect to migration
+                this._loadProgramForUser(currentUser);
+                this._pendingMigration = acct;
+                location.hash = '#/migrate';
+            } else {
+                this._loadProgramForUser(currentUser);
+                this._initSupaSync(currentUser.id);
             }
-            this._loadProgramForUser(currentUser);
-            // Restore Supabase sync for supa_ users
-            this._initSupaSync(currentUser.id);
         } else {
             // Legacy fallback: try loading stored program directly
             const storedProgram = Storage.getProgram();
@@ -602,20 +608,25 @@ const App = {
     },
 
     login(loginStr, passwordStr) {
-        // 1. Try hardcoded ACCOUNTS (existing users — unchanged)
+        // 1. Try hardcoded ACCOUNTS → redirect to migration
         var account = ACCOUNTS.find(function(a) {
             return a.login === loginStr && a.password === passwordStr;
         });
         if (account) {
+            // Check if already migrated
+            var migratedTo = localStorage.getItem('wt_migrated_' + account.id);
+            if (migratedTo) {
+                return 'migrated'; // Tell caller to show "use email" message
+            }
+            // Ensure user profile exists (for data copy)
             var users = Storage.getUsers();
             var existing = users.find(function(u) { return u.id === account.id; });
             if (!existing) {
                 Storage.createUser(account.id, account.name, account.programId);
-            } else if (existing.name !== account.name) {
-                existing.name = account.name;
-                Storage._saveUsers(users);
             }
-            this.switchUser(account.id);
+            // Redirect to migration screen
+            this._pendingMigration = account;
+            location.hash = '#/migrate';
             return true;
         }
 
@@ -680,7 +691,75 @@ const App = {
     logout() {
         Storage.logout();
         PROGRAM = null;
+        this._pendingMigration = null;
         location.hash = '#/login';
+    },
+
+    // Migrate hardcoded account to Supabase Auth
+    _handleMigration() {
+        var account = this._pendingMigration;
+        if (!account) return;
+
+        var email = (document.getElementById('migrate-email').value || '').trim().toLowerCase();
+        var password = (document.getElementById('migrate-password').value || '').trim();
+        var errEl = document.getElementById('migrate-error');
+        var btn = document.getElementById('migrate-submit');
+
+        if (!email || !email.includes('@')) {
+            errEl.textContent = 'Введите корректный email';
+            errEl.style.display = 'block';
+            return;
+        }
+        if (password.length < 6) {
+            errEl.textContent = 'Пароль минимум 6 символов';
+            errEl.style.display = 'block';
+            return;
+        }
+
+        if (btn) { btn.disabled = true; btn.textContent = 'ОБНОВЛЕНИЕ...'; }
+        errEl.style.display = 'none';
+
+        var self = this;
+        SupaSync.signUp(email, password, account.login).then(function(data) {
+            if (!data || !data.user) throw new Error('Не удалось создать аккаунт');
+
+            var supaUserId = data.user.id;
+            var newLocalId = 'supa_' + supaUserId;
+
+            // 1. Copy workout data from old key to new key
+            var oldData = localStorage.getItem('wt_data_' + account.id);
+            if (oldData) {
+                localStorage.setItem('wt_data_' + newLocalId, oldData);
+            }
+
+            // 2. Create new user profile
+            Storage.createSelfRegisteredUser(account.name, account.login, '', email, newLocalId);
+
+            // 3. Store Supabase mapping
+            localStorage.setItem('wt_supa_' + newLocalId, supaUserId);
+
+            // 4. Mark old account as migrated
+            localStorage.setItem('wt_migrated_' + account.id, newLocalId);
+
+            // 5. Set up sync
+            SupaSync._currentSupaUserId = supaUserId;
+            SupaSync._currentStorageKey = 'wt_data_' + newLocalId;
+
+            // 6. Switch to new user
+            self._pendingMigration = null;
+            self.switchUser(newLocalId);
+
+            // 7. Push data to cloud (backup)
+            if (oldData) {
+                try {
+                    SupaSync.pushData(supaUserId, JSON.parse(oldData), account.login).catch(function() {});
+                } catch (e) {}
+            }
+        }).catch(function(err) {
+            errEl.textContent = err.message || 'Ошибка обновления';
+            errEl.style.display = 'block';
+            if (btn) { btn.disabled = false; btn.textContent = 'ОБНОВИТЬ'; }
+        });
     },
 
     _showNotificationPrompt() {
@@ -763,6 +842,16 @@ const App = {
         // Registration screen
         if (hash === '#/register') {
             Builder.renderRegister();
+            return;
+        }
+
+        // Migration screen (hardcoded → Supabase)
+        if (hash === '#/migrate') {
+            if (this._pendingMigration) {
+                Builder.renderMigration(this._pendingMigration);
+            } else {
+                location.hash = '#/login';
+            }
             return;
         }
 
@@ -878,7 +967,16 @@ const App = {
             var passVal = passInput ? passInput.value.trim() : '';
             if (!loginVal || !passVal) return;
             // Try local login first (hardcoded + local self-registered)
-            if (this.login(loginVal, passVal)) return;
+            var loginResult = this.login(loginVal, passVal);
+            if (loginResult === 'migrated') {
+                var err = document.getElementById('login-error');
+                if (err) {
+                    err.textContent = 'Аккаунт обновлён. Войдите через email и пароль.';
+                    err.style.display = 'block';
+                }
+                return;
+            }
+            if (loginResult === true) return;
             // Try Supabase login (email + password)
             if (typeof SupaSync !== 'undefined' && loginVal.includes('@')) {
                 this.loginSupabase(loginVal, passVal);
@@ -902,6 +1000,12 @@ const App = {
                 togBtn.querySelector('.eye-icon').style.display = show ? 'none' : '';
                 togBtn.querySelector('.eye-off-icon').style.display = show ? '' : 'none';
             }
+            return;
+        }
+
+        // Migration: submit
+        if (target.id === 'migrate-submit' || target.closest('#migrate-submit')) {
+            this._handleMigration();
             return;
         }
 

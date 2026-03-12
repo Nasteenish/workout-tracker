@@ -77,6 +77,45 @@ const Builder = {
         });
     },
 
+    // ===== MIGRATION SCREEN (hardcoded → Supabase Auth) =====
+    renderMigration(account) {
+        document.getElementById('app').innerHTML = `
+            <div class="login-screen">
+                <div class="app-icon">${this._barbellSVG}</div>
+                <h1>Обновление аккаунта</h1>
+                <p class="subtitle">Привет, ${account.name}! Добавьте email для входа.</p>
+
+                <div class="login-field">
+                    <label for="migrate-email">Email</label>
+                    <input type="email" id="migrate-email" autocomplete="email" placeholder="Ваш email">
+                </div>
+                <div class="login-field">
+                    <label for="migrate-password">Новый пароль</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="migrate-password" autocomplete="new-password" placeholder="Минимум 6 символов">
+                        <button type="button" class="password-toggle" data-target="migrate-password" aria-label="Показать пароль">
+                            <svg class="eye-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <svg class="eye-off-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="migrate-error" class="login-error" style="display:none"></div>
+
+                <button class="btn-primary" id="migrate-submit">ОБНОВИТЬ</button>
+            </div>
+        `;
+
+        var emailInput = document.getElementById('migrate-email');
+        var passInput = document.getElementById('migrate-password');
+        if (emailInput) emailInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') passInput.focus();
+        });
+        if (passInput) passInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') document.getElementById('migrate-submit').click();
+        });
+    },
+
     handleRegister() {
         var login = (document.getElementById('reg-login').value || '').trim().toLowerCase();
         var email = (document.getElementById('reg-email').value || '').trim().toLowerCase();
