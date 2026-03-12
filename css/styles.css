@@ -3628,20 +3628,24 @@ a.stat-link:active { opacity: 0.6; }
 }
 .checkin-workout {
     background: rgba(255,255,255,0.05);
-    border-radius: 8px;
-    padding: 8px 10px;
+    border-radius: 10px;
+    padding: 10px 12px;
     margin: 6px 0;
     font-size: 13px;
 }
 .checkin-workout-label {
-    color: var(--accent-success);
+    display: block;
+    color: var(--text-primary);
     font-weight: 600;
+    font-size: 14px;
+    margin-top: 4px;
 }
 .checkin-workout-stats {
+    display: block;
     color: var(--text-muted);
     font-weight: 400;
     font-size: 12px;
-    margin-left: 6px;
+    margin-top: 3px;
 }
 .checkin-workout-exercises {
     color: var(--text-muted);

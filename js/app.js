@@ -241,6 +241,7 @@ const App = {
                     app.style.position = 'fixed';
                     app.style.top = `-${savedScrollY}px`;
                     app.style.left = '0'; app.style.right = '0';
+                    app.classList.add('swiping-back');
                     app.style.transition = 'none';
                 } else if (cfg.mode === 'carousel') {
                     const targetWeek = swipingLeft
@@ -284,7 +285,7 @@ const App = {
 
         document.addEventListener('touchend', (e) => {
             if (!cfg) return;
-            if (!dragging && !isBack && !isTabSwipe && companion) removeCompanion();
+            if (!dragging && !isBack && !isTabSwipe) { if (companion) removeCompanion(); return; }
             const dx = e.changedTouches[0].clientX - startX;
             const snap = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
             const commit = 'transform 0.26s cubic-bezier(0.32, 0.72, 0, 1)';
