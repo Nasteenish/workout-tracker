@@ -178,7 +178,8 @@ const App = {
             isMenuSubPage = location.hash === '#/settings' || location.hash === '#/guide' || location.hash === '#/calculator';
             isSettingsView = location.hash === '#/menu' || isMenuSubPage;
             isEditorView = !!location.hash.match(/^#\/edit\/day\/\d+$/);
-            if (!isWeekView && !isDayView && !isSettingsView && !isEditorView) return;
+            isHistoryView = !!location.hash.match(/^#\/history\/.+$/);
+            if (!isWeekView && !isDayView && !isSettingsView && !isEditorView && !isHistoryView) return;
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
             dragging = false;
@@ -197,7 +198,7 @@ const App = {
         }, { passive: true });
 
         document.addEventListener('touchmove', (e) => {
-            if (!isWeekView && !isDayView && !isSettingsView && !isEditorView) return;
+            if (!isWeekView && !isDayView && !isSettingsView && !isEditorView && !isHistoryView) return;
             if (locked) return;
             const dx = e.touches[0].clientX - startX;
             const dy = e.touches[0].clientY - startY;
@@ -205,7 +206,7 @@ const App = {
             if (!dragging) {
                 if (Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
                 if (Math.abs(dy) > Math.abs(dx)) { locked = true; return; }
-                if ((isDayView || isSettingsView || isEditorView) && dx < 0) { locked = true; return; }
+                if ((isDayView || isSettingsView || isEditorView || isHistoryView) && dx < 0) { locked = true; return; }
                 dragging = true;
                 swipingLeft = dx < 0;
                 savedScrollY = window.scrollY;
@@ -219,10 +220,10 @@ const App = {
                     companion = createCompanion(targetWeek);
                     companion.style.transition = 'none';
                     companion.style.transform = `translateX(${swipingLeft ? W() : -W()}px)`;
-                } else if (isEditorView) {
-                    // Editor back-swipe: show day view companion
+                } else if (isEditorView || isHistoryView) {
+                    // Editor/History back-swipe: show day view companion
                     isDayBack = true;
-                    var edDayNum = Builder._editingDay ? Builder._editingDay.dayNum : this._currentDay;
+                    var edDayNum = isEditorView && Builder._editingDay ? Builder._editingDay.dayNum : this._currentDay;
                     companion = createDayBackCompanion(this._currentWeek, edDayNum);
                 } else if (isDayView || isSettingsView) {
                     // Day/Settings back-swipe: full-screen companion + move entire #app
@@ -270,7 +271,7 @@ const App = {
         }, { passive: false });
 
         document.addEventListener('touchend', (e) => {
-            if (!isWeekView && !isDayView && !isSettingsView && !isEditorView) return;
+            if (!isWeekView && !isDayView && !isSettingsView && !isEditorView && !isHistoryView) return;
             // Clean up pre-created companion if touch wasn't a horizontal swipe
             if (!dragging && !isDayBack && companion) removeCompanion();
             const dx = e.changedTouches[0].clientX - startX;
@@ -309,14 +310,14 @@ const App = {
                     companion.style.transition = commit;
                     companion.style.transform = 'translateX(0)';
                 }
-                var editorDayNum = isEditorView ? (Builder._editingDay ? Builder._editingDay.dayNum : this._currentDay) : 0;
-                const swipeTarget = isEditorView ? `#/week/${this._currentWeek}/day/${editorDayNum}` : (isMenuSubPage ? '#/menu' : `#/week/${this._currentWeek}`);
+                var editorDayNum = (isEditorView || isHistoryView) ? (isEditorView && Builder._editingDay ? Builder._editingDay.dayNum : this._currentDay) : 0;
+                const swipeTarget = (isEditorView || isHistoryView) ? `#/week/${this._currentWeek}/day/${editorDayNum}` : (isMenuSubPage ? '#/menu' : `#/week/${this._currentWeek}`);
                 setTimeout(() => {
                     app.classList.add('no-animate');
                     if (isEditorView) Builder._editingDay = null;
                     history.replaceState(null, '', swipeTarget);
                     // Render while #app is still off-screen (position:fixed + translated)
-                    if (isEditorView) {
+                    if (isEditorView || isHistoryView) {
                         UI.renderDay(this._currentWeek, editorDayNum);
                     } else if (isMenuSubPage) {
                         UI.renderMenu();

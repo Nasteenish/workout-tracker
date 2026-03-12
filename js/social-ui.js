@@ -31,7 +31,10 @@ const SocialUI = {
         var targetId = isOwn ? myId : userId;
         if (!targetId) { location.hash = '#/login'; return; }
 
-        app.innerHTML = '<div class="social-loading">Загрузка...</div>';
+        // Show subtle loading indicator without clearing existing content
+        if (!app.querySelector('.social-screen')) {
+            app.innerHTML = '<div class="social-loading">Загрузка...</div>';
+        }
 
         var profile = await Social.getProfile(targetId);
         if (!profile && isOwn) {
@@ -54,7 +57,7 @@ const SocialUI = {
         html += '<div class="profile-avatar-wrap">';
         html += profile.avatar_url
             ? '<img class="profile-avatar" src="' + profile.avatar_url + '" alt="">'
-            : '<div class="profile-avatar profile-avatar-placeholder"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>';
+            : '<div class="profile-avatar profile-avatar-placeholder"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>';
         html += '</div>';
         html += '<div class="profile-info">';
         html += '<h2 class="profile-name">' + (profile.display_name || profile.username) + '</h2>';
@@ -124,7 +127,9 @@ const SocialUI = {
         var myId = Social._getSupaUserId();
         if (!myId) { location.hash = '#/login'; return; }
 
-        app.innerHTML = '<div class="social-loading">Загрузка...</div>';
+        if (!app.querySelector('.edit-fields')) {
+            app.innerHTML = '<div class="social-loading">Загрузка...</div>';
+        }
         var profile = await Social.getMyProfile() || {};
 
         // Default username from local user
@@ -143,7 +148,7 @@ const SocialUI = {
         html += '<div class="edit-avatar-section">';
         html += profile.avatar_url
             ? '<img class="edit-avatar" id="edit-avatar-preview" src="' + profile.avatar_url + '" alt="">'
-            : '<div class="edit-avatar edit-avatar-placeholder" id="edit-avatar-preview"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>';
+            : '<div class="edit-avatar edit-avatar-placeholder" id="edit-avatar-preview"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span class="edit-avatar-hint">Фото</span></div>';
         html += '<label class="edit-avatar-btn" for="avatar-file-input">Изменить фото</label>';
         html += '<input type="file" id="avatar-file-input" accept="image/*" style="display:none">';
         html += '</div>';
@@ -230,7 +235,9 @@ const SocialUI = {
     // ===== FEED =====
     async renderFeed() {
         var app = document.getElementById('app');
-        app.innerHTML = '<div class="social-loading">Загрузка...</div>' + this._tabBarHTML('feed');
+        if (!app.querySelector('.social-screen')) {
+            app.innerHTML = '<div class="social-loading">Загрузка...</div>' + this._tabBarHTML('feed');
+        }
 
         var checkins = await Social.getFeed();
         this._feedCursor = checkins.length >= 20 ? checkins[checkins.length - 1].created_at : null;
@@ -261,7 +268,9 @@ const SocialUI = {
     // ===== CHECKIN DETAIL =====
     async renderCheckinDetail(checkinId) {
         var app = document.getElementById('app');
-        app.innerHTML = '<div class="social-loading">Загрузка...</div>';
+        if (!app.querySelector('.checkin-full')) {
+            app.innerHTML = '<div class="social-loading">Загрузка...</div>';
+        }
 
         var checkin = await Social.getCheckin(checkinId);
         if (!checkin) {
@@ -315,7 +324,9 @@ const SocialUI = {
     // ===== DISCOVER =====
     async renderDiscover() {
         var app = document.getElementById('app');
-        app.innerHTML = '<div class="social-loading">Загрузка...</div>';
+        if (!app.querySelector('.discover-results')) {
+            app.innerHTML = '<div class="social-loading">Загрузка...</div>';
+        }
 
         var users = await Social.getRecentUsers();
         var myId = Social._getSupaUserId();
