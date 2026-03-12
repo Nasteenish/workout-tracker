@@ -226,15 +226,15 @@ const SocialUI = {
             var html = '<div class="social-screen">';
             html += '<div class="social-header"><button class="social-back" id="btn-checkin-back">&larr;</button><h2>Поделиться тренировкой</h2></div>';
 
-            // Muscle group tag
+            // Muscle group tag (or title as fallback)
             var mg = prefillWorkout.muscle_group || prefillWorkout.title || '';
             var mgColor = SocialUI._muscleGroupColor(mg);
             if (mg) {
                 html += '<div class="share-muscle-tag" style="background:' + mgColor + '">' + mg + '</div>';
             }
 
-            // Workout title
-            if (prefillWorkout.title) {
+            // Workout title — only if different from muscle group
+            if (prefillWorkout.title && prefillWorkout.title !== mg) {
                 html += '<div class="share-workout-title">' + prefillWorkout.title + '</div>';
             }
 
@@ -559,7 +559,8 @@ const SocialUI = {
                 var mgClr = SocialUI._muscleGroupColor(mgTag);
                 html += '<div class="checkin-workout">';
                 if (mgTag) html += '<span class="checkin-muscle-tag" style="background:' + mgClr + '">' + mgTag + '</span>';
-                html += '<span class="checkin-workout-label">' + (ws.title || 'Тренировка') + '</span>';
+                var wsLabel = ws.title || 'Тренировка';
+                if (wsLabel !== mgTag) html += '<span class="checkin-workout-label">' + wsLabel + '</span>';
                 var wStats = [];
                 if (ws.duration_sec) wStats.push(Math.round(ws.duration_sec / 60) + ' мин');
                 if (ws.exercises) wStats.push(ws.exercises.length + ' упр.');
@@ -642,7 +643,11 @@ const SocialUI = {
         if (c.workout_summary) {
             var ws = c.workout_summary;
             html += '<div class="checkin-workout">';
-            html += '<span class="checkin-workout-label">Тренировка</span>';
+            var dMg = ws.muscle_group || ws.title || '';
+            var dMgClr = SocialUI._muscleGroupColor(dMg);
+            if (dMg) html += '<span class="checkin-muscle-tag" style="background:' + dMgClr + '">' + dMg + '</span>';
+            var dLabel = ws.title || 'Тренировка';
+            if (dLabel !== dMg) html += '<span class="checkin-workout-label">' + dLabel + '</span>';
             if (ws.duration_sec) html += ' ' + Math.round(ws.duration_sec / 60) + ' мин';
             if (ws.gym_name) html += '<div class="checkin-gym-tag" style="margin-top:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + ws.gym_name + '</div>';
             if (ws.exercises && ws.exercises.length) {
