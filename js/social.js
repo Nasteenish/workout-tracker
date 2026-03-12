@@ -124,7 +124,7 @@ const Social = {
         var userId = this._getSupaUserId();
         if (!userId) return null;
         var name = Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-        var ext = file.name.split('.').pop() || 'jpg';
+        var ext = file.name ? file.name.split('.').pop() : (file.type && file.type.indexOf('video') !== -1 ? 'mp4' : 'jpg');
         var path = userId + '/' + name + '.' + ext;
         var result = await supa.storage.from('checkin-photos').upload(path, file, { upsert: false });
         if (result.error) throw new Error(result.error.message);
