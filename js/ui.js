@@ -131,6 +131,7 @@ const UI = {
                 <button class="btn-link" id="setup-import-program">Загрузить из файла</button>
                 <div id="program-status" style="font-size:13px;text-align:center"></div>
                 <button class="btn-link" id="setup-back">Назад</button>
+                <button class="btn-link" id="btn-logout" style="color:var(--text-secondary);font-size:12px;margin-top:4px">Выйти из аккаунта</button>
             </div>
         `;
     },

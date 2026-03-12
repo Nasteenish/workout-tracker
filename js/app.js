@@ -1248,9 +1248,16 @@ const App = {
             return;
         }
 
-        // Setup: back (go to previous page in history)
+        // Setup: back → re-enter onboarding
         if (target.id === 'setup-back' || target.closest('#setup-back')) {
-            history.back();
+            if (Builder._onboardingData) {
+                // Same session: onboarding steps are in history
+                history.back();
+            } else {
+                // App was reopened: no history, start onboarding fresh
+                Builder._onboardingData = {};
+                location.hash = '#/onboarding/1';
+            }
             return;
         }
 
