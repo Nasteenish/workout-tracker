@@ -4118,7 +4118,7 @@ a.stat-link:active { opacity: 0.6; }
     margin-bottom: 6px;
     max-height: 200px;
     overflow-y: auto;
-    z-index: 50;
+    z-index: 1000;
     box-shadow: 0 -4px 16px rgba(0,0,0,0.4);
 }
 .mention-dropdown-below {

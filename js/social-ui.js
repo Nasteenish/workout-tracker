@@ -844,11 +844,11 @@ const SocialUI = {
         row.appendChild(dropdown);
 
         var searchTimeout;
-        var self = this;
 
         function getMentionQuery() {
             var val = inputEl.value;
-            var pos = inputEl.selectionStart || val.length;
+            // Use selectionStart; fallback to value length (handle iOS quirks)
+            var pos = (typeof inputEl.selectionStart === 'number') ? inputEl.selectionStart : val.length;
             var before = val.slice(0, pos);
             var match = before.match(/(^|[^A-Za-z0-9_])@([A-Za-z0-9_]*)$/);
             if (!match) return null;
@@ -857,27 +857,36 @@ const SocialUI = {
 
         function hide() { dropdown.style.display = 'none'; dropdown.innerHTML = ''; }
 
-        inputEl.addEventListener('input', function() {
+        function renderUsers(users) {
+            var myId = Social._getSupaUserId();
+            var filtered = users.filter(function(u) { return u.user_id !== myId; }).slice(0, 5);
+            if (!filtered.length) { hide(); return; }
+            var html = '';
+            filtered.forEach(function(u) {
+                html += '<div class="mention-item" data-username="' + u.username + '">';
+                html += u.avatar_url ? '<img class="mention-avatar" src="' + u.avatar_url + '">' : '<div class="mention-avatar avatar-placeholder-sm"></div>';
+                html += '<div class="mention-info"><span class="mention-name">' + (u.display_name || u.username) + '</span><span class="mention-username">@' + u.username + '</span></div>';
+                html += '</div>';
+            });
+            dropdown.innerHTML = html;
+            dropdown.style.display = 'block';
+        }
+
+        function doSearch() {
             clearTimeout(searchTimeout);
             var m = getMentionQuery();
-            if (!m || m.query.length < 1) { hide(); return; }
+            if (!m) { hide(); return; }
             searchTimeout = setTimeout(function() {
-                Social.searchUsers(m.query).then(function(users) {
-                    var myId = Social._getSupaUserId();
-                    var filtered = users.filter(function(u) { return u.user_id !== myId; }).slice(0, 5);
-                    if (!filtered.length) { hide(); return; }
-                    var html = '';
-                    filtered.forEach(function(u) {
-                        html += '<div class="mention-item" data-username="' + u.username + '">';
-                        html += u.avatar_url ? '<img class="mention-avatar" src="' + u.avatar_url + '">' : '<div class="mention-avatar avatar-placeholder-sm"></div>';
-                        html += '<div class="mention-info"><span class="mention-name">' + (u.display_name || u.username) + '</span><span class="mention-username">@' + u.username + '</span></div>';
-                        html += '</div>';
-                    });
-                    dropdown.innerHTML = html;
-                    dropdown.style.display = 'block';
-                });
-            }, 200);
-        });
+                var promise = m.query.length > 0
+                    ? Social.searchUsers(m.query)
+                    : Social.getRecentUsers();
+                promise.then(renderUsers).catch(function() { hide(); });
+            }, m.query.length > 0 ? 200 : 100);
+        }
+
+        // Listen for both input and keyup (iOS backup)
+        inputEl.addEventListener('input', doSearch);
+        inputEl.addEventListener('keyup', doSearch);
 
         dropdown.addEventListener('click', function(e) {
             var item = e.target.closest('.mention-item');
@@ -891,8 +900,22 @@ const SocialUI = {
             inputEl.focus();
         });
 
+        // Use touchend on mobile to prevent blur from hiding dropdown before click registers
+        dropdown.addEventListener('touchend', function(e) {
+            var item = e.target.closest('.mention-item');
+            if (!item) return;
+            e.preventDefault();
+            var username = item.dataset.username;
+            var m = getMentionQuery();
+            if (!m) { hide(); return; }
+            var val = inputEl.value;
+            inputEl.value = val.slice(0, m.start) + '@' + username + ' ' + val.slice(m.start + m.len);
+            hide();
+            inputEl.focus();
+        });
+
         inputEl.addEventListener('blur', function() {
-            setTimeout(hide, 200);
+            setTimeout(hide, 300);
         });
 
         inputEl.addEventListener('keydown', function(e) {
