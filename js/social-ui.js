@@ -36,9 +36,18 @@ const SocialUI = {
             app.innerHTML = '<div class="social-loading">Загрузка...</div>';
         }
 
-        var profile = await Social.getProfile(targetId);
+        var results = await Promise.all([
+            Social.getProfile(targetId),
+            Social.getFollowCounts(targetId),
+            !isOwn ? Social.isFollowing(targetId) : Promise.resolve(false),
+            Social.getUserCheckins(targetId)
+        ]);
+        var profile = results[0];
+        var counts = results[1];
+        var isFollowing = results[2];
+        var checkins = results[3];
+
         if (!profile && isOwn) {
-            // No profile yet — redirect to edit
             location.hash = '#/profile/edit';
             return;
         }
@@ -46,10 +55,6 @@ const SocialUI = {
             app.innerHTML = '<div class="social-screen"><div class="social-empty">Профиль не найден</div></div>';
             return;
         }
-
-        var counts = await Social.getFollowCounts(targetId);
-        var isFollowing = !isOwn ? await Social.isFollowing(targetId) : false;
-        var checkins = await Social.getUserCheckins(targetId);
         this._profileCheckinsCursor = checkins.length >= 20 ? checkins[checkins.length - 1].created_at : null;
 
         var html = '<div class="social-screen">';
@@ -239,8 +244,9 @@ const SocialUI = {
             app.innerHTML = '<div class="social-loading">Загрузка...</div>' + this._tabBarHTML('feed');
         }
 
-        var checkins = await Social.getFeed();
-        var followingIds = await Social.getMyFollowingIds();
+        var feedResults = await Promise.all([Social.getFeed(), Social.getMyFollowingIds()]);
+        var checkins = feedResults[0];
+        var followingIds = feedResults[1];
         this._feedCursor = checkins.length >= 20 ? checkins[checkins.length - 1].created_at : null;
 
         var html = '<div class="social-screen">';
@@ -334,9 +340,10 @@ const SocialUI = {
             app.innerHTML = '<div class="social-loading">Загрузка...</div>';
         }
 
-        var users = await Social.getRecentUsers();
         var myId = Social._getSupaUserId();
-        var followingIds = await Social.getMyFollowingIds();
+        var results = await Promise.all([Social.getRecentUsers(), Social.getMyFollowingIds()]);
+        var users = results[0];
+        var followingIds = results[1];
 
         var html = '<div class="social-screen">';
         html += '<div class="social-header"><button class="social-back" id="btn-discover-back">&larr;</button><h2>Поиск</h2></div>';
