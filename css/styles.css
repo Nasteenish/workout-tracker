@@ -3845,6 +3845,38 @@ body:has(.tab-bar) .data-actions { margin-bottom: 10px; }
     margin-top: 16px;
 }
 
+/* ===== Share Workout Card ===== */
+.share-workout-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin: 16px;
+}
+.share-workout-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--accent-primary);
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+.share-workout-time {
+    margin-left: auto;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+.share-workout-exercises {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.share-workout-ex {
+    color: var(--text-secondary);
+    font-size: 13px;
+    padding: 2px 0;
+}
+
 /* ===== Avatar Cropper ===== */
 .cropper-overlay {
     position: fixed;

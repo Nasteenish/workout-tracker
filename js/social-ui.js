@@ -191,6 +191,44 @@ const SocialUI = {
 
     // ===== CHECK-IN FORM =====
     renderCheckinForm(prefillWorkout) {
+        // Simplified form for sharing a workout
+        if (prefillWorkout) {
+            var html = '<div class="social-screen">';
+            html += '<div class="social-header"><button class="social-back" id="btn-checkin-back">&larr;</button><h2>Поделиться тренировкой</h2></div>';
+
+            // Workout preview card
+            html += '<div class="share-workout-card">';
+            html += '<div class="share-workout-header">';
+            html += '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg>';
+            html += '<span>Неделя ' + prefillWorkout.week + ', День ' + prefillWorkout.day + '</span>';
+            if (prefillWorkout.duration_sec) {
+                var dm = Math.round(prefillWorkout.duration_sec / 60);
+                html += '<span class="share-workout-time">' + dm + ' мин</span>';
+            }
+            html += '</div>';
+            if (prefillWorkout.exercises && prefillWorkout.exercises.length) {
+                html += '<div class="share-workout-exercises">';
+                prefillWorkout.exercises.forEach(function(e) {
+                    html += '<div class="share-workout-ex">' + e.name + (e.sets ? ' — ' + e.sets + ' подх.' : '') + '</div>';
+                });
+                html += '</div>';
+            }
+            html += '<input type="hidden" id="checkin-workout-data" value=\'' + JSON.stringify(prefillWorkout).replace(/'/g, '&#39;') + '\'>';
+            html += '</div>';
+
+            // Optional note only
+            html += '<div class="edit-fields">';
+            html += '<div class="edit-field"><label>Комментарий (опционально)</label><textarea id="checkin-note" rows="2" placeholder="Как прошла тренировка?"></textarea></div>';
+            html += '</div>';
+
+            html += '<button class="btn-primary checkin-submit" id="btn-checkin-submit">ОПУБЛИКОВАТЬ</button>';
+            html += '<div id="checkin-error" class="login-error" style="display:none"></div>';
+            html += '</div>';
+            document.getElementById('app').innerHTML = html;
+            return;
+        }
+
+        // Full check-in form (weekly progress with photos/weight/measurements)
         var html = '<div class="social-screen">';
         html += '<div class="social-header"><button class="social-back" id="btn-checkin-back">&larr;</button><h2>Новый Check-in</h2></div>';
 
@@ -217,16 +255,6 @@ const SocialUI = {
 
         // Note
         html += '<div class="edit-field"><label>Заметка</label><textarea id="checkin-note" rows="3" placeholder="Как прошла неделя?"></textarea></div>';
-
-        // Workout summary (prefilled or from last workout)
-        if (prefillWorkout) {
-            html += '<div class="checkin-workout-attached">';
-            html += '<div class="checkin-workout-title">Тренировка прикреплена</div>';
-            html += '<div class="checkin-workout-info">Неделя ' + prefillWorkout.week + ', День ' + prefillWorkout.day + '</div>';
-            html += '<input type="hidden" id="checkin-workout-data" value=\'' + JSON.stringify(prefillWorkout).replace(/'/g, '&#39;') + '\'>';
-            html += '</div>';
-        }
-
         html += '</div>'; // edit-fields
 
         html += '<button class="btn-primary checkin-submit" id="btn-checkin-submit">ОПУБЛИКОВАТЬ</button>';
