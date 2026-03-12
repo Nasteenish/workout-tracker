@@ -3600,10 +3600,13 @@ a.stat-link:active { opacity: 0.6; }
     border-radius: 10px;
     overflow: hidden;
     margin-bottom: 10px;
+    background: var(--bg-card);
+    min-height: 250px;
 }
 .checkin-photos.multi {
     display: flex;
     gap: 2px;
+    min-height: 150px;
 }
 .checkin-photo {
     width: 100%;
