@@ -4,6 +4,10 @@ const SocialUI = {
     _feedCursor: null,
     _profileCheckinsCursor: null,
 
+    // Dumbbell-heart SVG for like button
+    _likeIconSVG: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5a3.5 3.5 0 0 1 5.5-2.9L12 10l4.5-3.4A3.5 3.5 0 0 1 22 9.5c0 2-1.5 3.8-3.2 5.3L12 21l-6.8-6.2C3.5 13.3 2 11.5 2 9.5z"/></svg>',
+    _commentIconSVG: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+
     // Preload all photo URLs so browser has them cached before rendering
     _preloadPhotos(checkins) {
         var urls = [];
@@ -65,8 +69,13 @@ const SocialUI = {
         var isFollowing = results[2];
         var checkins = results[3];
 
-        // Preload checkin photos before rendering
-        await this._preloadPhotos(checkins);
+        // Fetch likes and preload photos
+        var ids = checkins.map(function(c) { return c.id; });
+        var extraResults = await Promise.all([
+            Social.getLikesForCheckins(ids),
+            this._preloadPhotos(checkins)
+        ]);
+        var likes = extraResults[0];
 
         if (!profile && isOwn) {
             location.hash = '#/profile/edit';
@@ -133,7 +142,7 @@ const SocialUI = {
         if (checkins.length === 0) {
             html += '<div class="social-empty">Пока нет чекинов</div>';
         } else {
-            html += this._renderCheckinCards(checkins);
+            html += this._renderCheckinCards(checkins, likes);
         }
         if (this._profileCheckinsCursor) {
             html += '<button class="btn-load-more" id="btn-load-more-profile" data-user="' + targetId + '">Загрузить ещё</button>';
@@ -248,6 +257,12 @@ const SocialUI = {
             html += '<input type="file" id="checkin-photo-input" accept="image/*,video/*" multiple style="display:none">';
             html += '</div>';
 
+            // Tag users
+            html += '<div class="checkin-tag-section">';
+            html += '<button class="checkin-tag-btn" id="btn-tag-user"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Отметить</button>';
+            html += '<div class="checkin-tagged-users" id="checkin-tagged-users"></div>';
+            html += '</div>';
+
             // Note
             html += '<div class="edit-fields">';
             html += '<div class="edit-field"><textarea id="checkin-note" rows="2" placeholder="Как прошла тренировка?"></textarea></div>';
@@ -258,6 +273,7 @@ const SocialUI = {
             html += '</div>';
             document.getElementById('app').innerHTML = html;
             App._checkinPhotos = [];
+            App._checkinTaggedUsers = [];
             return;
         }
 
@@ -271,6 +287,12 @@ const SocialUI = {
         html += '<label class="checkin-add-photo" for="checkin-photo-input">+ Фото</label>';
         html += '<input type="file" id="checkin-photo-input" accept="image/*" multiple style="display:none">';
         html += '<div class="checkin-photo-hint">До 3 фото</div>';
+        html += '</div>';
+
+        // Tag users
+        html += '<div class="checkin-tag-section">';
+        html += '<button class="checkin-tag-btn" id="btn-tag-user"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Отметить</button>';
+        html += '<div class="checkin-tagged-users" id="checkin-tagged-users"></div>';
         html += '</div>';
 
         // Weight
@@ -310,11 +332,26 @@ const SocialUI = {
         var followingIds = feedResults[1];
         this._feedCursor = checkins.length >= 20 ? checkins[checkins.length - 1].created_at : null;
 
-        // Preload photos before rendering
-        await this._preloadPhotos(checkins);
+        // Fetch likes, tags, photos in parallel
+        var ids = checkins.map(function(c) { return c.id; });
+        var extra = await Promise.all([
+            Social.getLikesForCheckins(ids),
+            Social.getTagsForCheckins(ids),
+            this._preloadPhotos(checkins),
+            Social.getUnreadNotificationCount()
+        ]);
+        var likes = extra[0];
+        var tags = extra[1];
+        var unreadCount = extra[3];
 
         var html = '<div class="social-screen">';
-        html += '<div class="social-header"><h2>Лента</h2><button class="social-discover-btn" id="btn-discover"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button></div>';
+        html += '<div class="social-header"><h2>Лента</h2>';
+        // Notification bell
+        html += '<button class="social-notif-btn" id="btn-notifications">';
+        html += '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>';
+        if (unreadCount > 0) html += '<span class="notif-badge">' + unreadCount + '</span>';
+        html += '</button>';
+        html += '<button class="social-discover-btn" id="btn-discover"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button></div>';
 
         if (checkins.length === 0) {
             html += '<div class="social-empty">';
@@ -329,7 +366,7 @@ const SocialUI = {
             }
             html += '</div>';
         } else {
-            html += this._renderCheckinCards(checkins);
+            html += this._renderCheckinCards(checkins, likes, tags);
             if (this._feedCursor) {
                 html += '<button class="btn-load-more" id="btn-load-more-feed">Загрузить ещё</button>';
             }
@@ -351,12 +388,14 @@ const SocialUI = {
         var results = await Promise.all([
             Social.getCheckin(checkinId),
             Social.getReactions(checkinId),
-            Social.getComments(checkinId)
+            Social.getComments(checkinId),
+            Social.getTagsForCheckin(checkinId)
         ]);
         var checkin = results[0];
         if (checkin) await this._preloadPhotos([checkin]);
         var reactions = results[1];
         var comments = results[2];
+        var photoTags = results[3];
         if (!checkin) {
             app.innerHTML = '<div class="social-screen"><div class="social-empty">Чекин не найден</div></div>';
             return;
@@ -373,13 +412,26 @@ const SocialUI = {
         html += '</div>';
 
         // Full card
-        html += this._renderFullCheckin(checkin, reactions, myReaction);
+        html += this._renderFullCheckin(checkin, reactions, myReaction, photoTags);
+
+        // Photo tags list (detail view)
+        if (photoTags && photoTags.length) {
+            html += '<div class="photo-tags-detail">';
+            html += '<span class="photo-tags-label">Отмечены: </span>';
+            html += photoTags.map(function(t) {
+                var p = t.profiles || t;
+                return '<a class="photo-tag-link" href="#/u/' + (p.username || '') + '">@' + (p.username || p.display_name || '?') + '</a>';
+            }).join(', ');
+            html += '</div>';
+        }
 
         // Comments
         html += '<div class="checkin-comments">';
         html += '<h3>Комментарии (' + comments.length + ')</h3>';
         comments.forEach(function(c) {
-            var isOwn = c.user_id === myId;
+            var isMine = c.user_id === myId;
+            var authorName = c.profiles ? (c.profiles.display_name || c.profiles.username) : '?';
+            var authorUsername = c.profiles ? c.profiles.username : '';
             html += '<div class="comment-item">';
             html += '<div class="comment-avatar">';
             html += c.profiles && c.profiles.avatar_url
@@ -387,11 +439,14 @@ const SocialUI = {
                 : '<div class="avatar-placeholder-sm"></div>';
             html += '</div>';
             html += '<div class="comment-body">';
-            html += '<span class="comment-author">' + (c.profiles ? (c.profiles.display_name || c.profiles.username) : '?') + '</span> ';
+            html += '<span class="comment-author">' + authorName + '</span> ';
             html += '<span class="comment-text">' + c.text.replace(/</g, '&lt;') + '</span>';
-            html += '<div class="comment-time">' + SocialUI._timeAgo(c.created_at) + '</div>';
+            html += '<div class="comment-meta">';
+            html += '<span class="comment-time">' + SocialUI._timeAgo(c.created_at) + '</span>';
+            if (!isMine) html += '<button class="comment-reply-btn" data-username="' + authorUsername + '">Ответить</button>';
             html += '</div>';
-            if (isOwn) html += '<button class="comment-delete" data-comment="' + c.id + '">&times;</button>';
+            html += '</div>';
+            if (isMine) html += '<button class="comment-delete" data-comment="' + c.id + '">&times;</button>';
             html += '</div>';
         });
 
@@ -442,7 +497,9 @@ const SocialUI = {
 
     // ===== RENDER HELPERS =====
 
-    _renderCheckinCards(checkins) {
+    _renderCheckinCards(checkins, likes, tags) {
+        var likeData = likes || { counts: {}, myLikes: new Set() };
+        var tagData = tags || {};
         var html = '';
         checkins.forEach(function(c) {
             html += '<div class="checkin-card" data-checkin="' + c.id + '">';
@@ -463,6 +520,11 @@ const SocialUI = {
                 c.photos.forEach(function(url) {
                     html += '<img class="checkin-photo" src="' + url + '" alt="">';
                 });
+                // Photo tags badge
+                var cTags = tagData[c.id];
+                if (cTags && cTags.length) {
+                    html += '<div class="photo-tag-badge">с ' + cTags.map(function(t) { return '@' + (t.username || t.display_name); }).join(', ') + '</div>';
+                }
                 html += '</div>';
             }
 
@@ -502,12 +564,25 @@ const SocialUI = {
             // Note
             if (c.note) html += '<div class="checkin-note">' + c.note.replace(/</g, '&lt;') + '</div>';
 
+            // Like bar
+            var likeCount = likeData.counts[c.id] || 0;
+            var isLiked = likeData.myLikes.has ? likeData.myLikes.has(c.id) : false;
+            html += '<div class="like-bar">';
+            html += '<button class="like-btn' + (isLiked ? ' active' : '') + '" data-checkin="' + c.id + '">';
+            html += SocialUI._likeIconSVG;
+            html += '<span class="like-count">' + (likeCount > 0 ? likeCount : '') + '</span>';
+            html += '</button>';
+            html += '<button class="comment-btn-icon" data-checkin="' + c.id + '">';
+            html += SocialUI._commentIconSVG;
+            html += '</button>';
+            html += '</div>';
+
             html += '</div>'; // card
         });
         return html;
     },
 
-    _renderFullCheckin(checkin, reactions, myReaction) {
+    _renderFullCheckin(checkin, reactions, myReaction, photoTags) {
         var c = checkin;
         var html = '<div class="checkin-card checkin-full">';
 
@@ -528,6 +603,13 @@ const SocialUI = {
             c.photos.forEach(function(url) {
                 html += '<img class="checkin-photo" src="' + url + '" alt="">';
             });
+            // Photo tags badge
+            if (photoTags && photoTags.length) {
+                html += '<div class="photo-tag-badge">с ' + photoTags.map(function(t) {
+                    var p = t.profiles || t;
+                    return '@' + (p.username || p.display_name || '?');
+                }).join(', ') + '</div>';
+            }
             html += '</div>';
         }
 
@@ -561,17 +643,17 @@ const SocialUI = {
 
         if (c.note) html += '<div class="checkin-note">' + c.note.replace(/</g, '&lt;') + '</div>';
 
-        // Reactions bar
-        var emojis = ['🔥', '💪', '👏', '❤️', '🏆'];
-        html += '<div class="reactions-bar">';
-        emojis.forEach(function(emoji) {
-            var count = reactions.filter(function(r) { return r.emoji === emoji; }).length;
-            var active = myReaction && myReaction.emoji === emoji ? ' active' : '';
-            html += '<button class="reaction-btn' + active + '" data-emoji="' + emoji + '" data-checkin="' + c.id + '">';
-            html += emoji;
-            if (count > 0) html += '<span class="reaction-count">' + count + '</span>';
-            html += '</button>';
-        });
+        // Like bar (single like, Instagram-style)
+        var likeCount = reactions ? reactions.length : 0;
+        var isLiked = !!myReaction;
+        html += '<div class="like-bar">';
+        html += '<button class="like-btn' + (isLiked ? ' active' : '') + '" data-checkin="' + c.id + '">';
+        html += SocialUI._likeIconSVG;
+        html += '<span class="like-count">' + (likeCount > 0 ? likeCount : '') + '</span>';
+        html += '</button>';
+        html += '<button class="comment-btn-icon" data-checkin="' + c.id + '">';
+        html += SocialUI._commentIconSVG;
+        html += '</button>';
         html += '</div>';
 
         html += '</div>';
@@ -627,6 +709,105 @@ const SocialUI = {
         html += '</div>';
 
         app.innerHTML = html;
+    },
+
+    // ===== NOTIFICATIONS PAGE =====
+    async renderNotifications() {
+        var app = document.getElementById('app');
+        app.innerHTML = '<div class="social-loading">Загрузка...</div>';
+
+        var notifications = await Social.getNotifications(50);
+        // Mark all as read
+        Social.markNotificationsRead();
+
+        var html = '<div class="social-screen">';
+        html += '<div class="social-header"><button class="social-back" id="btn-notif-back">&larr;</button><h2>Уведомления</h2></div>';
+
+        if (!notifications.length) {
+            html += '<div class="social-empty"><p>Нет уведомлений</p></div>';
+        } else {
+            html += '<div class="notif-list">';
+            notifications.forEach(function(n) {
+                var p = n.from_profile;
+                var name = p ? (p.display_name || p.username || '?') : '?';
+                var avatar = p && p.avatar_url
+                    ? '<img class="notif-avatar" src="' + p.avatar_url + '" alt="">'
+                    : '<div class="notif-avatar avatar-placeholder-sm"></div>';
+                var text = '';
+                var link = '';
+                if (n.type === 'like') { text = ' поставил(а) лайк'; link = n.checkin_id ? '#/checkin/' + n.checkin_id : ''; }
+                else if (n.type === 'comment') { text = ' прокомментировал(а)'; link = n.checkin_id ? '#/checkin/' + n.checkin_id : ''; }
+                else if (n.type === 'follow') { text = ' подписался(-ась) на вас'; link = p ? '#/u/' + p.username : ''; }
+                else if (n.type === 'tag') { text = ' отметил(а) вас на фото'; link = n.checkin_id ? '#/checkin/' + n.checkin_id : ''; }
+
+                html += '<a class="notif-item' + (n.read ? '' : ' unread') + '" href="' + link + '">';
+                html += avatar;
+                html += '<div class="notif-body">';
+                html += '<span class="notif-name">' + name + '</span>';
+                html += '<span class="notif-text">' + text + '</span>';
+                html += '<div class="notif-time">' + SocialUI._timeAgo(n.created_at) + '</div>';
+                html += '</div>';
+                html += '</a>';
+            });
+            html += '</div>';
+        }
+
+        html += '</div>';
+        app.innerHTML = html;
+    },
+
+    // ===== TAG USER SEARCH (for checkin form) =====
+    async renderTagSearch(onSelect) {
+        // This creates a modal-like overlay for searching users to tag
+        var overlay = document.createElement('div');
+        overlay.className = 'tag-search-overlay';
+        overlay.innerHTML = '<div class="tag-search-modal">' +
+            '<div class="tag-search-header"><h3>Отметить</h3><button class="tag-search-close">&times;</button></div>' +
+            '<input type="text" class="tag-search-input" placeholder="Поиск по имени...">' +
+            '<div class="tag-search-results"></div>' +
+            '</div>';
+        document.body.appendChild(overlay);
+
+        var input = overlay.querySelector('.tag-search-input');
+        var results = overlay.querySelector('.tag-search-results');
+        var closeBtn = overlay.querySelector('.tag-search-close');
+
+        closeBtn.onclick = function() { overlay.remove(); };
+        overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+
+        input.focus();
+        var timeout;
+        input.oninput = function() {
+            clearTimeout(timeout);
+            var q = input.value.trim();
+            if (!q) { results.innerHTML = ''; return; }
+            timeout = setTimeout(function() {
+                Social.searchUsers(q).then(function(users) {
+                    var myId = Social._getSupaUserId();
+                    var html = '';
+                    users.filter(function(u) { return u.user_id !== myId; }).forEach(function(u) {
+                        html += '<div class="tag-search-user" data-uid="' + u.user_id + '" data-username="' + u.username + '" data-name="' + (u.display_name || u.username) + '">';
+                        html += u.avatar_url ? '<img class="tag-search-avatar" src="' + u.avatar_url + '">' : '<div class="tag-search-avatar avatar-placeholder-sm"></div>';
+                        html += '<span>' + (u.display_name || u.username) + ' <span style="color:var(--text-muted)">@' + u.username + '</span></span>';
+                        html += '</div>';
+                    });
+                    if (!html) html = '<div class="social-empty" style="padding:16px">Никого не найдено</div>';
+                    results.innerHTML = html;
+                });
+            }, 300);
+        };
+
+        results.onclick = function(e) {
+            var user = e.target.closest('.tag-search-user');
+            if (user) {
+                onSelect({
+                    user_id: user.dataset.uid,
+                    username: user.dataset.username,
+                    display_name: user.dataset.name
+                });
+                overlay.remove();
+            }
+        };
     },
 
     _muscleGroupColor(mg) {

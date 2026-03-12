@@ -67,6 +67,7 @@ const Social = {
         if (!userId) return false;
         var result = await supa.from('follows').insert({ follower_id: userId, following_id: targetUserId });
         if (result.error) throw new Error(result.error.message);
+        this.createNotification(targetUserId, 'follow', null, null);
         return true;
     },
 
@@ -215,21 +216,59 @@ const Social = {
         return result.data;
     },
 
-    // ===== REACTIONS =====
+    // ===== LIKES (single heart reaction) =====
 
-    async toggleReaction(checkinId, emoji) {
+    async toggleLike(checkinId) {
         if (!supa) return null;
         var userId = this._getSupaUserId();
         if (!userId) return null;
-        // Check if already reacted
         var existing = await supa.from('reactions').select('id').eq('checkin_id', checkinId).eq('user_id', userId).maybeSingle();
         if (existing.data) {
             await supa.from('reactions').delete().eq('id', existing.data.id);
-            return false; // removed
+            return false; // unliked
         } else {
-            await supa.from('reactions').insert({ checkin_id: checkinId, user_id: userId, emoji: emoji });
-            return true; // added
+            var result = await supa.from('reactions').insert({ checkin_id: checkinId, user_id: userId, emoji: '❤️' });
+            if (result.error) throw new Error(result.error.message);
+            // Notify checkin owner
+            var checkin = await supa.from('checkins').select('user_id').eq('id', checkinId).single();
+            if (checkin.data && checkin.data.user_id !== userId) {
+                this.createNotification(checkin.data.user_id, 'like', checkinId, null);
+            }
+            return true; // liked
         }
+    },
+
+    async getLikesForCheckins(checkinIds) {
+        if (!supa || !checkinIds.length) return { counts: {}, myLikes: new Set() };
+        var userId = this._getSupaUserId();
+        var result = await supa.from('reactions').select('checkin_id, user_id').in('checkin_id', checkinIds);
+        if (result.error || !result.data) return { counts: {}, myLikes: new Set() };
+        var counts = {};
+        var myLikes = new Set();
+        result.data.forEach(function(r) {
+            counts[r.checkin_id] = (counts[r.checkin_id] || 0) + 1;
+            if (r.user_id === userId) myLikes.add(r.checkin_id);
+        });
+        return { counts: counts, myLikes: myLikes };
+    },
+
+    async getLikeCount(checkinId) {
+        if (!supa) return 0;
+        var result = await supa.from('reactions').select('*', { count: 'exact', head: true }).eq('checkin_id', checkinId);
+        return result.count || 0;
+    },
+
+    async hasLiked(checkinId) {
+        if (!supa) return false;
+        var userId = this._getSupaUserId();
+        if (!userId) return false;
+        var result = await supa.from('reactions').select('id').eq('checkin_id', checkinId).eq('user_id', userId).maybeSingle();
+        return !!result.data;
+    },
+
+    // Legacy — kept for backward compat
+    async toggleReaction(checkinId, emoji) {
+        return this.toggleLike(checkinId);
     },
 
     async getReactions(checkinId) {
@@ -239,6 +278,94 @@ const Social = {
             .eq('checkin_id', checkinId);
         if (result.error) return [];
         return result.data;
+    },
+
+    // ===== PHOTO TAGS =====
+
+    async tagUsers(checkinId, userIds) {
+        if (!supa || !userIds.length) return [];
+        var userId = this._getSupaUserId();
+        if (!userId) return [];
+        var rows = userIds.map(function(uid) {
+            return { checkin_id: checkinId, tagged_user_id: uid, tagged_by: userId };
+        });
+        var result = await supa.from('photo_tags').insert(rows).select();
+        if (result.error) throw new Error(result.error.message);
+        // Notify tagged users
+        var self = this;
+        userIds.forEach(function(uid) {
+            if (uid !== userId) self.createNotification(uid, 'tag', checkinId, null);
+        });
+        return result.data;
+    },
+
+    async getTagsForCheckin(checkinId) {
+        if (!supa) return [];
+        var result = await supa.from('photo_tags')
+            .select('*, profiles:tagged_user_id(user_id, username, display_name, avatar_url)')
+            .eq('checkin_id', checkinId);
+        if (result.error) return [];
+        return result.data;
+    },
+
+    async getTagsForCheckins(checkinIds) {
+        if (!supa || !checkinIds.length) return {};
+        var result = await supa.from('photo_tags')
+            .select('checkin_id, tagged_user_id, profiles:tagged_user_id(username, display_name)')
+            .in('checkin_id', checkinIds);
+        if (result.error || !result.data) return {};
+        var tags = {};
+        result.data.forEach(function(t) {
+            if (!tags[t.checkin_id]) tags[t.checkin_id] = [];
+            tags[t.checkin_id].push(t.profiles);
+        });
+        return tags;
+    },
+
+    // ===== NOTIFICATIONS =====
+
+    async createNotification(targetUserId, type, checkinId, commentId) {
+        if (!supa) return null;
+        var userId = this._getSupaUserId();
+        if (!userId || targetUserId === userId) return null;
+        var data = {
+            user_id: targetUserId,
+            type: type,
+            from_user_id: userId,
+            checkin_id: checkinId || null,
+            comment_id: commentId || null
+        };
+        var result = await supa.from('notifications').insert(data);
+        // Silently ignore errors
+        return result.data;
+    },
+
+    async getNotifications(limit) {
+        if (!supa) return [];
+        var userId = this._getSupaUserId();
+        if (!userId) return [];
+        var result = await supa.from('notifications')
+            .select('*, from_profile:from_user_id(user_id, username, display_name, avatar_url)')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(limit || 50);
+        if (result.error) return [];
+        return result.data;
+    },
+
+    async getUnreadNotificationCount() {
+        if (!supa) return 0;
+        var userId = this._getSupaUserId();
+        if (!userId) return 0;
+        var result = await supa.from('notifications').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('read', false);
+        return result.count || 0;
+    },
+
+    async markNotificationsRead() {
+        if (!supa) return;
+        var userId = this._getSupaUserId();
+        if (!userId) return;
+        await supa.from('notifications').update({ read: true }).eq('user_id', userId).eq('read', false);
     },
 
     // ===== COMMENTS =====
@@ -252,6 +379,11 @@ const Social = {
             .select('*, profiles(username, display_name, avatar_url)')
             .single();
         if (result.error) throw new Error(result.error.message);
+        // Notify checkin owner
+        var checkin = await supa.from('checkins').select('user_id').eq('id', checkinId).single();
+        if (checkin.data && checkin.data.user_id !== userId) {
+            this.createNotification(checkin.data.user_id, 'comment', checkinId, result.data.id);
+        }
         return result.data;
     },
 

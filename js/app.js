@@ -146,6 +146,8 @@ const App = {
             return { mode: 'back', target: '#/profile', companion: 'none' };
         if (hash === '#/discover')
             return { mode: 'back', target: '#/feed', companion: 'none' };
+        if (hash === '#/notifications')
+            return { mode: 'back', target: '#/feed', companion: 'none' };
         if (/^#\/u\/.+$/.test(hash))
             return { mode: 'back', target: '#/discover', companion: 'none' };
         if (/^#\/(followers|following)\/.+$/.test(hash))
@@ -847,8 +849,15 @@ const App = {
                 workout_summary: workoutSummary
             };
             return Social.createCheckin(data);
-        }).then(function() {
+        }).then(function(checkin) {
+            // Tag users if any
+            var taggedUsers = self._checkinTaggedUsers || [];
+            if (taggedUsers.length && checkin && checkin.id) {
+                var tagIds = taggedUsers.map(function(u) { return u.user_id; });
+                Social.tagUsers(checkin.id, tagIds).catch(function() {});
+            }
             self._checkinPhotos = [];
+            self._checkinTaggedUsers = [];
             location.hash = '#/profile';
         }).catch(function(err) {
             if (errEl) { errEl.textContent = err.message || 'Ошибка публикации'; errEl.style.display = 'block'; }
@@ -976,6 +985,7 @@ const App = {
             return;
         }
         if (hash === '#/discover') { SocialUI.renderDiscover(); return; }
+        if (hash === '#/notifications') { SocialUI.renderNotifications(); return; }
         var checkinDetailMatch = hash.match(/^#\/checkin\/(.+)$/);
         if (checkinDetailMatch) { SocialUI.renderCheckinDetail(checkinDetailMatch[1]); return; }
         var followListMatch = hash.match(/^#\/(followers|following)\/(.+)$/);
@@ -1277,11 +1287,126 @@ const App = {
             return;
         }
 
-        // Checkin card click → detail
+        // Notifications button
+        if (target.id === 'btn-notifications' || target.closest('#btn-notifications')) {
+            location.hash = '#/notifications';
+            return;
+        }
+
+        // Notification back
+        if (target.id === 'btn-notif-back' || target.closest('#btn-notif-back')) {
+            history.back();
+            return;
+        }
+
+        // Like button (feed cards and detail)
+        var likeBtn = target.closest('.like-btn');
+        if (likeBtn) {
+            var checkinId = likeBtn.dataset.checkin;
+            if (!checkinId) return;
+            // Optimistic UI
+            var wasActive = likeBtn.classList.contains('active');
+            likeBtn.classList.toggle('active');
+            var countEl = likeBtn.querySelector('.like-count');
+            var currentCount = parseInt(countEl.textContent) || 0;
+            countEl.textContent = wasActive ? (currentCount > 1 ? currentCount - 1 : '') : (currentCount + 1);
+            // API call
+            Social.toggleLike(checkinId).catch(function() {
+                // Rollback on error
+                likeBtn.classList.toggle('active');
+                countEl.textContent = currentCount > 0 ? currentCount : '';
+            });
+            return;
+        }
+
+        // Comment icon button → scroll to or navigate to comments
+        var commentBtnIcon = target.closest('.comment-btn-icon');
+        if (commentBtnIcon) {
+            var checkinId = commentBtnIcon.dataset.checkin;
+            var commentInput = document.getElementById('comment-input');
+            if (commentInput) {
+                commentInput.focus();
+            } else if (checkinId) {
+                location.hash = '#/checkin/' + checkinId;
+            }
+            return;
+        }
+
+        // Reply to comment
+        var replyBtn = target.closest('.comment-reply-btn');
+        if (replyBtn) {
+            var username = replyBtn.dataset.username;
+            var input = document.getElementById('comment-input');
+            if (input && username) {
+                input.value = '@' + username + ' ';
+                input.focus();
+            }
+            return;
+        }
+
+        // Tag user button in checkin form
+        if (target.id === 'btn-tag-user' || target.closest('#btn-tag-user')) {
+            if (!App._checkinTaggedUsers) App._checkinTaggedUsers = [];
+            SocialUI.renderTagSearch(function(user) {
+                // Check if already tagged
+                var already = App._checkinTaggedUsers.some(function(u) { return u.user_id === user.user_id; });
+                if (already) return;
+                App._checkinTaggedUsers.push(user);
+                var container = document.getElementById('checkin-tagged-users');
+                if (container) {
+                    var tag = document.createElement('span');
+                    tag.className = 'tagged-user-chip';
+                    tag.dataset.uid = user.user_id;
+                    tag.innerHTML = '@' + user.username + ' <button class="tagged-user-remove">&times;</button>';
+                    container.appendChild(tag);
+                }
+            });
+            return;
+        }
+
+        // Remove tagged user chip
+        var removeTag = target.closest('.tagged-user-remove');
+        if (removeTag) {
+            var chip = removeTag.closest('.tagged-user-chip');
+            if (chip && App._checkinTaggedUsers) {
+                App._checkinTaggedUsers = App._checkinTaggedUsers.filter(function(u) { return u.user_id !== chip.dataset.uid; });
+                chip.remove();
+            }
+            return;
+        }
+
+        // Checkin card click → detail (with double-tap detection)
         var checkinCard = target.closest('.checkin-card');
-        if (checkinCard && !checkinCard.classList.contains('checkin-full') && !target.closest('.reaction-btn')) {
+        if (checkinCard && !checkinCard.classList.contains('checkin-full') && !target.closest('.like-btn') && !target.closest('.comment-btn-icon')) {
             var checkinId = checkinCard.dataset.checkin;
-            if (checkinId) location.hash = '#/checkin/' + checkinId;
+            if (!checkinId) return;
+
+            // Double-tap detection
+            var now = Date.now();
+            var lastTap = checkinCard._lastTap || 0;
+            checkinCard._lastTap = now;
+
+            if (now - lastTap < 300) {
+                // Double tap → like + animation
+                clearTimeout(checkinCard._tapTimer);
+                var likeBtnInCard = checkinCard.querySelector('.like-btn');
+                if (likeBtnInCard && !likeBtnInCard.classList.contains('active')) {
+                    likeBtnInCard.click();
+                }
+                // Show heart animation
+                var anim = document.createElement('div');
+                anim.className = 'double-tap-heart';
+                anim.innerHTML = SocialUI._likeIconSVG;
+                checkinCard.style.position = 'relative';
+                checkinCard.appendChild(anim);
+                setTimeout(function() { anim.remove(); }, 900);
+                return;
+            }
+
+            // Single tap → navigate after delay
+            checkinCard._tapTimer = setTimeout(function() {
+                location.hash = '#/checkin/' + checkinId;
+            }, 300);
             return;
         }
 
@@ -1322,20 +1447,7 @@ const App = {
             // Let label handle file input click
         }
 
-        // Reaction button
-        var reactionBtn = target.closest('.reaction-btn');
-        if (reactionBtn) {
-            var emoji = reactionBtn.dataset.emoji;
-            var checkinId = reactionBtn.dataset.checkin;
-            if (emoji && checkinId) {
-                reactionBtn.disabled = true;
-                Social.toggleReaction(checkinId, emoji).then(function(added) {
-                    // Refresh the detail view
-                    SocialUI.renderCheckinDetail(checkinId);
-                }).catch(function() { reactionBtn.disabled = false; });
-            }
-            return;
-        }
+        // Legacy reaction button (removed, now using like-btn)
 
         // Send comment
         if (target.id === 'btn-send-comment' || target.closest('#btn-send-comment')) {
@@ -1371,9 +1483,13 @@ const App = {
             target.textContent = 'Загрузка...';
             Social.getFeed(SocialUI._feedCursor).then(function(more) {
                 SocialUI._feedCursor = more.length >= 20 ? more[more.length - 1].created_at : null;
+                var ids = more.map(function(c) { return c.id; });
+                return Promise.all([Promise.resolve(more), Social.getLikesForCheckins(ids), Social.getTagsForCheckins(ids)]);
+            }).then(function(results) {
+                var more = results[0], likes = results[1], tags = results[2];
                 var btn = document.getElementById('btn-load-more-feed');
                 if (btn) {
-                    btn.insertAdjacentHTML('beforebegin', SocialUI._renderCheckinCards(more));
+                    btn.insertAdjacentHTML('beforebegin', SocialUI._renderCheckinCards(more, likes, tags));
                     if (!SocialUI._feedCursor) btn.remove();
                     else { btn.disabled = false; btn.textContent = 'Загрузить ещё'; }
                 }
@@ -1389,7 +1505,11 @@ const App = {
             btn.textContent = 'Загрузка...';
             Social.getUserCheckins(userId, SocialUI._profileCheckinsCursor).then(function(more) {
                 SocialUI._profileCheckinsCursor = more.length >= 20 ? more[more.length - 1].created_at : null;
-                btn.insertAdjacentHTML('beforebegin', SocialUI._renderCheckinCards(more));
+                var ids = more.map(function(c) { return c.id; });
+                return Promise.all([Promise.resolve(more), Social.getLikesForCheckins(ids)]);
+            }).then(function(results) {
+                var more = results[0], likes = results[1];
+                btn.insertAdjacentHTML('beforebegin', SocialUI._renderCheckinCards(more, likes));
                 if (!SocialUI._profileCheckinsCursor) btn.remove();
                 else { btn.disabled = false; btn.textContent = 'Загрузить ещё'; }
             });
