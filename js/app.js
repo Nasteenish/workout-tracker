@@ -2297,8 +2297,20 @@ const Celebration = {
                 });
             }
             var dayTitle = workout ? (workout.titleRu || workout.title || '') : '';
+            // Extract primary muscle group tag from title
+            var muscleGroup = '';
+            var t = dayTitle.toLowerCase();
+            if (t.indexOf('ягодиц') !== -1 || t.indexOf('glute') !== -1) muscleGroup = 'Ягодицы';
+            if (t.indexOf('бедр') !== -1 || t.indexOf('квадри') !== -1 || t.indexOf('ног') !== -1 || t.indexOf('leg') !== -1) muscleGroup = muscleGroup ? 'Ноги' : 'Ноги';
+            if ((t.indexOf('ягодиц') !== -1) && (t.indexOf('бедр') !== -1 || t.indexOf('квадри') !== -1)) muscleGroup = 'Ноги и ягодицы';
+            if (t.indexOf('спин') !== -1 || t.indexOf('back') !== -1) muscleGroup = 'Спина';
+            if (t.indexOf('груд') !== -1 || t.indexOf('chest') !== -1) muscleGroup = 'Грудь';
+            if (t.indexOf('плеч') !== -1 || t.indexOf('дельт') !== -1 || t.indexOf('shoulder') !== -1) muscleGroup = muscleGroup || 'Плечи';
+            if (t.indexOf('бицепс') !== -1 || t.indexOf('трицепс') !== -1 || t.indexOf('рук') !== -1 || t.indexOf('arm') !== -1) muscleGroup = muscleGroup || 'Руки';
+            if (!muscleGroup && dayTitle) muscleGroup = dayTitle;
             this._pendingShare = {
                 week: weekNum, day: dayNum, title: dayTitle,
+                muscle_group: muscleGroup,
                 exercises: exercises, total_sets: totalSets,
                 duration_sec: elapsedSec || 0
             };

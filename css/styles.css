@@ -3854,10 +3854,19 @@ a.stat-link:active { opacity: 0.6; }
 }
 
 /* ===== Share Workout ===== */
-.share-workout-info-line {
-    padding: 16px 16px 0;
-    font-size: 15px;
+.share-muscle-tag {
+    display: inline-block;
+    margin: 16px 16px 0;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
     font-weight: 600;
+    letter-spacing: 0.02em;
+}
+.share-workout-title {
+    padding: 8px 16px 0;
+    font-size: 17px;
+    font-weight: 700;
     color: var(--text-primary);
 }
 .share-workout-stats {
@@ -3865,14 +3874,28 @@ a.stat-link:active { opacity: 0.6; }
     gap: 8px;
     padding: 10px 16px 4px;
     flex-wrap: wrap;
+    align-items: center;
 }
 .share-stat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     background: rgba(255,255,255,0.07);
     color: var(--text-secondary);
     font-size: 12px;
     font-weight: 500;
     padding: 4px 10px;
     border-radius: 12px;
+}
+.share-stat-chip svg { opacity: 0.6; }
+/* Feed muscle tag */
+.checkin-muscle-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 4px;
 }
 
 /* ===== Avatar Cropper ===== */

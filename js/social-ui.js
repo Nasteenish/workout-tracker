@@ -196,18 +196,25 @@ const SocialUI = {
             var html = '<div class="social-screen">';
             html += '<div class="social-header"><button class="social-back" id="btn-checkin-back">&larr;</button><h2>Поделиться тренировкой</h2></div>';
 
-            // Workout info line
-            var infoLine = 'Неделя ' + prefillWorkout.week + ', День ' + prefillWorkout.day;
-            if (prefillWorkout.title) infoLine += ' — ' + prefillWorkout.title;
-            html += '<div class="share-workout-info-line">' + infoLine + '</div>';
+            // Muscle group tag
+            var mg = prefillWorkout.muscle_group || prefillWorkout.title || '';
+            var mgColor = SocialUI._muscleGroupColor(mg);
+            if (mg) {
+                html += '<div class="share-muscle-tag" style="background:' + mgColor + '">' + mg + '</div>';
+            }
+
+            // Workout title
+            if (prefillWorkout.title) {
+                html += '<div class="share-workout-title">' + prefillWorkout.title + '</div>';
+            }
 
             // Stats chips
             html += '<div class="share-workout-stats">';
             if (prefillWorkout.duration_sec) {
                 var dm = Math.round(prefillWorkout.duration_sec / 60);
-                html += '<span class="share-stat-chip">' + dm + ' мин</span>';
+                html += '<span class="share-stat-chip"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5V8l2.5 2.5"/></svg> ' + dm + ' мин</span>';
             }
-            html += '<span class="share-stat-chip">' + (prefillWorkout.exercises ? prefillWorkout.exercises.length : 0) + ' упр.</span>';
+            html += '<span class="share-stat-chip"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="2" height="6" rx="0.5"/><rect x="5" y="3" width="2" height="10" rx="0.5"/><rect x="9" y="3" width="2" height="10" rx="0.5"/><rect x="12" y="5" width="2" height="6" rx="0.5"/></svg> ' + (prefillWorkout.exercises ? prefillWorkout.exercises.length : 0) + ' упр.</span>';
             if (prefillWorkout.total_sets) html += '<span class="share-stat-chip">' + prefillWorkout.total_sets + ' подх.</span>';
             html += '</div>';
 
@@ -440,7 +447,10 @@ const SocialUI = {
             // Workout summary
             if (c.workout_summary) {
                 var ws = c.workout_summary;
+                var mgTag = ws.muscle_group || ws.title || '';
+                var mgClr = SocialUI._muscleGroupColor(mgTag);
                 html += '<div class="checkin-workout">';
+                if (mgTag) html += '<span class="checkin-muscle-tag" style="background:' + mgClr + '">' + mgTag + '</span>';
                 html += '<span class="checkin-workout-label">' + (ws.title || 'Тренировка') + '</span>';
                 var wStats = [];
                 if (ws.duration_sec) wStats.push(Math.round(ws.duration_sec / 60) + ' мин');
@@ -583,6 +593,17 @@ const SocialUI = {
         html += '</div>';
 
         app.innerHTML = html;
+    },
+
+    _muscleGroupColor(mg) {
+        var m = (mg || '').toLowerCase();
+        if (m.indexOf('ног') !== -1 || m.indexOf('бедр') !== -1 || m.indexOf('квадри') !== -1) return 'rgba(76,175,80,0.25)';
+        if (m.indexOf('ягодиц') !== -1) return 'rgba(233,30,99,0.25)';
+        if (m.indexOf('спин') !== -1) return 'rgba(33,150,243,0.25)';
+        if (m.indexOf('груд') !== -1) return 'rgba(255,152,0,0.25)';
+        if (m.indexOf('плеч') !== -1 || m.indexOf('дельт') !== -1) return 'rgba(156,39,176,0.25)';
+        if (m.indexOf('рук') !== -1 || m.indexOf('бицепс') !== -1 || m.indexOf('трицепс') !== -1) return 'rgba(0,188,212,0.25)';
+        return 'rgba(255,255,255,0.1)';
     },
 
     _timeAgo(dateStr) {
