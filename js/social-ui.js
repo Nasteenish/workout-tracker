@@ -324,14 +324,19 @@ const SocialUI = {
             app.innerHTML = '<div class="social-loading">Загрузка...</div>';
         }
 
-        var checkin = await Social.getCheckin(checkinId);
+        var results = await Promise.all([
+            Social.getCheckin(checkinId),
+            Social.getReactions(checkinId),
+            Social.getComments(checkinId)
+        ]);
+        var checkin = results[0];
+        var reactions = results[1];
+        var comments = results[2];
         if (!checkin) {
             app.innerHTML = '<div class="social-screen"><div class="social-empty">Чекин не найден</div></div>';
             return;
         }
 
-        var reactions = await Social.getReactions(checkinId);
-        var comments = await Social.getComments(checkinId);
         var myId = Social._getSupaUserId();
         var myReaction = reactions.find(function(r) { return r.user_id === myId; });
 
