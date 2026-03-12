@@ -344,12 +344,31 @@ const Social = {
         if (!supa) return [];
         var userId = this._getSupaUserId();
         if (!userId) return [];
+        // Fetch notifications without join (avoids FK issues)
         var result = await supa.from('notifications')
-            .select('*, from_profile:from_user_id(user_id, username, display_name, avatar_url)')
+            .select('*')
             .eq('user_id', userId)
             .order('created_at', { ascending: false })
             .limit(limit || 50);
-        if (result.error) return [];
+        if (result.error || !result.data || !result.data.length) return [];
+        // Fetch profiles for from_user_ids separately
+        var fromIds = [];
+        result.data.forEach(function(n) {
+            if (n.from_user_id && fromIds.indexOf(n.from_user_id) === -1) fromIds.push(n.from_user_id);
+        });
+        var profileMap = {};
+        if (fromIds.length) {
+            var pResult = await supa.from('profiles')
+                .select('user_id, username, display_name, avatar_url')
+                .in('user_id', fromIds);
+            if (pResult.data) {
+                pResult.data.forEach(function(p) { profileMap[p.user_id] = p; });
+            }
+        }
+        // Attach profiles
+        result.data.forEach(function(n) {
+            n.from_profile = profileMap[n.from_user_id] || null;
+        });
         return result.data;
     },
 
