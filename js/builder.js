@@ -34,7 +34,6 @@ const Builder = {
             <div class="login-screen">
                 <div class="app-icon">${this._barbellSVG}</div>
                 <h1>Создать аккаунт</h1>
-                <p class="subtitle">Путь атлета. Каждый день.</p>
 
                 <div class="login-features">
                     <div class="login-feature"><svg viewBox="0 0 28 14" width="22" height="11" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="0.5" y="4" width="2.5" height="6" rx="1"/><rect x="4" y="2" width="3" height="10" rx="1"/><rect x="8" y="3.5" width="2" height="7" rx="0.8"/><rect x="10" y="5.5" width="8" height="3" rx="1"/><rect x="18" y="3.5" width="2" height="7" rx="0.8"/><rect x="21" y="2" width="3" height="10" rx="1"/><rect x="25" y="4" width="2.5" height="6" rx="1"/></svg><span>Тренировки и программы</span></div>

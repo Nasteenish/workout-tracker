@@ -30,7 +30,6 @@ const UI = {
             <div class="login-screen">
                 <div class="app-icon"><svg viewBox="0 0 40 40" fill="white" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="16" width="3" height="8" rx="1.5"/><rect x="6" y="11" width="4" height="18" rx="2"/><rect x="11" y="14" width="3" height="12" rx="1.5"/><rect x="14" y="18" width="12" height="4" rx="2"/><rect x="26" y="14" width="3" height="12" rx="1.5"/><rect x="30" y="11" width="4" height="18" rx="2"/><rect x="35" y="16" width="3" height="8" rx="1.5"/></svg></div>
                 <h1>Трекер Тренировок</h1>
-                <p class="subtitle">Путь атлета. Каждый день.</p>
 
                 <div class="login-features">
                     <div class="login-feature"><svg viewBox="0 0 28 14" width="22" height="11" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="0.5" y="4" width="2.5" height="6" rx="1"/><rect x="4" y="2" width="3" height="10" rx="1"/><rect x="8" y="3.5" width="2" height="7" rx="0.8"/><rect x="10" y="5.5" width="8" height="3" rx="1"/><rect x="18" y="3.5" width="2" height="7" rx="0.8"/><rect x="21" y="2" width="3" height="10" rx="1"/><rect x="25" y="4" width="2.5" height="6" rx="1"/></svg><span>Тренировки и программы</span></div>
