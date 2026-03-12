@@ -499,8 +499,8 @@ const App = {
                     // Social pages: re-render without full page reload to avoid async flash
                     var isSocialRoute = /^#\/(feed|profile|checkin|discover|u\/)/.test(location.hash);
                     if (isSocialRoute) {
-                        var ref = indicator;
-                        setTimeout(function() { ref.remove(); }, 500);
+                        var indRef = indicator;
+                        setTimeout(function() { indRef.remove(); }, 500);
                         indicator = null;
                         App.route();
                         pulling = false; ready = false; active = false; bottomActive = false;
