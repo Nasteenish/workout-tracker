@@ -152,6 +152,13 @@ const App = {
             return { mode: 'back', target: '#/discover', companion: 'none' };
         if (/^#\/(followers|following)\/.+$/.test(hash))
             return { mode: 'back', target: '#/profile', companion: 'none' };
+        // Onboarding back-swipe
+        if (hash === '#/onboarding/2')
+            return { mode: 'back', target: '#/onboarding/1', companion: 'none' };
+        if (hash === '#/onboarding/3')
+            return { mode: 'back', target: '#/onboarding/2', companion: 'none' };
+        if (hash === '#/onboarding/4')
+            return { mode: 'back', target: '#/onboarding/3', companion: 'none' };
         return null;
     },
 
@@ -1197,7 +1204,8 @@ const App = {
         if (genderBtn) {
             if (!Builder._onboardingData) Builder._onboardingData = {};
             Builder._onboardingData.gender = genderBtn.dataset.gender;
-            location.hash = '#/onboarding/2';
+            history.replaceState(null, '', '#/onboarding/2');
+            this.route();
             return;
         }
 
@@ -1207,7 +1215,8 @@ const App = {
             if (!Builder._onboardingData) Builder._onboardingData = {};
             if (athleteBtn.dataset.athlete === 'yes') {
                 Builder._onboardingData.is_athlete = true;
-                location.hash = '#/onboarding/3';
+                history.replaceState(null, '', '#/onboarding/3');
+                this.route();
             } else {
                 Builder._onboardingData.is_athlete = false;
                 Builder._finishOnboarding();
@@ -1220,7 +1229,8 @@ const App = {
         if (proBtn) {
             if (!Builder._onboardingData) Builder._onboardingData = {};
             Builder._onboardingData.is_pro = proBtn.dataset.pro === 'true';
-            location.hash = '#/onboarding/4';
+            history.replaceState(null, '', '#/onboarding/4');
+            this.route();
             return;
         }
 

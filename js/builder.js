@@ -1343,7 +1343,6 @@ const Builder = {
             '<button class="onboard-option onboard-athlete-btn" data-athlete="yes">Да</button>' +
             '<button class="onboard-option onboard-athlete-btn" data-athlete="no">Нет</button>' +
             '</div>' +
-            '<button class="onboard-back" onclick="location.hash=\'#/onboarding/1\'">← Назад</button>' +
             '</div>';
     },
 
@@ -1357,7 +1356,6 @@ const Builder = {
             '<button class="onboard-option onboard-pro-btn" data-pro="true">IFBB PRO</button>' +
             '<button class="onboard-option onboard-pro-btn" data-pro="false">Любитель</button>' +
             '</div>' +
-            '<button class="onboard-back" onclick="location.hash=\'#/onboarding/2\'">← Назад</button>' +
             '</div>';
     },
 
@@ -1373,7 +1371,6 @@ const Builder = {
             html += '<button class="onboard-chip onboard-category-btn" data-category="' + c + '">' + c + '</button>';
         });
         html += '</div>' +
-            '<button class="onboard-back" onclick="location.hash=\'#/onboarding/3\'">← Назад</button>' +
             '</div>';
         document.getElementById('app').innerHTML = html;
     },
@@ -1393,14 +1390,16 @@ const Builder = {
             if (isNew && localId) {
                 App.switchUser(localId);
             } else {
-                location.hash = '#/';
+                history.replaceState(null, '', '#/');
+                App.route();
             }
         }).catch(function() {
             // Save failed but proceed anyway
             if (isNew && localId) {
                 App.switchUser(localId);
             } else {
-                location.hash = '#/';
+                history.replaceState(null, '', '#/');
+                App.route();
             }
         });
     }
