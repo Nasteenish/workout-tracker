@@ -1248,6 +1248,12 @@ const App = {
             return;
         }
 
+        // Setup: back (go to previous page in history)
+        if (target.id === 'setup-back' || target.closest('#setup-back')) {
+            history.back();
+            return;
+        }
+
         // Logout
         if (target.id === 'btn-logout' || target.closest('#btn-logout')) {
             this.logout();
