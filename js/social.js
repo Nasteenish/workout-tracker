@@ -389,12 +389,14 @@ const Social = {
 
     // ===== COMMENTS =====
 
-    async addComment(checkinId, text) {
+    async addComment(checkinId, text, parentId) {
         if (!supa) return null;
         var userId = this._getSupaUserId();
         if (!userId) return null;
+        var insertData = { checkin_id: checkinId, user_id: userId, text: text };
+        if (parentId) insertData.parent_id = parentId;
         var result = await supa.from('comments')
-            .insert({ checkin_id: checkinId, user_id: userId, text: text })
+            .insert(insertData)
             .select('*, profiles(username, display_name, avatar_url)')
             .single();
         if (result.error) throw new Error(result.error.message);
@@ -402,6 +404,13 @@ const Social = {
         var checkin = await supa.from('checkins').select('user_id').eq('id', checkinId).single();
         if (checkin.data && checkin.data.user_id !== userId) {
             this.createNotification(checkin.data.user_id, 'comment', checkinId, result.data.id);
+        }
+        // If reply, also notify parent comment author
+        if (parentId) {
+            var parent = await supa.from('comments').select('user_id').eq('id', parentId).single();
+            if (parent.data && parent.data.user_id !== userId && (!checkin.data || parent.data.user_id !== checkin.data.user_id)) {
+                this.createNotification(parent.data.user_id, 'comment', checkinId, result.data.id);
+            }
         }
         return result.data;
     },
@@ -421,6 +430,52 @@ const Social = {
             .order('created_at', { ascending: true });
         if (result.error) return [];
         return result.data;
+    },
+
+    // ===== COMMENT LIKES =====
+
+    async toggleCommentLike(commentId) {
+        if (!supa) return null;
+        var userId = this._getSupaUserId();
+        if (!userId) return null;
+        var existing = await supa.from('comment_likes').select('id').eq('comment_id', commentId).eq('user_id', userId).maybeSingle();
+        if (existing.data) {
+            await supa.from('comment_likes').delete().eq('id', existing.data.id);
+            return false;
+        } else {
+            await supa.from('comment_likes').insert({ comment_id: commentId, user_id: userId });
+            // Notify comment author
+            var comment = await supa.from('comments').select('user_id, checkin_id').eq('id', commentId).single();
+            if (comment.data && comment.data.user_id !== userId) {
+                this.createNotification(comment.data.user_id, 'like', comment.data.checkin_id, commentId);
+            }
+            return true;
+        }
+    },
+
+    async getCommentLikes(commentIds) {
+        if (!supa || !commentIds.length) return { counts: {}, myLikes: new Set() };
+        var userId = this._getSupaUserId();
+        var result = await supa.from('comment_likes').select('comment_id, user_id').in('comment_id', commentIds);
+        if (result.error || !result.data) return { counts: {}, myLikes: new Set() };
+        var counts = {};
+        var myLikes = new Set();
+        result.data.forEach(function(r) {
+            counts[r.comment_id] = (counts[r.comment_id] || 0) + 1;
+            if (r.user_id === userId) myLikes.add(r.comment_id);
+        });
+        return { counts: counts, myLikes: myLikes };
+    },
+
+    async getCommentCountsForCheckins(checkinIds) {
+        if (!supa || !checkinIds.length) return {};
+        var result = await supa.from('comments').select('checkin_id').in('checkin_id', checkinIds);
+        if (result.error || !result.data) return {};
+        var counts = {};
+        result.data.forEach(function(r) {
+            counts[r.checkin_id] = (counts[r.checkin_id] || 0) + 1;
+        });
+        return counts;
     },
 
     // ===== DISCOVERY =====

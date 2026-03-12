@@ -360,11 +360,13 @@ const SocialUI = {
             Social.getLikesForCheckins(ids),
             Social.getTagsForCheckins(ids),
             this._preloadPhotos(checkins),
-            Social.getUnreadNotificationCount()
+            Social.getUnreadNotificationCount(),
+            Social.getCommentCountsForCheckins(ids)
         ]);
         var likes = extra[0];
         var tags = extra[1];
         var unreadCount = extra[3];
+        var commentCounts = extra[4];
 
         var html = '<div class="social-screen">';
         html += '<div class="social-header"><h2>Лента</h2>';
@@ -388,7 +390,7 @@ const SocialUI = {
             }
             html += '</div>';
         } else {
-            html += this._renderCheckinCards(checkins, likes, tags);
+            html += this._renderCheckinCards(checkins, likes, tags, commentCounts);
             if (this._feedCursor) {
                 html += '<button class="btn-load-more" id="btn-load-more-feed">Загрузить ещё</button>';
             }
@@ -424,6 +426,10 @@ const SocialUI = {
             return;
         }
 
+        // Fetch comment likes
+        var commentIds = comments.map(function(c) { return c.id; });
+        var commentLikes = commentIds.length ? await Social.getCommentLikes(commentIds) : { counts: {}, myLikes: new Set() };
+
         var myId = Social._getSupaUserId();
         var myReaction = reactions.find(function(r) { return r.user_id === myId; });
 
@@ -448,30 +454,62 @@ const SocialUI = {
             html += '</div>';
         }
 
-        // Comments
-        html += '<div class="checkin-comments">';
-        html += '<h3>Комментарии (' + comments.length + ')</h3>';
+        // Comments — group into threads
+        var topLevel = comments.filter(function(c) { return !c.parent_id; });
+        var replies = {};
         comments.forEach(function(c) {
+            if (c.parent_id) {
+                if (!replies[c.parent_id]) replies[c.parent_id] = [];
+                replies[c.parent_id].push(c);
+            }
+        });
+
+        function renderComment(c, isReply) {
             var isMine = c.user_id === myId;
             var authorName = c.profiles ? (c.profiles.display_name || c.profiles.username) : '?';
             var authorUsername = c.profiles ? c.profiles.username : '';
-            html += '<div class="comment-item">';
-            html += '<div class="comment-avatar">';
-            html += c.profiles && c.profiles.avatar_url
+            var clCount = commentLikes.counts[c.id] || 0;
+            var clLiked = commentLikes.myLikes.has ? commentLikes.myLikes.has(c.id) : false;
+            var h = '<div class="comment-item' + (isReply ? ' comment-reply' : '') + '">';
+            h += '<div class="comment-avatar">';
+            h += c.profiles && c.profiles.avatar_url
                 ? '<img src="' + c.profiles.avatar_url + '" alt="">'
                 : '<div class="avatar-placeholder-sm"></div>';
-            html += '</div>';
-            html += '<div class="comment-body">';
-            html += '<span class="comment-author">' + authorName + '</span> ';
-            html += '<span class="comment-text">' + SocialUI._renderMentionText(c.text) + '</span>';
-            html += '<div class="comment-meta">';
-            html += '<span class="comment-time">' + SocialUI._timeAgo(c.created_at) + '</span>';
-            if (!isMine) html += '<button class="comment-reply-btn" data-username="' + authorUsername + '">Ответить</button>';
-            html += '</div>';
-            html += '</div>';
-            if (isMine) html += '<button class="comment-delete" data-comment="' + c.id + '">&times;</button>';
-            html += '</div>';
+            h += '</div>';
+            h += '<div class="comment-body">';
+            h += '<span class="comment-author">' + authorName + '</span> ';
+            h += '<span class="comment-text">' + SocialUI._renderMentionText(c.text) + '</span>';
+            h += '<div class="comment-meta">';
+            h += '<span class="comment-time">' + SocialUI._timeAgo(c.created_at) + '</span>';
+            if (!isMine) h += '<button class="comment-reply-btn" data-username="' + authorUsername + '" data-commentid="' + c.id + '">Ответить</button>';
+            h += '<button class="comment-like-btn' + (clLiked ? ' active' : '') + '" data-comment="' + c.id + '">';
+            h += '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+            h += '<span class="comment-like-count">' + (clCount > 0 ? clCount : '') + '</span>';
+            h += '</button>';
+            h += '</div>';
+            h += '</div>';
+            if (isMine) h += '<button class="comment-delete" data-comment="' + c.id + '">&times;</button>';
+            h += '</div>';
+            return h;
+        }
+
+        html += '<div class="checkin-comments">';
+        html += '<h3>Комментарии (' + comments.length + ')</h3>';
+        topLevel.forEach(function(c) {
+            html += renderComment(c, false);
+            var reps = replies[c.id];
+            if (reps && reps.length) {
+                html += '<div class="comment-replies">';
+                reps.forEach(function(r) { html += renderComment(r, true); });
+                html += '</div>';
+            }
         });
+
+        // Reply indicator (hidden by default)
+        html += '<div class="reply-indicator" id="reply-indicator" style="display:none">';
+        html += 'Ответ для <b id="reply-indicator-name"></b>';
+        html += '<button class="reply-cancel" id="btn-reply-cancel">&times;</button>';
+        html += '</div>';
 
         // Comment input
         html += '<div class="comment-input-row">';
@@ -532,9 +570,10 @@ const SocialUI = {
 
     // ===== RENDER HELPERS =====
 
-    _renderCheckinCards(checkins, likes, tags) {
+    _renderCheckinCards(checkins, likes, tags, commentCounts) {
         var likeData = likes || { counts: {}, myLikes: new Set() };
         var tagData = tags || {};
+        var commentCountData = commentCounts || {};
         var html = '';
         checkins.forEach(function(c) {
             html += '<div class="checkin-card" data-checkin="' + c.id + '">';
@@ -609,8 +648,10 @@ const SocialUI = {
             html += SocialUI._likeIconSVG;
             html += '<span class="like-count">' + (likeCount > 0 ? likeCount : '') + '</span>';
             html += '</button>';
+            var cc = commentCountData[c.id] || 0;
             html += '<button class="comment-btn-icon" data-checkin="' + c.id + '">';
             html += SocialUI._commentIconSVG;
+            html += '<span class="comment-count">' + (cc > 0 ? cc : '') + '</span>';
             html += '</button>';
             html += '</div>';
 

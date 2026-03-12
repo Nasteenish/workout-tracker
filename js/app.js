@@ -1340,11 +1340,47 @@ const App = {
         var replyBtn = target.closest('.comment-reply-btn');
         if (replyBtn) {
             var username = replyBtn.dataset.username;
+            var commentId = replyBtn.dataset.commentid;
             var input = document.getElementById('comment-input');
             if (input && username) {
+                App._replyToCommentId = commentId || null;
                 input.value = '@' + username + ' ';
                 input.focus();
+                // Show reply indicator
+                var indicator = document.getElementById('reply-indicator');
+                var nameEl = document.getElementById('reply-indicator-name');
+                if (indicator && nameEl) {
+                    nameEl.textContent = username;
+                    indicator.style.display = 'flex';
+                }
             }
+            return;
+        }
+
+        // Cancel reply
+        if (target.id === 'btn-reply-cancel' || target.closest('#btn-reply-cancel')) {
+            App._replyToCommentId = null;
+            var indicator = document.getElementById('reply-indicator');
+            if (indicator) indicator.style.display = 'none';
+            var input = document.getElementById('comment-input');
+            if (input) { input.value = ''; input.focus(); }
+            return;
+        }
+
+        // Comment like
+        var commentLikeBtn = target.closest('.comment-like-btn');
+        if (commentLikeBtn) {
+            var commentId = commentLikeBtn.dataset.comment;
+            if (!commentId) return;
+            var wasActive = commentLikeBtn.classList.contains('active');
+            commentLikeBtn.classList.toggle('active');
+            var countEl = commentLikeBtn.querySelector('.comment-like-count');
+            var cur = parseInt(countEl.textContent) || 0;
+            countEl.textContent = wasActive ? (cur > 1 ? cur - 1 : '') : (cur + 1);
+            Social.toggleCommentLike(commentId).catch(function() {
+                commentLikeBtn.classList.toggle('active');
+                countEl.textContent = cur > 0 ? cur : '';
+            });
             return;
         }
 
@@ -1461,7 +1497,9 @@ const App = {
             var text = input ? input.value.trim() : '';
             if (!text || !checkinId) return;
             btn.disabled = true;
-            Social.addComment(checkinId, text).then(function() {
+            var parentId = App._replyToCommentId || null;
+            App._replyToCommentId = null;
+            Social.addComment(checkinId, text, parentId).then(function() {
                 SocialUI.renderCheckinDetail(checkinId);
             }).catch(function() { btn.disabled = false; });
             return;
