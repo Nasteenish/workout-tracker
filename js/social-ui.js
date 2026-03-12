@@ -411,7 +411,8 @@ const SocialUI = {
     _renderCheckinCards(checkins) {
         var html = '';
         checkins.forEach(function(c) {
-            html += '<div class="checkin-card" data-checkin="' + c.id + '">';
+            var hasPhotos = c.photos && c.photos.length > 0;
+            html += '<div class="checkin-card' + (hasPhotos ? ' photo-loading' : '') + '" data-checkin="' + c.id + '">';
             // Author row
             html += '<div class="checkin-author">';
             html += c.profiles && c.profiles.avatar_url
@@ -424,10 +425,10 @@ const SocialUI = {
             html += '</div>';
 
             // Photos
-            if (c.photos && c.photos.length > 0) {
+            if (hasPhotos) {
                 html += '<div class="checkin-photos' + (c.photos.length > 1 ? ' multi' : '') + '">';
                 c.photos.forEach(function(url) {
-                    html += '<img class="checkin-photo" src="' + url + '" alt="">';
+                    html += '<img class="checkin-photo" src="' + url + '" alt="" onload="SocialUI._onCardPhotoLoad(this)" onerror="SocialUI._onCardPhotoLoad(this)">';
                 });
                 html += '</div>';
             }
@@ -593,6 +594,17 @@ const SocialUI = {
         html += '</div>';
 
         app.innerHTML = html;
+    },
+
+    _onCardPhotoLoad(img) {
+        var card = img.closest('.checkin-card');
+        if (!card) return;
+        // Check if all photos in this card are loaded
+        var photos = card.querySelectorAll('.checkin-photo');
+        for (var i = 0; i < photos.length; i++) {
+            if (!photos[i].complete) return;
+        }
+        card.classList.remove('photo-loading');
     },
 
     _muscleGroupColor(mg) {

@@ -3610,6 +3610,13 @@ a.stat-link:active { opacity: 0.6; }
     display: flex;
     gap: 2px;
 }
+.checkin-card.photo-loading {
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
 .checkin-photo {
     width: 100%;
     display: block;
