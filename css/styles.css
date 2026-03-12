@@ -3610,18 +3610,19 @@ a.stat-link:active { opacity: 0.6; }
     display: flex;
     gap: 2px;
 }
-.checkin-card.photo-loading {
-    opacity: 0;
-    max-height: 0;
-    overflow: hidden;
-    margin: 0;
-    padding: 0;
-}
 .checkin-photo {
     width: 100%;
     display: block;
     max-height: 400px;
     object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    background: var(--bg-card);
+    aspect-ratio: 4/3;
+}
+.checkin-photo.loaded {
+    opacity: 1;
+    aspect-ratio: auto;
 }
 .checkin-photos.multi .checkin-photo {
     flex: 1;

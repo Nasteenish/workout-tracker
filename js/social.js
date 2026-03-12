@@ -119,14 +119,37 @@ const Social = {
 
     // ===== CHECK-INS =====
 
+    _resizeImage(file, maxDim) {
+        return new Promise(function(resolve) {
+            var img = new Image();
+            img.onload = function() {
+                URL.revokeObjectURL(img.src);
+                var w = img.width, h = img.height;
+                var ratio = Math.min(maxDim / w, maxDim / h, 1);
+                var nw = Math.round(w * ratio);
+                var nh = Math.round(h * ratio);
+                var c = document.createElement('canvas');
+                c.width = nw; c.height = nh;
+                c.getContext('2d').drawImage(img, 0, 0, nw, nh);
+                c.toBlob(function(blob) { resolve(blob || file); }, 'image/jpeg', 0.82);
+            };
+            img.onerror = function() { resolve(file); };
+            img.src = URL.createObjectURL(file);
+        });
+    },
+
     async uploadCheckinPhoto(file) {
         if (!supa) return null;
         var userId = this._getSupaUserId();
         if (!userId) return null;
+        // Resize images to max 1200px, compress to JPEG
+        var uploadFile = file;
+        if (!file.type || file.type.startsWith('image/')) {
+            uploadFile = await this._resizeImage(file, 1200);
+        }
         var name = Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-        var ext = file.name ? file.name.split('.').pop() : (file.type && file.type.indexOf('video') !== -1 ? 'mp4' : 'jpg');
-        var path = userId + '/' + name + '.' + ext;
-        var result = await supa.storage.from('checkin-photos').upload(path, file, { upsert: false });
+        var path = userId + '/' + name + '.jpg';
+        var result = await supa.storage.from('checkin-photos').upload(path, uploadFile, { upsert: false, contentType: 'image/jpeg' });
         if (result.error) throw new Error(result.error.message);
         var urlResult = supa.storage.from('checkin-photos').getPublicUrl(path);
         return urlResult.data.publicUrl;
