@@ -172,6 +172,7 @@ const App = {
             app.style.position = ''; app.style.top = ''; app.style.left = ''; app.style.right = '';
             app.classList.remove('swiping-back');
         };
+        const isSocialHash = (h) => h === '#/feed' || h === '#/profile' || h === '#/discover' || /^#\/u\//.test(h);
 
         const createCarouselCompanion = (targetWeek) => {
             const c = document.createElement('div');
@@ -191,6 +192,17 @@ const App = {
             else if (targetHash && this._pageCache[targetHash]) c.innerHTML = this._pageCache[targetHash];
             document.body.appendChild(c);
             return c;
+        };
+
+        // After swipe commit: put cached companion in #app, then silently refresh data
+        const softNavigate = (target) => {
+            history.replaceState(null, '', target);
+            this._lastRouteHash = target;
+            window.scrollTo(0, 0);
+            if (target === '#/feed') SocialUI.renderFeed();
+            else if (target === '#/profile') SocialUI.renderProfile();
+            else if (target === '#/discover') SocialUI.renderDiscover();
+            else this.route(true);
         };
 
         document.addEventListener('touchstart', (e) => {
@@ -230,8 +242,20 @@ const App = {
                     tabTarget = swipingLeft ? cfg.right : cfg.left;
                     if (!tabTarget) { locked = true; dragging = false; unlockScroll(); return; }
                     isTabSwipe = true;
-                    // No companion, no position:fixed — just rubber-band the app
-                    document.getElementById('app').style.transition = 'none';
+                    // Create companion with cached page HTML
+                    const c = document.createElement('div');
+                    c.className = 'back-companion';
+                    if (this._pageCache[tabTarget]) c.innerHTML = this._pageCache[tabTarget];
+                    document.body.appendChild(c);
+                    companion = c;
+                    companion.style.transition = 'none';
+                    companion.style.transform = `translateX(${swipingLeft ? W() : -W()}px)`;
+                    const app = document.getElementById('app');
+                    app.style.position = 'fixed';
+                    app.style.top = `-${savedScrollY}px`;
+                    app.style.left = '0'; app.style.right = '0';
+                    app.classList.add('swiping-back');
+                    app.style.transition = 'none';
                 } else if (cfg.mode === 'carousel') {
                     const targetWeek = swipingLeft
                         ? (this._currentWeek === getTotalWeeks() ? 1 : this._currentWeek + 1)
@@ -260,10 +284,8 @@ const App = {
             if (dragging) { e.preventDefault(); window.scrollTo(0, savedScrollY); }
 
             if (isTabSwipe) {
-                // Rubber-band: app follows at 30%, capped at ±50px
-                var rb = dx * 0.3;
-                if (rb > 50) rb = 50; else if (rb < -50) rb = -50;
-                document.getElementById('app').style.transform = `translateX(${rb}px)`;
+                document.getElementById('app').style.transform = `translateX(${dx}px)`;
+                if (companion) companion.style.transform = `translateX(${(swipingLeft ? W() : -W()) + dx}px)`;
             } else if (isBack) {
                 document.getElementById('app').style.transform = `translateX(${dx}px)`;
                 if (companion) companion.style.transform = `translateX(${-0.28 * W() + 0.28 * dx}px)`;
@@ -281,23 +303,28 @@ const App = {
             const snap = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
             const commit = 'transform 0.26s cubic-bezier(0.32, 0.72, 0, 1)';
 
-            // === Tab swipe ===
+            // === Tab swipe (feed ↔ profile) ===
             if (isTabSwipe) {
                 const app = document.getElementById('app');
-                // Snap back
-                app.style.transition = snap;
-                app.style.transform = 'translateX(0)';
-                unlockScroll();
                 if (!dragging || Math.abs(dx) < 60) {
-                    setTimeout(() => { app.style.transition = ''; app.style.transform = ''; }, 230);
+                    app.style.transition = snap;
+                    app.style.transform = 'translateX(0)';
+                    if (companion) { companion.style.transition = snap; companion.style.transform = `translateX(${swipingLeft ? W() : -W()}px)`; }
+                    setTimeout(() => { removeCompanion(); unlockScroll(); resetApp(app); window.scrollTo(0, savedScrollY); }, 230);
                     return;
                 }
-                // Commit: snap back, then navigate
+                app.style.transition = commit;
+                app.style.transform = `translateX(${swipingLeft ? -W() - 20 : W() + 20}px)`;
+                if (companion) { companion.style.transition = commit; companion.style.transform = 'translateX(0)'; }
                 const target = tabTarget;
                 setTimeout(() => {
-                    app.style.transition = ''; app.style.transform = '';
-                    location.hash = target;
-                }, 230);
+                    // Move cached companion content into #app — no flash
+                    if (companion && companion.innerHTML) app.innerHTML = companion.innerHTML;
+                    removeCompanion();
+                    resetApp(app);
+                    unlockScroll();
+                    softNavigate(target);
+                }, 270);
                 return;
             }
 
@@ -318,12 +345,21 @@ const App = {
                 const onCommit = cfg.onCommit;
                 setTimeout(() => {
                     if (onCommit) onCommit();
-                    history.replaceState(null, '', target);
-                    this.route(true);
-                    resetApp(app);
-                    unlockScroll();
-                    removeCompanion();
-                    window.scrollTo(0, 0);
+                    // For social targets: use cached companion to avoid loading flash
+                    if (isSocialHash(target) && companion && companion.innerHTML) {
+                        app.innerHTML = companion.innerHTML;
+                        removeCompanion();
+                        resetApp(app);
+                        unlockScroll();
+                        softNavigate(target);
+                    } else {
+                        history.replaceState(null, '', target);
+                        this.route(true);
+                        resetApp(app);
+                        unlockScroll();
+                        removeCompanion();
+                        window.scrollTo(0, 0);
+                    }
                 }, 270);
                 return;
             }
