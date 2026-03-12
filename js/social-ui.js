@@ -240,6 +240,7 @@ const SocialUI = {
         }
 
         var checkins = await Social.getFeed();
+        var followingIds = await Social.getMyFollowingIds();
         this._feedCursor = checkins.length >= 20 ? checkins[checkins.length - 1].created_at : null;
 
         var html = '<div class="social-screen">';
@@ -248,9 +249,14 @@ const SocialUI = {
         if (checkins.length === 0) {
             html += '<div class="social-empty">';
             html += '<div class="social-empty-icon"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg></div>';
-            html += '<p>Лента пуста</p>';
-            html += '<p class="social-empty-hint">Подпишитесь на атлетов чтобы видеть их чекины</p>';
-            html += '<button class="btn-primary" id="btn-discover-empty">Найти атлетов</button>';
+            if (followingIds.length > 0) {
+                html += '<p>Пока нет чекинов</p>';
+                html += '<p class="social-empty-hint">Ваши подписки ещё не публиковали чекины</p>';
+            } else {
+                html += '<p>Лента пуста</p>';
+                html += '<p class="social-empty-hint">Подпишитесь на атлетов чтобы видеть их чекины</p>';
+                html += '<button class="btn-primary" id="btn-discover-empty">Найти атлетов</button>';
+            }
             html += '</div>';
         } else {
             html += this._renderCheckinCards(checkins);
