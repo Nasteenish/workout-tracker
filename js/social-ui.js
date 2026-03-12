@@ -484,10 +484,10 @@ const SocialUI = {
     },
 
     _renderUserList(users, myId) {
-        if (!users.length) return '<div class="social-empty">Никого не найдено</div>';
+        var filtered = users.filter(function(u) { return u.user_id !== myId; });
+        if (!filtered.length) return '<div class="social-empty">Никого не найдено</div>';
         var html = '';
-        users.forEach(function(u) {
-            if (u.user_id === myId) return;
+        filtered.forEach(function(u) {
             html += '<div class="discover-user">';
             html += u.avatar_url
                 ? '<img class="discover-user-avatar" src="' + u.avatar_url + '" alt="">'

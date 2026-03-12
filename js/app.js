@@ -108,27 +108,55 @@ const App = {
         });
     },
 
+    // Config-based swipe: add new routes in _getSwipeConfig only
+    _getSwipeConfig(hash) {
+        // Week carousel (horizontal left/right)
+        if (/^#\/week\/\d+$/.test(hash)) return { mode: 'carousel' };
+        // Back-swipe pages: { mode:'back', target, companion, dayNum?, onCommit? }
+        if (/^#\/week\/\d+\/day\/\d+$/.test(hash))
+            return { mode: 'back', target: '#/week/' + this._currentWeek, companion: 'week' };
+        if (hash === '#/menu')
+            return { mode: 'back', target: '#/week/' + this._currentWeek, companion: 'week' };
+        if (hash === '#/settings' || hash === '#/guide' || hash === '#/calculator')
+            return { mode: 'back', target: '#/menu', companion: 'menu', preCreate: true };
+        var edMatch = hash.match(/^#\/edit\/day\/(\d+)$/);
+        if (edMatch) {
+            var dn = Builder._editingDay ? Builder._editingDay.dayNum : parseInt(edMatch[1]);
+            return { mode: 'back', target: '#/week/' + this._currentWeek + '/day/' + dn, companion: 'day', dayNum: dn, onCommit: function() { Builder._editingDay = null; } };
+        }
+        if (/^#\/history\/.+$/.test(hash))
+            return { mode: 'back', target: '#/week/' + this._currentWeek + '/day/' + this._currentDay, companion: 'day', dayNum: this._currentDay };
+        // Social back-swipe pages
+        if (hash === '#/profile/edit')
+            return { mode: 'back', target: '#/profile', companion: 'none' };
+        if (hash === '#/checkin' || /^#\/checkin\/.+$/.test(hash))
+            return { mode: 'back', target: '#/profile', companion: 'none' };
+        if (hash === '#/discover')
+            return { mode: 'back', target: '#/feed', companion: 'none' };
+        if (/^#\/u\/.+$/.test(hash))
+            return { mode: 'back', target: '#/discover', companion: 'none' };
+        return null;
+    },
+
     _initSwipeNav() {
         let startX = 0, startY = 0;
         let dragging = false, locked = false;
-        let isWeekView = false, isDayView = false, isSettingsView = false, isMenuSubPage = false, isEditorView = false;
         let swipingLeft = false;
         let companion = null;
-        let isDayBack = false;
+        let isBack = false;
         let savedScrollY = 0;
+        let cfg = null;
 
         const W = () => window.innerWidth;
-
-        const removeCompanion = () => {
-            if (companion) { companion.remove(); companion = null; }
+        const removeCompanion = () => { if (companion) { companion.remove(); companion = null; } };
+        const unlockScroll = () => { document.documentElement.style.overflow = ''; document.body.style.overflow = ''; };
+        const resetApp = (app) => {
+            app.style.transition = 'none'; app.style.transform = '';
+            app.style.position = ''; app.style.top = ''; app.style.left = ''; app.style.right = '';
+            app.classList.remove('swiping-back');
         };
 
-        const unlockScroll = () => {
-            document.documentElement.style.overflow = '';
-            document.body.style.overflow = '';
-        };
-
-        const createCompanion = (targetWeek) => {
+        const createCarouselCompanion = (targetWeek) => {
             const c = document.createElement('div');
             c.className = 'nav-companion';
             c.innerHTML = UI._weekCardsHTML(targetWeek);
@@ -137,57 +165,36 @@ const App = {
             return c;
         };
 
-        const createBackCompanion = (weekNum) => {
+        const createBackCompanion = (type, dayNum) => {
+            if (type === 'none') return null;
             const c = document.createElement('div');
             c.className = 'back-companion';
-            c.innerHTML = UI._weekViewHTML(weekNum);
-            document.body.appendChild(c);
-            return c;
-        };
-
-        const createMenuCompanion = () => {
-            const c = document.createElement('div');
-            c.className = 'back-companion';
-            c.innerHTML = UI._menuHTML();
-            document.body.appendChild(c);
-            return c;
-        };
-
-        const createDayBackCompanion = (weekNum, dayNum) => {
-            const c = document.createElement('div');
-            c.className = 'back-companion';
-            c.innerHTML = UI._dayViewHTML(weekNum, dayNum);
+            if (type === 'week') c.innerHTML = UI._weekViewHTML(this._currentWeek);
+            else if (type === 'menu') c.innerHTML = UI._menuHTML();
+            else if (type === 'day') c.innerHTML = UI._dayViewHTML(this._currentWeek, dayNum || this._currentDay);
             document.body.appendChild(c);
             return c;
         };
 
         document.addEventListener('touchstart', (e) => {
-            isWeekView = !!location.hash.match(/^#\/week\/\d+$/);
-            isDayView = !!location.hash.match(/^#\/week\/\d+\/day\/\d+$/);
-            isMenuSubPage = location.hash === '#/settings' || location.hash === '#/guide' || location.hash === '#/calculator';
-            isSettingsView = location.hash === '#/menu' || isMenuSubPage;
-            isEditorView = !!location.hash.match(/^#\/edit\/day\/\d+$/);
-            isHistoryView = !!location.hash.match(/^#\/history\/.+$/);
-            if (!isWeekView && !isDayView && !isSettingsView && !isEditorView && !isHistoryView) return;
+            cfg = this._getSwipeConfig(location.hash);
+            if (!cfg) return;
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
-            dragging = false;
-            locked = false;
-            isDayBack = false;
+            dragging = false; locked = false; isBack = false;
             removeCompanion();
-            // Pre-create menu companion on touchstart so DOM is ready before animation
-            if (isMenuSubPage) {
-                companion = createMenuCompanion();
-                companion.style.transform = `translateX(${-W()}px)`;
+            if (cfg.preCreate) {
+                companion = createBackCompanion(cfg.companion, cfg.dayNum);
+                if (companion) companion.style.transform = `translateX(${-W()}px)`;
             }
-            if (isWeekView) {
+            if (cfg.mode === 'carousel') {
                 const el = document.querySelector('.week-slide');
                 if (el) el.style.transition = 'none';
             }
         }, { passive: true });
 
         document.addEventListener('touchmove', (e) => {
-            if (!isWeekView && !isDayView && !isSettingsView && !isEditorView && !isHistoryView) return;
+            if (!cfg) return;
             if (locked) return;
             const dx = e.touches[0].clientX - startX;
             const dy = e.touches[0].clientY - startY;
@@ -195,142 +202,86 @@ const App = {
             if (!dragging) {
                 if (Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
                 if (Math.abs(dy) > Math.abs(dx)) { locked = true; return; }
-                if ((isDayView || isSettingsView || isEditorView || isHistoryView) && dx < 0) { locked = true; return; }
+                if (cfg.mode === 'back' && dx < 0) { locked = true; return; }
                 dragging = true;
                 swipingLeft = dx < 0;
                 savedScrollY = window.scrollY;
                 document.documentElement.style.overflow = 'hidden';
                 document.body.style.overflow = 'hidden';
 
-                if (isWeekView) {
+                if (cfg.mode === 'carousel') {
                     const targetWeek = swipingLeft
                         ? (this._currentWeek === getTotalWeeks() ? 1 : this._currentWeek + 1)
                         : (this._currentWeek === 1 ? getTotalWeeks() : this._currentWeek - 1);
-                    companion = createCompanion(targetWeek);
+                    companion = createCarouselCompanion(targetWeek);
                     companion.style.transition = 'none';
                     companion.style.transform = `translateX(${swipingLeft ? W() : -W()}px)`;
-                } else if (isEditorView || isHistoryView) {
-                    // Editor/History back-swipe: show day view companion
-                    isDayBack = true;
-                    var edDayNum = isEditorView && Builder._editingDay ? Builder._editingDay.dayNum : this._currentDay;
-                    companion = createDayBackCompanion(this._currentWeek, edDayNum);
-                } else if (isDayView || isSettingsView) {
-                    // Day/Settings back-swipe: full-screen companion + move entire #app
-                    isDayBack = true;
-                    if (!isMenuSubPage) {
-                        companion = createBackCompanion(this._currentWeek);
+                } else {
+                    isBack = true;
+                    if (!cfg.preCreate) {
+                        companion = createBackCompanion(cfg.companion, cfg.dayNum);
                     }
-                }
-
-                if (isDayBack) {
-                    // Position companion
                     if (companion) {
                         companion.style.transition = 'none';
                         companion.style.transform = `translateX(${-0.28 * W()}px)`;
                     }
                     const app = document.getElementById('app');
-                    // Fix #app in place so overflow:hidden doesn't cause scroll jump
                     app.style.position = 'fixed';
                     app.style.top = `-${savedScrollY}px`;
-                    app.style.left = '0';
-                    app.style.right = '0';
+                    app.style.left = '0'; app.style.right = '0';
                     app.classList.add('swiping-back');
                     app.style.transition = 'none';
                 }
             }
 
-            // Lock to horizontal axis — prevent vertical scroll during swipe
-            if (dragging) {
-                e.preventDefault();
-                window.scrollTo(0, savedScrollY);
-            }
+            if (dragging) { e.preventDefault(); window.scrollTo(0, savedScrollY); }
 
-            if (isDayBack) {
+            if (isBack) {
                 document.getElementById('app').style.transform = `translateX(${dx}px)`;
-                if (companion) {
-                    companion.style.transform = `translateX(${-0.28 * W() + 0.28 * dx}px)`;
-                }
+                if (companion) companion.style.transform = `translateX(${-0.28 * W() + 0.28 * dx}px)`;
             } else {
                 const front = document.querySelector('.week-slide');
                 if (front) front.style.transform = `translateX(${dx}px)`;
-                if (companion) {
-                    companion.style.transform = `translateX(${(swipingLeft ? W() : -W()) + dx}px)`;
-                }
+                if (companion) companion.style.transform = `translateX(${(swipingLeft ? W() : -W()) + dx}px)`;
             }
         }, { passive: false });
 
         document.addEventListener('touchend', (e) => {
-            if (!isWeekView && !isDayView && !isSettingsView && !isEditorView && !isHistoryView) return;
-            // Clean up pre-created companion if touch wasn't a horizontal swipe
-            if (!dragging && !isDayBack && companion) removeCompanion();
+            if (!cfg) return;
+            if (!dragging && !isBack && companion) removeCompanion();
             const dx = e.changedTouches[0].clientX - startX;
             const snap = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
             const commit = 'transform 0.18s cubic-bezier(0.4, 0, 0.6, 1)';
 
-            // === Day back-swipe ===
-            if (isDayBack) {
+            // === Back-swipe ===
+            if (isBack) {
                 const app = document.getElementById('app');
                 if (!dragging || dx < 60) {
-                    // Snap back
                     app.style.transition = snap;
                     app.style.transform = 'translateX(0)';
-                    if (companion) {
-                        companion.style.transition = snap;
-                        companion.style.transform = `translateX(${-0.28 * W()}px)`;
-                    }
-                    setTimeout(() => {
-                        removeCompanion();
-                        unlockScroll();
-                        app.style.transition = 'none';
-                        app.style.transform = '';
-                        app.style.position = '';
-                        app.style.top = '';
-                        app.style.left = '';
-                        app.style.right = '';
-                        app.classList.remove('swiping-back');
-                        window.scrollTo(0, savedScrollY);
-                    }, 230);
+                    if (companion) { companion.style.transition = snap; companion.style.transform = `translateX(${-0.28 * W()}px)`; }
+                    setTimeout(() => { removeCompanion(); unlockScroll(); resetApp(app); window.scrollTo(0, savedScrollY); }, 230);
                     return;
                 }
-                // Commit: slide entire day view off
                 app.style.transition = commit;
                 app.style.transform = `translateX(${W() + 20}px)`;
-                if (companion) {
-                    companion.style.transition = commit;
-                    companion.style.transform = 'translateX(0)';
-                }
-                var editorDayNum = (isEditorView || isHistoryView) ? (isEditorView && Builder._editingDay ? Builder._editingDay.dayNum : this._currentDay) : 0;
-                const swipeTarget = (isEditorView || isHistoryView) ? `#/week/${this._currentWeek}/day/${editorDayNum}` : (isMenuSubPage ? '#/menu' : `#/week/${this._currentWeek}`);
+                if (companion) { companion.style.transition = commit; companion.style.transform = 'translateX(0)'; }
+                const target = cfg.target;
+                const onCommit = cfg.onCommit;
                 setTimeout(() => {
                     app.classList.add('no-animate');
-                    if (isEditorView) Builder._editingDay = null;
-                    history.replaceState(null, '', swipeTarget);
-                    // Render while #app is still off-screen (position:fixed + translated)
-                    if (isEditorView || isHistoryView) {
-                        UI.renderDay(this._currentWeek, editorDayNum);
-                    } else if (isMenuSubPage) {
-                        UI.renderMenu();
-                    } else {
-                        UI.renderWeek(this._currentWeek);
-                    }
-                    // Reset #app to normal position (companion still covers it)
-                    app.style.transition = 'none';
-                    app.style.transform = '';
-                    app.style.position = '';
-                    app.style.top = '';
-                    app.style.left = '';
-                    app.style.right = '';
-                    app.classList.remove('swiping-back');
+                    if (onCommit) onCommit();
+                    history.replaceState(null, '', target);
+                    this.route();
+                    resetApp(app);
                     unlockScroll();
-                    // Remove companion instantly — #app already has correct content
                     removeCompanion();
                     window.scrollTo(0, 0);
-                    // Keep no-animate on — route() will remove it on next navigation
                 }, 220);
                 return;
             }
 
-            // === Week swipe ===
+            // === Week carousel ===
             const front = document.querySelector('.week-slide');
             if (!dragging || Math.abs(dx) < 60) {
                 if (front) { front.style.transition = snap; front.style.transform = 'translateX(0)'; }
@@ -342,25 +293,12 @@ const App = {
                 unlockScroll();
                 return;
             }
-
-            if (front) {
-                front.style.transition = commit;
-                front.style.transform = `translateX(${swipingLeft ? '-110%' : '110%'})`;
-            }
-            if (companion) {
-                companion.style.transition = commit;
-                companion.style.transform = 'translateX(0)';
-            }
-
-            const week = this._currentWeek;
+            if (front) { front.style.transition = commit; front.style.transform = `translateX(${swipingLeft ? '-110%' : '110%'})`; }
+            if (companion) { companion.style.transition = commit; companion.style.transform = 'translateX(0)'; }
             const next = swipingLeft
-                ? (week === getTotalWeeks() ? 1 : week + 1)
-                : (week === 1 ? getTotalWeeks() : week - 1);
-            setTimeout(() => {
-                unlockScroll();
-                location.hash = `#/week/${next}`;
-                requestAnimationFrame(removeCompanion);
-            }, 190);
+                ? (this._currentWeek === getTotalWeeks() ? 1 : this._currentWeek + 1)
+                : (this._currentWeek === 1 ? getTotalWeeks() : this._currentWeek - 1);
+            setTimeout(() => { unlockScroll(); location.hash = `#/week/${next}`; requestAnimationFrame(removeCompanion); }, 190);
         }, { passive: true });
     },
 
@@ -488,23 +426,31 @@ const App = {
                 if (m) snapBack(parseFloat(m[1]));
             }
 
-            // Snap back from top pull
+            // Pull-to-refresh triggered: CSS snap-back then re-render
+            if (indicator && ready) {
+                var indRef = indicator;
+                setTimeout(function() { indRef.remove(); }, 500);
+                indicator = null;
+                // CSS transition snap (smoother than rAF when followed by DOM update)
+                app.style.transition = 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                app.style.transform = 'translateY(0)';
+                // Re-render AFTER snap completes to avoid jank
+                setTimeout(function() {
+                    app.style.transition = '';
+                    app.style.transform = '';
+                    App.route();
+                    app.classList.add('no-animate');
+                }, 260);
+                pulling = false; ready = false; active = false; bottomActive = false;
+                return;
+            }
+
+            // Snap back from top pull (no refresh)
             if (active) {
                 const m = app.style.transform.match(/translateY\((.+?)px\)/);
                 if (m) snapBack(parseFloat(m[1]));
             }
             if (indicator) {
-                if (ready) {
-                    // Re-render current route instead of full page reload
-                    var indRef = indicator;
-                    setTimeout(function() { indRef.remove(); }, 500);
-                    indicator = null;
-                    App.route();
-                    // Suppress fadeIn animation on re-rendered content
-                    app.classList.add('no-animate');
-                    pulling = false; ready = false; active = false; bottomActive = false;
-                    return;
-                }
                 const cur = indicator.style.transform || 'translateX(-50%)';
                 indicator.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
                 indicator.style.opacity = '0';
@@ -774,7 +720,12 @@ const App = {
             self._pendingMigration = null;
             self.switchUser(newLocalId);
 
-            // 7. Push data to cloud (backup)
+            // 7. Auto-create social profile so user appears in discover
+            try {
+                Social.upsertProfile({ username: account.login, display_name: account.name }).catch(function() {});
+            } catch (e) {}
+
+            // 8. Push data to cloud (backup)
             if (oldData) {
                 try {
                     SupaSync.pushData(supaUserId, JSON.parse(oldData), account.login).catch(function() {});

@@ -165,6 +165,11 @@ const Builder = {
             SupaSync._currentSupaUserId = supaUserId;
             SupaSync._currentStorageKey = 'wt_data_' + localId;
 
+            // Auto-create social profile so user appears in discover
+            try {
+                Social.upsertProfile({ username: login, display_name: login }).catch(function() {});
+            } catch (e) {}
+
             App.switchUser(localId);
         }).catch(function(err) {
             errEl.textContent = err.message || 'Ошибка регистрации';
