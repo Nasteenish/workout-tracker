@@ -1,11 +1,18 @@
 /* ===== UI Rendering Module ===== */
 
 function lockBodyScroll() {
+    if (document.body.classList.contains('modal-open')) return;
+    document.body.dataset.scrollY = window.scrollY;
+    document.body.style.top = '-' + window.scrollY + 'px';
     document.body.classList.add('modal-open');
 }
 
 function unlockBodyScroll() {
+    if (!document.body.classList.contains('modal-open')) return;
     document.body.classList.remove('modal-open');
+    var scrollY = parseInt(document.body.dataset.scrollY || '0');
+    document.body.style.top = '';
+    window.scrollTo(0, scrollY);
 }
 
 function blockOverlayScroll(overlay, scrollableSelector) {

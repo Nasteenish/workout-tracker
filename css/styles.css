@@ -1161,6 +1161,8 @@ input, button, select {
 
 body.modal-open {
     overflow: hidden;
+    position: fixed;
+    width: 100%;
 }
 
 .weight-modal {
