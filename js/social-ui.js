@@ -46,12 +46,18 @@ const SocialUI = {
     },
 
     // ===== PROFILE VIEW =====
-    async renderProfile(userId) {
+    async renderProfile(userId, useCache) {
         var app = document.getElementById('app');
         var myId = Social._getSupaUserId();
         var isOwn = !userId || userId === myId;
         var targetId = isOwn ? myId : userId;
         if (!targetId) { location.hash = '#/login'; return; }
+
+        // Instant restore from cache (back-swipe, own profile only)
+        if (useCache && isOwn && this._profileCache) {
+            app.innerHTML = this._profileCache;
+            return;
+        }
 
         // Show subtle loading indicator without clearing existing content
         if (!app.querySelector('.social-screen')) {
@@ -154,6 +160,7 @@ const SocialUI = {
         html += this._tabBarHTML('profile');
 
         app.innerHTML = html;
+        if (isOwn) this._profileCache = html;
     },
 
     // ===== PROFILE EDIT =====
@@ -329,8 +336,15 @@ const SocialUI = {
     },
 
     // ===== FEED =====
-    async renderFeed() {
+    async renderFeed(useCache) {
         var app = document.getElementById('app');
+
+        // Instant restore from cache (back-swipe)
+        if (useCache && this._feedCache) {
+            app.innerHTML = this._feedCache;
+            return;
+        }
+
         if (!app.querySelector('.social-screen')) {
             app.innerHTML = '<div class="social-loading">Загрузка...</div>' + this._tabBarHTML('feed');
         }
@@ -384,6 +398,7 @@ const SocialUI = {
         html += this._tabBarHTML('feed');
 
         app.innerHTML = html;
+        this._feedCache = html;
     },
 
     // ===== CHECKIN DETAIL =====
@@ -475,8 +490,15 @@ const SocialUI = {
     },
 
     // ===== DISCOVER =====
-    async renderDiscover() {
+    async renderDiscover(useCache) {
         var app = document.getElementById('app');
+
+        // Instant restore from cache (back-swipe)
+        if (useCache && this._discoverCache) {
+            app.innerHTML = this._discoverCache;
+            return;
+        }
+
         if (!app.querySelector('.discover-results')) {
             app.innerHTML = '<div class="social-loading">Загрузка...</div>';
         }
@@ -497,6 +519,7 @@ const SocialUI = {
         html += '</div>';
 
         app.innerHTML = html;
+        this._discoverCache = html;
 
         // Enter to search
         var searchInput = document.getElementById('discover-search-input');

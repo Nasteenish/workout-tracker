@@ -306,7 +306,9 @@ const App = {
                     if (onCommit) onCommit();
                     history.replaceState(null, '', target);
                     app.classList.add('no-animate');
+                    this._isBackSwipe = true;
                     this.route(true);
+                    this._isBackSwipe = false;
                     resetApp(app);
                     unlockScroll();
                     removeCompanion();
@@ -975,8 +977,9 @@ const App = {
         }
 
         // Social routes (need user, no program required)
-        if (hash === '#/feed') { SocialUI.renderFeed(); return; }
-        if (hash === '#/profile') { SocialUI.renderProfile(); return; }
+        var _bs = this._isBackSwipe;
+        if (hash === '#/feed') { SocialUI.renderFeed(_bs); return; }
+        if (hash === '#/profile') { SocialUI.renderProfile(null, _bs); return; }
         if (hash === '#/profile/edit') { SocialUI.renderProfileEdit(); return; }
         if (hash === '#/checkin') {
             // Keep prefill data alive for P2R re-renders; only clear when leaving page
@@ -985,7 +988,7 @@ const App = {
             SocialUI.renderCheckinForm(this._activeCheckinWorkout);
             return;
         }
-        if (hash === '#/discover') { SocialUI.renderDiscover(); return; }
+        if (hash === '#/discover') { SocialUI.renderDiscover(_bs); return; }
         if (hash === '#/notifications') { SocialUI.renderNotifications(); return; }
         var checkinDetailMatch = hash.match(/^#\/checkin\/(.+)$/);
         if (checkinDetailMatch) { SocialUI.renderCheckinDetail(checkinDetailMatch[1]); return; }
