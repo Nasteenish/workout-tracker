@@ -196,35 +196,40 @@ const SocialUI = {
             var html = '<div class="social-screen">';
             html += '<div class="social-header"><button class="social-back" id="btn-checkin-back">&larr;</button><h2>Поделиться тренировкой</h2></div>';
 
-            // Workout preview card
-            html += '<div class="share-workout-card">';
-            html += '<div class="share-workout-header">';
-            html += '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg>';
-            html += '<span>Неделя ' + prefillWorkout.week + ', День ' + prefillWorkout.day + '</span>';
+            // Workout info line
+            var infoLine = 'Неделя ' + prefillWorkout.week + ', День ' + prefillWorkout.day;
+            if (prefillWorkout.title) infoLine += ' — ' + prefillWorkout.title;
+            html += '<div class="share-workout-info-line">' + infoLine + '</div>';
+
+            // Stats chips
+            html += '<div class="share-workout-stats">';
             if (prefillWorkout.duration_sec) {
                 var dm = Math.round(prefillWorkout.duration_sec / 60);
-                html += '<span class="share-workout-time">' + dm + ' мин</span>';
+                html += '<span class="share-stat-chip">' + dm + ' мин</span>';
             }
-            html += '</div>';
-            if (prefillWorkout.exercises && prefillWorkout.exercises.length) {
-                html += '<div class="share-workout-exercises">';
-                prefillWorkout.exercises.forEach(function(e) {
-                    html += '<div class="share-workout-ex">' + e.name + (e.sets ? ' — ' + e.sets + ' подх.' : '') + '</div>';
-                });
-                html += '</div>';
-            }
-            html += '<input type="hidden" id="checkin-workout-data" value=\'' + JSON.stringify(prefillWorkout).replace(/'/g, '&#39;') + '\'>';
+            html += '<span class="share-stat-chip">' + (prefillWorkout.exercises ? prefillWorkout.exercises.length : 0) + ' упр.</span>';
+            if (prefillWorkout.total_sets) html += '<span class="share-stat-chip">' + prefillWorkout.total_sets + ' подх.</span>';
             html += '</div>';
 
-            // Optional note only
+            html += '<input type="hidden" id="checkin-workout-data" value=\'' + JSON.stringify(prefillWorkout).replace(/'/g, '&#39;') + '\'>';
+
+            // Photo/video upload
+            html += '<div class="checkin-photos-section">';
+            html += '<div class="checkin-photos-grid" id="checkin-photos-grid"></div>';
+            html += '<label class="checkin-add-photo" for="checkin-photo-input">+ Фото / Видео</label>';
+            html += '<input type="file" id="checkin-photo-input" accept="image/*,video/*" multiple style="display:none">';
+            html += '</div>';
+
+            // Note
             html += '<div class="edit-fields">';
-            html += '<div class="edit-field"><label>Комментарий (опционально)</label><textarea id="checkin-note" rows="2" placeholder="Как прошла тренировка?"></textarea></div>';
+            html += '<div class="edit-field"><textarea id="checkin-note" rows="2" placeholder="Как прошла тренировка?"></textarea></div>';
             html += '</div>';
 
             html += '<button class="btn-primary checkin-submit" id="btn-checkin-submit">ОПУБЛИКОВАТЬ</button>';
             html += '<div id="checkin-error" class="login-error" style="display:none"></div>';
             html += '</div>';
             document.getElementById('app').innerHTML = html;
+            App._checkinPhotos = [];
             return;
         }
 
@@ -436,8 +441,12 @@ const SocialUI = {
             if (c.workout_summary) {
                 var ws = c.workout_summary;
                 html += '<div class="checkin-workout">';
-                html += '<span class="checkin-workout-label">Тренировка</span>';
-                if (ws.duration_sec) html += ' ' + Math.round(ws.duration_sec / 60) + ' мин';
+                html += '<span class="checkin-workout-label">' + (ws.title || 'Тренировка') + '</span>';
+                var wStats = [];
+                if (ws.duration_sec) wStats.push(Math.round(ws.duration_sec / 60) + ' мин');
+                if (ws.exercises) wStats.push(ws.exercises.length + ' упр.');
+                if (ws.total_sets) wStats.push(ws.total_sets + ' подх.');
+                if (wStats.length) html += '<span class="checkin-workout-stats">' + wStats.join(' · ') + '</span>';
                 if (ws.exercises && ws.exercises.length) {
                     html += '<div class="checkin-workout-exercises">' + ws.exercises.slice(0, 4).map(function(e) { return e.name; }).join(', ');
                     if (ws.exercises.length > 4) html += ' +' + (ws.exercises.length - 4);

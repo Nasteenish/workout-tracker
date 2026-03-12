@@ -2265,16 +2265,33 @@ const Celebration = {
         if (weekNum && dayNum && typeof Social !== 'undefined' && Social._hasSupaAuth()) {
             var workout = resolveWorkout(weekNum, dayNum);
             var exercises = [];
+            var totalSets = 0;
             if (workout && workout.exerciseGroups) {
                 workout.exerciseGroups.forEach(function(g) {
-                    if (g.exercises) {
-                        g.exercises.forEach(function(ex) {
+                    if (g.type === 'single' && g.exercise) {
+                        exercises.push({ name: g.exercise.nameRu || g.exercise.name, sets: g.exercise.sets ? g.exercise.sets.length : 0 });
+                        totalSets += g.exercise.sets ? g.exercise.sets.length : 0;
+                    } else if (g.type === 'superset' && g.exercises) {
+                        g.exercises.forEach(function(item) {
+                            var ex = item.exercise || item;
                             exercises.push({ name: ex.nameRu || ex.name, sets: ex.sets ? ex.sets.length : 0 });
+                            totalSets += ex.sets ? ex.sets.length : 0;
                         });
+                    } else if (g.type === 'choose_one' && g.exercises) {
+                        var chosen = typeof getChosenExercise === 'function' ? getChosenExercise(g) : g.exercises[0];
+                        if (chosen) {
+                            exercises.push({ name: chosen.nameRu || chosen.name, sets: chosen.sets ? chosen.sets.length : 0 });
+                            totalSets += chosen.sets ? chosen.sets.length : 0;
+                        }
                     }
                 });
             }
-            this._pendingShare = { week: weekNum, day: dayNum, exercises: exercises, duration_sec: elapsedSec || 0 };
+            var dayTitle = workout ? (workout.titleRu || workout.title || '') : '';
+            this._pendingShare = {
+                week: weekNum, day: dayNum, title: dayTitle,
+                exercises: exercises, total_sets: totalSets,
+                duration_sec: elapsedSec || 0
+            };
         }
 
         var self = this;
