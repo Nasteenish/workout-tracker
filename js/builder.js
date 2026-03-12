@@ -175,7 +175,9 @@ const Builder = {
                 Social.upsertProfile({ username: login, display_name: login }).catch(function() {});
             } catch (e) {}
 
-            App.switchUser(localId);
+            // Start onboarding instead of going straight to app
+            Builder._onboardingData = { localId: localId, supaUserId: supaUserId, login: login, isNew: true };
+            location.hash = '#/onboarding/1';
         }).catch(function(err) {
             errEl.textContent = err.message || 'Ошибка регистрации';
             errEl.style.display = 'block';
@@ -1308,5 +1310,85 @@ const Builder = {
         }
         unlockBodyScroll();
         this._configExercise = null;
+    },
+
+    // ===== ONBOARDING =====
+    _onboardingData: null,
+
+    _maleCategories: ["Men's Physique", "Men's Classic Physique", "Men's 212 Bodybuilding", "Men's Bodybuilding"],
+    _femaleCategories: ["Women's Fit Model", "Women's Bikini", "Women's Wellness", "Women's Figure", "Women's Fitness", "Women's Physique", "Women's Bodybuilding"],
+
+    renderOnboarding1() {
+        var totalSteps = 2;
+        document.getElementById('app').innerHTML =
+            '<div class="login-screen">' +
+            '<div class="app-icon">' + this._barbellSVG + '</div>' +
+            '<p class="onboard-step">Шаг 1 из ' + totalSteps + '</p>' +
+            '<h2 class="onboard-title">Ваш пол?</h2>' +
+            '<div class="onboard-options">' +
+            '<button class="onboard-option onboard-gender-btn" data-gender="male">Мужской</button>' +
+            '<button class="onboard-option onboard-gender-btn" data-gender="female">Женский</button>' +
+            '</div>' +
+            '</div>';
+    },
+
+    renderOnboarding2() {
+        var totalSteps = 2;
+        document.getElementById('app').innerHTML =
+            '<div class="login-screen">' +
+            '<div class="app-icon">' + this._barbellSVG + '</div>' +
+            '<p class="onboard-step">Шаг 2 из ' + totalSteps + '</p>' +
+            '<h2 class="onboard-title">Вы соревнующийся атлет?</h2>' +
+            '<div class="onboard-options">' +
+            '<button class="onboard-option onboard-athlete-btn" data-athlete="yes">Да</button>' +
+            '<button class="onboard-option onboard-athlete-btn" data-athlete="no">Нет</button>' +
+            '</div>' +
+            '</div>';
+    },
+
+    renderOnboarding3() {
+        document.getElementById('app').innerHTML =
+            '<div class="login-screen">' +
+            '<div class="app-icon">' + this._barbellSVG + '</div>' +
+            '<p class="onboard-step">Шаг 3 из 4</p>' +
+            '<h2 class="onboard-title">Ваш статус</h2>' +
+            '<div class="onboard-options">' +
+            '<button class="onboard-option onboard-pro-btn" data-pro="true">IFBB PRO</button>' +
+            '<button class="onboard-option onboard-pro-btn" data-pro="false">Любитель</button>' +
+            '</div>' +
+            '</div>';
+    },
+
+    renderOnboarding4() {
+        var d = this._onboardingData || {};
+        var cats = d.gender === 'male' ? this._maleCategories : this._femaleCategories;
+        var html = '<div class="login-screen">' +
+            '<div class="app-icon">' + this._barbellSVG + '</div>' +
+            '<p class="onboard-step">Шаг 4 из 4</p>' +
+            '<h2 class="onboard-title">Ваша категория</h2>' +
+            '<div class="onboard-chips">';
+        cats.forEach(function(c) {
+            html += '<button class="onboard-chip onboard-category-btn" data-category="' + c + '">' + c + '</button>';
+        });
+        html += '</div></div>';
+        document.getElementById('app').innerHTML = html;
+    },
+
+    _finishOnboarding() {
+        var d = this._onboardingData || {};
+        var profileData = { gender: d.gender || null };
+        if (d.is_athlete) {
+            profileData.is_athlete = true;
+            profileData.is_pro = d.is_pro || false;
+            profileData.category = d.category || '';
+        }
+        Social.upsertProfile(profileData).catch(function() {});
+
+        if (d.isNew && d.localId) {
+            App.switchUser(d.localId);
+        } else {
+            location.hash = '#/';
+        }
+        this._onboardingData = null;
     }
 };

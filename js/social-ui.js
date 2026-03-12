@@ -101,7 +101,7 @@ const SocialUI = {
             : '<div class="profile-avatar profile-avatar-placeholder"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>';
         html += '</div>';
         html += '<div class="profile-info">';
-        html += '<h2 class="profile-name">' + (profile.display_name || profile.username) + '</h2>';
+        html += '<h2 class="profile-name">' + (profile.display_name || profile.username) + (profile.is_pro ? ' <span class="pro-badge">IFBB PRO</span>' : '') + '</h2>';
         html += '<div class="profile-username">@' + profile.username + '</div>';
         if (profile.is_athlete && profile.category) {
             html += '<div class="profile-badge">' + profile.category + '</div>';
@@ -180,7 +180,9 @@ const SocialUI = {
             profile.username = currentUser ? (currentUser.login || currentUser.name || '') : '';
         }
 
-        var categories = ['Bikini', 'Wellness', 'Figure', 'Fit Model', "Women's Physique", "Men's Physique", 'Classic Physique', 'Bodybuilding'];
+        var maleCategories = ["Men's Physique", "Men's Classic Physique", "Men's 212 Bodybuilding", "Men's Bodybuilding"];
+        var femaleCategories = ["Women's Fit Model", "Women's Bikini", "Women's Wellness", "Women's Figure", "Women's Fitness", "Women's Physique", "Women's Bodybuilding"];
+        var categories = profile.gender === 'male' ? maleCategories : profile.gender === 'female' ? femaleCategories : maleCategories.concat(femaleCategories);
         var phases = ['Off-season', 'Bulk', 'Cut', 'Prep', 'Show Week'];
 
         var html = '<div class="social-screen">';
@@ -201,11 +203,19 @@ const SocialUI = {
         html += '<div class="edit-field"><label>Username</label><input type="text" id="edit-username" value="' + (profile.username || '') + '" placeholder="username" autocapitalize="none"></div>';
         html += '<div class="edit-field"><label>Bio</label><textarea id="edit-bio" rows="3" placeholder="О себе">' + (profile.bio || '') + '</textarea></div>';
 
+        // Gender
+        html += '<div class="edit-field"><label>Пол</label><select id="edit-gender">';
+        html += '<option value="">—</option>';
+        html += '<option value="male"' + (profile.gender === 'male' ? ' selected' : '') + '>Мужской</option>';
+        html += '<option value="female"' + (profile.gender === 'female' ? ' selected' : '') + '>Женский</option>';
+        html += '</select></div>';
+
         // Athlete section
         html += '<div class="edit-section-title">Атлет</div>';
-        html += '<div class="edit-field edit-toggle-field"><label>Я IFBB атлет</label><input type="checkbox" id="edit-is-athlete"' + (profile.is_athlete ? ' checked' : '') + '></div>';
+        html += '<div class="edit-field edit-toggle-field"><label>Я соревнующийся атлет</label><input type="checkbox" id="edit-is-athlete"' + (profile.is_athlete ? ' checked' : '') + '></div>';
 
         html += '<div class="edit-athlete-fields" id="edit-athlete-fields" style="' + (profile.is_athlete ? '' : 'display:none') + '">';
+        html += '<div class="edit-field edit-toggle-field"><label>IFBB PRO</label><input type="checkbox" id="edit-is-pro"' + (profile.is_pro ? ' checked' : '') + '></div>';
         html += '<div class="edit-field"><label>Категория</label><select id="edit-category"><option value="">—</option>';
         categories.forEach(function(c) {
             html += '<option value="' + c + '"' + (profile.category === c ? ' selected' : '') + '>' + c + '</option>';
@@ -583,7 +593,7 @@ const SocialUI = {
                 ? '<img class="checkin-author-avatar" src="' + c.profiles.avatar_url + '" alt="">'
                 : '<div class="checkin-author-avatar avatar-placeholder-sm"></div>';
             html += '<div class="checkin-author-info">';
-            html += '<span class="checkin-author-name">' + (c.profiles ? (c.profiles.display_name || c.profiles.username) : '?') + '</span>';
+            html += '<span class="checkin-author-name">' + (c.profiles ? (c.profiles.display_name || c.profiles.username) : '?') + (c.profiles && c.profiles.is_pro ? ' <span class="pro-badge">IFBB PRO</span>' : '') + '</span>';
             html += '<span class="checkin-time">' + SocialUI._timeAgo(c.created_at) + '</span>';
             html += '</div>';
             html += '</div>';
@@ -670,7 +680,7 @@ const SocialUI = {
             ? '<img class="checkin-author-avatar" src="' + c.profiles.avatar_url + '" alt="">'
             : '<div class="checkin-author-avatar avatar-placeholder-sm"></div>';
         html += '<div class="checkin-author-info">';
-        html += '<span class="checkin-author-name">' + (c.profiles ? (c.profiles.display_name || c.profiles.username) : '?') + '</span>';
+        html += '<span class="checkin-author-name">' + (c.profiles ? (c.profiles.display_name || c.profiles.username) : '?') + (c.profiles && c.profiles.is_pro ? ' <span class="pro-badge">IFBB PRO</span>' : '') + '</span>';
         html += '<span class="checkin-time">' + SocialUI._timeAgo(c.created_at) + '</span>';
         html += '</div>';
         html += '</div>';

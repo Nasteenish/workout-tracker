@@ -784,7 +784,9 @@ const App = {
             display_name: (document.getElementById('edit-display-name').value || '').trim(),
             username: (document.getElementById('edit-username').value || '').trim().toLowerCase(),
             bio: (document.getElementById('edit-bio').value || '').trim(),
+            gender: document.getElementById('edit-gender') ? document.getElementById('edit-gender').value : '',
             is_athlete: document.getElementById('edit-is-athlete').checked,
+            is_pro: document.getElementById('edit-is-pro') ? document.getElementById('edit-is-pro').checked : false,
             category: document.getElementById('edit-category') ? document.getElementById('edit-category').value : '',
             weight_class: document.getElementById('edit-weight-class') ? document.getElementById('edit-weight-class').value.trim() : '',
             coach: document.getElementById('edit-coach') ? document.getElementById('edit-coach').value.trim() : '',
@@ -970,10 +972,31 @@ const App = {
             return;
         }
 
+        // Onboarding screens
+        if (hash.startsWith('#/onboarding/')) {
+            var step = hash.split('/')[2];
+            if (step === '1') { Builder.renderOnboarding1(); return; }
+            if (step === '2') { Builder.renderOnboarding2(); return; }
+            if (step === '3') { Builder.renderOnboarding3(); return; }
+            if (step === '4') { Builder.renderOnboarding4(); return; }
+        }
+
         // If no current user → login
         if (!Storage.getCurrentUserId()) {
             location.hash = '#/login';
             return;
+        }
+
+        // Check if onboarding needed (gender not set)
+        if (!this._onboardingChecked && Social._hasSupaAuth()) {
+            this._onboardingChecked = true;
+            var self = this;
+            Social.getMyProfile().then(function(p) {
+                if (p && !p.gender && !location.hash.startsWith('#/onboarding')) {
+                    Builder._onboardingData = Builder._onboardingData || {};
+                    location.hash = '#/onboarding/1';
+                }
+            }).catch(function() {});
         }
 
         // Social routes (need user, no program required)
@@ -1166,6 +1189,47 @@ const App = {
         // Registration: go back to login
         if (target.id === 'btn-go-login' || target.closest('#btn-go-login')) {
             location.hash = '#/login';
+            return;
+        }
+
+        // Onboarding: gender
+        var genderBtn = target.closest('.onboard-gender-btn');
+        if (genderBtn) {
+            if (!Builder._onboardingData) Builder._onboardingData = {};
+            Builder._onboardingData.gender = genderBtn.dataset.gender;
+            location.hash = '#/onboarding/2';
+            return;
+        }
+
+        // Onboarding: athlete
+        var athleteBtn = target.closest('.onboard-athlete-btn');
+        if (athleteBtn) {
+            if (!Builder._onboardingData) Builder._onboardingData = {};
+            if (athleteBtn.dataset.athlete === 'yes') {
+                Builder._onboardingData.is_athlete = true;
+                location.hash = '#/onboarding/3';
+            } else {
+                Builder._onboardingData.is_athlete = false;
+                Builder._finishOnboarding();
+            }
+            return;
+        }
+
+        // Onboarding: pro/amateur
+        var proBtn = target.closest('.onboard-pro-btn');
+        if (proBtn) {
+            if (!Builder._onboardingData) Builder._onboardingData = {};
+            Builder._onboardingData.is_pro = proBtn.dataset.pro === 'true';
+            location.hash = '#/onboarding/4';
+            return;
+        }
+
+        // Onboarding: category
+        var catBtn = target.closest('.onboard-category-btn');
+        if (catBtn) {
+            if (!Builder._onboardingData) Builder._onboardingData = {};
+            Builder._onboardingData.category = catBtn.dataset.category;
+            Builder._finishOnboarding();
             return;
         }
 

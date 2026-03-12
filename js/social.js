@@ -176,7 +176,7 @@ const Social = {
     async getCheckin(id) {
         if (!supa) return null;
         var result = await supa.from('checkins')
-            .select('*, profiles(username, display_name, avatar_url)')
+            .select('*, profiles(username, display_name, avatar_url, is_pro)')
             .eq('id', id).single();
         if (result.error) return null;
         return result.data;
@@ -185,7 +185,7 @@ const Social = {
     async getUserCheckins(userId, cursor) {
         if (!supa) return [];
         var query = supa.from('checkins')
-            .select('*, profiles(username, display_name, avatar_url)')
+            .select('*, profiles(username, display_name, avatar_url, is_pro)')
             .eq('user_id', userId)
             .order('created_at', { ascending: false })
             .limit(20);
@@ -206,7 +206,7 @@ const Social = {
         // Include own posts
         followIds.push(userId);
         var query = supa.from('checkins')
-            .select('*, profiles(username, display_name, avatar_url)')
+            .select('*, profiles(username, display_name, avatar_url, is_pro)')
             .in('user_id', followIds)
             .order('created_at', { ascending: false })
             .limit(20);
@@ -274,7 +274,7 @@ const Social = {
     async getReactions(checkinId) {
         if (!supa) return [];
         var result = await supa.from('reactions')
-            .select('*, profiles(username, display_name, avatar_url)')
+            .select('*, profiles(username, display_name, avatar_url, is_pro)')
             .eq('checkin_id', checkinId);
         if (result.error) return [];
         return result.data;
@@ -397,7 +397,7 @@ const Social = {
         if (parentId) insertData.parent_id = parentId;
         var result = await supa.from('comments')
             .insert(insertData)
-            .select('*, profiles(username, display_name, avatar_url)')
+            .select('*, profiles(username, display_name, avatar_url, is_pro)')
             .single();
         if (result.error) throw new Error(result.error.message);
         // Notify checkin owner
@@ -425,7 +425,7 @@ const Social = {
     async getComments(checkinId) {
         if (!supa) return [];
         var result = await supa.from('comments')
-            .select('*, profiles(username, display_name, avatar_url)')
+            .select('*, profiles(username, display_name, avatar_url, is_pro)')
             .eq('checkin_id', checkinId)
             .order('created_at', { ascending: true });
         if (result.error) return [];
