@@ -4,6 +4,24 @@ const SocialUI = {
     _feedCursor: null,
     _profileCheckinsCursor: null,
 
+    // Preload all photo URLs so browser has them cached before rendering
+    _preloadPhotos(checkins) {
+        var urls = [];
+        checkins.forEach(function(c) {
+            if (c.photos && c.photos.length) c.photos.forEach(function(u) { urls.push(u); });
+            if (c.profiles && c.profiles.avatar_url) urls.push(c.profiles.avatar_url);
+        });
+        if (!urls.length) return Promise.resolve();
+        return Promise.all(urls.map(function(url) {
+            return new Promise(function(resolve) {
+                var img = new Image();
+                img.onload = resolve;
+                img.onerror = resolve;
+                img.src = url;
+            });
+        }));
+    },
+
     // ===== TAB BAR =====
     _tabBarHTML(activeTab) {
         var tabs = [
@@ -46,6 +64,9 @@ const SocialUI = {
         var counts = results[1];
         var isFollowing = results[2];
         var checkins = results[3];
+
+        // Preload checkin photos before rendering
+        await this._preloadPhotos(checkins);
 
         if (!profile && isOwn) {
             location.hash = '#/profile/edit';
@@ -289,6 +310,9 @@ const SocialUI = {
         var followingIds = feedResults[1];
         this._feedCursor = checkins.length >= 20 ? checkins[checkins.length - 1].created_at : null;
 
+        // Preload photos before rendering
+        await this._preloadPhotos(checkins);
+
         var html = '<div class="social-screen">';
         html += '<div class="social-header"><h2>Лента</h2><button class="social-discover-btn" id="btn-discover"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button></div>';
 
@@ -330,6 +354,7 @@ const SocialUI = {
             Social.getComments(checkinId)
         ]);
         var checkin = results[0];
+        if (checkin) await this._preloadPhotos([checkin]);
         var reactions = results[1];
         var comments = results[2];
         if (!checkin) {
