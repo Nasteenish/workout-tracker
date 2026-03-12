@@ -278,6 +278,8 @@ const SocialUI = {
             document.getElementById('app').innerHTML = html;
             App._checkinPhotos = [];
             App._checkinTaggedUsers = [];
+            var noteEl = document.getElementById('checkin-note');
+            if (noteEl) this._initMentionInput(noteEl);
             return;
         }
 
@@ -322,6 +324,8 @@ const SocialUI = {
         html += '</div>';
 
         document.getElementById('app').innerHTML = html;
+        var noteEl = document.getElementById('checkin-note');
+        if (noteEl) this._initMentionInput(noteEl);
     },
 
     // ===== FEED =====
@@ -571,7 +575,7 @@ const SocialUI = {
             }
 
             // Note
-            if (c.note) html += '<div class="checkin-note">' + c.note.replace(/</g, '&lt;') + '</div>';
+            if (c.note) html += '<div class="checkin-note">' + SocialUI._renderMentionText(c.note) + '</div>';
 
             // Like bar
             var likeCount = likeData.counts[c.id] || 0;
@@ -651,7 +655,7 @@ const SocialUI = {
             html += '</div>';
         }
 
-        if (c.note) html += '<div class="checkin-note">' + c.note.replace(/</g, '&lt;') + '</div>';
+        if (c.note) html += '<div class="checkin-note">' + SocialUI._renderMentionText(c.note) + '</div>';
 
         // Like bar (single like, Instagram-style)
         var likeCount = reactions ? reactions.length : 0;
@@ -829,12 +833,13 @@ const SocialUI = {
         if (!inputEl || inputEl._mentionInit) return;
         inputEl._mentionInit = true;
 
-        var row = inputEl.closest('.comment-input-row');
+        var row = inputEl.closest('.comment-input-row') || inputEl.closest('.edit-field') || inputEl.parentElement;
         if (!row) return;
         row.style.position = 'relative';
 
+        var isComment = !!inputEl.closest('.comment-input-row');
         var dropdown = document.createElement('div');
-        dropdown.className = 'mention-dropdown';
+        dropdown.className = 'mention-dropdown' + (isComment ? '' : ' mention-dropdown-below');
         dropdown.style.display = 'none';
         row.appendChild(dropdown);
 
