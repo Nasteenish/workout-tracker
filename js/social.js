@@ -51,7 +51,7 @@ const Social = {
         if (!supa) return null;
         var userId = this._getSupaUserId();
         if (!userId) return null;
-        var ext = file.name.split('.').pop() || 'jpg';
+        var ext = file.name ? file.name.split('.').pop() : 'jpg';
         var path = userId + '/avatar.' + ext;
         var result = await supa.storage.from('avatars').upload(path, file, { upsert: true });
         if (result.error) throw new Error(result.error.message);

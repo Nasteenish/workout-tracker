@@ -8,6 +8,7 @@ const App = {
     _workoutTimerInterval: null,
     _pendingMigration: null,
     _pendingCheckinWorkout: null,
+    _croppedAvatarBlob: null,
 
     init() {
         // Multi-user migration (once)
@@ -56,15 +57,21 @@ const App = {
         // File input change handlers (delegated)
         document.getElementById('app').addEventListener('change', (e) => {
             if (e.target.id === 'avatar-file-input' && e.target.files[0]) {
-                var preview = document.getElementById('edit-avatar-preview');
-                if (preview) {
-                    var url = URL.createObjectURL(e.target.files[0]);
-                    if (preview.tagName === 'IMG') {
-                        preview.src = url;
-                    } else {
-                        preview.outerHTML = '<img class="edit-avatar" id="edit-avatar-preview" src="' + url + '" alt="">';
+                var avatarFile = e.target.files[0];
+                e.target.value = '';
+                AvatarCropper.open(avatarFile).then(function(blob) {
+                    if (!blob) return;
+                    App._croppedAvatarBlob = blob;
+                    var preview = document.getElementById('edit-avatar-preview');
+                    if (preview) {
+                        var url = URL.createObjectURL(blob);
+                        if (preview.tagName === 'IMG') {
+                            preview.src = url;
+                        } else {
+                            preview.outerHTML = '<img class="edit-avatar" id="edit-avatar-preview" src="' + url + '" alt="">';
+                        }
                     }
-                }
+                });
             }
             if (e.target.id === 'checkin-photo-input' && e.target.files) {
                 var files = Array.from(e.target.files);
@@ -761,14 +768,14 @@ const App = {
             return;
         }
 
-        // Upload avatar if changed
-        var avatarInput = document.getElementById('avatar-file-input');
-        var avatarPromise = (avatarInput && avatarInput.files && avatarInput.files[0])
-            ? Social.uploadAvatar(avatarInput.files[0])
+        // Upload avatar if cropped
+        var avatarPromise = App._croppedAvatarBlob
+            ? Social.uploadAvatar(App._croppedAvatarBlob)
             : Promise.resolve(null);
 
         avatarPromise.then(function(avatarUrl) {
             if (avatarUrl) data.avatar_url = avatarUrl;
+            App._croppedAvatarBlob = null;
             return Social.upsertProfile(data);
         }).then(function() {
             location.hash = '#/profile';
