@@ -500,6 +500,8 @@ const App = {
                     setTimeout(function() { indRef.remove(); }, 500);
                     indicator = null;
                     App.route();
+                    // Suppress fadeIn animation on re-rendered content
+                    app.classList.add('no-animate');
                     pulling = false; ready = false; active = false; bottomActive = false;
                     return;
                 }
@@ -1202,13 +1204,15 @@ const App = {
                     btn.classList.remove('following');
                     btn.textContent = 'Подписаться';
                     btn.disabled = false;
-                }).catch(function() { btn.disabled = false; });
+                }).catch(function(e) { btn.disabled = false; alert('Ошибка: ' + e.message); });
             } else {
-                Social.follow(userId).then(function() {
-                    btn.classList.add('following');
-                    btn.textContent = 'Отписаться';
+                Social.follow(userId).then(function(ok) {
+                    if (ok) {
+                        btn.classList.add('following');
+                        btn.textContent = 'Отписаться';
+                    }
                     btn.disabled = false;
-                }).catch(function() { btn.disabled = false; });
+                }).catch(function(e) { btn.disabled = false; alert('Ошибка: ' + e.message); });
             }
             return;
         }
@@ -1218,10 +1222,14 @@ const App = {
             var userId = target.dataset.user;
             if (!userId) return;
             target.disabled = true;
-            Social.follow(userId).then(function() {
-                target.textContent = 'Подписан';
-                target.classList.add('followed');
-            }).catch(function() { target.disabled = false; });
+            Social.follow(userId).then(function(ok) {
+                if (ok) {
+                    target.textContent = 'Подписан';
+                    target.classList.add('followed');
+                } else {
+                    target.disabled = false;
+                }
+            }).catch(function(e) { target.disabled = false; alert('Ошибка: ' + e.message); });
             return;
         }
 
