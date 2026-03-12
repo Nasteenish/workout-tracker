@@ -1248,19 +1248,6 @@ const App = {
             return;
         }
 
-        // Setup: back → re-enter onboarding
-        if (target.id === 'setup-back' || target.closest('#setup-back')) {
-            if (Builder._onboardingData) {
-                // Same session: onboarding steps are in history
-                history.back();
-            } else {
-                // App was reopened: no history, start onboarding fresh
-                Builder._onboardingData = {};
-                location.hash = '#/onboarding/1';
-            }
-            return;
-        }
-
         // Logout
         if (target.id === 'btn-logout' || target.closest('#btn-logout')) {
             this.logout();
