@@ -450,10 +450,12 @@ input, button, select {
 .login-screen > *:nth-child(1) { animation-delay: 0s; }
 .login-screen > *:nth-child(2) { animation-delay: 0.08s; }
 .login-screen > *:nth-child(3) { animation-delay: 0.16s; }
-.login-screen > *:nth-child(4) { animation-delay: 0.24s; }
-.login-screen > *:nth-child(5) { animation-delay: 0.32s; }
-.login-screen > *:nth-child(6) { animation-delay: 0.40s; }
-.login-screen > *:nth-child(7) { animation-delay: 0.48s; }
+.login-screen > *:nth-child(4) { animation-delay: 0.22s; }
+.login-screen > *:nth-child(5) { animation-delay: 0.28s; }
+.login-screen > *:nth-child(6) { animation-delay: 0.34s; }
+.login-screen > *:nth-child(7) { animation-delay: 0.40s; }
+.login-screen > *:nth-child(8) { animation-delay: 0.46s; }
+.login-screen > *:nth-child(9) { animation-delay: 0.52s; }
 
 .login-screen h1 {
     font-size: var(--font-size-title);
@@ -464,8 +466,33 @@ input, button, select {
 
 .login-screen .subtitle {
     color: var(--text-secondary);
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--spacing-md);
     font-size: var(--font-size-base);
+}
+
+.login-features {
+    display: flex;
+    gap: 16px;
+    margin-bottom: var(--spacing-xl);
+    width: 100%;
+    justify-content: center;
+}
+.login-feature {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    text-align: center;
+}
+.login-feature svg {
+    color: var(--accent-primary);
+    opacity: 0.8;
+}
+.login-feature span {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.3;
 }
 
 .login-field {
