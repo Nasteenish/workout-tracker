@@ -330,13 +330,14 @@ const SocialUI = {
 
         var users = await Social.getRecentUsers();
         var myId = Social._getSupaUserId();
+        var followingIds = await Social.getMyFollowingIds();
 
         var html = '<div class="social-screen">';
         html += '<div class="social-header"><button class="social-back" id="btn-discover-back">&larr;</button><h2>Поиск</h2></div>';
         html += '<div class="discover-search"><input type="text" id="discover-search-input" placeholder="Поиск по имени..."><button class="discover-search-btn" id="btn-discover-search"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button></div>';
 
         html += '<div class="discover-results" id="discover-results">';
-        html += this._renderUserList(users, myId);
+        html += this._renderUserList(users, myId, followingIds);
         html += '</div>';
 
         html += '</div>';
@@ -483,11 +484,13 @@ const SocialUI = {
         return html;
     },
 
-    _renderUserList(users, myId) {
+    _renderUserList(users, myId, followingIds) {
+        var fIds = followingIds || [];
         var filtered = users.filter(function(u) { return u.user_id !== myId; });
         if (!filtered.length) return '<div class="social-empty">Никого не найдено</div>';
         var html = '';
         filtered.forEach(function(u) {
+            var isFollowed = fIds.indexOf(u.user_id) !== -1;
             html += '<div class="discover-user">';
             html += u.avatar_url
                 ? '<img class="discover-user-avatar" src="' + u.avatar_url + '" alt="">'
@@ -497,7 +500,11 @@ const SocialUI = {
             html += '<div class="discover-user-username">@' + u.username + '</div>';
             if (u.is_athlete && u.category) html += '<div class="discover-user-badge">' + u.category + '</div>';
             html += '</div>';
-            html += '<button class="btn-follow-sm" data-user="' + u.user_id + '">Подписаться</button>';
+            if (isFollowed) {
+                html += '<button class="btn-follow-sm followed" data-user="' + u.user_id + '" disabled>Подписан</button>';
+            } else {
+                html += '<button class="btn-follow-sm" data-user="' + u.user_id + '">Подписаться</button>';
+            }
             html += '</div>';
         });
         return html;

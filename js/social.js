@@ -87,6 +87,15 @@ const Social = {
         return !!result.data;
     },
 
+    async getMyFollowingIds() {
+        if (!supa) return [];
+        var userId = this._getSupaUserId();
+        if (!userId) return [];
+        var result = await supa.from('follows').select('following_id').eq('follower_id', userId);
+        if (result.error || !result.data) return [];
+        return result.data.map(function(r) { return r.following_id; });
+    },
+
     async getFollowCounts(userId) {
         if (!supa) return { followers: 0, following: 0 };
         var r1 = await supa.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', userId);

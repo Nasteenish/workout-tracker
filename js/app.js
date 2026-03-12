@@ -173,12 +173,12 @@ const App = {
         };
 
         const createBackCompanion = (type, dayNum) => {
-            if (type === 'none') return null;
             const c = document.createElement('div');
             c.className = 'back-companion';
             if (type === 'week') c.innerHTML = UI._weekViewHTML(this._currentWeek);
             else if (type === 'menu') c.innerHTML = UI._menuHTML();
             else if (type === 'day') c.innerHTML = UI._dayViewHTML(this._currentWeek, dayNum || this._currentDay);
+            // 'none' type: empty dark backdrop (for async social pages)
             document.body.appendChild(c);
             return c;
         };
@@ -258,7 +258,7 @@ const App = {
             if (!dragging && !isBack && companion) removeCompanion();
             const dx = e.changedTouches[0].clientX - startX;
             const snap = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-            const commit = 'transform 0.18s cubic-bezier(0.4, 0, 0.6, 1)';
+            const commit = 'transform 0.26s cubic-bezier(0.32, 0.72, 0, 1)';
 
             // === Back-swipe ===
             if (isBack) {
@@ -276,15 +276,14 @@ const App = {
                 const target = cfg.target;
                 const onCommit = cfg.onCommit;
                 setTimeout(() => {
-                    app.classList.add('no-animate');
                     if (onCommit) onCommit();
                     history.replaceState(null, '', target);
-                    this.route();
+                    this.route(true);
                     resetApp(app);
                     unlockScroll();
                     removeCompanion();
                     window.scrollTo(0, 0);
-                }, 220);
+                }, 270);
                 return;
             }
 
@@ -445,8 +444,7 @@ const App = {
                 setTimeout(function() {
                     app.style.transition = '';
                     app.style.transform = '';
-                    App.route();
-                    app.classList.add('no-animate');
+                    App.route(true);
                 }, 260);
                 pulling = false; ready = false; active = false; bottomActive = false;
                 return;
@@ -897,8 +895,8 @@ const App = {
         });
     },
 
-    route() {
-        document.getElementById('app').classList.remove('no-animate');
+    route(skipAnimation) {
+        if (!skipAnimation) document.getElementById('app').classList.remove('no-animate');
         window.scrollTo(0, 0);
         const hash = location.hash || '';
 
