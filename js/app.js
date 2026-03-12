@@ -1207,8 +1207,8 @@ const App = {
             if (!query) return;
             var resultsEl = document.getElementById('discover-results');
             if (resultsEl) resultsEl.innerHTML = '<div class="social-loading">Поиск...</div>';
-            Social.searchUsers(query).then(function(users) {
-                if (resultsEl) resultsEl.innerHTML = SocialUI._renderUserList(users, Social._getSupaUserId());
+            Promise.all([Social.searchUsers(query), Social.getMyFollowingIds()]).then(function(r) {
+                if (resultsEl) resultsEl.innerHTML = SocialUI._renderUserList(r[0], Social._getSupaUserId(), r[1]);
             });
             return;
         }
