@@ -2656,6 +2656,14 @@ body.modal-open {
     scrollbar-width: none;
 }
 .picker-categories::-webkit-scrollbar { display: none; }
+.picker-categories {
+    -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+    mask-image: linear-gradient(to right, black 85%, transparent 100%);
+}
+.picker-categories.scrolled-end {
+    -webkit-mask-image: none;
+    mask-image: none;
+}
 
 .picker-cat {
     flex-shrink: 0;

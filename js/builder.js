@@ -1092,6 +1092,18 @@ const Builder = {
         lockBodyScroll();
         blockOverlayScroll(overlay, '.picker-list');
 
+        // Fade hint: remove mask when scrolled to end
+        var catsEl = document.getElementById('picker-categories');
+        if (catsEl) {
+            catsEl.addEventListener('scroll', function() {
+                if (catsEl.scrollLeft + catsEl.clientWidth >= catsEl.scrollWidth - 10) {
+                    catsEl.classList.add('scrolled-end');
+                } else {
+                    catsEl.classList.remove('scrolled-end');
+                }
+            });
+        }
+
         // Load shared exercises
         this._sharedExercisesCache = [];
         if (typeof Social !== 'undefined') {
