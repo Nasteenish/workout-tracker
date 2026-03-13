@@ -97,6 +97,7 @@ const SocialUI = {
 
         var html = '<div class="social-screen">';
         html += '<div class="profile-header">';
+        if (isOwn) html += '<button class="btn-profile-edit" id="btn-profile-edit" title="Редактировать">&#9998;</button>';
         html += '<div class="profile-avatar-wrap">';
         html += profile.avatar_url
             ? '<img class="profile-avatar" src="' + profile.avatar_url + '" alt="">'
@@ -128,7 +129,6 @@ const SocialUI = {
         // Action buttons
         html += '<div class="profile-actions">';
         if (isOwn) {
-            html += '<button class="btn-profile-edit" id="btn-profile-edit" title="Редактировать">&#9998;</button>';
             html += '<button class="btn-create-checkin" id="btn-new-checkin">Новый чекин</button>';
         } else {
             html += '<button class="btn-follow ' + (isFollowing ? 'following' : '') + '" id="btn-follow" data-user="' + targetId + '">';
