@@ -3024,6 +3024,7 @@ const App = {
 
     _loadSharedEquipment(muscleGroup) {
         if (typeof Social === 'undefined') return;
+        if (\!muscleGroup || muscleGroup === 'all') return;
         var self = this;
         Social.searchSharedEquipment('', muscleGroup).then(function(items) {
             self._sharedEquipmentCache = items || [];
