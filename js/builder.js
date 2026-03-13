@@ -1465,15 +1465,31 @@ const Builder = {
             nav();
             return;
         }
-        console.log('Onboarding save:', JSON.stringify(profileData));
-        Social.upsertProfile(profileData).then(function(result) {
-            console.log('Onboarding saved OK:', JSON.stringify(result));
-            nav();
-        }).catch(function(err) {
-            console.error('Onboarding save error:', err);
-            var dbg = document.getElementById('debug');
-            if (dbg) { dbg.style.display = 'block'; dbg.innerHTML += '<b>SAVE ERROR:</b> ' + err.message + '<br>'; }
-            nav();
-        });
+
+        var doSave = function(data) {
+            console.log('Onboarding save:', JSON.stringify(data));
+            Social.upsertProfile(data).then(function(result) {
+                console.log('Onboarding saved OK:', JSON.stringify(result));
+                nav();
+            }).catch(function(err) {
+                console.error('Onboarding save error:', err);
+                var dbg = document.getElementById('debug');
+                if (dbg) { dbg.style.display = 'block'; dbg.innerHTML += '<b>SAVE ERROR:</b> ' + err.message + '<br>'; }
+                nav();
+            });
+        };
+
+        // Existing user: fetch profile to include username (required NOT NULL)
+        if (!profileData.username) {
+            Social.getMyProfile().then(function(p) {
+                if (p && p.username) {
+                    profileData.username = p.username;
+                    profileData.display_name = p.display_name || p.username;
+                }
+                doSave(profileData);
+            }).catch(function() { doSave(profileData); });
+        } else {
+            doSave(profileData);
+        }
     }
 };
