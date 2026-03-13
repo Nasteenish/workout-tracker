@@ -841,14 +841,17 @@ const App = {
         if (btn) { btn.disabled = true; btn.textContent = 'ПУБЛИКАЦИЯ...'; }
         if (errEl) errEl.style.display = 'none';
 
+        // Photo required
+        if (!this._checkinPhotos || this._checkinPhotos.length === 0) {
+            if (errEl) { errEl.textContent = 'Добавьте хотя бы одно фото'; errEl.style.display = 'block'; }
+            if (btn) { btn.disabled = false; btn.textContent = 'ОПУБЛИКОВАТЬ'; }
+            return;
+        }
+
         var weightEl = document.getElementById('checkin-weight');
         var weight = weightEl ? (parseFloat(weightEl.value) || null) : null;
         var note = (document.getElementById('checkin-note').value || '').trim();
         var measurements = {};
-        var wEl = document.getElementById('m-waist'); if (wEl) { var waist = parseFloat(wEl.value); if (waist) measurements.waist = waist; }
-        var bEl = document.getElementById('m-bicep'); if (bEl) { var bicep = parseFloat(bEl.value); if (bicep) measurements.bicep = bicep; }
-        var cEl = document.getElementById('m-chest'); if (cEl) { var chest = parseFloat(cEl.value); if (chest) measurements.chest = chest; }
-        var tEl = document.getElementById('m-thigh'); if (tEl) { var thigh = parseFloat(tEl.value); if (thigh) measurements.thigh = thigh; }
 
         var workoutDataEl = document.getElementById('checkin-workout-data');
         var workoutSummary = null;

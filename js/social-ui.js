@@ -283,6 +283,7 @@ const SocialUI = {
             html += '<div class="checkin-photos-grid" id="checkin-photos-grid"></div>';
             html += '<label class="checkin-add-photo" for="checkin-photo-input">+ Фото / Видео</label>';
             html += '<input type="file" id="checkin-photo-input" accept="image/*,video/*" multiple style="display:none">';
+            html += '<div class="checkin-photo-hint">Обязательно</div>';
             html += '</div>';
 
             // Tag users
@@ -307,16 +308,16 @@ const SocialUI = {
             return;
         }
 
-        // Full check-in form (weekly progress with photos/weight/measurements)
+        // Full check-in form (weekly progress photo)
         var html = '<div class="social-screen">';
-        html += '<div class="social-header"><button class="social-back" id="btn-checkin-back">&larr;</button><h2>Новый Check-in</h2></div>';
+        html += '<div class="social-header"><button class="social-back" id="btn-checkin-back">&larr;</button><h2>Новый чекин</h2></div>';
 
         // Photo upload
         html += '<div class="checkin-photos-section">';
         html += '<div class="checkin-photos-grid" id="checkin-photos-grid"></div>';
         html += '<label class="checkin-add-photo" for="checkin-photo-input">+ Фото</label>';
         html += '<input type="file" id="checkin-photo-input" accept="image/*" multiple style="display:none">';
-        html += '<div class="checkin-photo-hint">До 3 фото</div>';
+        html += '<div class="checkin-photo-hint">До 3 фото (обязательно)</div>';
         html += '</div>';
 
         // Tag users
@@ -325,18 +326,9 @@ const SocialUI = {
         html += '<div class="checkin-tagged-users" id="checkin-tagged-users"></div>';
         html += '</div>';
 
-        // Weight
         html += '<div class="edit-fields">';
-        html += '<div class="edit-field"><label>Вес (кг)</label><input type="number" id="checkin-weight" step="0.1" placeholder="Текущий вес"></div>';
-
-        // Measurements (optional)
-        html += '<div class="edit-section-title">Замеры (опционально)</div>';
-        html += '<div class="checkin-measurements">';
-        html += '<div class="edit-field"><label>Талия</label><input type="number" id="m-waist" step="0.1" placeholder="см"></div>';
-        html += '<div class="edit-field"><label>Бицепс</label><input type="number" id="m-bicep" step="0.1" placeholder="см"></div>';
-        html += '<div class="edit-field"><label>Грудь</label><input type="number" id="m-chest" step="0.1" placeholder="см"></div>';
-        html += '<div class="edit-field"><label>Бедро</label><input type="number" id="m-thigh" step="0.1" placeholder="см"></div>';
-        html += '</div>';
+        // Weight (optional)
+        html += '<div class="edit-field"><label>Вес, кг (опционально)</label><input type="number" id="checkin-weight" step="0.1" placeholder="Текущий вес"></div>';
 
         // Note
         html += '<div class="edit-field"><label>Заметка</label><textarea id="checkin-note" rows="3" placeholder="Как прошла неделя?"></textarea></div>';
