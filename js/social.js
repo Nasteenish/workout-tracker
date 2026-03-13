@@ -672,5 +672,34 @@ const Social = {
             supa.removeChannel(this._globalMsgChannel);
             this._globalMsgChannel = null;
         }
+    },
+
+    // ===== Shared Gyms =====
+
+    async searchSharedGyms(query) {
+        if (!supa || !query) return [];
+        var r = await supa.from('shared_gyms').select('*')
+            .ilike('name', '%' + query + '%')
+            .order('name')
+            .limit(10);
+        return r.data || [];
+    },
+
+    async getSharedGymsByCity(city) {
+        if (!supa || !city) return [];
+        var r = await supa.from('shared_gyms').select('*')
+            .ilike('city', city)
+            .order('name');
+        return r.data || [];
+    },
+
+    async addSharedGym(name, city) {
+        if (!supa) return null;
+        var myId = this._getSupaUserId();
+        if (!myId) return null;
+        var r = await supa.from('shared_gyms')
+            .upsert({ name: name, city: city, created_by: myId }, { onConflict: 'name,city' })
+            .select().single();
+        return r.data;
     }
 };

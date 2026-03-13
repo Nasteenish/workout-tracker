@@ -1173,8 +1173,12 @@ const UI = {
             + '<div id="gym-geo-suggestion" style="display:none"></div>'
             + '<div id="gym-link-prompt" style="display:none"></div>'
             + '<div class="eq-list">' + optionsHtml + '</div>'
+            + '<div id="gym-shared-results"></div>'
             + '<div class="eq-add-row">'
-            + '<input type="text" id="gym-new-name" placeholder="Новый зал..." class="eq-new-input">'
+            + '<input type="text" id="gym-new-name" placeholder="Название зала..." class="eq-new-input">'
+            + '</div>'
+            + '<div class="eq-add-row">'
+            + '<input type="text" id="gym-new-city" placeholder="Город..." class="eq-new-input">'
             + '<button class="eq-add-btn" id="gym-add-btn">+</button>'
             + '</div></div>';
         document.body.appendChild(overlay);
@@ -1183,6 +1187,7 @@ const UI = {
         overlay._onSelect = onSelect;
         blockOverlayScroll(overlay, '.equipment-modal');
         overlay.addEventListener('click', function(e) { App.handleClick(e); });
+        overlay.addEventListener('input', function(e) { App.handleInput(e); });
 
         App._suggestNearbyGym();
     },

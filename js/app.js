@@ -2427,12 +2427,32 @@ const App = {
             return;
         }
 
+        // Gym modal — select shared gym suggestion
+        if (target.closest('.gym-shared-item')) {
+            var item = target.closest('.gym-shared-item');
+            var sharedName = item.dataset.name;
+            if (sharedName) {
+                var newId = Storage.addGym(sharedName);
+                var modal = document.getElementById('gym-modal');
+                var onSelect = modal ? modal._onSelect : null;
+                UI.hideGymModal();
+                if (onSelect) onSelect(newId);
+            }
+            return;
+        }
+
         // Gym modal — add new gym
         if (target.id === 'gym-add-btn' || target.closest('#gym-add-btn')) {
             var input = document.getElementById('gym-new-name');
+            var cityInput = document.getElementById('gym-new-city');
             var name = input ? input.value.trim() : '';
+            var city = cityInput ? cityInput.value.trim() : '';
             if (!name) return;
             var newId = Storage.addGym(name, App._lastGeoPos ? App._lastGeoPos.lat : null, App._lastGeoPos ? App._lastGeoPos.lng : null);
+            // Save to shared database
+            if (typeof Social !== 'undefined' && city) {
+                Social.addSharedGym(name, city).catch(function() {});
+            }
             var modal = document.getElementById('gym-modal');
             var onSelect = modal ? modal._onSelect : null;
             UI.hideGymModal();
@@ -2687,6 +2707,38 @@ const App = {
             const setIdx = parseInt(target.dataset.set);
             const segIdx = parseInt(target.dataset.seg);
             Storage.saveSegWeight(this._currentWeek, this._currentDay, exId, setIdx, segIdx, target.value);
+            return;
+        }
+
+        // Gym modal — search shared gyms as user types
+        if (target.id === 'gym-new-name') {
+            var query = target.value.trim();
+            var resultsDiv = document.getElementById('gym-shared-results');
+            if (!resultsDiv) return;
+            if (query.length < 2 || typeof Social === 'undefined') {
+                resultsDiv.innerHTML = '';
+                return;
+            }
+            clearTimeout(this._gymSearchTimer);
+            this._gymSearchTimer = setTimeout(function() {
+                Social.searchSharedGyms(query).then(function(gyms) {
+                    if (!gyms || !gyms.length) { resultsDiv.innerHTML = ''; return; }
+                    // Filter out gyms user already has
+                    var myGyms = Storage.getGyms();
+                    var myNames = {};
+                    for (var i = 0; i < myGyms.length; i++) myNames[myGyms[i].name.toLowerCase()] = true;
+                    var filtered = gyms.filter(function(g) { return !myNames[g.name.toLowerCase()]; });
+                    if (!filtered.length) { resultsDiv.innerHTML = ''; return; }
+                    var html = '<div class="gym-shared-label">Залы из базы:</div>';
+                    for (var i = 0; i < filtered.length; i++) {
+                        html += '<div class="gym-shared-item" data-name="' + filtered[i].name.replace(/"/g, '&quot;') + '">'
+                            + '<span class="gym-shared-name">' + filtered[i].name + '</span>'
+                            + '<span class="gym-shared-city">' + (filtered[i].city || '') + '</span>'
+                            + '</div>';
+                    }
+                    resultsDiv.innerHTML = html;
+                });
+            }, 300);
             return;
         }
     },
