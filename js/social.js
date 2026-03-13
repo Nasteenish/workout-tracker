@@ -677,11 +677,10 @@ const Social = {
     // ===== Shared Gyms =====
 
     async searchSharedGyms(query) {
-        if (!supa || !query) return [];
-        var r = await supa.from('shared_gyms').select('*')
-            .ilike('name', '%' + query + '%')
-            .order('name')
-            .limit(10);
+        if (!supa) return [];
+        var q = supa.from('shared_gyms').select('*').order('name').limit(50);
+        if (query) q = q.ilike('name', '%' + query + '%');
+        var r = await q;
         return r.data || [];
     },
 

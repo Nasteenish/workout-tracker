@@ -1192,6 +1192,7 @@ const UI = {
         overlay.addEventListener('input', function(e) { App.handleInput(e); });
 
         App._suggestNearbyGym();
+        App._loadSharedGyms();
     },
 
     hideGymModal() {
