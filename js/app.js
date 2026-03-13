@@ -2207,23 +2207,28 @@ const App = {
             var item = btn.closest('.settings-eq-item');
             var span = item ? item.querySelector('span') : null;
             if (!span || span.querySelector('input')) return;
-            var oldName = span.textContent;
+            var oldName = span.textContent.trim();
+            // Disable all remove buttons while editing
+            document.querySelectorAll('.eq-remove-btn, .gym-remove-btn').forEach(function(b) { b.disabled = true; b.style.opacity = '0.3'; });
             span.innerHTML = '<input type="text" class="eq-inline-edit" value="' + oldName.replace(/"/g, '&quot;') + '">';
             var inp = span.querySelector('input');
             inp.focus(); inp.select();
+            var saved = false;
             var save = function() {
+                if (saved) return; saved = true;
                 var v = inp.value.trim();
                 if (v && v !== oldName) { Storage.renameEquipment(eqId, v); }
                 UI.renderSettings();
             };
-            inp.addEventListener('blur', save);
-            inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') inp.blur(); });
+            inp.addEventListener('blur', function() { setTimeout(save, 100); });
+            inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); save(); } });
             return;
         }
 
         // Settings: remove equipment
         if (target.matches('.eq-remove-btn') || target.closest('.eq-remove-btn')) {
             const btn = target.matches('.eq-remove-btn') ? target : target.closest('.eq-remove-btn');
+            if (btn.disabled) return;
             const eqId = btn.dataset.eqId;
             if (eqId) {
                 Storage.removeEquipment(eqId);
@@ -2250,23 +2255,27 @@ const App = {
             var item = btn.closest('.settings-eq-item');
             var span = item ? item.querySelector('span') : null;
             if (!span || span.querySelector('input')) return;
-            var oldName = span.textContent;
+            var oldName = span.textContent.trim();
+            document.querySelectorAll('.eq-remove-btn, .gym-remove-btn').forEach(function(b) { b.disabled = true; b.style.opacity = '0.3'; });
             span.innerHTML = '<input type="text" class="eq-inline-edit" value="' + oldName.replace(/"/g, '&quot;') + '">';
             var inp = span.querySelector('input');
             inp.focus(); inp.select();
+            var saved = false;
             var save = function() {
+                if (saved) return; saved = true;
                 var v = inp.value.trim();
                 if (v && v !== oldName) { Storage.renameGym(gymId, v); }
                 UI.renderSettings();
             };
-            inp.addEventListener('blur', save);
-            inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') inp.blur(); });
+            inp.addEventListener('blur', function() { setTimeout(save, 100); });
+            inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); save(); } });
             return;
         }
 
         // Settings: remove gym
         if (target.matches('.gym-remove-btn') || target.closest('.gym-remove-btn')) {
             var btn = target.matches('.gym-remove-btn') ? target : target.closest('.gym-remove-btn');
+            if (btn.disabled) return;
             var gymId = btn.dataset.gymId;
             if (gymId && confirm('Удалить зал?')) {
                 Storage.removeGym(gymId);
