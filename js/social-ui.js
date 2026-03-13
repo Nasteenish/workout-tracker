@@ -653,12 +653,10 @@ const SocialUI = {
             // Workout summary
             if (c.workout_summary) {
                 var ws = c.workout_summary;
-                var mgTag = ws.muscle_group || ws.title || '';
-                var mgClr = SocialUI._muscleGroupColor(mgTag);
+                var wsLabel = ws.title || ws.muscle_group || 'Тренировка';
+                var mgClr = SocialUI._muscleGroupColor(ws.muscle_group || wsLabel);
                 html += '<div class="checkin-workout">';
-                if (mgTag) html += '<span class="checkin-muscle-tag" style="background:' + mgClr + '">' + mgTag + '</span>';
-                var wsLabel = ws.title || 'Тренировка';
-                if (wsLabel !== mgTag) html += '<span class="checkin-workout-label">' + wsLabel + '</span>';
+                html += '<span class="checkin-muscle-tag" style="background:' + mgClr + '">' + wsLabel + '</span>';
                 var wStats = [];
                 if (ws.duration_sec) wStats.push(Math.round(ws.duration_sec / 60) + ' мин');
                 if (ws.exercises) wStats.push(ws.exercises.length + ' упр.');
@@ -760,11 +758,9 @@ const SocialUI = {
         if (c.workout_summary) {
             var ws = c.workout_summary;
             html += '<div class="checkin-workout">';
-            var dMg = ws.muscle_group || ws.title || '';
-            var dMgClr = SocialUI._muscleGroupColor(dMg);
-            if (dMg) html += '<span class="checkin-muscle-tag" style="background:' + dMgClr + '">' + dMg + '</span>';
-            var dLabel = ws.title || 'Тренировка';
-            if (dLabel !== dMg) html += '<span class="checkin-workout-label">' + dLabel + '</span>';
+            var dLabel = ws.title || ws.muscle_group || 'Тренировка';
+            var dMgClr = SocialUI._muscleGroupColor(ws.muscle_group || dLabel);
+            html += '<span class="checkin-muscle-tag" style="background:' + dMgClr + '">' + dLabel + '</span>';
             if (ws.duration_sec) html += ' ' + Math.round(ws.duration_sec / 60) + ' мин';
             if (ws.gym_name) html += '<div class="checkin-gym-tag" style="margin-top:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + ws.gym_name + '</div>';
             if (ws.exercises && ws.exercises.length) {
