@@ -68,12 +68,14 @@ const SocialUI = {
             Social.getProfile(targetId),
             Social.getFollowCounts(targetId),
             !isOwn ? Social.isFollowing(targetId) : Promise.resolve(false),
-            Social.getUserCheckins(targetId)
+            Social.getUserCheckins(targetId),
+            Social.getCheckinCounts(targetId)
         ]);
         var profile = results[0];
         var counts = results[1];
         var isFollowing = results[2];
         var checkins = results[3];
+        var postCounts = results[4];
 
         // Fetch likes and preload photos
         var ids = checkins.map(function(c) { return c.id; });
@@ -116,13 +118,15 @@ const SocialUI = {
         html += '<div class="profile-stats">';
         html += '<a class="stat stat-link" href="#/followers/' + targetId + '"><span class="stat-num">' + (counts.followers || 0) + '</span><span class="stat-label">подписчиков</span></a>';
         html += '<a class="stat stat-link" href="#/following/' + targetId + '"><span class="stat-num">' + (counts.following || 0) + '</span><span class="stat-label">подписок</span></a>';
-        html += '<div class="stat"><span class="stat-num">' + checkins.length + '</span><span class="stat-label">чекинов</span></div>';
+        html += '<div class="stat"><span class="stat-num">' + (postCounts.workouts || 0) + '</span><span class="stat-label">тренировок</span></div>';
+        html += '<div class="stat"><span class="stat-num">' + (postCounts.checkins || 0) + '</span><span class="stat-label">чекинов</span></div>';
         html += '</div>';
 
         // Action buttons
         html += '<div class="profile-actions">';
         if (isOwn) {
             html += '<button class="btn-profile-edit" id="btn-profile-edit">Редактировать</button>';
+            html += '<button class="btn-create-checkin" id="btn-new-checkin">Новый чекин</button>';
         } else {
             html += '<button class="btn-follow ' + (isFollowing ? 'following' : '') + '" id="btn-follow" data-user="' + targetId + '">';
             html += isFollowing ? 'Отписаться' : 'Подписаться';
@@ -141,18 +145,23 @@ const SocialUI = {
             if (details.length) html += '<div class="profile-details">' + details.join(' &middot; ') + '</div>';
         }
 
-        // Checkins timeline
-        html += '<div class="profile-checkins">';
-        html += '<h3>Check-ins</h3>';
+        // Post type tabs + grid
+        html += '<div class="profile-post-tabs">';
+        html += '<button class="profile-tab active" data-tab="all">Все</button>';
+        html += '<button class="profile-tab" data-tab="workouts">Тренировки</button>';
+        html += '<button class="profile-tab" data-tab="checkins">Чекины</button>';
+        html += '</div>';
+        html += '<div class="profile-checkins" id="profile-posts-grid">';
         if (checkins.length === 0) {
-            html += '<div class="social-empty">Пока нет чекинов</div>';
+            html += '<div class="social-empty">Пока нет публикаций</div>';
         } else {
-            html += this._renderCheckinCards(checkins, likes);
+            html += this._renderProfileGrid(checkins);
         }
         if (this._profileCheckinsCursor) {
             html += '<button class="btn-load-more" id="btn-load-more-profile" data-user="' + targetId + '">Загрузить ещё</button>';
         }
         html += '</div>';
+        this._profileAllCheckins = checkins;
         html += '</div>';
 
         // Tab bar
@@ -577,6 +586,36 @@ const SocialUI = {
     },
 
     // ===== RENDER HELPERS =====
+
+    _renderProfileGrid(checkins, noWrap) {
+        var html = noWrap ? '' : '<div class="profile-grid">';
+        checkins.forEach(function(c) {
+            var isWorkout = !!c.workout_summary;
+            html += '<div class="profile-grid-item" data-checkin="' + c.id + '">';
+            if (c.photos && c.photos.length > 0) {
+                html += '<img class="profile-grid-thumb" src="' + c.photos[0] + '" alt="" loading="lazy">';
+            } else if (isWorkout) {
+                var ws = c.workout_summary;
+                var mg = ws.muscle_group || ws.title || '';
+                var mgClr = SocialUI._muscleGroupColor(mg);
+                html += '<div class="profile-grid-placeholder" style="background:' + mgClr + '">';
+                html += '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="7" width="3" height="10" rx="1"/><rect x="5" y="4" width="3" height="16" rx="1"/><rect x="16" y="4" width="3" height="16" rx="1"/><rect x="20" y="7" width="3" height="10" rx="1"/><line x1="8" y1="12" x2="16" y2="12"/></svg>';
+                if (mg) html += '<span>' + mg + '</span>';
+                html += '</div>';
+            } else {
+                html += '<div class="profile-grid-placeholder">';
+                html += '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L9 17"/></svg>';
+                if (c.weight) html += '<span>' + c.weight + ' кг</span>';
+                html += '</div>';
+            }
+            html += '<span class="grid-type-badge">' + (isWorkout ? '\uD83C\uDFCB\uFE0F' : '\uD83D\uDCF8') + '</span>';
+            html += '</div>';
+        });
+        html += noWrap ? '' : '</div>';
+        return html;
+    },
+
+    _profileAllCheckins: null,
 
     _renderCheckinCards(checkins, likes, tags, commentCounts) {
         var likeData = likes || { counts: {}, myLikes: new Set() };

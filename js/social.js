@@ -195,6 +195,15 @@ const Social = {
         return result.data;
     },
 
+    async getCheckinCounts(userId) {
+        if (!supa) return { workouts: 0, checkins: 0 };
+        var r1 = await supa.from('checkins').select('*', { count: 'exact', head: true })
+            .eq('user_id', userId).not('workout_summary', 'is', null);
+        var r2 = await supa.from('checkins').select('*', { count: 'exact', head: true })
+            .eq('user_id', userId).is('workout_summary', null);
+        return { workouts: r1.count || 0, checkins: r2.count || 0 };
+    },
+
     async getFeed(cursor) {
         if (!supa) return [];
         var userId = this._getSupaUserId();

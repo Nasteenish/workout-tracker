@@ -1295,6 +1295,40 @@ const App = {
             return;
         }
 
+        // New checkin button
+        if (target.id === 'btn-new-checkin' || target.closest('#btn-new-checkin')) {
+            location.hash = '#/checkin';
+            return;
+        }
+
+        // Profile grid item click → detail
+        var gridItem = target.closest('.profile-grid-item');
+        if (gridItem) {
+            var cid = gridItem.dataset.checkin;
+            if (cid) location.hash = '#/checkin/' + cid;
+            return;
+        }
+
+        // Profile post-type tab filter
+        if (target.classList.contains('profile-tab')) {
+            var allTabs = document.querySelectorAll('.profile-tab');
+            allTabs.forEach(function(t) { t.classList.remove('active'); });
+            target.classList.add('active');
+            var tab = target.dataset.tab;
+            var allPosts = SocialUI._profileAllCheckins || [];
+            var filtered;
+            if (tab === 'workouts') filtered = allPosts.filter(function(c) { return !!c.workout_summary; });
+            else if (tab === 'checkins') filtered = allPosts.filter(function(c) { return !c.workout_summary; });
+            else filtered = allPosts;
+            var gridEl = document.getElementById('profile-posts-grid');
+            if (gridEl) {
+                var loadBtn = gridEl.querySelector('.btn-load-more');
+                gridEl.innerHTML = filtered.length ? SocialUI._renderProfileGrid(filtered) : '<div class="social-empty">Нет публикаций</div>';
+                if (loadBtn) gridEl.appendChild(loadBtn);
+            }
+            return;
+        }
+
         // Profile save
         if (target.id === 'btn-profile-save' || target.closest('#btn-profile-save')) {
             this._saveProfile();
@@ -1659,11 +1693,11 @@ const App = {
             btn.textContent = 'Загрузка...';
             Social.getUserCheckins(userId, SocialUI._profileCheckinsCursor).then(function(more) {
                 SocialUI._profileCheckinsCursor = more.length >= 20 ? more[more.length - 1].created_at : null;
-                var ids = more.map(function(c) { return c.id; });
-                return Promise.all([Promise.resolve(more), Social.getLikesForCheckins(ids)]);
-            }).then(function(results) {
-                var more = results[0], likes = results[1];
-                btn.insertAdjacentHTML('beforebegin', SocialUI._renderCheckinCards(more, likes));
+                SocialUI._profileAllCheckins = (SocialUI._profileAllCheckins || []).concat(more);
+                var gridEl = document.querySelector('.profile-grid');
+                if (gridEl) {
+                    gridEl.insertAdjacentHTML('beforeend', SocialUI._renderProfileGrid(more, true));
+                }
                 if (!SocialUI._profileCheckinsCursor) btn.remove();
                 else { btn.disabled = false; btn.textContent = 'Загрузить ещё'; }
             });
