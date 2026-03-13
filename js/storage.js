@@ -469,6 +469,14 @@ const Storage = {
         this._save();
     },
 
+    copyGymEquipmentMap(fromGymId, toGymId) {
+        var data = this._load();
+        var map = data.gymEquipmentMap[fromGymId];
+        if (!map) return;
+        data.gymEquipmentMap[toGymId] = JSON.parse(JSON.stringify(map));
+        this._save();
+    },
+
     getGymEquipmentMap(gymId) {
         var data = this._load();
         return data.gymEquipmentMap[gymId] || {};

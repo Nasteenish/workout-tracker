@@ -15,6 +15,17 @@ const App = {
         // Multi-user migration (once)
         Storage.migrateToMultiUser();
 
+        // One-time: copy equipment map from old gym to new gym
+        if (!localStorage.getItem('wt_gym_eq_migrated')) {
+            var gyms = Storage.getGyms();
+            var oldGym = gyms.find(function(g) { return g.name.indexOf('\u{1F4AA}') !== -1; });
+            var newGym = gyms.find(function(g) { return g.city && !Storage.gymHasEquipmentMap(g.id); });
+            if (oldGym && newGym && Storage.gymHasEquipmentMap(oldGym.id)) {
+                Storage.copyGymEquipmentMap(oldGym.id, newGym.id);
+            }
+            localStorage.setItem('wt_gym_eq_migrated', '1');
+        }
+
         // Load program for current user
         const currentUser = Storage.getCurrentUser();
         if (currentUser) {
