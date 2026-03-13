@@ -324,6 +324,12 @@ const RestTimer = {
             if (this._audioCtx.state === 'suspended') {
                 this._audioCtx.resume();
             }
+            // Prime audio element for playback
+            var a = this._ensureAudioEl();
+            if (a && !a._primed) {
+                a.volume = 0;
+                a.play().then(() => { a.pause(); a.currentTime = 0; a.volume = 1; a._primed = true; }).catch(() => {});
+            }
         } catch(e) {}
     },
 
@@ -356,20 +362,53 @@ const RestTimer = {
         } else {
             // App is in background — defer sound/vibration until user returns
             this._showNotification(alertUser);
+            // Also try client-side Notification API (Android fallback if SW failed)
+            if ('Notification' in window && Notification.permission === 'granted') {
+                try { new Notification('Пора!', { body: 'Отдых завершён', tag: 'rest-timer', renotify: true }); } catch(e) {}
+            }
         }
     },
 
+    _audioEl: null,
+
+    _ensureAudioEl() {
+        if (this._audioEl) return this._audioEl;
+        // Generate a short WAV beep programmatically
+        var sr = 22050, dur = 0.8, samples = sr * dur | 0;
+        var buf = new ArrayBuffer(44 + samples * 2);
+        var v = new DataView(buf);
+        var w = function(o, s) { for (var i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+        w(0, 'RIFF'); v.setUint32(4, 36 + samples * 2, true); w(8, 'WAVEfmt ');
+        v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+        v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true);
+        v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data');
+        v.setUint32(40, samples * 2, true);
+        for (var i = 0; i < samples; i++) {
+            var t = i / sr;
+            var freq = t < 0.3 ? 880 : (t < 0.55 ? 1100 : 1320);
+            var env = Math.max(0, 1 - (t % 0.3) / 0.25) * 0.4;
+            v.setInt16(44 + i * 2, Math.sin(2 * Math.PI * freq * t) * env * 32767 | 0, true);
+        }
+        var blob = new Blob([buf], { type: 'audio/wav' });
+        this._audioEl = new Audio(URL.createObjectURL(blob));
+        this._audioEl.preload = 'auto';
+        return this._audioEl;
+    },
+
     _playBeep() {
+        // Try Web Audio API first
+        var played = false;
         try {
             if (!this._audioCtx) {
                 this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
-            const ctx = this._audioCtx;
+            var ctx = this._audioCtx;
 
-            const doPlay = () => {
+            var doPlay = () => {
+                played = true;
                 [[880, 0, 0.5], [1100, 0.35, 0.6], [1320, 0.65, 0.8]].forEach(([freq, start, end]) => {
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
+                    var osc = ctx.createOscillator();
+                    var gain = ctx.createGain();
                     osc.connect(gain);
                     gain.connect(ctx.destination);
                     osc.frequency.value = freq;
@@ -386,6 +425,12 @@ const RestTimer = {
             } else {
                 doPlay();
             }
+        } catch(e) {}
+        // Fallback: HTML Audio element (more reliable after background)
+        try {
+            var audio = this._ensureAudioEl();
+            audio.currentTime = 0;
+            audio.play().catch(() => {});
         } catch(e) {}
     },
 
@@ -424,6 +469,8 @@ const RestTimer = {
         const dismiss = () => {
             if (notif._dismissed) return;
             notif._dismissed = true;
+            // Play sound on tap (user gesture unlocks audio)
+            this._playBeep();
             notif.classList.remove('visible');
             setTimeout(() => notif.remove(), 300);
         };
@@ -513,6 +560,9 @@ const RestTimer = {
 
             if (this._remaining <= 0) {
                 localStorage.removeItem('_wt_timer');
+                // Timer expired while app was closed — show notification
+                this._defaultDuration = s.defaultDuration || this._defaultDuration;
+                setTimeout(() => this._finish(), 100);
                 return;
             }
 
