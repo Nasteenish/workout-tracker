@@ -466,7 +466,7 @@ const Builder = {
         return '<div class="editor-exercise-card" data-sub-idx="' + subIdx + '">'
             + '<div class="editor-ex-main">'
             + '<div class="editor-ex-info">'
-            + '<div class="editor-ex-name">' + (ex.nameRu || ex.name) + '</div>'
+            + '<div class="editor-ex-name" data-item="' + itemIdx + '" data-sub="' + subIdx + '">' + (ex.nameRu || ex.name) + '</div>'
             + '<div class="editor-ex-meta">' + (setsArr.length || 3) + ' \u00D7 ' + ex.reps
             + (ex.rest && ex.rest !== 120 ? ' \u00B7 ' + Math.floor(ex.rest / 60) + ':' + String(ex.rest % 60).padStart(2, '0') : '')
             + '</div></div>'
@@ -569,6 +569,36 @@ const Builder = {
         if (exList) {
             exList.addEventListener('click', function(e) {
                 var target = e.target;
+
+                // Inline rename exercise
+                if (target.matches('.editor-ex-name')) {
+                    var nameEl = target;
+                    var oldName = nameEl.textContent;
+                    var inp = document.createElement('input');
+                    inp.type = 'text';
+                    inp.value = oldName;
+                    inp.className = 'eq-inline-edit';
+                    inp.style.width = '100%';
+                    nameEl.textContent = '';
+                    nameEl.appendChild(inp);
+                    inp.focus();
+                    inp.select();
+                    var saved = false;
+                    var save = function() {
+                        if (saved) return; saved = true;
+                        var v = inp.value.trim();
+                        var ex = self._getExercise(parseInt(nameEl.dataset.item), parseInt(nameEl.dataset.sub));
+                        if (ex && v) {
+                            ex.nameRu = v;
+                            ex.name = v;
+                            self._autoSave();
+                        }
+                        nameEl.textContent = v || oldName;
+                    };
+                    inp.addEventListener('blur', function() { setTimeout(save, 100); });
+                    inp.addEventListener('keydown', function(ev) { if (ev.key === 'Enter') { ev.preventDefault(); save(); } });
+                    return;
+                }
 
                 // Checkbox
                 if (target.matches('.editor-check')) { self._updateGroupBar(); return; }
