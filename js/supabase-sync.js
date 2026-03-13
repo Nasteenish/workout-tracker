@@ -80,7 +80,41 @@ const SupaSync = {
         return true;
     },
 
-    // Sync on login: merge local ↔ cloud
+    // Deep merge workout logs: keep the entry with the latest timestamp per set
+    _deepMergeLogs(localLog, remoteLog) {
+        var merged = {};
+        var allWeeks = new Set(Object.keys(localLog || {}).concat(Object.keys(remoteLog || {})));
+        allWeeks.forEach(function(week) {
+            merged[week] = {};
+            var lw = (localLog || {})[week] || {};
+            var rw = (remoteLog || {})[week] || {};
+            var allDays = new Set(Object.keys(lw).concat(Object.keys(rw)));
+            allDays.forEach(function(day) {
+                merged[week][day] = {};
+                var ld = lw[day] || {};
+                var rd = rw[day] || {};
+                var allEx = new Set(Object.keys(ld).concat(Object.keys(rd)));
+                allEx.forEach(function(ex) {
+                    merged[week][day][ex] = {};
+                    var le = ld[ex] || {};
+                    var re = rd[ex] || {};
+                    var allSets = new Set(Object.keys(le).concat(Object.keys(re)));
+                    allSets.forEach(function(s) {
+                        var ls = le[s], rs = re[s];
+                        if (!ls) { merged[week][day][ex][s] = rs; }
+                        else if (!rs) { merged[week][day][ex][s] = ls; }
+                        else {
+                            // Keep the one with latest timestamp
+                            merged[week][day][ex][s] = (rs.timestamp || 0) > (ls.timestamp || 0) ? rs : ls;
+                        }
+                    });
+                });
+            });
+        });
+        return merged;
+    },
+
+    // Sync on login: deep merge local ↔ cloud logs
     async syncOnLogin(supaUserId, localStorageKey) {
         if (!supa || this._syncing) return;
         this._syncing = true;
@@ -96,14 +130,18 @@ const SupaSync = {
                 // New device: pull from cloud
                 localStorage.setItem(localStorageKey, JSON.stringify(remote.data));
             } else if (remote && localData) {
-                // Both exist: compare timestamps
+                // Deep merge logs from both sides
+                var remoteData = remote.data;
+                var mergedLog = this._deepMergeLogs(localData.log, remoteData.log);
+                // Use the newer version for non-log fields
                 var remoteTime = new Date(remote.updated_at).getTime();
                 var localTime = localData._lastModified || 0;
-                if (remoteTime > localTime) {
-                    localStorage.setItem(localStorageKey, JSON.stringify(remote.data));
-                } else {
-                    await this.pushData(supaUserId, localData, '');
-                }
+                var base = remoteTime > localTime ? remoteData : localData;
+                base.log = mergedLog;
+                base._lastModified = Date.now();
+                // Save merged result locally and push to cloud
+                localStorage.setItem(localStorageKey, JSON.stringify(base));
+                await this.pushData(supaUserId, base, '');
             }
         } catch (e) {
             console.error('Sync error:', e);
