@@ -132,7 +132,7 @@ const Social = {
                 var c = document.createElement('canvas');
                 c.width = nw; c.height = nh;
                 c.getContext('2d').drawImage(img, 0, 0, nw, nh);
-                c.toBlob(function(blob) { resolve(blob || file); }, 'image/jpeg', 0.82);
+                c.toBlob(function(blob) { resolve(blob || file); }, 'image/jpeg', 0.92);
             };
             img.onerror = function() { resolve(file); };
             img.src = URL.createObjectURL(file);
@@ -143,10 +143,10 @@ const Social = {
         if (!supa) return null;
         var userId = this._getSupaUserId();
         if (!userId) return null;
-        // Resize images to max 1200px, compress to JPEG
+        // Resize images to max 1800px, compress to JPEG
         var uploadFile = file;
         if (!file.type || file.type.startsWith('image/')) {
-            uploadFile = await this._resizeImage(file, 1200);
+            uploadFile = await this._resizeImage(file, 1800);
         }
         var name = Date.now() + '_' + Math.random().toString(36).slice(2, 8);
         var path = userId + '/' + name + '.jpg';
