@@ -2298,21 +2298,12 @@ const App = {
                     Storage.touchGym(gymId);
                     if (Storage.gymHasEquipmentMap(gymId)) {
                         Storage.applyGymEquipment(gymId);
-                        self.startWorkoutTimer();
-                        UI.renderDay(self._currentWeek, self._currentDay);
                     } else {
-                        // First time at this gym — offer to link current equipment
-                        var gym = Storage.getGymById(gymId);
-                        var hasAnyEquipment = Object.keys(Storage._load().exerciseEquipment).some(function(k) {
-                            return !!Storage._load().exerciseEquipment[k];
-                        });
-                        if (hasAnyEquipment) {
-                            self._showGymLinkPrompt(gymId, gym ? gym.name : '');
-                        } else {
-                            self.startWorkoutTimer();
-                            UI.renderDay(self._currentWeek, self._currentDay);
-                        }
+                        // First time at this gym — auto-save current equipment
+                        Storage.initGymFromCurrentEquipment(gymId);
                     }
+                    self.startWorkoutTimer();
+                    UI.renderDay(self._currentWeek, self._currentDay);
                 } else {
                     self.startWorkoutTimer();
                     UI.renderDay(self._currentWeek, self._currentDay);
