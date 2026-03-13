@@ -2565,24 +2565,10 @@ const App = {
             const modal = document.getElementById('equipment-modal');
             const exId = modal ? modal._exerciseId : null;
             const muscleGroup = modal ? modal._muscleGroup : null;
-            // Check if muscle group prompt needed (unknown category)
-            var prompt = document.getElementById('eq-muscle-prompt');
-            if ((!muscleGroup || muscleGroup === 'all') && prompt && !prompt.dataset.ready) {
-                // Show muscle group selector
-                var html = '<div class="eq-muscle-chips">';
-                for (var ci = 0; ci < EXERCISE_CATEGORIES.length; ci++) {
-                    html += '<button class="eq-muscle-chip" data-group="' + EXERCISE_CATEGORIES[ci].id + '">' + EXERCISE_CATEGORIES[ci].nameRu + '</button>';
-                }
-                html += '</div>';
-                prompt.innerHTML = html;
-                prompt.style.display = 'block';
-                return;
-            }
-            var group = prompt && prompt.dataset.ready ? prompt.dataset.ready : muscleGroup;
             const newId = Storage.addEquipment(name);
-            // Save to shared DB
-            if (typeof Social !== 'undefined' && group && group !== 'all') {
-                Social.addSharedEquipment(name, group).catch(function() {});
+            // Save to shared DB with auto-detected muscle group
+            if (typeof Social !== 'undefined' && muscleGroup && muscleGroup !== 'all') {
+                Social.addSharedEquipment(name, muscleGroup).catch(function() {});
             }
             if (exId) {
                 Storage.setExerciseEquipment(exId, newId);
@@ -2594,15 +2580,7 @@ const App = {
             return;
         }
 
-        // Equipment modal — muscle group chip selected
-        if (target.classList.contains('eq-muscle-chip')) {
-            var prompt = document.getElementById('eq-muscle-prompt');
-            if (prompt) { prompt.dataset.ready = target.dataset.group; }
-            // Trigger the add button
-            var addBtn = document.getElementById('eq-add-btn');
-            if (addBtn) addBtn.click();
-            return;
-        }
+
 
         // Equipment modal — click shared item
         if (target.closest('.eq-shared-item')) {

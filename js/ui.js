@@ -1173,7 +1173,6 @@ const UI = {
                     <input type="text" id="eq-new-name" placeholder="Новое оборудование..." class="eq-new-input">
                     <button class="eq-add-btn" id="eq-add-btn">+</button>
                 </div>
-                <div id="eq-muscle-prompt" style="display:none"></div>
             </div>
         `;
         document.body.appendChild(overlay);
