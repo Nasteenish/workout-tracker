@@ -3228,6 +3228,38 @@ body.modal-open {
     cursor: pointer;
 }
 
+/* Gym city prompt */
+.gym-city-prompt {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 10px 12px;
+    margin-top: var(--spacing-sm);
+    background: rgba(157, 141, 245, 0.08);
+    border: 1px solid rgba(157, 141, 245, 0.2);
+    border-radius: var(--radius-sm);
+    animation: fadeIn 0.2s ease;
+}
+.gym-city-prompt span {
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+.gym-city-prompt input {
+    flex: 1;
+    height: 36px;
+    background: var(--bg-card);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: 0 var(--spacing-sm);
+    font-size: var(--font-size-sm);
+}
+.gym-city-prompt input:focus {
+    outline: none;
+    box-shadow: 0 0 0 1px var(--accent-primary);
+}
+
 /* Gym shared search results */
 .gym-shared-label {
     font-size: 12px;

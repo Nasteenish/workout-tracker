@@ -2444,10 +2444,28 @@ const App = {
         // Gym modal — add new gym
         if (target.id === 'gym-add-btn' || target.closest('#gym-add-btn')) {
             var input = document.getElementById('gym-new-name');
+            var name = input ? input.value.trim() : '';
+            if (!name) return;
+            // Show city prompt
+            var prompt = document.getElementById('gym-city-prompt');
+            if (prompt) {
+                prompt.style.display = 'flex';
+                var cityInput = document.getElementById('gym-new-city');
+                var savedCity = localStorage.getItem('wt_gym_city') || '';
+                if (cityInput) { cityInput.value = savedCity; cityInput.focus(); }
+            }
+            return;
+        }
+
+        // Gym modal — confirm city and save
+        if (target.id === 'gym-city-ok' || target.closest('#gym-city-ok')) {
+            var input = document.getElementById('gym-new-name');
             var cityInput = document.getElementById('gym-new-city');
             var name = input ? input.value.trim() : '';
             var city = cityInput ? cityInput.value.trim() : '';
             if (!name) return;
+            // Remember city for next time
+            if (city) localStorage.setItem('wt_gym_city', city);
             var newId = Storage.addGym(name, App._lastGeoPos ? App._lastGeoPos.lat : null, App._lastGeoPos ? App._lastGeoPos.lng : null);
             // Save to shared database
             if (typeof Social !== 'undefined' && city) {

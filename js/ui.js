@@ -1176,10 +1176,12 @@ const UI = {
             + '<div id="gym-shared-results"></div>'
             + '<div class="eq-add-row">'
             + '<input type="text" id="gym-new-name" placeholder="Название зала..." class="eq-new-input">'
-            + '</div>'
-            + '<div class="eq-add-row">'
-            + '<input type="text" id="gym-new-city" placeholder="Город..." class="eq-new-input">'
             + '<button class="eq-add-btn" id="gym-add-btn">+</button>'
+            + '</div>'
+            + '<div id="gym-city-prompt" class="gym-city-prompt" style="display:none">'
+            + '<span>Город:</span>'
+            + '<input type="text" id="gym-new-city" placeholder="Город..." class="eq-new-input">'
+            + '<button class="eq-add-btn gym-city-ok" id="gym-city-ok">OK</button>'
             + '</div></div>';
         document.body.appendChild(overlay);
         lockBodyScroll();
