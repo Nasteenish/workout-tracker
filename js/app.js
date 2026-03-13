@@ -2468,7 +2468,7 @@ const App = {
             var name = input ? input.value.trim() : '';
             var city = cityInput ? cityInput.value.trim() : '';
             if (!name) return;
-            var newId = Storage.addGym(name, App._lastGeoPos ? App._lastGeoPos.lat : null, App._lastGeoPos ? App._lastGeoPos.lng : null);
+            var newId = Storage.addGym(name, App._lastGeoPos ? App._lastGeoPos.lat : null, App._lastGeoPos ? App._lastGeoPos.lng : null, city);
             // Save to shared database
             if (typeof Social !== 'undefined' && city) {
                 Social.addSharedGym(name, city).catch(function() {});

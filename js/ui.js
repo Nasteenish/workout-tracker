@@ -1162,7 +1162,7 @@ const UI = {
         for (var i = 0; i < gyms.length; i++) {
             var g = gyms[i];
             optionsHtml += '<div class="eq-option" data-gym-id="' + g.id + '">'
-                + '<span>' + g.name + '</span></div>';
+                + '<span>' + g.name + (g.city ? ' <span class="gym-shared-city">' + g.city + '</span>' : '') + '</span></div>';
         }
 
         var overlay = document.createElement('div');
@@ -1697,7 +1697,7 @@ const UI = {
         for (const g of gymList) {
             gymListHtml += `
                 <div class="settings-eq-item">
-                    <span>${g.name}</span>
+                    <span>${g.name}${g.city ? ' <span class="gym-shared-city">' + g.city + '</span>' : ''}</span>
                     <div class="eq-item-actions">
                         <button class="eq-edit-btn gym-edit-btn" data-gym-id="${g.id}">${svgPencil}</button>
                         <button class="eq-remove-btn gym-remove-btn" data-gym-id="${g.id}"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>

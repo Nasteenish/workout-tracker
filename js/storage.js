@@ -419,10 +419,10 @@ const Storage = {
         return (this._load().gyms || []).find(function(g) { return g.id === id; }) || null;
     },
 
-    addGym(name, lat, lng) {
+    addGym(name, lat, lng, city) {
         var data = this._load();
         var id = 'gym_' + Date.now();
-        data.gyms.push({ id: id, name: name, lat: lat || null, lng: lng || null, lastUsed: Date.now() });
+        data.gyms.push({ id: id, name: name, lat: lat || null, lng: lng || null, city: city || null, lastUsed: Date.now() });
         this._save();
         return id;
     },
