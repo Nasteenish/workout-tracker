@@ -1302,11 +1302,6 @@ const Builder = {
                     </div>
                 </div>
 
-                <div class="config-field">
-                    <label>\u041F\u041E\u0412\u0422\u041E\u0420\u0415\u041D\u0418\u042F</label>
-                    <input type="text" id="cfg-reps" class="form-input" value="8-12" placeholder="8-12" style="text-align:center">
-                </div>
-
                 <button class="btn-primary" id="cfg-confirm" style="margin-top:var(--spacing-md)">\u0414\u041E\u0411\u0410\u0412\u0418\u0422\u042C</button>
                 <button class="btn-link" id="cfg-cancel">\u041E\u0442\u043C\u0435\u043D\u0430</button>
             </div>
@@ -1350,7 +1345,7 @@ const Builder = {
 
         var cfg = this._configExercise;
         var setsVal = document.getElementById('cfg-sets-val');
-        var repsInput = document.getElementById('cfg-reps');
+        
 
         var numSets = parseInt(setsVal.textContent) || 3;
         var setsArr = [];
@@ -1363,7 +1358,7 @@ const Builder = {
                 nameRu: cfg.nameRu,
                 name: cfg.name,
                 sets: setsArr,
-                reps: (repsInput.value || '').trim() || '8-12',
+                reps: '8-12',
                 rest: 120,
                 note: '',
                 noteRu: ''
