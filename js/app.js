@@ -157,8 +157,14 @@ const App = {
             return { mode: 'back', target: '#/onboarding/1', companion: 'none' };
         if (hash === '#/onboarding/3')
             return { mode: 'back', target: '#/onboarding/2', companion: 'none' };
+        if (hash === '#/onboarding/3a')
+            return { mode: 'back', target: '#/onboarding/2', companion: 'none' };
+        if (hash === '#/onboarding/3t')
+            return { mode: 'back', target: '#/onboarding/2', companion: 'none' };
         if (hash === '#/onboarding/4')
-            return { mode: 'back', target: '#/onboarding/3', companion: 'none' };
+            return { mode: 'back', target: '#/onboarding/3a', companion: 'none' };
+        if (hash === '#/onboarding/5')
+            return { mode: 'back', target: '#/onboarding/4', companion: 'none' };
         return null;
     },
 
@@ -799,7 +805,6 @@ const App = {
             is_athlete: document.getElementById('edit-is-athlete').checked,
             is_pro: document.getElementById('edit-is-pro') ? document.getElementById('edit-is-pro').checked : false,
             category: document.getElementById('edit-category') ? document.getElementById('edit-category').value : '',
-            weight_class: document.getElementById('edit-weight-class') ? document.getElementById('edit-weight-class').value.trim() : '',
             coach: document.getElementById('edit-coach') ? document.getElementById('edit-coach').value.trim() : '',
             phase: document.getElementById('edit-phase') ? document.getElementById('edit-phase').value : ''
         };
@@ -988,8 +993,11 @@ const App = {
             var step = hash.split('/')[2];
             if (step === '1') { Builder.renderOnboarding1(); return; }
             if (step === '2') { Builder.renderOnboarding2(); return; }
-            if (step === '3') { Builder.renderOnboarding3(); return; }
+            if (step === '3') { Builder.renderOnboarding3casual(); return; }
+            if (step === '3a') { Builder.renderOnboarding3athlete(); return; }
+            if (step === '3t') { Builder.renderOnboarding3trainer(); return; }
             if (step === '4') { Builder.renderOnboarding4(); return; }
+            if (step === '5') { Builder.renderOnboarding5(); return; }
         }
 
         // If no current user → login (replace, keep history clean)
@@ -1216,21 +1224,27 @@ const App = {
             return;
         }
 
-        // Onboarding: athlete
-        var athleteBtn = target.closest('.onboard-athlete-btn');
-        if (athleteBtn) {
+        // Onboarding: role selection
+        var roleBtn = target.closest('.onboard-role-btn');
+        if (roleBtn) {
             if (!Builder._onboardingData) Builder._onboardingData = {};
-            if (athleteBtn.dataset.athlete === 'yes') {
-                Builder._onboardingData.is_athlete = true;
-                location.hash = '#/onboarding/3';
-            } else {
-                Builder._onboardingData.is_athlete = false;
-                Builder._finishOnboarding();
-            }
+            Builder._onboardingData.role = roleBtn.dataset.role;
+            if (roleBtn.dataset.role === 'casual') location.hash = '#/onboarding/3';
+            else if (roleBtn.dataset.role === 'athlete') location.hash = '#/onboarding/3a';
+            else if (roleBtn.dataset.role === 'trainer') location.hash = '#/onboarding/3t';
             return;
         }
 
-        // Onboarding: pro/amateur
+        // Onboarding: goal (casual)
+        var goalBtn = target.closest('.onboard-goal-btn');
+        if (goalBtn) {
+            if (!Builder._onboardingData) Builder._onboardingData = {};
+            Builder._onboardingData.goal = goalBtn.dataset.goal;
+            Builder._finishOnboarding();
+            return;
+        }
+
+        // Onboarding: pro/amateur (athlete)
         var proBtn = target.closest('.onboard-pro-btn');
         if (proBtn) {
             if (!Builder._onboardingData) Builder._onboardingData = {};
@@ -1239,11 +1253,29 @@ const App = {
             return;
         }
 
-        // Onboarding: category
+        // Onboarding: category (athlete)
         var catBtn = target.closest('.onboard-category-btn');
         if (catBtn) {
             if (!Builder._onboardingData) Builder._onboardingData = {};
             Builder._onboardingData.category = catBtn.dataset.category;
+            location.hash = '#/onboarding/5';
+            return;
+        }
+
+        // Onboarding: phase (athlete)
+        var phaseBtn = target.closest('.onboard-phase-btn');
+        if (phaseBtn) {
+            if (!Builder._onboardingData) Builder._onboardingData = {};
+            Builder._onboardingData.phase = phaseBtn.dataset.phase;
+            Builder._finishOnboarding();
+            return;
+        }
+
+        // Onboarding: client count (trainer)
+        var clientsBtn = target.closest('.onboard-clients-btn');
+        if (clientsBtn) {
+            if (!Builder._onboardingData) Builder._onboardingData = {};
+            Builder._onboardingData.client_count = clientsBtn.dataset.clients;
             Builder._finishOnboarding();
             return;
         }

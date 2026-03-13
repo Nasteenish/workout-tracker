@@ -137,7 +137,6 @@ const SocialUI = {
         // Athlete details
         if (profile.is_athlete) {
             var details = [];
-            if (profile.weight_class) details.push(profile.weight_class);
             if (profile.coach) details.push('Тренер: ' + profile.coach);
             if (details.length) html += '<div class="profile-details">' + details.join(' &middot; ') + '</div>';
         }
@@ -221,7 +220,6 @@ const SocialUI = {
             html += '<option value="' + c + '"' + (profile.category === c ? ' selected' : '') + '>' + c + '</option>';
         });
         html += '</select></div>';
-        html += '<div class="edit-field"><label>Весовая категория</label><input type="text" id="edit-weight-class" value="' + (profile.weight_class || '') + '" placeholder="Напр. до 75 кг"></div>';
         html += '<div class="edit-field"><label>Тренер</label><input type="text" id="edit-coach" value="' + (profile.coach || '') + '" placeholder="Имя тренера"></div>';
         html += '<div class="edit-field"><label>Фаза</label><select id="edit-phase"><option value="">—</option>';
         phases.forEach(function(p) {

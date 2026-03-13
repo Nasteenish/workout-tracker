@@ -1321,13 +1321,14 @@ const Builder = {
 
     _maleCategories: ["Men's Physique", "Men's Classic Physique", "Men's 212 Bodybuilding", "Men's Bodybuilding"],
     _femaleCategories: ["Women's Fit Model", "Women's Bikini", "Women's Wellness", "Women's Figure", "Women's Fitness", "Women's Physique", "Women's Bodybuilding"],
+    _phases: ['Off-season', 'Bulk', 'Cut', 'Prep', 'Show Week'],
 
+    // Step 1: Gender
     renderOnboarding1() {
-        var totalSteps = 2;
         document.getElementById('app').innerHTML =
             '<div class="login-screen">' +
             '<div class="app-icon">' + this._barbellSVG + '</div>' +
-            '<p class="onboard-step">Шаг 1 из ' + totalSteps + '</p>' +
+            '<p class="onboard-step">Шаг 1</p>' +
             '<h2 class="onboard-title">Ваш пол?</h2>' +
             '<div class="onboard-options">' +
             '<button class="onboard-option onboard-gender-btn" data-gender="male">Мужской</button>' +
@@ -1336,25 +1337,43 @@ const Builder = {
             '</div>';
     },
 
+    // Step 2: Role
     renderOnboarding2() {
-        var totalSteps = 2;
         document.getElementById('app').innerHTML =
             '<div class="login-screen">' +
             '<div class="app-icon">' + this._barbellSVG + '</div>' +
-            '<p class="onboard-step">Шаг 2 из ' + totalSteps + '</p>' +
-            '<h2 class="onboard-title">Вы соревнующийся атлет?</h2>' +
+            '<p class="onboard-step">Шаг 2</p>' +
+            '<h2 class="onboard-title">Расскажи о себе</h2>' +
             '<div class="onboard-options">' +
-            '<button class="onboard-option onboard-athlete-btn" data-athlete="yes">Да</button>' +
-            '<button class="onboard-option onboard-athlete-btn" data-athlete="no">Нет</button>' +
+            '<button class="onboard-option onboard-role-btn" data-role="casual">\ud83c\udfcb\ufe0f Я тренируюсь для себя</button>' +
+            '<button class="onboard-option onboard-role-btn" data-role="athlete">\ud83c\udfc6 Я соревнующийся атлет</button>' +
+            '<button class="onboard-option onboard-role-btn" data-role="trainer">\ud83d\udccb Я тренер</button>' +
             '</div>' +
             '</div>';
     },
 
-    renderOnboarding3() {
+    // Step 3 casual: Goal
+    renderOnboarding3casual() {
         document.getElementById('app').innerHTML =
             '<div class="login-screen">' +
             '<div class="app-icon">' + this._barbellSVG + '</div>' +
-            '<p class="onboard-step">Шаг 3 из 4</p>' +
+            '<p class="onboard-step">Шаг 3</p>' +
+            '<h2 class="onboard-title">Какая у тебя цель?</h2>' +
+            '<div class="onboard-options">' +
+            '<button class="onboard-option onboard-goal-btn" data-goal="muscle">\ud83d\udcaa Набрать мышечную массу</button>' +
+            '<button class="onboard-option onboard-goal-btn" data-goal="fat_loss">\ud83d\udd25 Сбросить жир</button>' +
+            '<button class="onboard-option onboard-goal-btn" data-goal="strength">\u26a1 Стать сильнее</button>' +
+            '<button class="onboard-option onboard-goal-btn" data-goal="health">\ud83e\uddd8 Здоровье и самочувствие</button>' +
+            '</div>' +
+            '</div>';
+    },
+
+    // Step 3a athlete: PRO/Amateur
+    renderOnboarding3athlete() {
+        document.getElementById('app').innerHTML =
+            '<div class="login-screen">' +
+            '<div class="app-icon">' + this._barbellSVG + '</div>' +
+            '<p class="onboard-step">Шаг 3 из 5</p>' +
             '<h2 class="onboard-title">Ваш статус</h2>' +
             '<div class="onboard-options">' +
             '<button class="onboard-option onboard-pro-btn" data-pro="true">IFBB PRO</button>' +
@@ -1363,30 +1382,66 @@ const Builder = {
             '</div>';
     },
 
+    // Step 3t trainer: Client count
+    renderOnboarding3trainer() {
+        document.getElementById('app').innerHTML =
+            '<div class="login-screen">' +
+            '<div class="app-icon">' + this._barbellSVG + '</div>' +
+            '<p class="onboard-step">Шаг 3</p>' +
+            '<h2 class="onboard-title">Сколько у тебя клиентов?</h2>' +
+            '<div class="onboard-options">' +
+            '<button class="onboard-option onboard-clients-btn" data-clients="1-5">1\u20135</button>' +
+            '<button class="onboard-option onboard-clients-btn" data-clients="5-15">5\u201315</button>' +
+            '<button class="onboard-option onboard-clients-btn" data-clients="15+">15+</button>' +
+            '</div>' +
+            '</div>';
+    },
+
+    // Step 4 athlete: Category
     renderOnboarding4() {
         var d = this._onboardingData || {};
         var cats = d.gender === 'male' ? this._maleCategories : this._femaleCategories;
         var html = '<div class="login-screen">' +
             '<div class="app-icon">' + this._barbellSVG + '</div>' +
-            '<p class="onboard-step">Шаг 4 из 4</p>' +
+            '<p class="onboard-step">Шаг 4 из 5</p>' +
             '<h2 class="onboard-title">Ваша категория</h2>' +
             '<div class="onboard-chips">';
         cats.forEach(function(c) {
             html += '<button class="onboard-chip onboard-category-btn" data-category="' + c + '">' + c + '</button>';
         });
-        html += '</div>' +
-            '</div>';
+        html += '</div></div>';
+        document.getElementById('app').innerHTML = html;
+    },
+
+    // Step 5 athlete: Phase
+    renderOnboarding5() {
+        var html = '<div class="login-screen">' +
+            '<div class="app-icon">' + this._barbellSVG + '</div>' +
+            '<p class="onboard-step">Шаг 5 из 5</p>' +
+            '<h2 class="onboard-title">В какой вы фазе?</h2>' +
+            '<div class="onboard-chips">';
+        this._phases.forEach(function(p) {
+            html += '<button class="onboard-chip onboard-phase-btn" data-phase="' + p + '">' + p + '</button>';
+        });
+        html += '</div></div>';
         document.getElementById('app').innerHTML = html;
     },
 
     _finishOnboarding() {
         var d = this._onboardingData || {};
-        var profileData = { gender: d.gender || null, is_athlete: !!d.is_athlete };
-        if (d.is_athlete) {
+        var profileData = { gender: d.gender || null, role: d.role || 'casual' };
+
+        if (d.role === 'casual') {
+            profileData.goal = d.goal || '';
+        } else if (d.role === 'athlete') {
+            profileData.is_athlete = true;
             profileData.is_pro = d.is_pro || false;
             profileData.category = d.category || '';
+            profileData.phase = d.phase || '';
+        } else if (d.role === 'trainer') {
+            profileData.client_count = d.client_count || '';
         }
-        // Include username/display_name so INSERT works if profile doesn't exist yet
+
         if (d.login) {
             profileData.username = d.login;
             profileData.display_name = d.login;
@@ -1394,7 +1449,6 @@ const Builder = {
         App._onboardingChecked = true;
         var isNew = d.isNew, localId = d.localId;
 
-        // Ensure current user is set so _getSupaUserId() works
         if (localId) Storage.setCurrentUser(localId);
 
         var nav = function() {
@@ -1406,12 +1460,7 @@ const Builder = {
             }
         };
 
-        var supaId = Social._getSupaUserId();
-        if (!supaId) {
-            nav();
-            return;
-        }
-
+        if (!Social._getSupaUserId()) { nav(); return; }
         Social.upsertProfile(profileData).then(nav).catch(nav);
     }
 };
