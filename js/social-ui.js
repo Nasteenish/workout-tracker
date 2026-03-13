@@ -1197,9 +1197,26 @@ const SocialUI = {
         // Scroll to bottom
         var chatEl = document.getElementById('chat-messages');
         if (chatEl) chatEl.scrollTop = chatEl.scrollHeight;
-        // Focus input
+        // Handle virtual keyboard resize (iOS/Android)
+        var chatScreen = app.querySelector('.chat-screen');
+        if (chatScreen && window.visualViewport) {
+            var onResize = function() {
+                var h = window.visualViewport.height;
+                var offset = window.visualViewport.offsetTop;
+                chatScreen.style.height = h + 'px';
+                chatScreen.style.top = offset + 'px';
+                if (chatEl) chatEl.scrollTop = chatEl.scrollHeight;
+            };
+            window.visualViewport.addEventListener('resize', onResize);
+            window.visualViewport.addEventListener('scroll', onResize);
+            this._chatViewportCleanup = function() {
+                window.visualViewport.removeEventListener('resize', onResize);
+                window.visualViewport.removeEventListener('scroll', onResize);
+            };
+        }
+        // Focus input (delay to avoid iOS jump)
         var inp = document.getElementById('chat-input');
-        if (inp) inp.focus();
+        setTimeout(function() { if (inp) inp.focus(); }, 300);
         // Subscribe to realtime
         Social.subscribeToMessages(convId, function(msg) {
             if (msg.sender_id === myId) return; // Already rendered optimistically

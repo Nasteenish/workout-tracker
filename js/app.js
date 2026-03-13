@@ -1053,7 +1053,7 @@ const App = {
         }
         if (hash === '#/discover') { SocialUI.renderDiscover(_bs); return; }
         if (hash === '#/notifications') { SocialUI.renderNotifications(); return; }
-        if (hash === '#/messages') { Social.unsubscribeMessages(); SocialUI.renderMessages(); return; }
+        if (hash === '#/messages') { Social.unsubscribeMessages(); if (SocialUI._chatViewportCleanup) { SocialUI._chatViewportCleanup(); SocialUI._chatViewportCleanup = null; } SocialUI.renderMessages(); return; }
         var dmMatch = hash.match(/^#\/messages\/(.+)$/);
         if (dmMatch) { SocialUI.renderConversation(null, dmMatch[1]); return; }
         var checkinDetailMatch = hash.match(/^#\/checkin\/(.+)$/);
@@ -1479,6 +1479,7 @@ const App = {
         // Chat back
         if (target.id === 'btn-chat-back' || target.closest('#btn-chat-back')) {
             Social.unsubscribeMessages();
+            if (SocialUI._chatViewportCleanup) { SocialUI._chatViewportCleanup(); SocialUI._chatViewportCleanup = null; }
             history.back();
             return;
         }
