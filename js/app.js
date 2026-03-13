@@ -2604,20 +2604,6 @@ const App = {
             return;
         }
 
-        // Equipment modal — category chip filter
-        if (target.classList.contains('eq-cat')) {
-            var chips = document.querySelectorAll('.eq-cat');
-            chips.forEach(function(c) { c.classList.remove('active'); });
-            target.classList.add('active');
-            var cat = target.dataset.cat;
-            var modal = document.getElementById('equipment-modal');
-            if (modal) modal._muscleGroup = cat;
-            var searchInput = document.getElementById('eq-search');
-            var query = searchInput ? searchInput.value.trim().toLowerCase() : '';
-            this._renderSharedEquipment(query, cat);
-            return;
-        }
-
         // Equipment modal — click shared item
         if (target.closest('.eq-shared-item')) {
             var item = target.closest('.eq-shared-item');
@@ -2807,15 +2793,6 @@ const App = {
             return;
         }
 
-        // Equipment modal — filter shared equipment as user types
-        if (target.id === 'eq-search') {
-            var query = target.value.trim().toLowerCase();
-            var modal = document.getElementById('equipment-modal');
-            var activeCat = modal ? modal.querySelector('.eq-cat.active') : null;
-            var cat = activeCat ? activeCat.dataset.cat : 'all';
-            this._renderSharedEquipment(query, cat);
-            return;
-        }
     },
 
     handleFocus(e) {
@@ -3052,11 +3029,6 @@ const App = {
         var resultsDiv = document.getElementById('gym-shared-results');
         if (!resultsDiv) return;
         var gyms = this._sharedGymsCache || [];
-        // Filter by query
-        if (query) {
-            gyms = gyms.filter(function(g) { return g.name.toLowerCase().indexOf(query) !== -1; });
-        }
-        // Filter out gyms user already has
         var myGyms = Storage.getGyms();
         var myNames = {};
         for (var i = 0; i < myGyms.length; i++) myNames[myGyms[i].name.toLowerCase()] = true;
@@ -3077,22 +3049,17 @@ const App = {
         var self = this;
         Social.searchSharedEquipment('', muscleGroup).then(function(items) {
             self._sharedEquipmentCache = items || [];
-            self._renderSharedEquipment('', muscleGroup);
+            self._renderSharedEquipment(muscleGroup);
         }).catch(function() {});
     },
 
-    _renderSharedEquipment(query, muscleGroup) {
+    _renderSharedEquipment(muscleGroup) {
         var resultsDiv = document.getElementById('eq-shared-results');
         if (!resultsDiv) return;
         var items = this._sharedEquipmentCache || [];
         // Filter by muscle group
         if (muscleGroup && muscleGroup !== 'all') {
             items = items.filter(function(it) { return it.muscle_group === muscleGroup; });
-        }
-        // Filter by query
-        if (query) {
-            var q = query.toLowerCase();
-            items = items.filter(function(it) { return it.name.toLowerCase().indexOf(q) !== -1; });
         }
         // Filter out equipment user already has
         var myEq = Storage.getEquipmentList();

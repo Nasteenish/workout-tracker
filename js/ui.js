@@ -1143,13 +1143,6 @@ const UI = {
         const currentEqId = Storage.getExerciseEquipment(exerciseId);
         const muscleGroup = this._getExerciseMuscleGroup(exerciseId);
 
-        // Category chips
-        var catsHtml = '<button class="eq-cat' + (muscleGroup === 'all' ? ' active' : '') + '" data-cat="all">Все</button>';
-        for (var i = 0; i < EXERCISE_CATEGORIES.length; i++) {
-            var cat = EXERCISE_CATEGORIES[i];
-            catsHtml += '<button class="eq-cat' + (cat.id === muscleGroup ? ' active' : '') + '" data-cat="' + cat.id + '">' + cat.nameRu + '</button>';
-        }
-
         let optionsHtml = `
             <div class="eq-option ${!currentEqId ? 'selected' : ''}" data-eq-id="" data-exercise="${exerciseId}">
                 Без оборудования
@@ -1171,10 +1164,6 @@ const UI = {
             <div class="equipment-modal">
                 <div class="modal-header">
                     <h3>Оборудование</h3>
-                </div>
-                <div class="eq-category-chips" id="eq-categories">${catsHtml}</div>
-                <div class="eq-search-row">
-                    <input type="text" id="eq-search" placeholder="Поиск..." class="eq-new-input">
                 </div>
                 <div class="eq-list">
                     ${optionsHtml}
