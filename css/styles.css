@@ -3414,6 +3414,12 @@ body.modal-open {
     background: var(--accent-primary);
     color: #fff;
 }
+.picker-cat-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+}
 
 .workout-timer-row {
     display: flex;
