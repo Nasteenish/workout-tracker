@@ -143,14 +143,22 @@ const Social = {
         if (!supa) return null;
         var userId = this._getSupaUserId();
         if (!userId) return null;
-        // Resize images to max 1800px, compress to JPEG
+        var isVideo = file.type && file.type.startsWith('video/');
         var uploadFile = file;
-        if (!file.type || file.type.startsWith('image/')) {
+        var ext = 'jpg';
+        var contentType = 'image/jpeg';
+        if (isVideo) {
+            // Video: upload as-is, limit 50MB
+            if (file.size > 50 * 1024 * 1024) throw new Error('Видео до 50 МБ');
+            ext = file.name.split('.').pop() || 'mp4';
+            contentType = file.type || 'video/mp4';
+        } else {
+            // Image: resize to max 1800px
             uploadFile = await this._resizeImage(file, 1800);
         }
         var name = Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-        var path = userId + '/' + name + '.jpg';
-        var result = await supa.storage.from('checkin-photos').upload(path, uploadFile, { upsert: false, contentType: 'image/jpeg' });
+        var path = userId + '/' + name + '.' + ext;
+        var result = await supa.storage.from('checkin-photos').upload(path, uploadFile, { upsert: false, contentType: contentType });
         if (result.error) throw new Error(result.error.message);
         var urlResult = supa.storage.from('checkin-photos').getPublicUrl(path);
         return urlResult.data.publicUrl;

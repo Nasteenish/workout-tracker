@@ -77,13 +77,17 @@ const App = {
             if (e.target.id === 'checkin-photo-input' && e.target.files) {
                 var files = Array.from(e.target.files);
                 var total = this._checkinPhotos.length + files.length;
-                if (total > 3) { alert('Максимум 3 фото'); return; }
+                if (total > 3) { alert('Максимум 3 фото/видео'); return; }
                 this._checkinPhotos = this._checkinPhotos.concat(files);
                 var grid = document.getElementById('checkin-photos-grid');
                 if (grid) {
                     files.forEach(function(f) {
                         var url = URL.createObjectURL(f);
-                        grid.insertAdjacentHTML('beforeend', '<div class="checkin-photo-thumb"><img src="' + url + '" alt=""></div>');
+                        var isVid = f.type && f.type.startsWith('video/');
+                        var media = isVid
+                            ? '<video src="' + url + '" muted playsinline style="width:100%;height:100%;object-fit:cover"></video>'
+                            : '<img src="' + url + '" alt="">';
+                        grid.insertAdjacentHTML('beforeend', '<div class="checkin-photo-thumb">' + media + '</div>');
                     });
                 }
             }
@@ -843,7 +847,7 @@ const App = {
 
         // Photo required
         if (!this._checkinPhotos || this._checkinPhotos.length === 0) {
-            if (errEl) { errEl.textContent = 'Добавьте хотя бы одно фото'; errEl.style.display = 'block'; }
+            if (errEl) { errEl.textContent = 'Добавьте хотя бы одно фото или видео'; errEl.style.display = 'block'; }
             if (btn) { btn.disabled = false; btn.textContent = 'ОПУБЛИКОВАТЬ'; }
             return;
         }

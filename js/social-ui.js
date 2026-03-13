@@ -105,14 +105,14 @@ const SocialUI = {
         html += '<div class="profile-info">';
         html += '<h2 class="profile-name">' + (profile.display_name || profile.username) + (profile.is_pro ? ' <span class="pro-badge">IFBB PRO</span>' : '') + '</h2>';
         html += '<div class="profile-username">@' + profile.username + '</div>';
-        if (profile.is_athlete && profile.category) {
-            html += '<div class="profile-badge">' + profile.category + '</div>';
+        if ((profile.is_athlete && profile.category) || profile.phase) {
+            html += '<div class="profile-badges-row">';
+            if (profile.is_athlete && profile.category) html += '<span class="profile-badge">' + profile.category + '</span>';
+            if (profile.phase) html += '<span class="profile-phase">' + profile.phase + '</span>';
+            html += '</div>';
         }
         if (profile.is_athlete && profile.coach) {
             html += '<div class="profile-coach">Тренер: ' + profile.coach + '</div>';
-        }
-        if (profile.phase) {
-            html += '<span class="profile-phase">' + profile.phase + '</span>';
         }
         html += '</div>';
         html += '</div>';
@@ -312,9 +312,9 @@ const SocialUI = {
         // Photo upload
         html += '<div class="checkin-photos-section">';
         html += '<div class="checkin-photos-grid" id="checkin-photos-grid"></div>';
-        html += '<label class="checkin-add-photo" for="checkin-photo-input">+ Фото</label>';
-        html += '<input type="file" id="checkin-photo-input" accept="image/*" multiple style="display:none">';
-        html += '<div class="checkin-photo-hint">До 3 фото</div>';
+        html += '<label class="checkin-add-photo" for="checkin-photo-input">+ Фото / Видео</label>';
+        html += '<input type="file" id="checkin-photo-input" accept="image/*,video/*" multiple style="display:none">';
+        html += '<div class="checkin-photo-hint">До 3 фото/видео</div>';
         html += '</div>';
 
         // Tag users
@@ -582,7 +582,7 @@ const SocialUI = {
             var isWorkout = !!c.workout_summary;
             html += '<div class="profile-grid-item" data-checkin="' + c.id + '">';
             if (c.photos && c.photos.length > 0) {
-                html += '<img class="profile-grid-thumb" src="' + c.photos[0] + '" alt="" loading="lazy">';
+                html += SocialUI._mediaTag(c.photos[0], 'profile-grid-thumb', ' loading="lazy"');
             } else if (isWorkout) {
                 var ws = c.workout_summary;
                 var mg = ws.muscle_group || ws.title || '';
@@ -597,7 +597,6 @@ const SocialUI = {
                 if (c.weight) html += '<span>' + c.weight + ' кг</span>';
                 html += '</div>';
             }
-            html += '<span class="grid-type-badge">' + (isWorkout ? '\uD83C\uDFCB\uFE0F' : '\uD83D\uDCF8') + '</span>';
             html += '</div>';
         });
         html += noWrap ? '' : '</div>';
@@ -628,7 +627,7 @@ const SocialUI = {
             if (c.photos && c.photos.length > 0) {
                 html += '<div class="checkin-photos' + (c.photos.length > 1 ? ' multi' : '') + '">';
                 c.photos.forEach(function(url) {
-                    html += '<img class="checkin-photo" src="' + url + '" alt="">';
+                    html += SocialUI._mediaTag(url, 'checkin-photo', '');
                 });
                 // Photo tags badge
                 var cTags = tagData[c.id];
@@ -730,7 +729,7 @@ const SocialUI = {
         if (c.photos && c.photos.length > 0) {
             html += '<div class="checkin-photos' + (c.photos.length > 1 ? ' multi' : '') + '">';
             c.photos.forEach(function(url) {
-                html += '<img class="checkin-photo" src="' + url + '" alt="">';
+                html += SocialUI._mediaTag(url, 'checkin-photo', '');
             });
             // Photo tags badge
             if (photoTags && photoTags.length) {
@@ -1062,6 +1061,17 @@ const SocialUI = {
         inputEl.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') hide();
         });
+    },
+
+    _isVideo(url) {
+        return /\.(mp4|mov|webm|avi|m4v)(\?|$)/i.test(url || '');
+    },
+
+    _mediaTag(url, cls, extra) {
+        if (this._isVideo(url)) {
+            return '<video class="' + cls + '" src="' + url + '" playsinline muted loop' + (extra || '') + '></video>';
+        }
+        return '<img class="' + cls + '" src="' + url + '" alt=""' + (extra || '') + '>';
     },
 
     _muscleGroupColor(mg) {
