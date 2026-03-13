@@ -128,12 +128,13 @@ const SocialUI = {
         // Action buttons
         html += '<div class="profile-actions">';
         if (isOwn) {
-            html += '<button class="btn-profile-edit" id="btn-profile-edit">Редактировать</button>';
+            html += '<button class="btn-profile-edit" id="btn-profile-edit" title="Редактировать">&#9998;</button>';
             html += '<button class="btn-create-checkin" id="btn-new-checkin">Новый чекин</button>';
         } else {
             html += '<button class="btn-follow ' + (isFollowing ? 'following' : '') + '" id="btn-follow" data-user="' + targetId + '">';
             html += isFollowing ? 'Отписаться' : 'Подписаться';
             html += '</button>';
+            html += '<button class="btn-dm" id="btn-dm" data-user="' + targetId + '">Написать</button>';
         }
         html += '</div>';
 
@@ -152,7 +153,7 @@ const SocialUI = {
         if (checkins.length === 0) {
             html += '<div class="social-empty">Пока нет публикаций</div>';
         } else {
-            html += this._renderProfileGrid(checkins);
+            html += this._renderProfileFeed(checkins);
         }
         if (this._profileCheckinsCursor) {
             html += '<button class="btn-load-more" id="btn-load-more-profile" data-user="' + targetId + '">Загрузить ещё</button>';
@@ -367,12 +368,14 @@ const SocialUI = {
             Social.getTagsForCheckins(ids),
             this._preloadPhotos(checkins),
             Social.getUnreadNotificationCount(),
-            Social.getCommentCountsForCheckins(ids)
+            Social.getCommentCountsForCheckins(ids),
+            Social.getUnreadMessageCount()
         ]);
         var likes = extra[0];
         var tags = extra[1];
         var unreadCount = extra[3];
         var commentCounts = extra[4];
+        var msgUnread = extra[5] || 0;
 
         var html = '<div class="social-screen">';
         html += '<div class="social-header"><h2>Лента</h2>';
@@ -380,6 +383,10 @@ const SocialUI = {
         html += '<button class="social-notif-btn" id="btn-notifications">';
         html += '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>';
         if (unreadCount > 0) html += '<span class="notif-badge">' + unreadCount + '</span>';
+        html += '</button>';
+        html += '<button class="social-notif-btn" id="btn-messages" style="position:relative">';
+        html += '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+        if (msgUnread > 0) html += '<span class="msg-badge">' + msgUnread + '</span>';
         html += '</button>';
         html += '<button class="social-discover-btn" id="btn-discover"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button></div>';
 
@@ -576,27 +583,37 @@ const SocialUI = {
 
     // ===== RENDER HELPERS =====
 
-    _renderProfileGrid(checkins, noWrap) {
-        var html = noWrap ? '' : '<div class="profile-grid">';
+    _renderProfileFeed(checkins, noWrap) {
+        var html = noWrap ? '' : '<div class="profile-feed">';
         checkins.forEach(function(c) {
             var isWorkout = !!c.workout_summary;
-            html += '<div class="profile-grid-item" data-checkin="' + c.id + '">';
+            html += '<div class="profile-feed-item" data-checkin="' + c.id + '">';
+            // Date
+            html += '<div class="profile-feed-date">' + SocialUI._timeAgo(c.created_at) + '</div>';
+            // Photos/video
             if (c.photos && c.photos.length > 0) {
-                html += SocialUI._mediaTag(c.photos[0], 'profile-grid-thumb', ' loading="lazy"');
-            } else if (isWorkout) {
-                var ws = c.workout_summary;
-                var mg = ws.muscle_group || ws.title || '';
-                var mgClr = SocialUI._muscleGroupColor(mg);
-                html += '<div class="profile-grid-placeholder" style="background:' + mgClr + '">';
-                html += '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="7" width="3" height="10" rx="1"/><rect x="5" y="4" width="3" height="16" rx="1"/><rect x="16" y="4" width="3" height="16" rx="1"/><rect x="20" y="7" width="3" height="10" rx="1"/><line x1="8" y1="12" x2="16" y2="12"/></svg>';
-                if (mg) html += '<span>' + mg + '</span>';
-                html += '</div>';
-            } else {
-                html += '<div class="profile-grid-placeholder">';
-                html += '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L9 17"/></svg>';
-                if (c.weight) html += '<span>' + c.weight + ' кг</span>';
-                html += '</div>';
+                c.photos.forEach(function(url) {
+                    html += '<div class="profile-feed-photo">' + SocialUI._mediaTag(url, '', ' loading="lazy" style="width:100%;border-radius:10px;display:block"') + '</div>';
+                });
             }
+            // Workout info (no photo)
+            if (isWorkout) {
+                var ws = c.workout_summary;
+                var title = ws.title || ws.muscle_group || 'Тренировка';
+                var stats = [];
+                if (ws.exercises) stats.push(ws.exercises.length + ' упр.');
+                if (ws.total_sets) stats.push(ws.total_sets + ' подх.');
+                if (ws.duration_sec) stats.push(Math.round(ws.duration_sec / 60) + ' мин');
+                if (!(c.photos && c.photos.length > 0)) {
+                    html += '<div class="profile-feed-workout">';
+                    html += '<div class="profile-feed-workout-title">' + title + '</div>';
+                    if (stats.length) html += '<div class="profile-feed-workout-stats">' + stats.join(' · ') + '</div>';
+                    html += '</div>';
+                }
+            }
+            // Caption
+            if (c.note) html += '<div class="profile-feed-caption">' + c.note + '</div>';
+            if (c.weight) html += '<div class="profile-feed-caption">' + c.weight + ' кг</div>';
             html += '</div>';
         });
         html += noWrap ? '' : '</div>';
@@ -1094,5 +1111,128 @@ const SocialUI = {
         if (diff < 86400) return Math.floor(diff / 3600) + ' ч';
         if (diff < 604800) return Math.floor(diff / 86400) + ' д';
         return new Date(dateStr).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    },
+
+    // ===== MESSAGING =====
+
+    async renderMessages() {
+        var app = document.getElementById('app');
+        app.innerHTML = '<div class="social-loading">Загрузка...</div>';
+        var convs = await Social.getConversations();
+        var html = '<div class="social-screen">';
+        html += '<div class="social-header"><button class="social-back" id="btn-messages-back">&larr;</button><h2>Сообщения</h2></div>';
+        if (convs.length === 0) {
+            html += '<div class="messages-empty">';
+            html += '<svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+            html += 'Нет сообщений';
+            html += '</div>';
+        } else {
+            html += '<div class="messages-list">';
+            convs.forEach(function(c) {
+                var p = c.other_profile;
+                html += '<div class="conversation-item" data-conv="' + c.id + '" data-user="' + p.user_id + '">';
+                if (p.avatar_url) {
+                    html += '<img class="conversation-avatar" src="' + p.avatar_url + '" alt="">';
+                } else {
+                    html += '<div class="conversation-avatar-placeholder"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>';
+                }
+                html += '<div class="conversation-info">';
+                html += '<div class="conversation-name">' + (p.display_name || p.username) + '</div>';
+                html += '<div class="conversation-preview">' + (c.last_message || '') + '</div>';
+                html += '</div>';
+                html += '<div class="conversation-meta">';
+                html += '<div class="conversation-time">' + SocialUI._timeAgo(c.last_message_at) + '</div>';
+                if (c.unread_count > 0) html += '<div class="conversation-unread">' + c.unread_count + '</div>';
+                html += '</div>';
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+        html += this._tabBarHTML('feed');
+        app.innerHTML = html;
+    },
+
+    _chatConvId: null,
+
+    async renderConversation(conversationId, otherUserId) {
+        var app = document.getElementById('app');
+        app.innerHTML = '<div class="social-loading">Загрузка...</div>';
+        // If we got a userId instead of conversationId, resolve it
+        var convId = conversationId;
+        var otherProfile = null;
+        if (otherUserId) {
+            var conv = await Social.getOrCreateConversation(otherUserId);
+            if (!conv) { location.hash = '#/messages'; return; }
+            convId = conv.id;
+            otherProfile = await Social.getProfile(otherUserId);
+        } else {
+            // Fetch conversation to find other user
+            var convs = await Social.getConversations();
+            var conv = convs.find(function(c) { return c.id === convId; });
+            if (conv) otherProfile = conv.other_profile;
+        }
+        this._chatConvId = convId;
+        var messages = await Social.getMessages(convId);
+        await Social.markMessagesRead(convId);
+        var myId = Social._getSupaUserId();
+        var name = otherProfile ? (otherProfile.display_name || otherProfile.username) : 'Чат';
+        var avatarUrl = otherProfile ? otherProfile.avatar_url : null;
+        var html = '<div class="chat-screen">';
+        html += '<div class="chat-header">';
+        html += '<button class="social-back" id="btn-chat-back">&larr;</button>';
+        if (avatarUrl) html += '<img class="chat-header-avatar" src="' + avatarUrl + '" alt="">';
+        html += '<div class="chat-header-name">' + name + '</div>';
+        html += '</div>';
+        html += '<div class="chat-messages" id="chat-messages">';
+        html += this._renderChatMessages(messages, myId);
+        html += '</div>';
+        html += '<div class="chat-input-bar">';
+        html += '<input class="chat-input" id="chat-input" type="text" placeholder="Сообщение..." autocomplete="off">';
+        html += '<button class="chat-send-btn" id="btn-send-message">';
+        html += '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>';
+        html += '</button>';
+        html += '</div>';
+        html += '</div>';
+        app.innerHTML = html;
+        // Scroll to bottom
+        var chatEl = document.getElementById('chat-messages');
+        if (chatEl) chatEl.scrollTop = chatEl.scrollHeight;
+        // Focus input
+        var inp = document.getElementById('chat-input');
+        if (inp) inp.focus();
+        // Subscribe to realtime
+        Social.subscribeToMessages(convId, function(msg) {
+            if (msg.sender_id === myId) return; // Already rendered optimistically
+            var chatEl = document.getElementById('chat-messages');
+            if (!chatEl) return;
+            chatEl.insertAdjacentHTML('beforeend', SocialUI._renderSingleBubble(msg, myId));
+            chatEl.scrollTop = chatEl.scrollHeight;
+            Social.markMessagesRead(convId);
+        });
+    },
+
+    _renderChatMessages(messages, myId) {
+        var html = '';
+        var lastDate = '';
+        messages.forEach(function(m) {
+            var d = new Date(m.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+            if (d !== lastDate) {
+                html += '<div class="chat-date-divider">' + d + '</div>';
+                lastDate = d;
+            }
+            html += SocialUI._renderSingleBubble(m, myId);
+        });
+        return html;
+    },
+
+    _renderSingleBubble(m, myId) {
+        var isMine = m.sender_id === myId;
+        var time = new Date(m.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        var html = '<div class="chat-bubble ' + (isMine ? 'mine' : 'theirs') + '">';
+        html += m.text;
+        html += '<div class="chat-bubble-time">' + time + '</div>';
+        html += '</div>';
+        return html;
     }
 };

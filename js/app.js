@@ -54,6 +54,13 @@ const App = {
         document.getElementById('app').addEventListener('click', (e) => this.handleClick(e));
         document.getElementById('app').addEventListener('input', (e) => this.handleInput(e));
         document.getElementById('app').addEventListener('focus', (e) => this.handleFocus(e), true);
+        document.getElementById('app').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.target.id === 'chat-input') {
+                e.preventDefault();
+                var sendBtn = document.getElementById('btn-send-message');
+                if (sendBtn) sendBtn.click();
+            }
+        });
 
         // File input change handlers (delegated)
         document.getElementById('app').addEventListener('change', (e) => {
@@ -152,6 +159,10 @@ const App = {
             return { mode: 'back', target: '#/feed', companion: 'none' };
         if (hash === '#/notifications')
             return { mode: 'back', target: '#/feed', companion: 'none' };
+        if (hash === '#/messages')
+            return { mode: 'back', target: '#/feed', companion: 'none' };
+        if (/^#\/messages\/.+$/.test(hash))
+            return { mode: 'back', target: '#/messages', companion: 'none' };
         if (/^#\/u\/.+$/.test(hash))
             return { mode: 'back', target: '#/discover', companion: 'none' };
         if (/^#\/(followers|following)\/.+$/.test(hash))
@@ -1042,6 +1053,9 @@ const App = {
         }
         if (hash === '#/discover') { SocialUI.renderDiscover(_bs); return; }
         if (hash === '#/notifications') { SocialUI.renderNotifications(); return; }
+        if (hash === '#/messages') { Social.unsubscribeMessages(); SocialUI.renderMessages(); return; }
+        var dmMatch = hash.match(/^#\/messages\/(.+)$/);
+        if (dmMatch) { SocialUI.renderConversation(null, dmMatch[1]); return; }
         var checkinDetailMatch = hash.match(/^#\/checkin\/(.+)$/);
         if (checkinDetailMatch) { SocialUI.renderCheckinDetail(checkinDetailMatch[1]); return; }
         var followListMatch = hash.match(/^#\/(followers|following)\/(.+)$/);
@@ -1309,7 +1323,7 @@ const App = {
         }
 
         // Profile grid item click → detail
-        var gridItem = target.closest('.profile-grid-item');
+        var gridItem = target.closest('.profile-feed-item');
         if (gridItem) {
             var cid = gridItem.dataset.checkin;
             if (cid) location.hash = '#/checkin/' + cid;
@@ -1330,7 +1344,7 @@ const App = {
             var gridEl = document.getElementById('profile-posts-grid');
             if (gridEl) {
                 var loadBtn = gridEl.querySelector('.btn-load-more');
-                gridEl.innerHTML = filtered.length ? SocialUI._renderProfileGrid(filtered) : '<div class="social-empty">Нет публикаций</div>';
+                gridEl.innerHTML = filtered.length ? SocialUI._renderProfileFeed(filtered) : '<div class="social-empty">Нет публикаций</div>';
                 if (loadBtn) gridEl.appendChild(loadBtn);
             }
             return;
@@ -1447,6 +1461,58 @@ const App = {
         // Notifications button
         if (target.id === 'btn-notifications' || target.closest('#btn-notifications')) {
             location.hash = '#/notifications';
+            return;
+        }
+
+        // Messages button (feed header)
+        if (target.id === 'btn-messages' || target.closest('#btn-messages')) {
+            location.hash = '#/messages';
+            return;
+        }
+
+        // Messages back
+        if (target.id === 'btn-messages-back' || target.closest('#btn-messages-back')) {
+            history.back();
+            return;
+        }
+
+        // Chat back
+        if (target.id === 'btn-chat-back' || target.closest('#btn-chat-back')) {
+            Social.unsubscribeMessages();
+            history.back();
+            return;
+        }
+
+        // Conversation item click
+        var convItem = target.closest('.conversation-item');
+        if (convItem) {
+            var userId = convItem.dataset.user;
+            if (userId) location.hash = '#/messages/' + userId;
+            return;
+        }
+
+        // Send message
+        if (target.id === 'btn-send-message' || target.closest('#btn-send-message')) {
+            var inp = document.getElementById('chat-input');
+            var text = inp ? inp.value.trim() : '';
+            if (!text || !SocialUI._chatConvId) return;
+            inp.value = '';
+            // Optimistic render
+            var chatEl = document.getElementById('chat-messages');
+            if (chatEl) {
+                var time = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                chatEl.insertAdjacentHTML('beforeend', '<div class="chat-bubble mine">' + text + '<div class="chat-bubble-time">' + time + '</div></div>');
+                chatEl.scrollTop = chatEl.scrollHeight;
+            }
+            Social.sendMessage(SocialUI._chatConvId, text).catch(function() {});
+            return;
+        }
+
+        // DM button on other user's profile
+        if (target.id === 'btn-dm' || target.closest('#btn-dm')) {
+            var btn = target.id === 'btn-dm' ? target : target.closest('#btn-dm');
+            var userId = btn.dataset.user;
+            if (userId) location.hash = '#/messages/' + userId;
             return;
         }
 
@@ -1703,7 +1769,7 @@ const App = {
                 SocialUI._profileAllCheckins = (SocialUI._profileAllCheckins || []).concat(more);
                 var gridEl = document.querySelector('.profile-grid');
                 if (gridEl) {
-                    gridEl.insertAdjacentHTML('beforeend', SocialUI._renderProfileGrid(more, true));
+                    gridEl.insertAdjacentHTML('beforeend', SocialUI._renderProfileFeed(more, true));
                 }
                 if (!SocialUI._profileCheckinsCursor) btn.remove();
                 else { btn.disabled = false; btn.textContent = 'Загрузить ещё'; }

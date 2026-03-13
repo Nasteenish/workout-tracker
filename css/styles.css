@@ -3578,17 +3578,15 @@ a.stat-link { text-decoration: none; color: inherit; -webkit-tap-highlight-color
 a.stat-link:active { opacity: 0.6; }
 .stat-num { display: block; font-size: 18px; font-weight: 700; }
 .stat-label { display: block; font-size: 12px; color: var(--text-muted); }
-.profile-actions { padding: 12px 0; }
+.profile-actions { padding: 12px 0; display: flex; gap: 8px; align-items: center; }
 .btn-profile-edit {
-    background: rgba(255,255,255,0.1);
-    color: var(--text-primary);
+    background: none;
     border: none;
-    border-radius: 8px;
-    padding: 8px 20px;
-    font-size: 14px;
-    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 18px;
     cursor: pointer;
-    width: 100%;
+    padding: 4px;
+    -webkit-tap-highlight-color: transparent;
 }
 .btn-follow {
     background: var(--accent-primary);
@@ -3599,11 +3597,21 @@ a.stat-link:active { opacity: 0.6; }
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    width: 100%;
+    flex: 1;
 }
 .btn-follow.following {
     background: rgba(255,255,255,0.1);
     color: var(--text-primary);
+}
+.btn-dm {
+    background: rgba(255,255,255,0.1);
+    color: var(--text-primary);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
 }
 .profile-bio {
     padding: 8px 0;
@@ -3641,68 +3649,67 @@ a.stat-link:active { opacity: 0.6; }
     color: var(--text-primary);
 }
 
-/* Instagram-style profile grid */
-.profile-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2px;
-    padding-top: 2px;
+/* Profile chronological feed */
+.profile-feed {
+    padding-top: 8px;
 }
-.profile-grid-item {
-    position: relative;
-    aspect-ratio: 1;
-    overflow: hidden;
+.profile-feed-item {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
     cursor: pointer;
-    border-radius: 2px;
     -webkit-tap-highlight-color: transparent;
-    outline: none;
 }
-.profile-grid-thumb {
+.profile-feed-date {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+.profile-feed-photo {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    border-radius: 10px;
     display: block;
 }
-.profile-grid-placeholder {
+.profile-feed-photo video {
     width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    background: var(--bg-card);
-    color: var(--text-muted);
-    font-size: 11px;
-    font-weight: 600;
+    border-radius: 10px;
+    display: block;
 }
-.grid-type-badge {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    font-size: 10px;
-    background: rgba(0,0,0,0.55);
-    border-radius: 4px;
-    padding: 2px 4px;
-    line-height: 1;
+.profile-feed-caption {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 6px;
+    line-height: 1.3;
+}
+.profile-feed-workout {
+    background: var(--bg-card);
+    border-radius: 10px;
+    padding: 12px;
+}
+.profile-feed-workout-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+.profile-feed-workout-stats {
+    font-size: 12px;
+    color: var(--text-muted);
 }
 
 /* New checkin button */
 .btn-create-checkin {
-    background: rgba(255,255,255,0.1);
+    background: var(--accent-primary);
     border: none;
     border-radius: 8px;
-    padding: 8px 20px;
-    color: var(--text-primary);
+    padding: 10px 24px;
+    color: #000;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    width: 100%;
-    margin-top: 8px;
+    flex: 1;
     -webkit-tap-highlight-color: transparent;
 }
 .btn-create-checkin:active {
-    background: rgba(255,255,255,0.1);
+    opacity: 0.85;
 }
 
 /* ===== Profile Edit ===== */
@@ -4641,4 +4648,209 @@ video.checkin-photo {
     padding: 12px;
     padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     flex-shrink: 0;
+}
+
+/* ===== Messaging ===== */
+.messages-list {
+    padding: 0;
+}
+.conversation-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.conversation-item:active {
+    background: rgba(255,255,255,0.04);
+}
+.conversation-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.conversation-avatar-placeholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--text-muted);
+}
+.conversation-info {
+    flex: 1;
+    min-width: 0;
+}
+.conversation-name {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 2px;
+}
+.conversation-preview {
+    font-size: 13px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.conversation-meta {
+    text-align: right;
+    flex-shrink: 0;
+}
+.conversation-time {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+.conversation-unread {
+    background: var(--accent-primary);
+    color: #000;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+}
+.messages-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+    font-size: 15px;
+}
+.messages-empty svg {
+    display: block;
+    margin: 0 auto 12px;
+    opacity: 0.4;
+}
+
+/* Chat screen */
+.chat-screen {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+}
+.chat-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    flex-shrink: 0;
+}
+.chat-header-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.chat-header-name {
+    font-weight: 600;
+    font-size: 16px;
+    flex: 1;
+}
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    -webkit-overflow-scrolling: touch;
+}
+.chat-date-divider {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 12px 0 4px;
+}
+.chat-bubble {
+    max-width: 75%;
+    padding: 8px 12px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+.chat-bubble.mine {
+    align-self: flex-end;
+    background: var(--accent-primary);
+    color: #000;
+    border-bottom-right-radius: 4px;
+}
+.chat-bubble.theirs {
+    align-self: flex-start;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border-bottom-left-radius: 4px;
+}
+.chat-bubble-time {
+    font-size: 10px;
+    opacity: 0.6;
+    margin-top: 2px;
+}
+.chat-input-bar {
+    display: flex;
+    gap: 8px;
+    padding: 8px 12px;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid rgba(255,255,255,0.08);
+    background: var(--bg-primary);
+    flex-shrink: 0;
+}
+.chat-input {
+    flex: 1;
+    background: var(--bg-card);
+    border: none;
+    border-radius: 20px;
+    padding: 10px 16px;
+    color: var(--text-primary);
+    font-size: 14px;
+    outline: none;
+}
+.chat-input::placeholder {
+    color: var(--text-muted);
+}
+.chat-send-btn {
+    background: var(--accent-primary);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    color: #000;
+}
+.chat-send-btn:disabled {
+    opacity: 0.4;
+}
+.msg-badge {
+    background: var(--accent-primary);
+    color: #000;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    position: absolute;
+    top: -4px;
+    right: -4px;
 }

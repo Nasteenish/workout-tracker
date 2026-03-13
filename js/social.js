@@ -515,5 +515,135 @@ const Social = {
             .limit(20);
         if (result.error) return [];
         return result.data;
+    },
+
+    // ===== MESSAGING =====
+
+    async getOrCreateConversation(otherUserId) {
+        if (!supa) return null;
+        var myId = this._getSupaUserId();
+        if (!myId) return null;
+        // Consistent ordering: smaller UUID = user1
+        var u1 = myId < otherUserId ? myId : otherUserId;
+        var u2 = myId < otherUserId ? otherUserId : myId;
+        // Try find existing
+        var r = await supa.from('conversations')
+            .select('*')
+            .eq('user1_id', u1).eq('user2_id', u2).single();
+        if (r.data) return r.data;
+        // Create new
+        var r2 = await supa.from('conversations')
+            .insert({ user1_id: u1, user2_id: u2 })
+            .select().single();
+        if (r2.error) throw new Error(r2.error.message);
+        return r2.data;
+    },
+
+    async getConversations() {
+        if (!supa) return [];
+        var myId = this._getSupaUserId();
+        if (!myId) return [];
+        var r = await supa.from('conversations')
+            .select('*')
+            .or('user1_id.eq.' + myId + ',user2_id.eq.' + myId)
+            .order('last_message_at', { ascending: false });
+        if (r.error) return [];
+        var convs = r.data || [];
+        // Fetch profiles for other users
+        var otherIds = convs.map(function(c) { return c.user1_id === myId ? c.user2_id : c.user1_id; });
+        var uniqueIds = otherIds.filter(function(id, i) { return otherIds.indexOf(id) === i; });
+        var profileMap = {};
+        if (uniqueIds.length) {
+            var pr = await supa.from('profiles').select('*').in('user_id', uniqueIds);
+            if (pr.data) pr.data.forEach(function(p) { profileMap[p.user_id] = p; });
+        }
+        // Get unread counts per conversation
+        var unreadR = await supa.from('messages')
+            .select('conversation_id', { count: 'exact' })
+            .eq('read', false)
+            .neq('sender_id', myId)
+            .in('conversation_id', convs.map(function(c) { return c.id; }));
+        // Count per conversation manually
+        var unreadMap = {};
+        if (unreadR.data) {
+            unreadR.data.forEach(function(m) {
+                unreadMap[m.conversation_id] = (unreadMap[m.conversation_id] || 0) + 1;
+            });
+        }
+        convs.forEach(function(c) {
+            var otherId = c.user1_id === myId ? c.user2_id : c.user1_id;
+            c.other_profile = profileMap[otherId] || { username: '?', display_name: '?' };
+            c.unread_count = unreadMap[c.id] || 0;
+        });
+        return convs;
+    },
+
+    async getMessages(conversationId, before) {
+        if (!supa) return [];
+        var q = supa.from('messages')
+            .select('*')
+            .eq('conversation_id', conversationId)
+            .order('created_at', { ascending: false })
+            .limit(30);
+        if (before) q = q.lt('created_at', before);
+        var r = await q;
+        if (r.error) return [];
+        return (r.data || []).reverse();
+    },
+
+    async sendMessage(conversationId, text) {
+        if (!supa) return null;
+        var myId = this._getSupaUserId();
+        if (!myId) return null;
+        var r = await supa.from('messages')
+            .insert({ conversation_id: conversationId, sender_id: myId, text: text })
+            .select().single();
+        if (r.error) throw new Error(r.error.message);
+        // Update conversation last_message
+        await supa.from('conversations')
+            .update({ last_message: text, last_message_at: new Date().toISOString() })
+            .eq('id', conversationId);
+        return r.data;
+    },
+
+    async markMessagesRead(conversationId) {
+        if (!supa) return;
+        var myId = this._getSupaUserId();
+        if (!myId) return;
+        await supa.from('messages')
+            .update({ read: true })
+            .eq('conversation_id', conversationId)
+            .neq('sender_id', myId)
+            .eq('read', false);
+    },
+
+    async getUnreadMessageCount() {
+        if (!supa) return 0;
+        var myId = this._getSupaUserId();
+        if (!myId) return 0;
+        var r = await supa.from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('read', false)
+            .neq('sender_id', myId);
+        return r.count || 0;
+    },
+
+    _messageChannel: null,
+
+    subscribeToMessages(conversationId, callback) {
+        this.unsubscribeMessages();
+        if (!supa) return;
+        this._messageChannel = supa.channel('messages_' + conversationId)
+            .on('postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'messages', filter: 'conversation_id=eq.' + conversationId },
+                function(payload) { callback(payload.new); }
+            ).subscribe();
+    },
+
+    unsubscribeMessages() {
+        if (this._messageChannel) {
+            supa.removeChannel(this._messageChannel);
+            this._messageChannel = null;
+        }
     }
 };
