@@ -264,7 +264,8 @@ const App = {
                     }
                     const app = document.getElementById('app');
                     app.style.position = 'fixed';
-                    app.style.top = `-${savedScrollY}px`;
+                    var bodyPad = parseInt(getComputedStyle(document.body).paddingTop) || 0;
+                    app.style.top = `${bodyPad - savedScrollY}px`;
                     app.style.left = '0'; app.style.right = '0';
                     app.classList.add('swiping-back');
                     app.style.transition = 'none';
