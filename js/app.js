@@ -2445,8 +2445,9 @@ const App = {
         if (target.closest('.gym-shared-item')) {
             var item = target.closest('.gym-shared-item');
             var sharedName = item.dataset.name;
+            var sharedCity = item.dataset.city || '';
             if (sharedName) {
-                var newId = Storage.addGym(sharedName);
+                var newId = Storage.addGym(sharedName, null, null, sharedCity);
                 var modal = document.getElementById('gym-modal');
                 var onSelect = modal ? modal._onSelect : null;
                 UI.hideGymModal();
@@ -3063,7 +3064,7 @@ const App = {
         if (!filtered.length) { resultsDiv.innerHTML = ''; return; }
         var html = '<div class="gym-shared-label">Залы из базы:</div>';
         for (var i = 0; i < filtered.length; i++) {
-            html += '<div class="gym-shared-item" data-name="' + filtered[i].name.replace(/"/g, '&quot;') + '">'
+            html += '<div class="gym-shared-item" data-name="' + filtered[i].name.replace(/"/g, '&quot;') + '" data-city="' + (filtered[i].city || '').replace(/"/g, '&quot;') + '">'
                 + '<span class="gym-shared-name">' + filtered[i].name + '</span>'
                 + '<span class="gym-shared-city">' + (filtered[i].city || '') + '</span>'
                 + '</div>';
