@@ -128,60 +128,83 @@ const App = {
         });
     },
 
-    // Global realtime subscription for new messages → badge + notification
+    // Global message notifications: realtime + polling fallback
+    _msgPollTimer: null,
+    _lastKnownMsgCount: 0,
+
     _initGlobalMessageSub() {
         if (typeof Social === 'undefined') return;
-        // Request notification permission early
+        var self = this;
+        // Request notification permission
         if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission();
         }
+        // Try Realtime subscription (instant, but may not connect)
         Social.subscribeToGlobalMessages(function(msg) {
-            // Ignore if user is currently in this conversation
             if (SocialUI._chatConvId === msg.conversation_id) return;
-            // Update badge count
-            SocialUI._tabBarMsgCount = (SocialUI._tabBarMsgCount || 0) + 1;
-            var count = SocialUI._tabBarMsgCount;
-            // Update all msg-badge elements in DOM
-            document.querySelectorAll('.msg-badge').forEach(function(el) { el.textContent = count; });
-            // If no badge exists yet, create one on chat buttons
-            if (!document.querySelector('.msg-badge')) {
-                document.querySelectorAll('#btn-messages').forEach(function(btn) {
-                    var span = document.createElement('span');
-                    span.className = 'msg-badge';
-                    span.textContent = count;
-                    btn.appendChild(span);
-                });
-            }
-            var preview = msg.text ? msg.text.substring(0, 100) : 'Вам написали';
-            if (document.visibilityState === 'visible') {
-                // In-app toast + vibrate
-                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-                var toast = document.createElement('div');
-                toast.className = 'msg-toast';
-                toast.innerHTML = '<b>Новое сообщение</b><br>' + preview;
-                toast.onclick = function() { toast.remove(); location.hash = '#/messages'; };
-                document.body.appendChild(toast);
-                setTimeout(function() { toast.remove(); }, 4000);
-            } else {
-                // SW push notification when backgrounded
-                if (navigator.serviceWorker) {
-                    navigator.serviceWorker.ready.then(function(reg) {
-                        if (reg.active) {
-                            reg.active.postMessage({
-                                type: 'SHOW_MSG_NOTIFICATION',
-                                title: 'Новое сообщение',
-                                body: preview
-                            });
-                        }
-                    });
-                }
-            }
+            self._onNewMessage(msg.text);
         });
-        // Listen for SW notification click → open messages
+        // Polling fallback — every 15s check unread count
+        Social.getUnreadMessageCount().then(function(c) { self._lastKnownMsgCount = c || 0; });
+        this._msgPollTimer = setInterval(function() {
+            Social.getUnreadMessageCount().then(function(count) {
+                count = count || 0;
+                if (count > self._lastKnownMsgCount) {
+                    self._onNewMessage(null);
+                }
+                self._lastKnownMsgCount = count;
+                SocialUI._tabBarMsgCount = count;
+                if (count > 0) {
+                    document.querySelectorAll('.msg-badge').forEach(function(el) { el.textContent = count; });
+                    if (!document.querySelector('.msg-badge')) {
+                        document.querySelectorAll('#btn-messages').forEach(function(btn) {
+                            var span = document.createElement('span');
+                            span.className = 'msg-badge';
+                            span.textContent = count;
+                            btn.appendChild(span);
+                        });
+                    }
+                } else {
+                    document.querySelectorAll('.msg-badge').forEach(function(el) { el.remove(); });
+                }
+            }).catch(function() {});
+        }, 15000);
+        // Listen for SW notification click
         if (navigator.serviceWorker) {
             navigator.serviceWorker.addEventListener('message', function(e) {
                 if (e.data && e.data.type === 'OPEN_MESSAGES') {
                     location.hash = '#/messages';
+                }
+            });
+        }
+    },
+
+    _onNewMessage(text) {
+        SocialUI._tabBarMsgCount = (SocialUI._tabBarMsgCount || 0) + 1;
+        var count = SocialUI._tabBarMsgCount;
+        this._lastKnownMsgCount = count;
+        document.querySelectorAll('.msg-badge').forEach(function(el) { el.textContent = count; });
+        if (!document.querySelector('.msg-badge')) {
+            document.querySelectorAll('#btn-messages').forEach(function(btn) {
+                var span = document.createElement('span');
+                span.className = 'msg-badge';
+                span.textContent = count;
+                btn.appendChild(span);
+            });
+        }
+        var preview = text ? text.substring(0, 100) : 'Вам написали';
+        if (document.visibilityState === 'visible') {
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            var toast = document.createElement('div');
+            toast.className = 'msg-toast';
+            toast.innerHTML = '<b>Новое сообщение</b><br>' + preview;
+            toast.onclick = function() { toast.remove(); location.hash = '#/messages'; };
+            document.body.appendChild(toast);
+            setTimeout(function() { toast.remove(); }, 4000);
+        } else if (navigator.serviceWorker) {
+            navigator.serviceWorker.ready.then(function(reg) {
+                if (reg.active) {
+                    reg.active.postMessage({ type: 'SHOW_MSG_NOTIFICATION', title: 'Новое сообщение', body: preview });
                 }
             });
         }
