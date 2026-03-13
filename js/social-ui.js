@@ -314,7 +314,7 @@ const SocialUI = {
         html += '<div class="checkin-photos-grid" id="checkin-photos-grid"></div>';
         html += '<label class="checkin-add-photo" for="checkin-photo-input">+ Фото</label>';
         html += '<input type="file" id="checkin-photo-input" accept="image/*" multiple style="display:none">';
-        html += '<div class="checkin-photo-hint">До 3 фото (обязательно)</div>';
+        html += '<div class="checkin-photo-hint">До 3 фото</div>';
         html += '</div>';
 
         // Tag users
