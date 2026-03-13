@@ -131,6 +131,10 @@ const App = {
     // Global realtime subscription for new messages → badge + notification
     _initGlobalMessageSub() {
         if (typeof Social === 'undefined') return;
+        // Request notification permission early
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
         Social.subscribeToGlobalMessages(function(msg) {
             // Ignore if user is currently in this conversation
             if (SocialUI._chatConvId === msg.conversation_id) return;
@@ -148,17 +152,29 @@ const App = {
                     btn.appendChild(span);
                 });
             }
-            // Show SW notification if app is backgrounded
-            if (document.visibilityState !== 'visible' && navigator.serviceWorker) {
-                navigator.serviceWorker.ready.then(function(reg) {
-                    if (reg.active) {
-                        reg.active.postMessage({
-                            type: 'SHOW_MSG_NOTIFICATION',
-                            title: 'Новое сообщение',
-                            body: msg.text ? msg.text.substring(0, 100) : 'Вам написали'
-                        });
-                    }
-                });
+            var preview = msg.text ? msg.text.substring(0, 100) : 'Вам написали';
+            if (document.visibilityState === 'visible') {
+                // In-app toast + vibrate
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                var toast = document.createElement('div');
+                toast.className = 'msg-toast';
+                toast.innerHTML = '<b>Новое сообщение</b><br>' + preview;
+                toast.onclick = function() { toast.remove(); location.hash = '#/messages'; };
+                document.body.appendChild(toast);
+                setTimeout(function() { toast.remove(); }, 4000);
+            } else {
+                // SW push notification when backgrounded
+                if (navigator.serviceWorker) {
+                    navigator.serviceWorker.ready.then(function(reg) {
+                        if (reg.active) {
+                            reg.active.postMessage({
+                                type: 'SHOW_MSG_NOTIFICATION',
+                                title: 'Новое сообщение',
+                                body: preview
+                            });
+                        }
+                    });
+                }
             }
         });
         // Listen for SW notification click → open messages
