@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="./icons/icon-192.png">
     <link rel="manifest" href="./manifest.json">
-    <link rel="stylesheet" href="./css/styles.css?v=108">
+    <link rel="stylesheet" href="./css/styles.css?v=109">
     <title>Трекер Тренировок</title>
 </head>
 <body>
@@ -42,7 +42,7 @@
     <script src="./js/ui.js?v=94"></script>
     <script src="./js/cropper.js?v=1"></script>
     <script src="./js/social-ui.js?v=28"></script>
-    <script src="./js/builder.js?v=44"></script>
+    <script src="./js/builder.js?v=45"></script>
     <script src="./js/timer.js?v=61"></script>
     <script src="./js/app.js?v=135"></script>
 
@@ -56,11 +56,11 @@
                 location.reload();
             });
             // One-time SW reset to clear corrupted state after rapid updates
-            if (!localStorage.getItem('_swReset377')) {
+            if (!localStorage.getItem('_swReset378')) {
                 navigator.serviceWorker.getRegistrations().then(function(regs) {
                     return Promise.all(regs.map(function(r) { return r.unregister(); }));
                 }).then(function() {
-                    localStorage.setItem('_swReset377', '1');
+                    localStorage.setItem('_swReset378', '1');
                     return navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' });
                 }).then(function(reg) { return reg.update(); });
             } else {

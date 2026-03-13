@@ -1345,9 +1345,9 @@ const Builder = {
             '<p class="onboard-step">Шаг 2</p>' +
             '<h2 class="onboard-title">Расскажи о себе</h2>' +
             '<div class="onboard-options">' +
-            '<button class="onboard-option onboard-role-btn" data-role="casual">\ud83c\udfcb\ufe0f Я тренируюсь для себя</button>' +
-            '<button class="onboard-option onboard-role-btn" data-role="athlete">\ud83c\udfc6 Я соревнующийся атлет</button>' +
-            '<button class="onboard-option onboard-role-btn" data-role="trainer">\ud83d\udccb Я тренер</button>' +
+            '<button class="onboard-option onboard-role-btn" data-role="casual">Я тренируюсь для себя</button>' +
+            '<button class="onboard-option onboard-role-btn" data-role="athlete">Я соревнующийся атлет</button>' +
+            '<button class="onboard-option onboard-role-btn" data-role="trainer">Я тренер</button>' +
             '</div>' +
             '</div>';
     },
@@ -1360,10 +1360,10 @@ const Builder = {
             '<p class="onboard-step">Шаг 3</p>' +
             '<h2 class="onboard-title">Какая у тебя цель?</h2>' +
             '<div class="onboard-options">' +
-            '<button class="onboard-option onboard-goal-btn" data-goal="muscle">\ud83d\udcaa Набрать мышечную массу</button>' +
-            '<button class="onboard-option onboard-goal-btn" data-goal="fat_loss">\ud83d\udd25 Сбросить жир</button>' +
-            '<button class="onboard-option onboard-goal-btn" data-goal="strength">\u26a1 Стать сильнее</button>' +
-            '<button class="onboard-option onboard-goal-btn" data-goal="health">\ud83e\uddd8 Здоровье и самочувствие</button>' +
+            '<button class="onboard-option onboard-goal-btn" data-goal="muscle">Набрать мышечную массу</button>' +
+            '<button class="onboard-option onboard-goal-btn" data-goal="fat_loss">Сбросить жир</button>' +
+            '<button class="onboard-option onboard-goal-btn" data-goal="strength">Стать сильнее</button>' +
+            '<button class="onboard-option onboard-goal-btn" data-goal="health">Здоровье и самочувствие</button>' +
             '</div>' +
             '</div>';
     },
@@ -1460,7 +1460,20 @@ const Builder = {
             }
         };
 
-        if (!Social._getSupaUserId()) { nav(); return; }
-        Social.upsertProfile(profileData).then(nav).catch(nav);
+        if (!Social._getSupaUserId()) {
+            console.warn('Onboarding: no supaUserId, skipping save');
+            nav();
+            return;
+        }
+        console.log('Onboarding save:', JSON.stringify(profileData));
+        Social.upsertProfile(profileData).then(function(result) {
+            console.log('Onboarding saved OK:', JSON.stringify(result));
+            nav();
+        }).catch(function(err) {
+            console.error('Onboarding save error:', err);
+            var dbg = document.getElementById('debug');
+            if (dbg) { dbg.style.display = 'block'; dbg.innerHTML += '<b>SAVE ERROR:</b> ' + err.message + '<br>'; }
+            nav();
+        });
     }
 };
