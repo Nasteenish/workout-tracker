@@ -2588,7 +2588,7 @@ const App = {
                 if (progress.total > 0 && progress.completed >= progress.total) {
                     this._showFinishButton();
                 } else {
-                    RestTimer.start();
+                    RestTimer.start(row);
                 }
             }
             return;

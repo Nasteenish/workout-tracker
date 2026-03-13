@@ -8,9 +8,7 @@ const RestTimer = {
     _audioCtx: null,
     _endTime: null,
     _pausedAt: null,
-    _minimized: false,
-    _touchStartY: null,
-    _touchStartX: null,
+    _bar: null,
 
     init() {
         const settings = Storage.getSettings();
@@ -35,131 +33,16 @@ const RestTimer = {
                 </svg>
             </button>
         `;
-        document.body.appendChild(bar);
+        this._bar = bar;
+        // Don't append to body — will be inserted inline on start()
 
-        document.getElementById('rtb-close').addEventListener('click', () => this.stop());
-        document.getElementById('rtb-minus').addEventListener('click', () => this.adjust(-30));
-        document.getElementById('rtb-plus').addEventListener('click', () => this.adjust(30));
-        document.getElementById('rtb-pause').addEventListener('click', () => this.togglePause());
-
-        // Drag gestures for minimize/expand
-        this._dragging = false;
-        this._dragDy = 0;
-
-        bar.addEventListener('touchstart', (e) => {
-            this._touchStartY = e.touches[0].clientY;
-            this._touchStartX = e.touches[0].clientX;
-            this._dragging = false;
-            this._dragDy = 0;
-        }, { passive: false });
-
-        bar.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            if (this._touchStartY === null) return;
-            const dy = e.touches[0].clientY - this._touchStartY;
-            const dx = Math.abs(e.touches[0].clientX - this._touchStartX);
-
-            // Start dragging after small threshold
-            if (!this._dragging && Math.abs(dy) > 8 && Math.abs(dy) > dx) {
-                this._dragging = true;
-                bar.style.transition = 'none';
-            }
-
-            if (this._dragging) {
-                this._dragDy = dy;
-                // Expanded: drag down → minimize, drag up → dismiss
-                if (!this._minimized && dy > 0) {
-                    const dampened = dy * 0.6;
-                    const scale = Math.max(0.4, 1 - dy / 600);
-                    const opacity = Math.max(0.5, 1 - dy / 400);
-                    bar.style.transform = `translateX(-50%) translateY(${dampened}px) scale(${scale})`;
-                    bar.style.opacity = opacity;
-                } else if (!this._minimized && dy < 0) {
-                    const dampened = dy * 0.6;
-                    const opacity = Math.max(0.3, 1 - Math.abs(dy) / 300);
-                    bar.style.transform = `translateX(-50%) translateY(${dampened}px)`;
-                    bar.style.opacity = opacity;
-                } else if (this._minimized && dy < 0) {
-                    const dampened = dy * 0.6;
-                    const scale = Math.min(1.3, 1 + Math.abs(dy) / 400);
-                    bar.style.transform = `translateY(${dampened}px) scale(${scale})`;
-                    bar.style.opacity = Math.max(0.5, 1 - Math.abs(dy) / 400);
-                }
-            }
-        }, { passive: false });
-
-        bar.addEventListener('touchend', (e) => {
-            if (this._touchStartY === null) return;
-            const dy = e.changedTouches[0].clientY - this._touchStartY;
-            const dx = Math.abs(e.changedTouches[0].clientX - this._touchStartX);
-            const wasDragging = this._dragging;
-            this._touchStartY = null;
-            this._touchStartX = null;
-            this._dragging = false;
-
-            // Reset inline styles
-            bar.style.transition = '';
-            bar.style.opacity = '';
-
-            if (wasDragging) {
-                if (!this._minimized && dy < -50) {
-                    // Swiped up on expanded bar → fly up and dismiss
-                    const anim = bar.animate([
-                        { transform: `translateX(-50%) translateY(${dy * 0.6}px)`, opacity: bar.style.opacity || 1 },
-                        { transform: 'translateX(-50%) translateY(-120px)', opacity: 0 }
-                    ], { duration: 250, easing: 'ease-in', fill: 'forwards' });
-                    anim.onfinish = () => {
-                        anim.cancel();
-                        // Stop timer logic without triggering CSS transition
-                        if (this._interval) clearInterval(this._interval);
-                        this._interval = null;
-                        this._endTime = null;
-                        this._pausedAt = null;
-                        this._minimized = false;
-                        this._swTimer('STOP_TIMER');
-                        bar.style.transition = 'none';
-                        bar.style.transform = '';
-                        bar.classList.remove('active', 'minimized');
-                        this._saveState();
-                        requestAnimationFrame(() => requestAnimationFrame(() => {
-                            bar.style.transition = '';
-                        }));
-                    };
-                    return;
-                }
-                if (!this._minimized && dy > 60) {
-                    // Dragged down enough → minimize
-                    bar.style.transform = '';
-                    this._animateMinimize();
-                    return;
-                } else if (this._minimized && dy < -40) {
-                    // Dragged up enough → expand
-                    bar.style.transform = '';
-                    this._animateExpand();
-                    return;
-                }
-                // Snap back
-                bar.style.transform = '';
-                bar.animate([
-                    { transform: this._minimized ? `translateY(${dy * 0.6}px)` : `translateX(-50%) translateY(${dy * 0.6}px)` },
-                    { transform: this._minimized ? 'translate(0)' : 'translateX(-50%)' }
-                ], { duration: 250, easing: 'cubic-bezier(0.34, 1.2, 0.64, 1)' });
-                return;
-            }
-
-            // Tap on minimized circle → expand
-            if (this._minimized && Math.abs(dy) < 10 && dx < 10) {
-                bar.style.transform = '';
-                this._animateExpand();
-            }
-        });
-
-        bar.addEventListener('touchcancel', () => {
-            this._touchStartY = null;
-            this._dragging = false;
-            bar.style.transition = '';
-            bar.style.opacity = '';
-            bar.style.transform = '';
+        bar.addEventListener('click', (e) => {
+            var target = e.target.closest('button');
+            if (!target) return;
+            if (target.id === 'rtb-close') this.stop();
+            else if (target.id === 'rtb-minus') this.adjust(-30);
+            else if (target.id === 'rtb-plus') this.adjust(30);
+            else if (target.id === 'rtb-pause') this.togglePause();
         });
 
         // Unlock AudioContext on first user interaction (required on iOS)
@@ -189,69 +72,10 @@ const RestTimer = {
         }
     },
 
-    _animateMinimize() {
-        const bar = document.getElementById('rest-timer-bar');
-        if (!bar) return;
-
-        // FLIP: capture First position
-        const first = bar.getBoundingClientRect();
-
-        // Apply minimized state
-        this._minimized = true;
-        bar.classList.add('minimized');
-
-        // FLIP: capture Last position
-        const last = bar.getBoundingClientRect();
-
-        // FLIP: Invert + Play
-        const dx = first.left + first.width / 2 - (last.left + last.width / 2);
-        const dy = first.top + first.height / 2 - (last.top + last.height / 2);
-        const sx = first.width / last.width;
-        const sy = first.height / last.height;
-
-        bar.animate([
-            { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, opacity: 0.7 },
-            { transform: 'translate(0, 0) scale(1)', opacity: 1 }
-        ], { duration: 350, easing: 'cubic-bezier(0.34, 1.2, 0.64, 1)' });
-
-        this._saveState();
-    },
-
-    _animateExpand() {
-        const bar = document.getElementById('rest-timer-bar');
-        if (!bar) return;
-
-        // FLIP: capture First position (minimized)
-        const first = bar.getBoundingClientRect();
-
-        // Remove minimized state
-        this._minimized = false;
-        bar.classList.remove('minimized');
-
-        // FLIP: capture Last position (expanded)
-        // Note: expanded bar has transform: translateX(-50%) from CSS, so we must account for that
-        const last = bar.getBoundingClientRect();
-
-        // FLIP: Invert + Play
-        const dx = first.left + first.width / 2 - (last.left + last.width / 2);
-        const dy = first.top + first.height / 2 - (last.top + last.height / 2);
-        const sx = first.width / last.width;
-        const sy = first.height / last.height;
-
-        bar.animate([
-            { transform: `translateX(-50%) translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, opacity: 0.7 },
-            { transform: 'translateX(-50%) translate(0, 0) scale(1)', opacity: 1 }
-        ], { duration: 350, easing: 'cubic-bezier(0.34, 1.2, 0.64, 1)' });
-
-        this._saveState();
-    },
-
-    start() {
+    start(targetRow) {
         if (this._interval) clearInterval(this._interval);
         this._paused = false;
         this._pausedAt = null;
-        this._minimized = false;
-        document.getElementById('rest-timer-bar')?.classList.remove('minimized');
         this._remaining = this._defaultDuration;
         this._endTime = Date.now() + this._remaining * 1000;
         this._updateDisplay();
@@ -264,8 +88,29 @@ const RestTimer = {
 
         this._swTimer('START_TIMER', this._remaining * 1000);
 
-        document.getElementById('rest-timer-bar').classList.add('active');
+        // Insert timer inline after completed set/exercise
+        var bar = this._bar;
+        if (bar.parentNode) bar.remove();
+        if (targetRow) {
+            var card = targetRow.closest('.exercise-card') || targetRow.closest('.superset-group');
+            var nextSib = targetRow.nextElementSibling;
+            var isLastSet = !nextSib || !nextSib.classList.contains('set-row');
+            if (isLastSet && card) {
+                card.after(bar);
+            } else {
+                targetRow.after(bar);
+            }
+        } else {
+            // Fallback: append to body as fixed
+            document.body.appendChild(bar);
+        }
+        bar.classList.add('active');
         this._saveState();
+
+        // Scroll into view
+        setTimeout(() => {
+            bar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 50);
 
         this._interval = setInterval(() => {
             if (!this._paused) {
@@ -283,10 +128,10 @@ const RestTimer = {
         this._interval = null;
         this._endTime = null;
         this._pausedAt = null;
-        this._minimized = false;
         this._swTimer('STOP_TIMER');
-        const bar = document.getElementById('rest-timer-bar');
-        bar.classList.remove('active', 'minimized');
+        var bar = this._bar;
+        bar.classList.remove('active');
+        if (bar.parentNode) bar.remove();
         this._saveState();
     },
 
@@ -344,12 +189,14 @@ const RestTimer = {
         clearInterval(this._interval);
         this._interval = null;
         this._endTime = null;
-        this._minimized = false;
-        const bar = document.getElementById('rest-timer-bar');
-        bar.classList.remove('active', 'minimized');
         this._saveState();
 
         this._swTimer('STOP_TIMER');
+
+        // Auto-hide the inline timer
+        var bar = this._bar;
+        bar.classList.remove('active');
+        if (bar.parentNode) bar.remove();
 
         const alertUser = () => {
             if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
@@ -397,7 +244,6 @@ const RestTimer = {
 
     _playBeep() {
         // Try Web Audio API first
-        var played = false;
         try {
             if (!this._audioCtx) {
                 this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -405,7 +251,6 @@ const RestTimer = {
             var ctx = this._audioCtx;
 
             var doPlay = () => {
-                played = true;
                 [[880, 0, 0.5], [1100, 0.35, 0.6], [1320, 0.65, 0.8]].forEach(([freq, start, end]) => {
                     var osc = ctx.createOscillator();
                     var gain = ctx.createGain();
@@ -504,7 +349,7 @@ const RestTimer = {
     },
 
     _updateDisplay() {
-        const display = document.getElementById('rtb-display');
+        var display = this._bar ? this._bar.querySelector('.rtb-display') : null;
         if (!display) return;
         const sec = Math.max(0, this._remaining);
         const m = Math.floor(sec / 60);
@@ -541,8 +386,7 @@ const RestTimer = {
             endTime: this._endTime,
             paused: this._paused,
             pausedAt: this._pausedAt,
-            defaultDuration: this._defaultDuration,
-            minimized: this._minimized
+            defaultDuration: this._defaultDuration
         }));
     },
 
@@ -570,7 +414,6 @@ const RestTimer = {
             this._paused = s.paused;
             this._pausedAt = s.pausedAt;
             this._defaultDuration = s.defaultDuration || this._defaultDuration;
-            this._minimized = !!s.minimized;
 
             if (this._paused) {
                 const drift = Date.now() - s.pausedAt;
@@ -578,9 +421,10 @@ const RestTimer = {
                 this._pausedAt = Date.now();
             }
 
-            const bar = document.getElementById('rest-timer-bar');
-            bar.classList.add('active');
-            if (this._minimized) bar.classList.add('minimized');
+            // Fallback: append to body since we don't know which set-row to attach to
+            var bar = this._bar;
+            if (!bar.parentNode) document.body.appendChild(bar);
+            bar.classList.add('active', 'floating');
             this._updateDisplay();
             this._updatePauseBtn();
 
@@ -597,7 +441,7 @@ const RestTimer = {
     },
 
     _updatePauseBtn() {
-        const btn = document.getElementById('rtb-pause');
+        var btn = this._bar ? this._bar.querySelector('#rtb-pause') : null;
         if (!btn) return;
         btn.innerHTML = this._paused
             ? `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 2l10 4.5L2 11V2z" fill="currentColor"/></svg>`
