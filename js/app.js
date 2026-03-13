@@ -1555,6 +1555,14 @@ const App = {
             return;
         }
 
+        // Comment author profile link
+        var profileLink = target.closest('.comment-profile-link');
+        if (profileLink && !target.closest('.comment-reply-btn') && !target.closest('.comment-like-btn')) {
+            var username = profileLink.dataset.username;
+            if (username) location.hash = '#/u/' + username;
+            return;
+        }
+
         // Reply to comment
         var replyBtn = target.closest('.comment-reply-btn');
         if (replyBtn) {

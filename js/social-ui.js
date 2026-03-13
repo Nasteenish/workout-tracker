@@ -484,13 +484,13 @@ const SocialUI = {
             var clCount = commentLikes.counts[c.id] || 0;
             var clLiked = commentLikes.myLikes.has ? commentLikes.myLikes.has(c.id) : false;
             var h = '<div class="comment-item' + (isReply ? ' comment-reply' : '') + '">';
-            h += '<div class="comment-avatar">';
+            h += '<div class="comment-avatar comment-profile-link" data-username="' + authorUsername + '">';
             h += c.profiles && c.profiles.avatar_url
                 ? '<img src="' + c.profiles.avatar_url + '" alt="">'
                 : '<div class="avatar-placeholder-sm"></div>';
             h += '</div>';
             h += '<div class="comment-body">';
-            h += '<span class="comment-author">' + authorName + '</span> ';
+            h += '<span class="comment-author comment-profile-link" data-username="' + authorUsername + '">' + authorName + '</span> ';
             h += '<span class="comment-text">' + SocialUI._renderMentionText(c.text) + '</span>';
             h += '<div class="comment-meta">';
             h += '<span class="comment-time">' + SocialUI._timeAgo(c.created_at) + '</span>';
