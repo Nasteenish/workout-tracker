@@ -1347,7 +1347,7 @@ const Builder = {
             '<div class="onboard-options">' +
             '<button class="onboard-option onboard-role-btn" data-role="casual">Я тренируюсь для себя</button>' +
             '<button class="onboard-option onboard-role-btn" data-role="athlete">Я соревнующийся атлет</button>' +
-            '<button class="onboard-option onboard-role-btn" data-role="trainer">Я тренер</button>' +
+            // '<button class="onboard-option onboard-role-btn" data-role="trainer">Я тренер</button>' +
             '</div>' +
             '</div>';
     },
