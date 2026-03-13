@@ -1381,29 +1381,25 @@ const Builder = {
 
     _finishOnboarding() {
         var d = this._onboardingData || {};
-        var profileData = { gender: d.gender || null };
+        var profileData = { gender: d.gender || null, is_athlete: !!d.is_athlete };
         if (d.is_athlete) {
-            profileData.is_athlete = true;
             profileData.is_pro = d.is_pro || false;
             profileData.category = d.category || '';
         }
         App._onboardingChecked = true;
         var isNew = d.isNew, localId = d.localId;
-        Social.upsertProfile(profileData).then(function() {
+
+        // Ensure current user is set so _getSupaUserId() works
+        if (localId) Storage.setCurrentUser(localId);
+
+        var nav = function() {
             if (isNew && localId) {
                 App.switchUser(localId, true);
             } else {
                 history.replaceState(null, '', '#/');
                 App.route();
             }
-        }).catch(function() {
-            // Save failed but proceed anyway
-            if (isNew && localId) {
-                App.switchUser(localId, true);
-            } else {
-                history.replaceState(null, '', '#/');
-                App.route();
-            }
-        });
+        };
+        Social.upsertProfile(profileData).then(nav).catch(nav);
     }
 };
