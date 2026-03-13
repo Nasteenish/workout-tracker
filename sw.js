@@ -1,4 +1,4 @@
-const CACHE_NAME = 'workout-tracker-v403';
+const CACHE_NAME = 'workout-tracker-v404';
 const ASSETS = [
     './',
     './index.html',
@@ -87,6 +87,18 @@ self.addEventListener('message', event => {
         );
     }
 
+    if (type === 'SHOW_MSG_NOTIFICATION') {
+        event.waitUntil(
+            self.registration.showNotification(event.data.title || 'Новое сообщение', {
+                body: event.data.body || 'Вам написали',
+                icon: './icons/icon-192.png',
+                tag: 'new-message',
+                renotify: true,
+                vibrate: [200, 80, 200]
+            })
+        );
+    }
+
     if (type === 'STOP_TIMER') {
         if (_timerTimeout) clearTimeout(_timerTimeout);
         _timerTimeout = null;
@@ -96,10 +108,17 @@ self.addEventListener('message', event => {
 
 self.addEventListener('notificationclick', event => {
     event.notification.close();
+    var url = event.notification.tag === 'new-message' ? '/#/messages' : '/';
     event.waitUntil(
         clients.matchAll({ type: 'window' }).then(list => {
-            if (list.length > 0) return list[0].focus();
-            return clients.openWindow('/');
+            if (list.length > 0) {
+                list[0].focus();
+                if (event.notification.tag === 'new-message') {
+                    list[0].postMessage({ type: 'OPEN_MESSAGES' });
+                }
+                return;
+            }
+            return clients.openWindow(url);
         })
     );
 });

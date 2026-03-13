@@ -34,6 +34,7 @@ const App = {
             } else {
                 this._loadProgramForUser(currentUser);
                 this._initSupaSync(currentUser.id);
+                this._initGlobalMessageSub();
             }
         } else {
             // Legacy fallback: try loading stored program directly
@@ -125,6 +126,49 @@ const App = {
         SupaSync.syncOnLogin(supaUserId, 'wt_data_' + userId).catch(function(e) {
             console.error('Init sync error:', e);
         });
+    },
+
+    // Global realtime subscription for new messages → badge + notification
+    _initGlobalMessageSub() {
+        if (typeof Social === 'undefined') return;
+        Social.subscribeToGlobalMessages(function(msg) {
+            // Ignore if user is currently in this conversation
+            if (SocialUI._chatConvId === msg.conversation_id) return;
+            // Update badge count
+            SocialUI._tabBarMsgCount = (SocialUI._tabBarMsgCount || 0) + 1;
+            var count = SocialUI._tabBarMsgCount;
+            // Update all msg-badge elements in DOM
+            document.querySelectorAll('.msg-badge').forEach(function(el) { el.textContent = count; });
+            // If no badge exists yet, create one on chat buttons
+            if (!document.querySelector('.msg-badge')) {
+                document.querySelectorAll('#btn-messages').forEach(function(btn) {
+                    var span = document.createElement('span');
+                    span.className = 'msg-badge';
+                    span.textContent = count;
+                    btn.appendChild(span);
+                });
+            }
+            // Show SW notification if app is backgrounded
+            if (document.visibilityState !== 'visible' && navigator.serviceWorker) {
+                navigator.serviceWorker.ready.then(function(reg) {
+                    if (reg.active) {
+                        reg.active.postMessage({
+                            type: 'SHOW_MSG_NOTIFICATION',
+                            title: 'Новое сообщение',
+                            body: msg.text ? msg.text.substring(0, 100) : 'Вам написали'
+                        });
+                    }
+                });
+            }
+        });
+        // Listen for SW notification click → open messages
+        if (navigator.serviceWorker) {
+            navigator.serviceWorker.addEventListener('message', function(e) {
+                if (e.data && e.data.type === 'OPEN_MESSAGES') {
+                    location.hash = '#/messages';
+                }
+            });
+        }
     },
 
     // Config-based swipe: add new routes in _getSwipeConfig only

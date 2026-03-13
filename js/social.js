@@ -645,5 +645,32 @@ const Social = {
             supa.removeChannel(this._messageChannel);
             this._messageChannel = null;
         }
+    },
+
+    // Global subscription: notifies about any new message in user's conversations
+    _globalMsgChannel: null,
+
+    subscribeToGlobalMessages(callback) {
+        this.unsubscribeGlobalMessages();
+        if (!supa) return;
+        var myId = this._getSupaUserId();
+        if (!myId) return;
+        this._globalMsgChannel = supa.channel('global_msgs_' + myId)
+            .on('postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'messages' },
+                function(payload) {
+                    var msg = payload.new;
+                    if (msg.sender_id !== myId) {
+                        callback(msg);
+                    }
+                }
+            ).subscribe();
+    },
+
+    unsubscribeGlobalMessages() {
+        if (this._globalMsgChannel) {
+            supa.removeChannel(this._globalMsgChannel);
+            this._globalMsgChannel = null;
+        }
     }
 };
