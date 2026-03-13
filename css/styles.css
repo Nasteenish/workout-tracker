@@ -3509,7 +3509,7 @@ body:has(.tab-bar) .data-actions { margin-bottom: 10px; }
     padding: 16px 0;
     position: relative;
 }
-.profile-avatar-wrap { flex-shrink: 0; }
+.profile-avatar-wrap { flex-shrink: 0; position: relative; }
 .profile-avatar {
     width: 80px;
     height: 80px;
@@ -3581,14 +3581,21 @@ a.stat-link:active { opacity: 0.6; }
 .stat-label { display: block; font-size: 12px; color: var(--text-muted); }
 .profile-actions { padding: 12px 0; display: flex; gap: 8px; align-items: center; }
 .btn-profile-edit {
-    background: none;
+    position: absolute;
+    bottom: 2px;
+    right: -2px;
+    background: rgba(255,255,255,0.15);
     border: none;
-    color: var(--text-muted);
-    font-size: 13px;
+    color: #fff;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    padding: 0;
-    margin-left: 4px;
     -webkit-tap-highlight-color: transparent;
+    z-index: 1;
 }
 .btn-follow {
     background: var(--accent-primary);
