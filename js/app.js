@@ -2199,18 +2199,25 @@ const App = {
             return;
         }
 
-        // Settings: edit equipment name
+        // Settings: edit equipment name (inline)
         if (target.matches('.eq-edit-btn') || target.closest('.eq-edit-btn')) {
             const btn = target.matches('.eq-edit-btn') ? target : target.closest('.eq-edit-btn');
             const eqId = btn.dataset.eqId;
-            const eq = Storage.getEquipmentById(eqId);
-            if (eq) {
-                const newName = prompt('Новое название:', eq.name);
-                if (newName && newName.trim()) {
-                    Storage.renameEquipment(eqId, newName.trim());
-                    UI.renderSettings();
-                }
-            }
+            if (!eqId) return;
+            var item = btn.closest('.settings-eq-item');
+            var span = item ? item.querySelector('span') : null;
+            if (!span || span.querySelector('input')) return;
+            var oldName = span.textContent;
+            span.innerHTML = '<input type="text" class="eq-inline-edit" value="' + oldName.replace(/"/g, '&quot;') + '">';
+            var inp = span.querySelector('input');
+            inp.focus(); inp.select();
+            var save = function() {
+                var v = inp.value.trim();
+                if (v && v !== oldName) { Storage.renameEquipment(eqId, v); }
+                UI.renderSettings();
+            };
+            inp.addEventListener('blur', save);
+            inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') inp.blur(); });
             return;
         }
 
@@ -2235,18 +2242,25 @@ const App = {
             return;
         }
 
-        // Settings: edit gym name
+        // Settings: edit gym name (inline)
         if (target.matches('.gym-edit-btn') || target.closest('.gym-edit-btn')) {
             var btn = target.matches('.gym-edit-btn') ? target : target.closest('.gym-edit-btn');
             var gymId = btn.dataset.gymId;
-            var gym = Storage.getGymById(gymId);
-            if (gym) {
-                var newName = prompt('Название зала:', gym.name);
-                if (newName && newName.trim()) {
-                    Storage.renameGym(gymId, newName.trim());
-                    UI.renderSettings();
-                }
-            }
+            if (!gymId) return;
+            var item = btn.closest('.settings-eq-item');
+            var span = item ? item.querySelector('span') : null;
+            if (!span || span.querySelector('input')) return;
+            var oldName = span.textContent;
+            span.innerHTML = '<input type="text" class="eq-inline-edit" value="' + oldName.replace(/"/g, '&quot;') + '">';
+            var inp = span.querySelector('input');
+            inp.focus(); inp.select();
+            var save = function() {
+                var v = inp.value.trim();
+                if (v && v !== oldName) { Storage.renameGym(gymId, v); }
+                UI.renderSettings();
+            };
+            inp.addEventListener('blur', save);
+            inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') inp.blur(); });
             return;
         }
 

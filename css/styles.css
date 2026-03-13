@@ -1756,6 +1756,16 @@ body.modal-open {
     display: flex;
     gap: var(--spacing-xs);
 }
+.eq-inline-edit {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--accent-primary);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    font-size: var(--font-size-sm);
+    outline: none;
+}
 
 .eq-edit-btn {
     display: flex;
