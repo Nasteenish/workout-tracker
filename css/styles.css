@@ -3630,7 +3630,6 @@ a.stat-link:active { opacity: 0.6; }
 }
 .profile-tab.active {
     color: var(--text-primary);
-    border-bottom-color: var(--accent-primary);
 }
 
 /* Instagram-style profile grid */
@@ -3646,6 +3645,8 @@ a.stat-link:active { opacity: 0.6; }
     overflow: hidden;
     cursor: pointer;
     border-radius: 2px;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
 }
 .profile-grid-thumb {
     width: 100%;
