@@ -1083,10 +1083,7 @@ const Builder = {
                 <div class="picker-custom">
                     <input type="text" id="picker-custom-name" class="form-input" placeholder="\u0421\u0432\u043E\u0451 \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u0435..." autocomplete="off">
                     <button class="btn-primary picker-custom-btn" id="picker-add-custom">\u0414\u041E\u0411\u0410\u0412\u0418\u0422\u042C</button>
-                    <div id="picker-cat-prompt" style="display:none">
-                        <div class="picker-cat-label">\u0413\u0440\u0443\u043F\u043F\u0430 \u043C\u044B\u0448\u0446:</div>
-                        <div class="eq-muscle-chips"><button class="picker-cat-chip eq-muscle-chip" data-cat="chest">\u0413\u0440\u0443\u0434\u044C</button><button class="picker-cat-chip eq-muscle-chip" data-cat="back">\u0421\u043F\u0438\u043D\u0430</button><button class="picker-cat-chip eq-muscle-chip" data-cat="legs">\u041D\u043E\u0433\u0438</button><button class="picker-cat-chip eq-muscle-chip" data-cat="glutes">\u042F\u0433\u043E\u0434\u0438\u0446\u044B</button><button class="picker-cat-chip eq-muscle-chip" data-cat="shoulders">\u041F\u043B\u0435\u0447\u0438</button><button class="picker-cat-chip eq-muscle-chip" data-cat="arms">\u0420\u0443\u043A\u0438</button><button class="picker-cat-chip eq-muscle-chip" data-cat="core">\u041A\u043E\u0440</button><button class="picker-cat-chip eq-muscle-chip" data-cat="cardio">\u041A\u0430\u0440\u0434\u0438\u043E</button></div>
-                    </div>
+                    <div id="picker-cat-prompt" class="picker-cat-label" style="display:none">\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0433\u0440\u0443\u043F\u043F\u0443 \u043C\u044B\u0448\u0446 \u0441\u0432\u0435\u0440\u0445\u0443 \u2191</div>
                 </div>
             </div>
         `;
@@ -1236,12 +1233,15 @@ const Builder = {
             if (!customName) return;
             var currentCat = this._pickerCategory || 'all';
             if (currentCat === 'all') {
-                // Show muscle group chips to pick category
-                var prompt = document.getElementById('picker-cat-prompt');
-                if (prompt) {
-                    prompt.style.display = 'block';
-                    prompt._customName = customName;
+                // Highlight top category chips
+                var catsEl = document.getElementById('picker-categories');
+                if (catsEl) {
+                    catsEl.style.animation = 'none';
+                    catsEl.offsetHeight;
+                    catsEl.style.animation = 'pulse-hint 0.6s ease';
                 }
+                var prompt = document.getElementById('picker-cat-prompt');
+                if (prompt) prompt.style.display = 'block';
                 return;
             }
             // Save to shared DB with current category
@@ -1253,19 +1253,7 @@ const Builder = {
             return;
         }
 
-        // Pick category for custom exercise
-        if (target.classList.contains('picker-cat-chip')) {
-            var cat = target.dataset.cat;
-            var prompt = document.getElementById('picker-cat-prompt');
-            var customName = prompt ? prompt._customName : '';
-            if (!customName) return;
-            if (typeof Social !== 'undefined') {
-                Social.addSharedExercise(customName, cat).catch(function() {});
-            }
-            this._closeExercisePicker();
-            this.showExerciseConfig(customName, customName);
-            return;
-        }
+
     },
 
     _closeExercisePicker() {
