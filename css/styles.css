@@ -1767,7 +1767,7 @@ body.modal-open {
     outline: none;
 }
 
-.eq-edit-btn {
+.eq-edit-btn, .gym-edit-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1779,7 +1779,7 @@ body.modal-open {
     line-height: 1;
 }
 
-.eq-remove-btn {
+.eq-remove-btn, .gym-remove-btn {
     display: flex;
     align-items: center;
     justify-content: center;
