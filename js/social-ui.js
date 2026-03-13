@@ -27,17 +27,23 @@ const SocialUI = {
     },
 
     // ===== TAB BAR =====
+    _tabBarMsgCount: 0,
+
     _tabBarHTML(activeTab) {
+        var msgCount = this._tabBarMsgCount || 0;
         var tabs = [
             { id: 'workouts', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="7" width="3" height="10" rx="1"/><rect x="5" y="4" width="3" height="16" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/><rect x="16" y="4" width="3" height="16" rx="1"/><rect x="20" y="7" width="3" height="10" rx="1"/></svg>', label: 'Трени', hash: '' },
             { id: 'feed', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>', label: 'Лента', hash: '#/feed' },
+            { id: 'messages', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>', label: 'Чаты', hash: '#/messages', badge: msgCount },
             { id: 'profile', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>', label: 'Профиль', hash: '#/profile' }
         ];
         var html = '<nav class="tab-bar">';
         tabs.forEach(function(tab) {
             var cls = tab.id === activeTab ? ' active' : '';
             html += '<a class="tab-item' + cls + '" href="' + (tab.hash || '#/') + '">';
-            html += '<span class="tab-icon">' + tab.icon + '</span>';
+            html += '<span class="tab-icon">' + tab.icon;
+            if (tab.badge > 0) html += '<span class="tab-badge">' + tab.badge + '</span>';
+            html += '</span>';
             html += '<span class="tab-label">' + tab.label + '</span>';
             html += '</a>';
         });
@@ -69,13 +75,15 @@ const SocialUI = {
             Social.getFollowCounts(targetId),
             !isOwn ? Social.isFollowing(targetId) : Promise.resolve(false),
             Social.getUserCheckins(targetId),
-            Social.getCheckinCounts(targetId)
+            Social.getCheckinCounts(targetId),
+            Social.getUnreadMessageCount()
         ]);
         var profile = results[0];
         var counts = results[1];
         var isFollowing = results[2];
         var checkins = results[3];
         var postCounts = results[4];
+        this._tabBarMsgCount = results[5] || 0;
 
         // Fetch likes and preload photos
         var ids = checkins.map(function(c) { return c.id; });
@@ -376,6 +384,7 @@ const SocialUI = {
         var unreadCount = extra[3];
         var commentCounts = extra[4];
         var msgUnread = extra[5] || 0;
+        this._tabBarMsgCount = msgUnread;
 
         var html = '<div class="social-screen">';
         html += '<div class="social-header"><h2>Лента</h2>';
@@ -383,10 +392,6 @@ const SocialUI = {
         html += '<button class="social-notif-btn" id="btn-notifications">';
         html += '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>';
         if (unreadCount > 0) html += '<span class="notif-badge">' + unreadCount + '</span>';
-        html += '</button>';
-        html += '<button class="social-notif-btn" id="btn-messages" style="position:relative">';
-        html += '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
-        if (msgUnread > 0) html += '<span class="msg-badge">' + msgUnread + '</span>';
         html += '</button>';
         html += '<button class="social-discover-btn" id="btn-discover"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button></div>';
 
@@ -1116,7 +1121,9 @@ const SocialUI = {
     async renderMessages() {
         var app = document.getElementById('app');
         app.innerHTML = '<div class="social-loading">Загрузка...</div>';
-        var convs = await Social.getConversations();
+        var results = await Promise.all([Social.getConversations(), Social.getUnreadMessageCount()]);
+        var convs = results[0];
+        this._tabBarMsgCount = results[1] || 0;
         var html = '<div class="social-screen">';
         html += '<div class="social-header"><button class="social-back" id="btn-messages-back">&larr;</button><h2>Сообщения</h2></div>';
         if (convs.length === 0) {
@@ -1147,7 +1154,7 @@ const SocialUI = {
             html += '</div>';
         }
         html += '</div>';
-        html += this._tabBarHTML('feed');
+        html += this._tabBarHTML('messages');
         app.innerHTML = html;
     },
 
