@@ -3917,8 +3917,26 @@ a.stat-link:active { opacity: 0.6; }
 }
 .checkin-workout-exercises {
     color: var(--text-muted);
-    margin-top: 4px;
+    margin-top: 8px;
+    font-size: 13px;
+}
+.workout-ex-item {
+    margin-bottom: 8px;
+}
+.workout-ex-name {
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+.workout-set-line {
     font-size: 12px;
+    color: var(--text-muted);
+    padding-left: 8px;
+}
+.workout-eq {
+    font-size: 11px;
+    color: var(--accent-primary);
+    opacity: 0.7;
 }
 .checkin-note {
     font-size: 14px;

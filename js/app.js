@@ -2847,23 +2847,36 @@ const Celebration = {
             var workout = resolveWorkout(weekNum, dayNum);
             var exercises = [];
             var totalSets = 0;
+            // Build detailed exercise data with logged sets
+            var buildExDetail = function(ex) {
+                var name = ex.nameRu || ex.name;
+                var numSets = ex.sets ? ex.sets.length : 0;
+                totalSets += numSets;
+                var loggedSets = [];
+                for (var si = 0; si < numSets; si++) {
+                    var sl = Storage.getSetLog(weekNum, dayNum, ex.id, si);
+                    if (sl && sl.completed) {
+                        var setInfo = { weight: sl.weight || 0, reps: sl.reps || 0, unit: sl.unit || 'kg' };
+                        if (sl.equipmentId) {
+                            var eq = Storage.getEquipmentById(sl.equipmentId);
+                            if (eq) setInfo.equipment = eq.name;
+                        }
+                        loggedSets.push(setInfo);
+                    }
+                }
+                exercises.push({ name: name, sets: numSets, logged: loggedSets });
+            };
             if (workout && workout.exerciseGroups) {
                 workout.exerciseGroups.forEach(function(g) {
                     if (g.type === 'single' && g.exercise) {
-                        exercises.push({ name: g.exercise.nameRu || g.exercise.name, sets: g.exercise.sets ? g.exercise.sets.length : 0 });
-                        totalSets += g.exercise.sets ? g.exercise.sets.length : 0;
+                        buildExDetail(g.exercise);
                     } else if (g.type === 'superset' && g.exercises) {
                         g.exercises.forEach(function(item) {
-                            var ex = item.exercise || item;
-                            exercises.push({ name: ex.nameRu || ex.name, sets: ex.sets ? ex.sets.length : 0 });
-                            totalSets += ex.sets ? ex.sets.length : 0;
+                            buildExDetail(item.exercise || item);
                         });
                     } else if (g.type === 'choose_one' && g.exercises) {
                         var chosen = typeof getChosenExercise === 'function' ? getChosenExercise(g) : g.exercises[0];
-                        if (chosen) {
-                            exercises.push({ name: chosen.nameRu || chosen.name, sets: chosen.sets ? chosen.sets.length : 0 });
-                            totalSets += chosen.sets ? chosen.sets.length : 0;
-                        }
+                        if (chosen) buildExDetail(chosen);
                     }
                 });
             }

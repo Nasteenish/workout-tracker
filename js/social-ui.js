@@ -756,7 +756,21 @@ const SocialUI = {
             if (ws.exercises && ws.exercises.length) {
                 html += '<div class="checkin-workout-exercises">';
                 ws.exercises.forEach(function(e) {
-                    html += '<div>' + e.name + (e.sets ? ' — ' + e.sets + ' подходов' : '') + '</div>';
+                    html += '<div class="workout-ex-item">';
+                    html += '<div class="workout-ex-name">' + e.name + '</div>';
+                    if (e.logged && e.logged.length) {
+                        e.logged.forEach(function(s, idx) {
+                            var parts = [];
+                            if (s.weight) parts.push(s.weight + ' ' + (s.unit || 'kg'));
+                            if (s.reps) parts.push('x ' + s.reps);
+                            var line = parts.join(' ') || '—';
+                            if (s.equipment) line += ' <span class="workout-eq">' + s.equipment + '</span>';
+                            html += '<div class="workout-set-line">' + (idx + 1) + '. ' + line + '</div>';
+                        });
+                    } else {
+                        html += '<div class="workout-set-line">' + (e.sets || 0) + ' подходов</div>';
+                    }
+                    html += '</div>';
                 });
                 html += '</div>';
             }
