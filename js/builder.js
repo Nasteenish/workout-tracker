@@ -1400,6 +1400,28 @@ const Builder = {
                 App.route();
             }
         };
-        Social.upsertProfile(profileData).then(nav).catch(nav);
+
+        // Debug: show what we're saving
+        var dbg = document.getElementById('debug');
+        var supaId = Social._getSupaUserId();
+        if (dbg) {
+            dbg.style.display = 'block';
+            dbg.innerHTML = '<b>Onboarding save:</b> supaId=' + supaId + ', data=' + JSON.stringify(profileData);
+        }
+
+        if (!supaId) {
+            // Can't find user - show error and navigate anyway
+            if (dbg) dbg.innerHTML += '<br><b>ERROR: supaId is null!</b> localId=' + localId + ', wt_current=' + localStorage.getItem('wt_current');
+            nav();
+            return;
+        }
+
+        Social.upsertProfile(profileData).then(function(result) {
+            if (dbg) dbg.innerHTML += '<br><b>SAVED OK:</b> ' + JSON.stringify(result);
+            setTimeout(nav, 1500);
+        }).catch(function(err) {
+            if (dbg) { dbg.style.display = 'block'; dbg.innerHTML += '<br><b>SAVE ERROR:</b> ' + (err.message || err); }
+            setTimeout(nav, 2000);
+        });
     }
 };
