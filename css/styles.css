@@ -3318,6 +3318,103 @@ body.modal-open {
     color: var(--text-muted);
 }
 
+/* Equipment category chips (reuse picker chip styles) */
+.eq-category-chips {
+    display: flex;
+    gap: var(--spacing-xs);
+    overflow-x: auto;
+    padding: var(--spacing-xs) 0 var(--spacing-sm);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+.eq-category-chips::-webkit-scrollbar { display: none; }
+.eq-cat {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    background: var(--bg-card);
+    border: var(--glass-border);
+    border-radius: var(--radius-pill);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+    transition: background 0.15s, color 0.15s;
+}
+.eq-cat.active {
+    background: var(--accent-primary);
+    color: #fff;
+    border-color: var(--accent-primary);
+}
+.eq-search-row {
+    margin-bottom: var(--spacing-sm);
+}
+.eq-search-row input {
+    width: 100%;
+    height: var(--touch-min);
+    background: var(--bg-card);
+    border: var(--glass-border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    padding: 0 var(--spacing-md);
+    font-size: var(--font-size-base);
+    font-family: inherit;
+    box-sizing: border-box;
+}
+.eq-search-row input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+.eq-search-row input::placeholder {
+    color: var(--text-muted);
+}
+/* Equipment shared results */
+.eq-shared-label, .picker-shared-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding: 8px 4px 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.eq-shared-item, .picker-shared-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    margin: 2px 0;
+    background: rgba(157, 141, 245, 0.08);
+    border: 1px solid rgba(157, 141, 245, 0.15);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+.eq-shared-item:active, .picker-shared-item:active {
+    background: rgba(157, 141, 245, 0.2);
+}
+.eq-shared-name {
+    font-size: 14px;
+    color: var(--text-primary);
+}
+/* Equipment muscle group prompt */
+.eq-muscle-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) 0;
+}
+.eq-muscle-chip {
+    padding: 6px 14px;
+    background: var(--bg-card);
+    border: var(--glass-border);
+    border-radius: var(--radius-pill);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    font-family: inherit;
+}
+.eq-muscle-chip:active {
+    background: var(--accent-primary);
+    color: #fff;
+}
+
 .workout-timer-row {
     display: flex;
     align-items: center;

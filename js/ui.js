@@ -1101,10 +1101,54 @@ const UI = {
     },
 
     // ===== EQUIPMENT MODAL =====
+    _getExerciseMuscleGroup(exerciseId) {
+        // Find exercise name in program
+        var name = '';
+        var program = typeof PROGRAM !== 'undefined' ? PROGRAM : null;
+        if (program && program.weeks) {
+            for (var w = 0; w < program.weeks.length && !name; w++) {
+                var days = program.weeks[w].days;
+                for (var d = 0; d < days.length && !name; d++) {
+                    var items = days[d].items || [];
+                    for (var it = 0; it < items.length && !name; it++) {
+                        var item = items[it];
+                        if (item.type === 'single' && item.exercise && item.exercise.id === exerciseId) {
+                            name = item.exercise.nameRu || item.exercise.name || '';
+                        }
+                        if (item.type === 'superset' && item.exercises) {
+                            for (var s = 0; s < item.exercises.length; s++) {
+                                var se = item.exercises[s].exercise || item.exercises[s];
+                                if (se.id === exerciseId) { name = se.nameRu || se.name || ''; break; }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (!name) return 'all';
+        // Look up in EXERCISE_DB
+        var nl = name.toLowerCase();
+        for (var i = 0; i < EXERCISE_DB.length; i++) {
+            if ((EXERCISE_DB[i].nameRu && EXERCISE_DB[i].nameRu.toLowerCase() === nl) ||
+                (EXERCISE_DB[i].name && EXERCISE_DB[i].name.toLowerCase() === nl)) {
+                return EXERCISE_DB[i].category;
+            }
+        }
+        return 'all';
+    },
+
     showEquipmentModal(exerciseId) {
         // Show only equipment linked to this exercise
         const exerciseEquipment = Storage.getExerciseEquipmentOptions(exerciseId);
         const currentEqId = Storage.getExerciseEquipment(exerciseId);
+        const muscleGroup = this._getExerciseMuscleGroup(exerciseId);
+
+        // Category chips
+        var catsHtml = '<button class="eq-cat' + (muscleGroup === 'all' ? ' active' : '') + '" data-cat="all">Все</button>';
+        for (var i = 0; i < EXERCISE_CATEGORIES.length; i++) {
+            var cat = EXERCISE_CATEGORIES[i];
+            catsHtml += '<button class="eq-cat' + (cat.id === muscleGroup ? ' active' : '') + '" data-cat="' + cat.id + '">' + cat.nameRu + '</button>';
+        }
 
         let optionsHtml = `
             <div class="eq-option ${!currentEqId ? 'selected' : ''}" data-eq-id="" data-exercise="${exerciseId}">
@@ -1128,24 +1172,32 @@ const UI = {
                 <div class="modal-header">
                     <h3>Оборудование</h3>
                 </div>
+                <div class="eq-category-chips" id="eq-categories">${catsHtml}</div>
+                <div class="eq-search-row">
+                    <input type="text" id="eq-search" placeholder="Поиск..." class="eq-new-input">
+                </div>
                 <div class="eq-list">
                     ${optionsHtml}
                 </div>
+                <div id="eq-shared-results"></div>
                 <div class="eq-add-row">
                     <input type="text" id="eq-new-name" placeholder="Новое оборудование..." class="eq-new-input">
                     <button class="eq-add-btn" id="eq-add-btn">+</button>
                 </div>
+                <div id="eq-muscle-prompt" style="display:none"></div>
             </div>
         `;
         document.body.appendChild(overlay);
         lockBodyScroll();
 
         overlay._exerciseId = exerciseId;
+        overlay._muscleGroup = muscleGroup;
 
         blockOverlayScroll(overlay, '.equipment-modal');
-        overlay.addEventListener('click', function(e) {
-            App.handleClick(e);
-        });
+        overlay.addEventListener('click', function(e) { App.handleClick(e); });
+        overlay.addEventListener('input', function(e) { App.handleInput(e); });
+
+        App._loadSharedEquipment(muscleGroup);
     },
 
     hideEquipmentModal() {

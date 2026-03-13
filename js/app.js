@@ -2563,15 +2563,75 @@ const App = {
             if (!name) return;
             const modal = document.getElementById('equipment-modal');
             const exId = modal ? modal._exerciseId : null;
+            const muscleGroup = modal ? modal._muscleGroup : null;
+            // Check if muscle group prompt needed (unknown category)
+            var prompt = document.getElementById('eq-muscle-prompt');
+            if ((!muscleGroup || muscleGroup === 'all') && prompt && !prompt.dataset.ready) {
+                // Show muscle group selector
+                var html = '<div class="eq-muscle-chips">';
+                for (var ci = 0; ci < EXERCISE_CATEGORIES.length; ci++) {
+                    html += '<button class="eq-muscle-chip" data-group="' + EXERCISE_CATEGORIES[ci].id + '">' + EXERCISE_CATEGORIES[ci].nameRu + '</button>';
+                }
+                html += '</div>';
+                prompt.innerHTML = html;
+                prompt.style.display = 'block';
+                return;
+            }
+            var group = prompt && prompt.dataset.ready ? prompt.dataset.ready : muscleGroup;
             const newId = Storage.addEquipment(name);
+            // Save to shared DB
+            if (typeof Social !== 'undefined' && group && group !== 'all') {
+                Social.addSharedEquipment(name, group).catch(function() {});
+            }
             if (exId) {
                 Storage.setExerciseEquipment(exId, newId);
-                // Propagate to gym-equipment map
                 var activeGym = this._getActiveGymId();
                 if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, newId);
                 UI.hideEquipmentModal();
                 UI.renderDay(this._currentWeek, this._currentDay);
             }
+            return;
+        }
+
+        // Equipment modal — muscle group chip selected
+        if (target.classList.contains('eq-muscle-chip')) {
+            var prompt = document.getElementById('eq-muscle-prompt');
+            if (prompt) { prompt.dataset.ready = target.dataset.group; }
+            // Trigger the add button
+            var addBtn = document.getElementById('eq-add-btn');
+            if (addBtn) addBtn.click();
+            return;
+        }
+
+        // Equipment modal — category chip filter
+        if (target.classList.contains('eq-cat')) {
+            var chips = document.querySelectorAll('.eq-cat');
+            chips.forEach(function(c) { c.classList.remove('active'); });
+            target.classList.add('active');
+            var cat = target.dataset.cat;
+            var modal = document.getElementById('equipment-modal');
+            if (modal) modal._muscleGroup = cat;
+            var searchInput = document.getElementById('eq-search');
+            var query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            this._renderSharedEquipment(query, cat);
+            return;
+        }
+
+        // Equipment modal — click shared item
+        if (target.closest('.eq-shared-item')) {
+            var item = target.closest('.eq-shared-item');
+            var sharedName = item.dataset.name;
+            if (!sharedName) return;
+            var modal = document.getElementById('equipment-modal');
+            var exId = modal ? modal._exerciseId : null;
+            var newId = Storage.addEquipment(sharedName);
+            if (exId) {
+                Storage.setExerciseEquipment(exId, newId);
+                var activeGym = this._getActiveGymId();
+                if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, newId);
+            }
+            UI.hideEquipmentModal();
+            UI.renderDay(this._currentWeek, this._currentDay);
             return;
         }
 
@@ -2743,6 +2803,16 @@ const App = {
         if (target.id === 'gym-new-name') {
             var query = target.value.trim().toLowerCase();
             this._renderSharedGyms(query);
+            return;
+        }
+
+        // Equipment modal — filter shared equipment as user types
+        if (target.id === 'eq-search') {
+            var query = target.value.trim().toLowerCase();
+            var modal = document.getElementById('equipment-modal');
+            var activeCat = modal ? modal.querySelector('.eq-cat.active') : null;
+            var cat = activeCat ? activeCat.dataset.cat : 'all';
+            this._renderSharedEquipment(query, cat);
             return;
         }
     },
@@ -2966,6 +3036,7 @@ const App = {
     },
 
     _sharedGymsCache: null,
+    _sharedEquipmentCache: null,
 
     _loadSharedGyms() {
         if (typeof Social === 'undefined') return;
@@ -2995,6 +3066,43 @@ const App = {
             html += '<div class="gym-shared-item" data-name="' + filtered[i].name.replace(/"/g, '&quot;') + '">'
                 + '<span class="gym-shared-name">' + filtered[i].name + '</span>'
                 + '<span class="gym-shared-city">' + (filtered[i].city || '') + '</span>'
+                + '</div>';
+        }
+        resultsDiv.innerHTML = html;
+    },
+
+    _loadSharedEquipment(muscleGroup) {
+        if (typeof Social === 'undefined') return;
+        var self = this;
+        Social.searchSharedEquipment('', muscleGroup).then(function(items) {
+            self._sharedEquipmentCache = items || [];
+            self._renderSharedEquipment('', muscleGroup);
+        }).catch(function() {});
+    },
+
+    _renderSharedEquipment(query, muscleGroup) {
+        var resultsDiv = document.getElementById('eq-shared-results');
+        if (!resultsDiv) return;
+        var items = this._sharedEquipmentCache || [];
+        // Filter by muscle group
+        if (muscleGroup && muscleGroup !== 'all') {
+            items = items.filter(function(it) { return it.muscle_group === muscleGroup; });
+        }
+        // Filter by query
+        if (query) {
+            var q = query.toLowerCase();
+            items = items.filter(function(it) { return it.name.toLowerCase().indexOf(q) !== -1; });
+        }
+        // Filter out equipment user already has
+        var myEq = Storage.getEquipmentList();
+        var myNames = {};
+        for (var i = 0; i < myEq.length; i++) myNames[myEq[i].name.toLowerCase()] = true;
+        var filtered = items.filter(function(it) { return !myNames[it.name.toLowerCase()]; });
+        if (!filtered.length) { resultsDiv.innerHTML = ''; return; }
+        var html = '<div class="eq-shared-label">Из базы:</div>';
+        for (var i = 0; i < filtered.length; i++) {
+            html += '<div class="eq-shared-item" data-name="' + filtered[i].name.replace(/"/g, '&quot;') + '">'
+                + '<span class="eq-shared-name">' + filtered[i].name + '</span>'
                 + '</div>';
         }
         resultsDiv.innerHTML = html;

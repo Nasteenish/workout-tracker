@@ -700,5 +700,47 @@ const Social = {
             .upsert({ name: name, city: city, created_by: myId }, { onConflict: 'name,city' })
             .select().single();
         return r.data;
+    },
+
+    // ===== SHARED EXERCISES =====
+
+    async searchSharedExercises(query, category) {
+        if (!supa) return [];
+        var q = supa.from('shared_exercises').select('*').order('name').limit(100);
+        if (query) q = q.ilike('name', '%' + query + '%');
+        if (category && category !== 'all') q = q.eq('category', category);
+        var r = await q;
+        return r.data || [];
+    },
+
+    async addSharedExercise(name, category) {
+        if (!supa || !category || category === 'all') return null;
+        var myId = this._getSupaUserId();
+        if (!myId) return null;
+        var r = await supa.from('shared_exercises')
+            .upsert({ name: name, category: category, created_by: myId }, { onConflict: 'name' })
+            .select().single();
+        return r.data;
+    },
+
+    // ===== SHARED EQUIPMENT =====
+
+    async searchSharedEquipment(query, muscleGroup) {
+        if (!supa) return [];
+        var q = supa.from('shared_equipment').select('*').order('name').limit(100);
+        if (query) q = q.ilike('name', '%' + query + '%');
+        if (muscleGroup && muscleGroup !== 'all') q = q.eq('muscle_group', muscleGroup);
+        var r = await q;
+        return r.data || [];
+    },
+
+    async addSharedEquipment(name, muscleGroup) {
+        if (!supa || !muscleGroup) return null;
+        var myId = this._getSupaUserId();
+        if (!myId) return null;
+        var r = await supa.from('shared_equipment')
+            .upsert({ name: name, muscle_group: muscleGroup, created_by: myId }, { onConflict: 'name,muscle_group' })
+            .select().single();
+        return r.data;
     }
 };

@@ -1091,6 +1091,20 @@ const Builder = {
         lockBodyScroll();
         blockOverlayScroll(overlay, '.picker-list');
 
+        // Load shared exercises
+        this._sharedExercisesCache = [];
+        if (typeof Social !== 'undefined') {
+            Social.searchSharedExercises('').then(function(exs) {
+                Builder._sharedExercisesCache = exs || [];
+                var activeCat = document.querySelector('.picker-cat.active');
+                var cat = activeCat ? activeCat.dataset.cat : 'all';
+                var searchInput = document.getElementById('picker-search-input');
+                var q = searchInput ? searchInput.value.trim() : '';
+                var listEl = document.getElementById('picker-list');
+                if (listEl) listEl.innerHTML = Builder._buildPickerList(cat, q);
+            }).catch(function() {});
+        }
+
         // Search input listener
         var searchInput = document.getElementById('picker-search-input');
         if (searchInput) {
@@ -1125,6 +1139,8 @@ const Builder = {
         requestAnimationFrame(function() { overlay.classList.add('visible'); });
     },
 
+    _sharedExercisesCache: [],
+
     _buildPickerList(category, query) {
         var filtered = EXERCISE_DB;
         if (category && category !== 'all') {
@@ -1138,14 +1154,36 @@ const Builder = {
             });
         }
 
-        if (filtered.length === 0) {
-            return '<div class="picker-empty">\u041D\u0438\u0447\u0435\u0433\u043E \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E</div>';
-        }
-
         var html = '';
         for (var i = 0; i < filtered.length; i++) {
             var ex = filtered[i];
             html += `<div class="picker-item" data-name-ru="${ex.nameRu}" data-name="${ex.name}">${ex.nameRu}</div>`;
+        }
+
+        // Add shared exercises (filter out duplicates with EXERCISE_DB)
+        var shared = this._sharedExercisesCache || [];
+        if (category && category !== 'all') {
+            shared = shared.filter(function(s) { return s.category === category; });
+        }
+        if (query) {
+            var q = query.toLowerCase();
+            shared = shared.filter(function(s) { return s.name.toLowerCase().indexOf(q) !== -1; });
+        }
+        var dbNames = {};
+        for (var i = 0; i < EXERCISE_DB.length; i++) {
+            dbNames[EXERCISE_DB[i].nameRu.toLowerCase()] = true;
+            if (EXERCISE_DB[i].name) dbNames[EXERCISE_DB[i].name.toLowerCase()] = true;
+        }
+        shared = shared.filter(function(s) { return !dbNames[s.name.toLowerCase()]; });
+        if (shared.length > 0) {
+            html += '<div class="picker-shared-label">Из базы:</div>';
+            for (var i = 0; i < shared.length; i++) {
+                html += `<div class="picker-item picker-shared-item" data-name-ru="${shared[i].name}" data-name="${shared[i].name}">${shared[i].name}</div>`;
+            }
+        }
+
+        if (!html) {
+            return '<div class="picker-empty">\u041D\u0438\u0447\u0435\u0433\u043E \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E</div>';
         }
         return html;
     },
@@ -1171,6 +1209,7 @@ const Builder = {
             buttons.forEach(function(b) { b.classList.remove('active'); });
             target.classList.add('active');
             var cat = target.dataset.cat;
+            this._pickerCategory = cat;
             var searchInput = document.getElementById('picker-search-input');
             var query = searchInput ? searchInput.value.trim() : '';
             document.getElementById('picker-list').innerHTML = this._buildPickerList(cat, query);
@@ -1191,6 +1230,11 @@ const Builder = {
             var input = document.getElementById('picker-custom-name');
             var customName = input ? input.value.trim() : '';
             if (!customName) return;
+            // Save to shared DB with current category
+            var currentCat = this._pickerCategory || 'all';
+            if (typeof Social !== 'undefined' && currentCat !== 'all') {
+                Social.addSharedExercise(customName, currentCat).catch(function() {});
+            }
             this._closeExercisePicker();
             this.showExerciseConfig(customName, customName);
             return;
