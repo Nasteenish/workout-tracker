@@ -669,8 +669,25 @@ const SocialUI = {
                 if (wStats.length) html += '<span class="checkin-workout-stats">' + wStats.join(' · ') + '</span>';
                 if (ws.gym_name) html += '<span class="checkin-gym-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + ws.gym_name + '</span>';
                 if (ws.exercises && ws.exercises.length) {
-                    html += '<div class="checkin-workout-exercises">' + ws.exercises.slice(0, 4).map(function(e) { return e.name; }).join(', ');
-                    if (ws.exercises.length > 4) html += ' +' + (ws.exercises.length - 4);
+                    html += '<div class="checkin-workout-exercises">';
+                    ws.exercises.slice(0, 6).forEach(function(e) {
+                        html += '<div class="workout-ex-item">';
+                        html += '<div class="workout-ex-name">' + e.name + '</div>';
+                        if (e.logged && e.logged.length) {
+                            e.logged.forEach(function(s, idx) {
+                                var parts = [];
+                                if (s.weight) parts.push(s.weight + ' ' + (s.unit || 'kg'));
+                                if (s.reps) parts.push('x ' + s.reps);
+                                var line = parts.join(' ') || '—';
+                                if (s.equipment) line += ' <span class="workout-eq">' + s.equipment + '</span>';
+                                html += '<div class="workout-set-line">' + (idx + 1) + '. ' + line + '</div>';
+                            });
+                        } else if (e.sets) {
+                            html += '<div class="workout-set-line">' + e.sets + ' подх.</div>';
+                        }
+                        html += '</div>';
+                    });
+                    if (ws.exercises.length > 6) html += '<div class="workout-set-line">+' + (ws.exercises.length - 6) + ' ещё</div>';
                     html += '</div>';
                 }
                 html += '</div>';
@@ -761,14 +778,14 @@ const SocialUI = {
                     if (e.logged && e.logged.length) {
                         e.logged.forEach(function(s, idx) {
                             var parts = [];
-                            if (s.weight) parts.push(s.weight + ' ' + (s.unit || 'kg'));
+                            if (s.weight != null && s.weight !== '') parts.push(s.weight + ' ' + (s.unit || 'kg'));
                             if (s.reps) parts.push('x ' + s.reps);
                             var line = parts.join(' ') || '—';
                             if (s.equipment) line += ' <span class="workout-eq">' + s.equipment + '</span>';
                             html += '<div class="workout-set-line">' + (idx + 1) + '. ' + line + '</div>';
                         });
-                    } else {
-                        html += '<div class="workout-set-line">' + (e.sets || 0) + ' подходов</div>';
+                    } else if (e.sets) {
+                        html += '<div class="workout-set-line">' + e.sets + ' подх.</div>';
                     }
                     html += '</div>';
                 });
