@@ -108,6 +108,9 @@ const SocialUI = {
         if (profile.is_athlete && profile.category) {
             html += '<div class="profile-badge">' + profile.category + '</div>';
         }
+        if (profile.is_athlete && profile.coach) {
+            html += '<div class="profile-coach">Тренер: ' + profile.coach + '</div>';
+        }
         if (profile.phase) {
             html += '<span class="profile-phase">' + profile.phase + '</span>';
         }
@@ -137,12 +140,6 @@ const SocialUI = {
         // Bio
         if (profile.bio) {
             html += '<div class="profile-bio">' + profile.bio + '</div>';
-        }
-        // Athlete details
-        if (profile.is_athlete) {
-            var details = [];
-            if (profile.coach) details.push('Тренер: ' + profile.coach);
-            if (details.length) html += '<div class="profile-details">' + details.join(' &middot; ') + '</div>';
         }
 
         // Post type tabs + grid

@@ -3546,6 +3546,11 @@ body:has(.tab-bar) .data-actions { margin-bottom: 10px; }
     border-radius: 10px;
     margin-top: 6px;
 }
+.profile-coach {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
 .profile-phase {
     display: inline-block;
     background: rgba(255,255,255,0.1);
@@ -3680,11 +3685,11 @@ a.stat-link:active { opacity: 0.6; }
 
 /* New checkin button */
 .btn-create-checkin {
-    background: rgba(255,255,255,0.06);
-    border: 1px dashed rgba(255,255,255,0.15);
-    border-radius: 10px;
-    padding: 10px 20px;
-    color: var(--accent-primary);
+    background: rgba(255,255,255,0.1);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 20px;
+    color: var(--text-primary);
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
