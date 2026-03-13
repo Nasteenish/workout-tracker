@@ -2451,8 +2451,7 @@ const App = {
             if (prompt) {
                 prompt.style.display = 'flex';
                 var cityInput = document.getElementById('gym-new-city');
-                var savedCity = localStorage.getItem('wt_gym_city') || '';
-                if (cityInput) { cityInput.value = savedCity; cityInput.focus(); }
+                if (cityInput) { cityInput.value = ''; cityInput.focus(); }
             }
             return;
         }
@@ -2464,8 +2463,6 @@ const App = {
             var name = input ? input.value.trim() : '';
             var city = cityInput ? cityInput.value.trim() : '';
             if (!name) return;
-            // Remember city for next time
-            if (city) localStorage.setItem('wt_gym_city', city);
             var newId = Storage.addGym(name, App._lastGeoPos ? App._lastGeoPos.lat : null, App._lastGeoPos ? App._lastGeoPos.lng : null);
             // Save to shared database
             if (typeof Social !== 'undefined' && city) {
