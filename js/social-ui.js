@@ -97,11 +97,11 @@ const SocialUI = {
 
         var html = '<div class="social-screen">';
         html += '<div class="profile-header">';
-        if (isOwn) html += '<button class="btn-profile-edit" id="btn-profile-edit" title="Редактировать">&#9998;</button>';
         html += '<div class="profile-avatar-wrap">';
         html += profile.avatar_url
             ? '<img class="profile-avatar" src="' + profile.avatar_url + '" alt="">'
             : '<div class="profile-avatar profile-avatar-placeholder"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>';
+        if (isOwn) html += '<button class="btn-profile-edit" id="btn-profile-edit"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>';
         html += '</div>';
         html += '<div class="profile-info">';
         html += '<h2 class="profile-name">' + (profile.display_name || profile.username) + (profile.is_pro ? ' <span class="pro-badge">IFBB PRO</span>' : '') + '</h2>';
