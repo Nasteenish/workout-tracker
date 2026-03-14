@@ -570,35 +570,6 @@ const Builder = {
             exList.addEventListener('click', function(e) {
                 var target = e.target;
 
-                // Inline rename exercise
-                if (target.matches('.editor-ex-name')) {
-                    var nameEl = target;
-                    var oldName = nameEl.textContent;
-                    var inp = document.createElement('input');
-                    inp.type = 'text';
-                    inp.value = oldName;
-                    inp.className = 'eq-inline-edit';
-                    inp.style.width = '100%';
-                    nameEl.textContent = '';
-                    nameEl.appendChild(inp);
-                    inp.focus();
-                    inp.select();
-                    var saved = false;
-                    var save = function() {
-                        if (saved) return; saved = true;
-                        var v = inp.value.trim();
-                        var ex = self._getExercise(parseInt(nameEl.dataset.item), parseInt(nameEl.dataset.sub));
-                        if (ex && v) {
-                            ex.nameRu = v;
-                            ex.name = v;
-                            self._autoSave();
-                        }
-                        nameEl.textContent = v || oldName;
-                    };
-                    inp.addEventListener('blur', function() { setTimeout(save, 100); });
-                    inp.addEventListener('keydown', function(ev) { if (ev.key === 'Enter') { ev.preventDefault(); save(); } });
-                    return;
-                }
 
                 // Checkbox
                 if (target.matches('.editor-check')) { self._updateGroupBar(); return; }
@@ -1120,7 +1091,7 @@ const Builder = {
 
         document.body.appendChild(overlay);
         lockBodyScroll();
-        blockOverlayScroll(overlay, '.picker-list');
+        blockOverlayScroll(overlay, ['.picker-list', '.picker-categories']);
 
         // Fade hint: remove mask when scrolled to end
         var catsEl = document.getElementById('picker-categories');

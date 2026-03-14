@@ -16,10 +16,12 @@ function unlockBodyScroll() {
 }
 
 function blockOverlayScroll(overlay, scrollableSelector) {
+    var selectors = Array.isArray(scrollableSelector) ? scrollableSelector : [scrollableSelector];
     overlay.addEventListener('touchmove', function(e) {
-        if (!e.target.closest(scrollableSelector)) {
-            e.preventDefault();
+        for (var i = 0; i < selectors.length; i++) {
+            if (e.target.closest(selectors[i])) return;
         }
+        e.preventDefault();
     }, { passive: false });
 }
 

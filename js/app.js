@@ -2371,15 +2371,7 @@ const App = {
             return;
         }
 
-        // Rename exercise (tap on exercise name — skip if it's a choose_one exercise)
-        if (target.matches('.exercise-name-editable') || target.closest('.exercise-name-editable')) {
-            const el = target.matches('.exercise-name-editable') ? target : target.closest('.exercise-name-editable');
-            if (!el.dataset.choiceKey) {
-                const exId = el.dataset.exercise;
-                this._renameExercise(exId);
-                return;
-            }
-        }
+        // Exercise name tap — no-op (names are standardized from Hevy DB)
 
         // Equipment button — show equipment picker
         if (target.matches('.equipment-btn') || target.closest('.equipment-btn')) {
@@ -2827,18 +2819,6 @@ const App = {
         UI.renderDay(this._currentWeek, this._currentDay);
     },
 
-    _renameExercise(exerciseId) {
-        var ex = this._findExerciseInProgram(exerciseId);
-        if (!ex) return;
-        var current = exName(ex) || '';
-        var newName = prompt('Название упражнения:', current);
-        if (newName !== null && newName.trim()) {
-            ex.nameRu = newName.trim();
-            ex.name = newName.trim();
-            Storage.saveProgram(PROGRAM, false);
-            UI.renderDay(this._currentWeek, this._currentDay);
-        }
-    },
 
     _showFinishButton() {
         if (document.getElementById('finish-workout-btn')) return;
