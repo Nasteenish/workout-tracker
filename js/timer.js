@@ -404,9 +404,9 @@ const RestTimer = {
 
             if (this._remaining <= 0) {
                 localStorage.removeItem('_wt_timer');
-                // Timer expired while app was closed — show notification
+                // Timer expired while app was closed — just clean up, don't beep
                 this._defaultDuration = s.defaultDuration || this._defaultDuration;
-                setTimeout(() => this._finish(), 100);
+                this._remaining = 0;
                 return;
             }
 

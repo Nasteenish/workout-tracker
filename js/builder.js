@@ -1079,7 +1079,7 @@ const Builder = {
                 <div class="picker-search">
                     <input type="text" id="picker-search-input" placeholder="\u041F\u043E\u0438\u0441\u043A \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u044F..." autocomplete="off">
                 </div>
-                <div class="picker-categories" id="picker-categories">${catsHtml}</div>
+                <div class="picker-categories-wrap" id="picker-categories-wrap"><div class="picker-categories" id="picker-categories">${catsHtml}</div></div>
                 <div class="picker-list" id="picker-list">${listHtml}</div>
                 <div class="picker-custom">
                     <input type="text" id="picker-custom-name" class="form-input" placeholder="\u0421\u0432\u043E\u0451 \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u0435..." autocomplete="off">
@@ -1095,12 +1095,13 @@ const Builder = {
 
         // Fade hint: remove mask when scrolled to end
         var catsEl = document.getElementById('picker-categories');
-        if (catsEl) {
+        var catsWrap = document.getElementById('picker-categories-wrap');
+        if (catsEl && catsWrap) {
             catsEl.addEventListener('scroll', function() {
                 if (catsEl.scrollLeft + catsEl.clientWidth >= catsEl.scrollWidth - 10) {
-                    catsEl.classList.add('scrolled-end');
+                    catsWrap.classList.add('scrolled-end');
                 } else {
-                    catsEl.classList.remove('scrolled-end');
+                    catsWrap.classList.remove('scrolled-end');
                 }
             });
         }
