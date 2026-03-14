@@ -34,6 +34,12 @@ const Storage = {
                 }
                 this._save();
             }
+            // v431: migrate exercise names to Hevy DB standard
+            if (!this._data._exerciseNamesMigrated) {
+                this._migrateExerciseNames();
+                this._data._exerciseNamesMigrated = true;
+                this._save();
+            }
         } catch (e) {
             console.error('Storage load error:', e);
             this._data = this._defaultData();
@@ -172,6 +178,104 @@ const Storage = {
         } catch (e) {
             console.error('Fix migration error:', e);
         }
+    },
+
+    // v431: rename exercises to Hevy DB standard names
+    _migrateExerciseNames() {
+        var MAP = {
+            'Stiff legged deadlift': ['Straight Leg Deadlift', '\u0421\u0442\u0430\u043D\u043E\u0432\u0430\u044F \u0442\u044F\u0433\u0430 \u043D\u0430 \u043F\u0440\u044F\u043C\u044B\u0445 \u043D\u043E\u0433\u0430\u0445'],
+            'Dumbell stiff legged deadlift': ['Straight Leg Deadlift', '\u0421\u0442\u0430\u043D\u043E\u0432\u0430\u044F \u0442\u044F\u0433\u0430 \u043D\u0430 \u043F\u0440\u044F\u043C\u044B\u0445 \u043D\u043E\u0433\u0430\u0445'],
+            'Smith deadlift': ['Deadlift (Smith Machine)', '\u0421\u0442\u0430\u043D\u043E\u0432\u0430\u044F \u0442\u044F\u0433\u0430 (\u0432 \u0421\u043C\u0438\u0442\u0435)'],
+            'Romanian deadlift machine': ['Romanian Deadlift (Barbell)', '\u0420\u0443\u043C\u044B\u043D\u0441\u043A\u0430\u044F \u0442\u044F\u0433\u0430 (\u0441\u043E \u0448\u0442\u0430\u043D\u0433\u043E\u0439)'],
+            'Seated leg curl': ['Seated Leg Curl (Machine)', '\u0421\u0433\u0438\u0431\u0430\u043D\u0438\u0435 \u043D\u043E\u0433 \u0441\u0438\u0434\u044F (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Lying leg curl': ['Lying Leg Curl (Machine)', '\u0421\u0433\u0438\u0431\u0430\u043D\u0438\u0435 \u043D\u043E\u0433 \u043B\u0451\u0436\u0430 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Glute split squat': ['Bulgarian Split Squat', '\u0411\u043E\u043B\u0433\u0430\u0440\u0441\u043A\u0438\u0435 \u0432\u044B\u043F\u0430\u0434\u044B'],
+            'Glute kickback machine': ['Glute Kickback (Machine)', '\u041E\u0442\u0432\u0435\u0434\u0435\u043D\u0438\u0435 \u043D\u043E\u0433\u0438 \u043D\u0430\u0437\u0430\u0434 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Calf raises machine': ['Standing Calf Raise (Machine)', '\u041F\u043E\u0434\u044A\u0451\u043C \u043D\u0430 \u043D\u043E\u0441\u043A\u0438 \u0441\u0442\u043E\u044F (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Supported row': ['Chest Supported Incline Row (Dumbbell)', '\u0422\u044F\u0433\u0430 \u0433\u0430\u043D\u0442\u0435\u043B\u0435\u0439 \u043D\u0430 \u043D\u0430\u043A\u043B\u043E\u043D\u043D\u043E\u0439 \u0441\u043A\u0430\u043C\u044C\u0435 \u0441 \u043E\u043F\u043E\u0440\u043E\u0439'],
+            'T-bar supported row': ['T Bar Row', '\u0422\u044F\u0433\u0430 \u0422-\u0433\u0440\u0438\u0444\u0430'],
+            'Incline dumbbell rows': ['Chest Supported Incline Row (Dumbbell)', '\u0422\u044F\u0433\u0430 \u0433\u0430\u043D\u0442\u0435\u043B\u0435\u0439 \u043D\u0430 \u043D\u0430\u043A\u043B\u043E\u043D\u043D\u043E\u0439 \u0441\u043A\u0430\u043C\u044C\u0435 \u0441 \u043E\u043F\u043E\u0440\u043E\u0439'],
+            'Incline dumbell rows': ['Chest Supported Incline Row (Dumbbell)', '\u0422\u044F\u0433\u0430 \u0433\u0430\u043D\u0442\u0435\u043B\u0435\u0439 \u043D\u0430 \u043D\u0430\u043A\u043B\u043E\u043D\u043D\u043E\u0439 \u0441\u043A\u0430\u043C\u044C\u0435 \u0441 \u043E\u043F\u043E\u0440\u043E\u0439'],
+            'Close grip pulldown': ['Lat Pulldown - Close Grip (Cable)', '\u0422\u044F\u0433\u0430 \u0432\u0435\u0440\u0445\u043D\u0435\u0433\u043E \u0431\u043B\u043E\u043A\u0430 \u0443\u0437\u043A\u0438\u043C \u0445\u0432\u0430\u0442\u043E\u043C (\u0431\u043B\u043E\u043A)'],
+            'Dorian row': ['Bent Over Row (Barbell)', '\u0422\u044F\u0433\u0430 \u0448\u0442\u0430\u043D\u0433\u0438 \u0432 \u043D\u0430\u043A\u043B\u043E\u043D\u0435'],
+            'Single arm cable row': ['Single Arm Cable Row', '\u0422\u044F\u0433\u0430 \u043D\u0438\u0436\u043D\u0435\u0433\u043E \u0431\u043B\u043E\u043A\u0430 \u043E\u0434\u043D\u043E\u0439 \u0440\u0443\u043A\u043E\u0439'],
+            'Hammer single arm low row': ['Iso-Lateral Low Row', '\u0422\u044F\u0433\u0430 \u0440\u044B\u0447\u0430\u0436\u043D\u0430\u044F \u043D\u0438\u0436\u043D\u044F\u044F'],
+            'Single arm hammer high row': ['Iso-Lateral High Row (Machine)', '\u0422\u044F\u0433\u0430 \u0440\u044B\u0447\u0430\u0436\u043D\u0430\u044F \u0432\u0435\u0440\u0445\u043D\u044F\u044F (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Single arm pulldown': ['Single Arm Lat Pulldown', '\u0422\u044F\u0433\u0430 \u0432\u0435\u0440\u0445\u043D\u0435\u0433\u043E \u0431\u043B\u043E\u043A\u0430 \u043E\u0434\u043D\u043E\u0439 \u0440\u0443\u043A\u043E\u0439'],
+            'Unilateral pulldown machine': ['Lat Pulldown (Machine)', '\u0422\u044F\u0433\u0430 \u0432\u0435\u0440\u0445\u043D\u0435\u0433\u043E \u0431\u043B\u043E\u043A\u0430 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Hammer high row': ['Iso-Lateral High Row (Machine)', '\u0422\u044F\u0433\u0430 \u0440\u044B\u0447\u0430\u0436\u043D\u0430\u044F \u0432\u0435\u0440\u0445\u043D\u044F\u044F (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Hammer low row': ['Iso-Lateral Low Row', '\u0422\u044F\u0433\u0430 \u0440\u044B\u0447\u0430\u0436\u043D\u0430\u044F \u043D\u0438\u0436\u043D\u044F\u044F'],
+            'Inclined bench dumbell swings': ['Rear Delt Reverse Fly (Dumbbell)', '\u041E\u0431\u0440\u0430\u0442\u043D\u044B\u0435 \u0440\u0430\u0437\u0432\u0435\u0434\u0435\u043D\u0438\u044F (\u0441 \u0433\u0430\u043D\u0442\u0435\u043B\u044F\u043C\u0438)'],
+            'Fly machine / Cable rear delt fly': ['Rear Delt Reverse Fly (Cable)', '\u041E\u0431\u0440\u0430\u0442\u043D\u044B\u0435 \u0440\u0430\u0437\u0432\u0435\u0434\u0435\u043D\u0438\u044F (\u0431\u043B\u043E\u043A)'],
+            'Fly machine / cable rear delt fly': ['Rear Delt Reverse Fly (Cable)', '\u041E\u0431\u0440\u0430\u0442\u043D\u044B\u0435 \u0440\u0430\u0437\u0432\u0435\u0434\u0435\u043D\u0438\u044F (\u0431\u043B\u043E\u043A)'],
+            'Fly machine / standing cable rear delt fly': ['Rear Delt Reverse Fly (Cable)', '\u041E\u0431\u0440\u0430\u0442\u043D\u044B\u0435 \u0440\u0430\u0437\u0432\u0435\u0434\u0435\u043D\u0438\u044F (\u0431\u043B\u043E\u043A)'],
+            'Abductor machine': ['Hip Abduction (Machine)', '\u0420\u0430\u0437\u0432\u0435\u0434\u0435\u043D\u0438\u0435 \u043D\u043E\u0433 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Abductor machine - WARMUP': ['Hip Abduction (Machine)', '\u0420\u0430\u0437\u0432\u0435\u0434\u0435\u043D\u0438\u0435 \u043D\u043E\u0433 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Abductor machine (warm-up)': ['Hip Abduction (Machine)', '\u0420\u0430\u0437\u0432\u0435\u0434\u0435\u043D\u0438\u0435 \u043D\u043E\u0433 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Adductor machine': ['Hip Adduction (Machine)', '\u0421\u0432\u0435\u0434\u0435\u043D\u0438\u0435 \u043D\u043E\u0433 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Adductor machine (warm-up)': ['Hip Adduction (Machine)', '\u0421\u0432\u0435\u0434\u0435\u043D\u0438\u0435 \u043D\u043E\u0433 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Hip thrust machine': ['Hip Thrust (Machine)', '\u042F\u0433\u043E\u0434\u0438\u0447\u043D\u044B\u0439 \u043C\u043E\u0441\u0442 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Unilateral hip thrust machine': ['Hip Thrust (Machine)', '\u042F\u0433\u043E\u0434\u0438\u0447\u043D\u044B\u0439 \u043C\u043E\u0441\u0442 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Barbell hip thrust': ['Hip Thrust (Barbell)', '\u042F\u0433\u043E\u0434\u0438\u0447\u043D\u044B\u0439 \u043C\u043E\u0441\u0442 (\u0441\u043E \u0448\u0442\u0430\u043D\u0433\u043E\u0439)'],
+            'Single leg press': ['Single Leg Press (Machine)', '\u0416\u0438\u043C \u043D\u043E\u0433\u043E\u0439 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Leg extension': ['Leg Extension (Machine)', '\u0420\u0430\u0437\u0433\u0438\u0431\u0430\u043D\u0438\u0435 \u043D\u043E\u0433 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Unilateral leg extension': ['Leg Extension (Machine)', '\u0420\u0430\u0437\u0433\u0438\u0431\u0430\u043D\u0438\u0435 \u043D\u043E\u0433 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Machine shoulder press': ['Shoulder Press (Machine Plates)', '\u0416\u0438\u043C \u043F\u043B\u0435\u0447\u0430\u043C\u0438 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435, \u0434\u0438\u0441\u043A\u0438)'],
+            'Lateral raise machine': ['Lateral Raise (Machine)', '\u041F\u043E\u0434\u044A\u0451\u043C \u0432 \u0441\u0442\u043E\u0440\u043E\u043D\u044B (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Seated dumbell lateral raises': ['Seated Lateral Raise (Dumbbell)', '\u041F\u043E\u0434\u044A\u0451\u043C \u0433\u0430\u043D\u0442\u0435\u043B\u0435\u0439 \u0432 \u0441\u0442\u043E\u0440\u043E\u043D\u044B \u0441\u0438\u0434\u044F'],
+            'Standing lateral dumbell raises': ['Lateral Raise (Dumbbell)', '\u041F\u043E\u0434\u044A\u0451\u043C \u0433\u0430\u043D\u0442\u0435\u043B\u0435\u0439 \u0432 \u0441\u0442\u043E\u0440\u043E\u043D\u044B'],
+            'Machine chest press': ['Chest Press (Machine)', '\u0416\u0438\u043C \u043E\u0442 \u0433\u0440\u0443\u0434\u0438 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Convergence chest press': ['Iso-Lateral Chest Press (Machine)', '\u0416\u0438\u043C \u043E\u0442 \u0433\u0440\u0443\u0434\u0438 \u0438\u0437\u043E\u043B\u0430\u0442\u0435\u0440\u0430\u043B\u044C\u043D\u044B\u0439 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Incline dumbell press': ['Incline Bench Press (Dumbbell)', '\u0416\u0438\u043C \u043B\u0451\u0436\u0430 \u043D\u0430 \u043D\u0430\u043A\u043B\u043E\u043D\u043D\u043E\u0439 (\u0441 \u0433\u0430\u043D\u0442\u0435\u043B\u044F\u043C\u0438)'],
+            'Incline bench press (Smith)': ['Incline Bench Press (Smith Machine)', '\u0416\u0438\u043C \u043B\u0451\u0436\u0430 \u043D\u0430 \u043D\u0430\u043A\u043B\u043E\u043D\u043D\u043E\u0439 (\u0432 \u0421\u043C\u0438\u0442\u0435)'],
+            'Low cable crossover': ['Low Cable Fly Crossovers', '\u0421\u0432\u0435\u0434\u0435\u043D\u0438\u0435 \u0440\u0443\u043A \u0432 \u043A\u0440\u043E\u0441\u0441\u043E\u0432\u0435\u0440\u0435 \u0441\u043D\u0438\u0437\u0443'],
+            'Dip machine for chest': ['Chest Dip', '\u041E\u0442\u0436\u0438\u043C\u0430\u043D\u0438\u044F \u043D\u0430 \u0431\u0440\u0443\u0441\u044C\u044F\u0445 (\u0433\u0440\u0443\u0434\u044C)'],
+            'Machine fly': ['Chest Fly (Machine)', '\u0421\u0432\u0435\u0434\u0435\u043D\u0438\u0435 \u0440\u0443\u043A (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Unilateral machine fly': ['Chest Fly (Machine)', '\u0421\u0432\u0435\u0434\u0435\u043D\u0438\u0435 \u0440\u0443\u043A (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Seated pec flys': ['Seated Chest Flys (Cable)', '\u0421\u0432\u0435\u0434\u0435\u043D\u0438\u0435 \u0440\u0443\u043A \u0441\u0438\u0434\u044F (\u0431\u043B\u043E\u043A)'],
+            'Overhead triceps extension': ['Overhead Triceps Extension (Cable)', '\u0420\u0430\u0437\u0433\u0438\u0431\u0430\u043D\u0438\u0435 \u0440\u0443\u043A \u043D\u0430\u0434 \u0433\u043E\u043B\u043E\u0432\u043E\u0439 (\u0431\u043B\u043E\u043A)'],
+            'Dual rope cable extension': ['Triceps Extension (Cable)', '\u0420\u0430\u0437\u0433\u0438\u0431\u0430\u043D\u0438\u0435 \u043D\u0430 \u0442\u0440\u0438\u0446\u0435\u043F\u0441 (\u0431\u043B\u043E\u043A)'],
+            'Incline skull crushers': ['Skullcrusher (Dumbbell)', '\u0424\u0440\u0430\u043D\u0446\u0443\u0437\u0441\u043A\u0438\u0439 \u0436\u0438\u043C (\u0441 \u0433\u0430\u043D\u0442\u0435\u043B\u044F\u043C\u0438)'],
+            'Dumbell single arm preacher curl': ['Preacher Curl (Dumbbell)', '\u0421\u0433\u0438\u0431\u0430\u043D\u0438\u0435 \u043D\u0430 \u0441\u043A\u0430\u043C\u044C\u0435 \u0421\u043A\u043E\u0442\u0442\u0430 (\u0441 \u0433\u0430\u043D\u0442\u0435\u043B\u044F\u043C\u0438)'],
+            'Seated dumbell curl': ['Seated Incline Curl (Dumbbell)', '\u0421\u0433\u0438\u0431\u0430\u043D\u0438\u0435 \u0440\u0443\u043A \u0441\u0438\u0434\u044F \u043D\u0430 \u043D\u0430\u043A\u043B\u043E\u043D\u043D\u043E\u0439 (\u0441 \u0433\u0430\u043D\u0442\u0435\u043B\u044F\u043C\u0438)'],
+            'Preacher curls': ['Preacher Curl (Dumbbell)', '\u0421\u0433\u0438\u0431\u0430\u043D\u0438\u0435 \u043D\u0430 \u0441\u043A\u0430\u043C\u044C\u0435 \u0421\u043A\u043E\u0442\u0442\u0430 (\u0441 \u0433\u0430\u043D\u0442\u0435\u043B\u044F\u043C\u0438)'],
+            'Glute cable kickbacks': ['Standing Cable Glute Kickbacks', '\u041E\u0442\u0432\u0435\u0434\u0435\u043D\u0438\u0435 \u043D\u043E\u0433\u0438 \u043D\u0430\u0437\u0430\u0434 (\u0431\u043B\u043E\u043A) \u0441\u0442\u043E\u044F'],
+            'High cable glute kickbacks': ['Standing Cable Glute Kickbacks', '\u041E\u0442\u0432\u0435\u0434\u0435\u043D\u0438\u0435 \u043D\u043E\u0433\u0438 \u043D\u0430\u0437\u0430\u0434 (\u0431\u043B\u043E\u043A) \u0441\u0442\u043E\u044F'],
+            'Unilateral seated leg curl': ['Seated Leg Curl (Machine)', '\u0421\u0433\u0438\u0431\u0430\u043D\u0438\u0435 \u043D\u043E\u0433 \u0441\u0438\u0434\u044F (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Pendulum squat': ['Pendulum Squat (Machine)', '\u041C\u0430\u044F\u0442\u043D\u0438\u043A\u043E\u0432\u044B\u0439 \u043F\u0440\u0438\u0441\u0435\u0434 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Reverse banded hack squat': ['Hack Squat (Machine)', '\u0413\u0430\u043A\u043A-\u043F\u0440\u0438\u0441\u0435\u0434 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Smith squat': ['Squat (Smith Machine)', '\u041F\u0440\u0438\u0441\u0435\u0434 (\u0432 \u0421\u043C\u0438\u0442\u0435)'],
+            '45\u00b0 leg press': ['Leg Press (Machine)', '\u0416\u0438\u043C \u043D\u043E\u0433\u0430\u043C\u0438 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Push-ups': ['Push Up', '\u041E\u0442\u0436\u0438\u043C\u0430\u043D\u0438\u044F'],
+            'Single leg curl': ['Lying Leg Curl (Machine)', '\u0421\u0433\u0438\u0431\u0430\u043D\u0438\u0435 \u043D\u043E\u0433 \u043B\u0451\u0436\u0430 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'Single leg step up': ['Step Up', '\u0417\u0430\u0448\u0430\u0433\u0438\u0432\u0430\u043D\u0438\u044F']
+        };
+        var d = this._data;
+        if (!d || !d.program || !d.program.days) return;
+        var count = 0;
+        d.program.days.forEach(function(day) {
+            if (!day.groups) return;
+            day.groups.forEach(function(g) {
+                var exList = [];
+                if (g.type === 'single' && g.exercise) exList.push(g.exercise);
+                if (g.type === 'superset' && g.exercises) exList = exList.concat(g.exercises);
+                if (g.type === 'choose_one' && g.options) exList = exList.concat(g.options);
+                exList.forEach(function(ex) {
+                    if (!ex) return;
+                    // Check exercise itself
+                    var m = MAP[ex.name];
+                    if (m) { ex.name = m[0]; ex.nameRu = m[1]; count++; }
+                    // Check nested options (choose_one inside superset)
+                    if (ex.options) {
+                        ex.options.forEach(function(opt) {
+                            var m2 = MAP[opt.name];
+                            if (m2) { opt.name = m2[0]; opt.nameRu = m2[1]; count++; }
+                        });
+                    }
+                });
+            });
+        });
+        if (count > 0) console.log('Migrated ' + count + ' exercise names to Hevy DB standard');
     },
 
     // One-time migration: convert old single-user data to multi-user
