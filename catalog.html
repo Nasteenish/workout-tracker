@@ -3,18 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Equipment Catalog</title>
+<title>Каталог</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #e0e0e0; padding: 16px; }
 h1 { text-align: center; margin: 16px 0; font-size: 24px; }
-.stats { text-align: center; margin-bottom: 20px; color: #888; font-size: 14px; }
-.filters { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; position: sticky; top: 0; background: #0a0a0a; padding: 12px 0; z-index: 10; }
-.filter-btn { padding: 8px 16px; border-radius: 20px; border: 1px solid #333; background: #1a1a1a; color: #ccc; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+.stats { text-align: center; margin-bottom: 12px; color: #888; font-size: 14px; }
+
+.tabs { display: flex; justify-content: center; gap: 0; margin-bottom: 16px; }
+.tab { padding: 10px 24px; border: 1px solid #333; background: #1a1a1a; color: #ccc; cursor: pointer; font-size: 15px; font-weight: 600; transition: all 0.2s; }
+.tab:first-child { border-radius: 10px 0 0 10px; }
+.tab:last-child { border-radius: 0 10px 10px 0; }
+.tab.active { background: #4a9eff; color: #fff; border-color: #4a9eff; }
+
+.filters { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px; position: sticky; top: 0; background: #0a0a0a; padding: 12px 0; z-index: 10; }
+.filter-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid #333; background: #1a1a1a; color: #ccc; cursor: pointer; font-size: 13px; transition: all 0.2s; }
 .filter-btn.active { background: #4a9eff; color: #fff; border-color: #4a9eff; }
 .filter-btn:hover { border-color: #4a9eff; }
 .search { width: 100%; max-width: 400px; padding: 10px 16px; border-radius: 20px; border: 1px solid #333; background: #1a1a1a; color: #e0e0e0; font-size: 14px; margin: 0 auto 20px; display: block; }
 .search:focus { outline: none; border-color: #4a9eff; }
+
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
 .card { background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid #222; transition: transform 0.2s; }
 .card:hover { transform: translateY(-2px); border-color: #444; }
@@ -23,89 +31,170 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 .card-body { padding: 12px; }
 .card-brand { font-size: 11px; color: #4a9eff; text-transform: uppercase; letter-spacing: 1px; }
 .card-name { font-size: 14px; font-weight: 600; margin: 4px 0; }
+.card-name-secondary { font-size: 12px; color: #999; margin-bottom: 4px; }
 .card-model { font-size: 12px; color: #888; }
 .card-meta { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
 .tag { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: #252525; color: #aaa; }
 .tag.muscle { background: #1a2a1a; color: #6c6; }
 .tag.type { background: #1a1a2a; color: #88f; }
-.brand-section { margin-bottom: 8px; }
-.brand-title { font-size: 18px; font-weight: 700; margin: 24px 0 12px; padding-bottom: 8px; border-bottom: 1px solid #333; }
-.count { color: #888; font-weight: 400; font-size: 14px; }
+.tag.cat { background: #2a1a1a; color: #c88; }
+.tag.level { background: #2a2a1a; color: #cc8; }
+
+/* Exercise card images - 2 images side by side */
+.card-imgs { display: flex; gap: 2px; background: #fff; height: 180px; }
+.card-imgs img { flex: 1; height: 100%; object-fit: contain; padding: 4px; }
 </style>
 </head>
 <body>
 
-<h1>🏋️ Equipment Catalog</h1>
+<h1>🏋️ Каталог</h1>
 <div class="stats" id="stats"></div>
 
-<div class="filters" id="filters">
-  <button class="filter-btn active" data-brand="all">Все</button>
-  <button class="filter-btn" data-brand="gym80">gym80</button>
-  <button class="filter-btn" data-brand="Precor">Precor</button>
-  <button class="filter-btn" data-brand="Cybex">Cybex</button>
+<div class="tabs">
+  <div class="tab active" data-tab="equipment">Тренажёры</div>
+  <div class="tab" data-tab="exercises">Упражнения</div>
 </div>
 
-<input type="text" class="search" id="search" placeholder="Поиск по названию или модели...">
+<div class="filters" id="filters"></div>
+
+<input type="text" class="search" id="search" placeholder="Поиск...">
 
 <div class="grid" id="grid"></div>
 
 <script>
-const SUPABASE_URL = 'https://mqyfdbfdeuwojgexhwpy.supabase.co';
-const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeWZkYmZkZXV3b2pnZXhod3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NzE1OTYsImV4cCI6MjA4NzQ0NzU5Nn0.5okpQM-UffmYatsVjbzjafsHhY3taCqhDYkiyEjiSvg';
+const SB = 'https://mqyfdbfdeuwojgexhwpy.supabase.co';
+const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeWZkYmZkZXV3b2pnZXhod3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NzE1OTYsImV4cCI6MjA4NzQ0NzU5Nn0.5okpQM-UffmYatsVjbzjafsHhY3taCqhDYkiyEjiSvg';
+const H = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY };
 
-let allItems = [];
-let currentBrand = 'all';
+let equipmentData = [];
+let exerciseData = [];
+let currentTab = 'equipment';
+let currentFilter = 'all';
 
-async function loadData() {
-  const res = await fetch(SUPABASE_URL + '/rest/v1/equipment_catalog?select=*&order=brand,name', {
-    headers: { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY }
-  });
-  allItems = await res.json();
-  document.getElementById('stats').textContent =
-    'Всего: ' + allItems.length + ' | С фото: ' + allItems.filter(i => i.image_url).length;
-  render();
+async function loadEquipment() {
+  const r = await fetch(SB + '/rest/v1/equipment_catalog?select=*&order=brand,name', { headers: H });
+  equipmentData = await r.json();
+}
+
+async function loadExercises() {
+  const r = await fetch(SB + '/rest/v1/exercises?select=*&order=name_ru', { headers: H });
+  exerciseData = await r.json();
+}
+
+function getFilters() {
+  if (currentTab === 'equipment') {
+    const brands = [...new Set(equipmentData.map(i => i.brand))].sort();
+    return [{ key: 'all', label: 'Все' }, ...brands.map(b => ({ key: b, label: b }))];
+  } else {
+    const muscles = [...new Set(exerciseData.flatMap(e => e.primary_muscles || []))].sort();
+    return [{ key: 'all', label: 'Все' }, ...muscles.map(m => ({ key: m, label: m }))];
+  }
+}
+
+function renderFilters() {
+  const filters = getFilters();
+  document.getElementById('filters').innerHTML = filters.map(f =>
+    '<button class="filter-btn' + (currentFilter === f.key ? ' active' : '') + '" data-filter="' + f.key + '">' + f.label + '</button>'
+  ).join('');
 }
 
 function render() {
   const query = document.getElementById('search').value.toLowerCase();
-  const filtered = allItems.filter(item => {
-    if (currentBrand !== 'all' && item.brand !== currentBrand) return false;
-    if (query && !item.name.toLowerCase().includes(query) &&
-        !(item.model || '').toLowerCase().includes(query)) return false;
-    return true;
-  });
-
   const grid = document.getElementById('grid');
-  grid.innerHTML = filtered.map(item => `
-    <div class="card">
-      ${item.image_url
-        ? '<img class="card-img" src="' + item.image_url + '" alt="' + item.name + '" loading="lazy">'
-        : '<div class="card-img no-img">📷</div>'}
-      <div class="card-body">
-        <div class="card-brand">${item.brand}</div>
-        <div class="card-name">${item.name}</div>
-        <div class="card-model">${item.model || '—'}</div>
-        <div class="card-meta">
-          <span class="tag muscle">${item.muscle_group || '—'}</span>
-          <span class="tag type">${item.equipment_type || '—'}</span>
+
+  if (currentTab === 'equipment') {
+    const filtered = equipmentData.filter(item => {
+      if (currentFilter !== 'all' && item.brand !== currentFilter) return false;
+      if (query && !item.name.toLowerCase().includes(query) && !(item.model || '').toLowerCase().includes(query)) return false;
+      return true;
+    });
+    document.getElementById('stats').textContent = 'Тренажёры: ' + filtered.length + ' / ' + equipmentData.length;
+    grid.innerHTML = filtered.map(item => `
+      <div class="card">
+        ${item.image_url
+          ? '<img class="card-img" src="' + item.image_url + '" alt="' + item.name + '" loading="lazy">'
+          : '<div class="card-img no-img">📷</div>'}
+        <div class="card-body">
+          <div class="card-brand">${item.brand}</div>
+          <div class="card-name">${item.name}</div>
+          <div class="card-model">${item.model || '—'}</div>
+          <div class="card-meta">
+            <span class="tag muscle">${item.muscle_group || '—'}</span>
+            <span class="tag type">${item.equipment_type || '—'}</span>
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `).join('');
+  } else {
+    const filtered = exerciseData.filter(item => {
+      if (currentFilter !== 'all' && !(item.primary_muscles || []).includes(currentFilter)) return false;
+      if (query) {
+        const q = query;
+        const match = (item.name_ru || '').toLowerCase().includes(q) ||
+                      (item.name_en || '').toLowerCase().includes(q) ||
+                      (item.equipment || '').toLowerCase().includes(q);
+        if (!match) return false;
+      }
+      return true;
+    });
+    document.getElementById('stats').textContent = 'Упражнения: ' + filtered.length + ' / ' + exerciseData.length;
+    grid.innerHTML = filtered.map(item => {
+      const imgs = item.images || [];
+      let imgHtml;
+      if (imgs.length >= 2) {
+        imgHtml = '<div class="card-imgs"><img src="' + imgs[0] + '" loading="lazy"><img src="' + imgs[1] + '" loading="lazy"></div>';
+      } else if (imgs.length === 1) {
+        imgHtml = '<img class="card-img" src="' + imgs[0] + '" loading="lazy">';
+      } else {
+        imgHtml = '<div class="card-img no-img">🏋️</div>';
+      }
+      return `
+        <div class="card">
+          ${imgHtml}
+          <div class="card-body">
+            <div class="card-name">${item.name_ru || item.name_en}</div>
+            <div class="card-name-secondary">${item.name_en}</div>
+            <div class="card-meta">
+              ${(item.primary_muscles || []).map(m => '<span class="tag muscle">' + m + '</span>').join('')}
+              ${item.equipment ? '<span class="tag type">' + item.equipment + '</span>' : ''}
+              ${item.category ? '<span class="tag cat">' + item.category + '</span>' : ''}
+              ${item.level ? '<span class="tag level">' + item.level + '</span>' : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
 }
 
+// Tabs
+document.querySelector('.tabs').addEventListener('click', e => {
+  if (!e.target.matches('.tab')) return;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  e.target.classList.add('active');
+  currentTab = e.target.dataset.tab;
+  currentFilter = 'all';
+  renderFilters();
+  render();
+});
+
+// Filters
 document.getElementById('filters').addEventListener('click', e => {
   if (!e.target.matches('.filter-btn')) return;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   e.target.classList.add('active');
-  currentBrand = e.target.dataset.brand;
+  currentFilter = e.target.dataset.filter;
   render();
 });
 
+// Search
 document.getElementById('search').addEventListener('input', render);
 
-// Need RLS policy for anon select
-loadData();
+// Init
+Promise.all([loadEquipment(), loadExercises()]).then(() => {
+  renderFilters();
+  render();
+});
 </script>
 </body>
 </html>
