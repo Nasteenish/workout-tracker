@@ -4168,14 +4168,15 @@ img.checkin-photo,
 video.checkin-photo {
     width: 100%;
     display: block;
-    max-height: 400px;
-    object-fit: cover;
+    max-height: 560px;
+    object-fit: contain;
 }
 .checkin-photos.multi img.checkin-photo,
 .checkin-photos.multi video.checkin-photo {
     flex: 1;
     min-width: 0;
-    max-height: 200px;
+    max-height: 280px;
+    object-fit: cover;
 }
 .checkin-meta {
     font-size: 14px;
