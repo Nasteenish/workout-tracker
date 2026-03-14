@@ -780,7 +780,7 @@ const Social = {
             .select('id, brand, model, name, muscle_group, image_url')
             .order('brand')
             .limit(30);
-        if (query) q = q.ilike('name', '%' + query + '%');
+        if (query) q = q.or('name.ilike.%' + query + '%,brand.ilike.%' + query + '%');
         if (muscleGroup && muscleGroup !== 'all') q = q.eq('muscle_group', muscleGroup);
         var r = await q;
         return r.data || [];

@@ -3086,7 +3086,7 @@ const App = {
         var myEq = Storage.getEquipmentList();
         for (var i = 0; i < myEq.length; i++) {
             if (myEq[i].name.toLowerCase().indexOf(ql) !== -1) {
-                var k = myEq[i].name.toLowerCase();
+                var k = myEq[i].name.toLowerCase().trim();
                 if (seen[k]) continue;
                 seen[k] = true;
                 html += '<div class="eq-search-item" data-name="' + myEq[i].name.replace(/"/g, '&quot;') + '">'
@@ -3118,10 +3118,12 @@ const App = {
 
                 var html2 = '';
                 var seen2 = {};
-                // Re-add local matches
+                // Re-add local matches (deduplicated)
                 for (var i = 0; i < myEq.length; i++) {
                     if (myEq[i].name.toLowerCase().indexOf(ql) !== -1) {
-                        seen2[myEq[i].name.toLowerCase()] = true;
+                        var lk = myEq[i].name.toLowerCase().trim();
+                        if (seen2[lk]) continue;
+                        seen2[lk] = true;
                         html2 += '<div class="eq-search-item" data-name="' + myEq[i].name.replace(/"/g, '&quot;') + '">'
                             + '<span class="eq-shared-name">' + myEq[i].name + '</span></div>';
                     }
