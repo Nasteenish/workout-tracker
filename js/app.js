@@ -307,6 +307,8 @@ const App = {
         };
 
         document.addEventListener('touchstart', (e) => {
+            // Ignore touches inside modal overlays (equipment, gym, etc.)
+            if (e.target.closest('.modal-overlay')) { cfg = null; return; }
             cfg = this._getSwipeConfig(location.hash);
             if (!cfg) return;
             startX = e.touches[0].clientX;
@@ -2534,6 +2536,11 @@ const App = {
             Storage.saveChoice(choiceKey, exerciseId);
             UI.hideChoiceModal();
             UI.renderDay(this._currentWeek, this._currentDay);
+            return;
+        }
+
+        // Equipment modal — ignore clicks on inputs
+        if (target.closest('#equipment-modal') && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
             return;
         }
 
