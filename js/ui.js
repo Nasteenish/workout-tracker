@@ -1213,20 +1213,14 @@ const UI = {
             if (gymResults) gymResults.style.display = 'none';
             if (eqList) eqList.style.display = 'none';
             if (addRow) addRow.style.display = 'none';
-            // Flip modal to top
-            if (eqModal) {
-                eqModal.style.bottom = 'auto';
-                eqModal.style.top = 'env(safe-area-inset-top, 44px)';
-                eqModal.style.borderRadius = '0 0 var(--radius-xl) var(--radius-xl)';
-                if (window.visualViewport) {
-                    eqModal.style.maxHeight = (window.visualViewport.height - 10) + 'px';
-                }
-            }
-            document.getElementById('eq-search-results').style.display = '';
+            // Expand search results area
+            var searchResults = document.getElementById('eq-search-results');
+            if (searchResults) searchResults.style.flex = '1';
+            if (eqModal) eqModal.style.maxHeight = '88vh';
         });
 
         searchInput.addEventListener('blur', function() {
-            if (searchInput.value.trim()) return; // keep search mode if has text
+            if (searchInput.value.trim()) return;
             var header = overlay.querySelector('.eq-modal-header');
             var gymResults = document.getElementById('eq-gym-results');
             var eqList = document.getElementById('eq-list');
@@ -1235,29 +1229,14 @@ const UI = {
             if (gymResults) gymResults.style.display = '';
             if (eqList) eqList.style.display = '';
             if (addRow) addRow.style.display = '';
-            document.getElementById('eq-search-results').innerHTML = '';
-            if (eqModal) {
-                eqModal.style.bottom = '';
-                eqModal.style.top = '';
-                eqModal.style.borderRadius = '';
-                eqModal.style.maxHeight = '';
-            }
+            var searchResults = document.getElementById('eq-search-results');
+            if (searchResults) { searchResults.innerHTML = ''; searchResults.style.flex = ''; }
+            if (eqModal) eqModal.style.maxHeight = '';
         });
 
         searchInput.addEventListener('input', function() {
             App._searchEquipment(searchInput.value.trim());
         });
-
-        // Adjust on keyboard resize
-        if (window.visualViewport) {
-            var vpHandler = function() {
-                if (document.activeElement === searchInput && eqModal) {
-                    eqModal.style.maxHeight = (window.visualViewport.height - 10) + 'px';
-                }
-            };
-            window.visualViewport.addEventListener('resize', vpHandler);
-            overlay._vpListener = vpHandler;
-        }
 
         App._loadGymEquipment(exerciseId);
     },
