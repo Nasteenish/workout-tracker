@@ -1136,7 +1136,7 @@ const Builder = {
             // Move modal to top so it's above keyboard
             if (pickerModal) {
                 pickerModal.style.bottom = 'auto';
-                pickerModal.style.top = '0';
+                pickerModal.style.top = 'env(safe-area-inset-top, 44px)';
                 pickerModal.style.borderRadius = '0 0 var(--radius-xl) var(--radius-xl)';
             }
             adjustToViewport();
