@@ -43,7 +43,7 @@
     <script src="./js/cropper.js?v=1"></script>
     <script src="./js/social-ui.js?v=109"></script>
     <script src="./js/builder.js?v=58"></script>
-    <script src="./js/timer.js?v=63"></script>
+    <script src="./js/timer.js?v=64"></script>
     <script src="./js/app.js?v=169"></script>
 
     <script>
@@ -56,11 +56,11 @@
                 location.reload();
             });
             // One-time SW reset to clear corrupted state after rapid updates
-            if (!localStorage.getItem('_swReset448')) {
+            if (!localStorage.getItem('_swReset449')) {
                 navigator.serviceWorker.getRegistrations().then(function(regs) {
                     return Promise.all(regs.map(function(r) { return r.unregister(); }));
                 }).then(function() {
-                    localStorage.setItem('_swReset448', '1');
+                    localStorage.setItem('_swReset449', '1');
                     return navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' });
                 }).then(function(reg) { return reg.update(); });
             } else {

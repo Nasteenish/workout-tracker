@@ -186,6 +186,8 @@ const RestTimer = {
     },
 
     _finish() {
+        if (this._finishing) return;
+        this._finishing = true;
         clearInterval(this._interval);
         this._interval = null;
         this._endTime = null;
@@ -214,6 +216,7 @@ const RestTimer = {
                 try { new Notification('Пора!', { body: 'Отдых завершён', tag: 'rest-timer', renotify: true }); } catch(e) {}
             }
         }
+        setTimeout(() => { this._finishing = false; }, 500);
     },
 
     _audioEl: null,
@@ -243,6 +246,7 @@ const RestTimer = {
     },
 
     _playBeep() {
+        var played = false;
         // Try Web Audio API first
         try {
             if (!this._audioCtx) {
@@ -251,6 +255,7 @@ const RestTimer = {
             var ctx = this._audioCtx;
 
             var doPlay = () => {
+                played = true;
                 [[880, 0, 0.5], [1100, 0.35, 0.6], [1320, 0.65, 0.8]].forEach(([freq, start, end]) => {
                     var osc = ctx.createOscillator();
                     var gain = ctx.createGain();
@@ -271,12 +276,14 @@ const RestTimer = {
                 doPlay();
             }
         } catch(e) {}
-        // Fallback: HTML Audio element (more reliable after background)
-        try {
-            var audio = this._ensureAudioEl();
-            audio.currentTime = 0;
-            audio.play().catch(() => {});
-        } catch(e) {}
+        // Fallback: HTML Audio element ONLY if Web Audio didn't play
+        if (!played) {
+            try {
+                var audio = this._ensureAudioEl();
+                audio.currentTime = 0;
+                audio.play().catch(() => {});
+            } catch(e) {}
+        }
     },
 
     _showNotification(onReturnCallback) {
@@ -314,8 +321,6 @@ const RestTimer = {
         const dismiss = () => {
             if (notif._dismissed) return;
             notif._dismissed = true;
-            // Play sound on tap (user gesture unlocks audio)
-            this._playBeep();
             notif.classList.remove('visible');
             setTimeout(() => notif.remove(), 300);
         };
