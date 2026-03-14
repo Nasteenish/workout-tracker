@@ -1091,7 +1091,7 @@ const Builder = {
 
         document.body.appendChild(overlay);
         lockBodyScroll();
-        blockOverlayScroll(overlay, ['.picker-list', '.picker-categories']);
+        blockOverlayScroll(overlay, '.picker-modal');
 
         // Fade hint: remove mask when scrolled to end
         var catsEl = document.getElementById('picker-categories');
