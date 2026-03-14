@@ -49,12 +49,7 @@ const App = {
         }, 300);
 
         // Route handling
-        window.addEventListener('hashchange', () => {
-            if (document.getElementById('equipment-modal')) {
-                alert('[HASH] ' + location.hash + ' — modal was open!');
-            }
-            this.route();
-        });
+        window.addEventListener('hashchange', () => this.route());
 
         // Global event delegation
         document.getElementById('app').addEventListener('click', (e) => this.handleClick(e));
@@ -1257,10 +1252,6 @@ const App = {
     handleClick(e) {
         const target = e.target;
 
-        // DEBUG: trace what closes equipment modal
-        if (document.getElementById('equipment-modal')) {
-            alert('[CLICK] tag=' + target.tagName + ' id=' + target.id + ' class=' + target.className.substring(0,40));
-        }
 
         // Login form submit
         if (target.id === 'login-submit' || target.closest('#login-submit')) {
@@ -2635,7 +2626,14 @@ const App = {
         }
 
         // Equipment modal — close on overlay or X button
-        if (target.id === 'equipment-modal' || target.id === 'eq-close' || target.closest('#eq-close')) {
+        if (target.id === 'eq-close' || target.closest('#eq-close')) {
+            UI.hideEquipmentModal();
+            return;
+        }
+        if (target.id === 'equipment-modal') {
+            // Ignore phantom overlay clicks from iOS input focus (within 600ms)
+            var modal = document.getElementById('equipment-modal');
+            if (modal && modal._inputFocusedAt && (Date.now() - modal._inputFocusedAt < 600)) return;
             UI.hideEquipmentModal();
             return;
         }

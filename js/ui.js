@@ -1204,7 +1204,7 @@ const UI = {
         var searchInput = document.getElementById('eq-search');
 
         searchInput.addEventListener('focus', function() {
-            alert('[FOCUS] search focused, modal=' + !!document.getElementById('equipment-modal'));
+            overlay._inputFocusedAt = Date.now();
             // Hide everything except search + results
             var header = overlay.querySelector('.eq-modal-header');
             var gymResults = document.getElementById('eq-gym-results');
