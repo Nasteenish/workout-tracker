@@ -56,6 +56,7 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 </div>
 
 <div class="filters" id="filters"></div>
+<div class="filters" id="filters2" style="display:none"></div>
 
 <input type="text" class="search" id="search" placeholder="Поиск...">
 
@@ -70,6 +71,7 @@ let equipmentData = [];
 let exerciseData = [];
 let currentTab = 'equipment';
 let currentFilter = 'all';
+let currentFilter2 = 'all';
 
 async function loadEquipment() {
   const r = await fetch(SB + '/rest/v1/equipment_catalog?select=*&order=brand,name', { headers: H });
@@ -96,6 +98,17 @@ function renderFilters() {
   document.getElementById('filters').innerHTML = filters.map(f =>
     '<button class="filter-btn' + (currentFilter === f.key ? ' active' : '') + '" data-filter="' + f.key + '">' + f.label + '</button>'
   ).join('');
+
+  const f2 = document.getElementById('filters2');
+  if (currentTab === 'exercises') {
+    const equips = [...new Set(exerciseData.map(e => e.equipment).filter(Boolean))].sort();
+    f2.style.display = 'flex';
+    f2.innerHTML = [{ key: 'all', label: 'Все' }, ...equips.map(e => ({ key: e, label: e }))].map(f =>
+      '<button class="filter-btn' + (currentFilter2 === f.key ? ' active' : '') + '" data-filter2="' + f.key + '">' + f.label + '</button>'
+    ).join('');
+  } else {
+    f2.style.display = 'none';
+  }
 }
 
 function render() {
@@ -128,6 +141,7 @@ function render() {
   } else {
     const filtered = exerciseData.filter(item => {
       if (currentFilter !== 'all' && !(item.primary_muscles || []).includes(currentFilter)) return false;
+      if (currentFilter2 !== 'all' && item.equipment !== currentFilter2) return false;
       if (query) {
         const q = query;
         const match = (item.name_ru || '').toLowerCase().includes(q) ||
@@ -174,6 +188,7 @@ document.querySelector('.tabs').addEventListener('click', e => {
   e.target.classList.add('active');
   currentTab = e.target.dataset.tab;
   currentFilter = 'all';
+  currentFilter2 = 'all';
   renderFilters();
   render();
 });
@@ -184,6 +199,15 @@ document.getElementById('filters').addEventListener('click', e => {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   e.target.classList.add('active');
   currentFilter = e.target.dataset.filter;
+  render();
+});
+
+// Filters2 (equipment)
+document.getElementById('filters2').addEventListener('click', e => {
+  if (!e.target.matches('.filter-btn')) return;
+  document.getElementById('filters2').querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  e.target.classList.add('active');
+  currentFilter2 = e.target.dataset.filter2;
   render();
 });
 
