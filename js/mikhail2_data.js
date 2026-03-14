@@ -16,8 +16,8 @@ const MIKHAIL2_PROGRAM = {
           "options": [
             {
               "id": "D1E1_opt1",
-              "name": "Dumbell stiff legged deadlift",
-              "nameRu": "Мёртвая тяга с гантелями",
+              "name": "Straight Leg Deadlift",
+              "nameRu": "Становая тяга на прямых ногах",
               "reps": "8-12",
               "rest": 120,
               "sets": [
@@ -40,8 +40,8 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D1E1_opt2",
-              "name": "Smith deadlift",
-              "nameRu": "Мёртвая тяга в Смите",
+              "name": "Deadlift (Smith Machine)",
+              "nameRu": "Становая тяга (в Смите)",
               "reps": "8-12",
               "rest": 120,
               "sets": [
@@ -64,8 +64,8 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D1E1_opt3",
-              "name": "Romanian deadlift machine",
-              "nameRu": "Румынская тяга в тренажёре",
+              "name": "Romanian Deadlift (Barbell)",
+              "nameRu": "Румынская тяга (со штангой)",
               "reps": "8-12",
               "rest": 120,
               "sets": [
@@ -92,8 +92,8 @@ const MIKHAIL2_PROGRAM = {
           "type": "single",
           "exercise": {
             "id": "D1E2",
-            "name": "Seated leg curl",
-            "nameRu": "Сгибание ног сидя",
+            "name": "Seated Leg Curl (Machine)",
+            "nameRu": "Сгибание ног сидя (в тренажёре)",
             "reps": "12-15",
             "rest": 120,
             "sets": [
@@ -119,8 +119,8 @@ const MIKHAIL2_PROGRAM = {
           "type": "single",
           "exercise": {
             "id": "D1E3",
-            "name": "Lying leg curl",
-            "nameRu": "Сгибание ног лёжа",
+            "name": "Lying Leg Curl (Machine)",
+            "nameRu": "Сгибание ног лёжа (в тренажёре)",
             "reps": "12-15",
             "rest": 120,
             "sets": [
@@ -148,8 +148,8 @@ const MIKHAIL2_PROGRAM = {
           "sectionTitleRu": "АБДУКТОР",
           "exercise": {
             "id": "D1E4",
-            "name": "Abductor machine",
-            "nameRu": "Разведение ног в тренажёре",
+            "name": "Hip Abduction (Machine)",
+            "nameRu": "Разведение ног (в тренажёре)",
             "reps": "12-15",
             "rest": 120,
             "sets": [
@@ -179,8 +179,8 @@ const MIKHAIL2_PROGRAM = {
           "options": [
             {
               "id": "D1E5_opt1",
-              "name": "Single leg step up",
-              "nameRu": "Подъём на платформу (поочерёдно)",
+              "name": "Step Up",
+              "nameRu": "Зашагивание на платформу",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -203,8 +203,8 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D1E5_opt2",
-              "name": "Glute split squat",
-              "nameRu": "Сплит-присед (акцент на ягодицы)",
+              "name": "Bulgarian Split Squat",
+              "nameRu": "Болгарские сплит-приседания",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -234,8 +234,8 @@ const MIKHAIL2_PROGRAM = {
           "exercises": [
             {
               "id": "D1E6",
-              "name": "Single leg press",
-              "nameRu": "Жим ногой (поочерёдно)",
+              "name": "Single Leg Press (Machine)",
+              "nameRu": "Жим ногой (в тренажёре)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -258,8 +258,8 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D1E7",
-              "name": "Unilateral leg extension",
-              "nameRu": "Разгибание ноги (поочерёдно)",
+              "name": "Leg Extension (Machine)",
+              "nameRu": "Разгибание ног (в тренажёре)",
               "reps": "12-15",
               "rest": 30,
               "sets": [
@@ -288,8 +288,8 @@ const MIKHAIL2_PROGRAM = {
           "sectionTitleRu": "ГОЛЕНИ",
           "exercise": {
             "id": "D1E8",
-            "name": "Calf raises machine",
-            "nameRu": "Подъём на носки (тренажёр)",
+            "name": "Standing Calf Raise (Machine)",
+            "nameRu": "Подъём на носки стоя (в тренажёре)",
             "reps": "12-15",
             "rest": 120,
             "sets": [
@@ -347,8 +347,8 @@ const MIKHAIL2_PROGRAM = {
           "sectionTitleRu": "ГРУДЬ",
           "exercise": {
             "id": "D2E2",
-            "name": "Incline dumbell press",
-            "nameRu": "Жим гантелей на наклонной",
+            "name": "Incline Bench Press (Dumbbell)",
+            "nameRu": "Жим лёжа на наклонной скамье (с гантелями)",
             "reps": "8-12",
             "rest": 120,
             "sets": [
@@ -374,8 +374,8 @@ const MIKHAIL2_PROGRAM = {
           "type": "single",
           "exercise": {
             "id": "D2E3",
-            "name": "Convergence chest press",
-            "nameRu": "Жим в тренажёре (конвергентный)",
+            "name": "Iso-Lateral Chest Press (Machine)",
+            "nameRu": "Жим от груди раздельный (в тренажёре)",
             "reps": "8-12",
             "rest": 120,
             "sets": [
@@ -401,8 +401,8 @@ const MIKHAIL2_PROGRAM = {
           "type": "single",
           "exercise": {
             "id": "D2E4",
-            "name": "Machine fly",
-            "nameRu": "Разводка в тренажёре",
+            "name": "Chest Fly (Machine)",
+            "nameRu": "Разведение на грудь (в тренажёре)",
             "reps": "12-15",
             "rest": 120,
             "sets": [
@@ -425,31 +425,33 @@ const MIKHAIL2_PROGRAM = {
           }
         },
         {
-          "type": "single",
-          "exercise": {
-            "id": "D2E5",
-            "name": "Cable crossover and dip superset for chest",
-            "nameRu": "Кроссовер + отжимания в тренажёре (суперсет)",
-            "reps": "12-15",
-            "rest": 120,
-            "sets": [
-              {
-                "type": "H",
-                "rpe": "9-10",
-                "techniques": []
-              },
-              {
-                "type": "H",
-                "rpe": "9-10",
-                "techniques": []
-              },
-              {
-                "type": "H",
-                "rpe": "9-10",
-                "techniques": []
-              }
-            ]
-          }
+          "type": "superset",
+          "exercises": [
+            {
+              "id": "D2E5a",
+              "name": "Cable Fly Crossovers",
+              "nameRu": "Сведение рук в кроссовере",
+              "reps": "12-15",
+              "rest": 0,
+              "sets": [
+                { "type": "H", "rpe": "9-10", "techniques": [] },
+                { "type": "H", "rpe": "9-10", "techniques": [] },
+                { "type": "H", "rpe": "9-10", "techniques": [] }
+              ]
+            },
+            {
+              "id": "D2E5b",
+              "name": "Chest Dip",
+              "nameRu": "Отжимания на брусьях (грудь)",
+              "reps": "12-15",
+              "rest": 120,
+              "sets": [
+                { "type": "H", "rpe": "9-10", "techniques": [] },
+                { "type": "H", "rpe": "9-10", "techniques": [] },
+                { "type": "H", "rpe": "9-10", "techniques": [] }
+              ]
+            }
+          ]
         },
         {
           "type": "single",
@@ -457,7 +459,7 @@ const MIKHAIL2_PROGRAM = {
           "sectionTitleRu": "ДЕЛЬТЫ",
           "exercise": {
             "id": "D2E6",
-            "name": "Unilateral low pulley raises",
+            "name": "Unilateral Low Pulley Raises",
             "nameRu": "Подъём на нижнем блоке (поочерёдно)",
             "reps": "12-15",
             "rest": 120,
@@ -486,8 +488,8 @@ const MIKHAIL2_PROGRAM = {
           "options": [
             {
               "id": "D2E7_opt1",
-              "name": "Standing lateral dumbell raises",
-              "nameRu": "Махи гантелями стоя",
+              "name": "Lateral Raise (Dumbbell)",
+              "nameRu": "Махи в стороны (с гантелями)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -510,8 +512,8 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D2E7_opt2",
-              "name": "Seated dumbell lateral raises",
-              "nameRu": "Махи гантелями сидя",
+              "name": "Seated Lateral Raise (Dumbbell)",
+              "nameRu": "Махи в стороны сидя (с гантелями)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -534,8 +536,8 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D2E7_opt3",
-              "name": "Lateral raise machine",
-              "nameRu": "Махи в тренажёре",
+              "name": "Lateral Raise (Machine)",
+              "nameRu": "Махи в стороны (в тренажёре)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -564,7 +566,7 @@ const MIKHAIL2_PROGRAM = {
           "sectionTitleRu": "ТРИЦЕПС",
           "exercise": {
             "id": "D2E8",
-            "name": "One arm rope triceps extension",
+            "name": "One Arm Rope Triceps Extension",
             "nameRu": "Разгибание одной рукой (канат)",
             "reps": "12-15",
             "rest": 120,
@@ -591,8 +593,8 @@ const MIKHAIL2_PROGRAM = {
           "type": "single",
           "exercise": {
             "id": "D2E9",
-            "name": "Overhead triceps extension",
-            "nameRu": "Французский жим из-за головы",
+            "name": "Overhead Triceps Extension (Cable)",
+            "nameRu": "Разгибание рук над головой (блок)",
             "reps": "12-15",
             "rest": 120,
             "sets": [
@@ -618,8 +620,8 @@ const MIKHAIL2_PROGRAM = {
           "type": "single",
           "exercise": {
             "id": "D2E10",
-            "name": "Incline skull crushers",
-            "nameRu": "Французский жим на наклонной",
+            "name": "Skullcrusher (Dumbbell)",
+            "nameRu": "Французский жим лёжа (с гантелями)",
             "reps": "12-15",
             "rest": 120,
             "sets": [
@@ -655,8 +657,8 @@ const MIKHAIL2_PROGRAM = {
           "options": [
             {
               "id": "D3E1_opt1",
-              "name": "Supported row",
-              "nameRu": "Тяга с опорой на грудь",
+              "name": "Chest Supported Incline Row (Dumbbell)",
+              "nameRu": "Тяга с упором в наклонную скамью (с гантелями)",
               "reps": "8-12",
               "rest": 120,
               "sets": [
@@ -667,8 +669,8 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D3E1_opt2",
-              "name": "T-bar supported row",
-              "nameRu": "Тяга Т-грифа с опорой",
+              "name": "T Bar Row",
+              "nameRu": "Тяга Т-грифа",
               "reps": "8-12",
               "rest": 120,
               "sets": [
@@ -679,8 +681,8 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D3E1_opt3",
-              "name": "Incline dumbell rows",
-              "nameRu": "Тяга гантелей на наклонной скамье",
+              "name": "Chest Supported Incline Row (Dumbbell)",
+              "nameRu": "Тяга с упором в наклонную скамью (с гантелями)",
               "reps": "8-12",
               "rest": 120,
               "sets": [
@@ -691,7 +693,7 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D3E1_opt4",
-              "name": "Supported bar rows",
+              "name": "Supported Bar Rows",
               "nameRu": "Тяга штанги с опорой",
               "reps": "8-12",
               "rest": 120,
@@ -707,8 +709,8 @@ const MIKHAIL2_PROGRAM = {
           "type": "single",
           "exercise": {
             "id": "D3E2",
-            "name": "Close grip pulldown",
-            "nameRu": "Тяга верхнего блока узким хватом",
+            "name": "Lat Pulldown - Close Grip (Cable)",
+            "nameRu": "Тяга верхнего блока узким хватом (на блоке)",
             "reps": "12-15",
             "rest": 120,
             "sets": [
@@ -736,8 +738,8 @@ const MIKHAIL2_PROGRAM = {
           "options": [
             {
               "id": "D3E3_opt1",
-              "name": "Dorian row",
-              "nameRu": "Тяга Дориана",
+              "name": "Bent Over Row (Barbell)",
+              "nameRu": "Тяга в наклоне (со штангой)",
               "reps": "8-12",
               "rest": 120,
               "sets": [
@@ -760,8 +762,8 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D3E3_opt2",
-              "name": "Single arm cable row",
-              "nameRu": "Тяга нижнего блока одной рукой",
+              "name": "Single Arm Cable Row",
+              "nameRu": "Тяга одной рукой (на блоке)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -784,8 +786,8 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D3E3_opt3",
-              "name": "Hammer single arm low row",
-              "nameRu": "Тяга Хаммер одной рукой (нижняя)",
+              "name": "Iso-Lateral Low Row",
+              "nameRu": "Нижняя тяга раздельная",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -814,8 +816,8 @@ const MIKHAIL2_PROGRAM = {
           "options": [
             {
               "id": "D3E4_opt1",
-              "name": "Single arm hammer high row",
-              "nameRu": "Тяга Хаммер одной рукой (верхняя)",
+              "name": "Iso-Lateral High Row (Machine)",
+              "nameRu": "Верхняя тяга раздельная (в тренажёре)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -838,7 +840,7 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D3E4_opt2",
-              "name": "Single arm pulldown",
+              "name": "Single Arm Lat Pulldown",
               "nameRu": "Тяга верхнего блока одной рукой",
               "reps": "12-15",
               "rest": 120,
@@ -862,8 +864,8 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D3E4_opt3",
-              "name": "Unilateral pulldown machine",
-              "nameRu": "Тяга сверху в тренажёре (поочерёдно)",
+              "name": "Lat Pulldown (Machine)",
+              "nameRu": "Тяга верхнего блока (в тренажёре)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -893,8 +895,8 @@ const MIKHAIL2_PROGRAM = {
           "exercises": [
             {
               "id": "D3E5",
-              "name": "Inclined bench dumbell swings",
-              "nameRu": "Махи гантелями на наклонной скамье",
+              "name": "Rear Delt Reverse Fly (Dumbbell)",
+              "nameRu": "Разведение на заднюю дельту (с гантелями)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -917,8 +919,8 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D3E6",
-              "name": "Fly machine / Cable rear delt fly",
-              "nameRu": "Разводка в тренажёре / Задние дельты на блоке",
+              "name": "Rear Delt Reverse Fly (Cable)",
+              "nameRu": "Разведение на заднюю дельту (на блоке)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -948,8 +950,8 @@ const MIKHAIL2_PROGRAM = {
           "exercises": [
             {
               "id": "D3E7",
-              "name": "Dumbell single arm preacher curl",
-              "nameRu": "Сгибание на скамье Скотта (гантель, поочерёдно)",
+              "name": "Preacher Curl (Dumbbell)",
+              "nameRu": "Подъём на бицепс на скамье Скотта (с гантелями)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -972,7 +974,7 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D3E8",
-              "name": "Dual bayesian curl",
+              "name": "Dual Bayesian Curl",
               "nameRu": "Байесовские сгибания",
               "reps": "12-15",
               "rest": 120,
@@ -1008,8 +1010,8 @@ const MIKHAIL2_PROGRAM = {
           "sectionTitleRu": "РАЗМИНКА",
           "exercise": {
             "id": "D4W1",
-            "name": "Adductor machine (warm-up)",
-            "nameRu": "Сведение ног (разминка)",
+            "name": "Hip Adduction (Machine)",
+            "nameRu": "Сведение ног (в тренажёре)",
             "reps": "15-20",
             "rest": 0,
             "sets": [
@@ -1025,8 +1027,8 @@ const MIKHAIL2_PROGRAM = {
           "type": "warmup",
           "exercise": {
             "id": "D4W2",
-            "name": "Abductor machine (warm-up)",
-            "nameRu": "Разведение ног (разминка)",
+            "name": "Hip Abduction (Machine)",
+            "nameRu": "Разведение ног (в тренажёре)",
             "reps": "15-20",
             "rest": 0,
             "sets": [
@@ -1046,8 +1048,8 @@ const MIKHAIL2_PROGRAM = {
           "options": [
             {
               "id": "D4E1_opt1",
-              "name": "Hack squat",
-              "nameRu": "Гакк-присед",
+              "name": "Hack Squat (Machine)",
+              "nameRu": "Гакк-присед (в тренажёре)",
               "reps": "8-12",
               "rest": 120,
               "sets": [
@@ -1070,8 +1072,8 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D4E1_opt2",
-              "name": "Reverse banded hack squat",
-              "nameRu": "Гакк-присед с резинкой (обратный)",
+              "name": "Hack Squat (Machine)",
+              "nameRu": "Гакк-присед (в тренажёре)",
               "reps": "8-12",
               "rest": 120,
               "sets": [
@@ -1094,8 +1096,8 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D4E1_opt3",
-              "name": "Pendulum squat",
-              "nameRu": "Присед в маятниковом тренажёре",
+              "name": "Pendulum Squat (Machine)",
+              "nameRu": "Маятниковые приседания (в тренажёре)",
               "reps": "8-12",
               "rest": 120,
               "sets": [
@@ -1118,8 +1120,8 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D4E1_opt4",
-              "name": "Smith squat",
-              "nameRu": "Присед в Смите",
+              "name": "Squat (Smith Machine)",
+              "nameRu": "Приседание (в Смите)",
               "reps": "8-12",
               "rest": 120,
               "sets": [
@@ -1146,8 +1148,8 @@ const MIKHAIL2_PROGRAM = {
           "type": "single",
           "exercise": {
             "id": "D4E2",
-            "name": "45° leg press",
-            "nameRu": "Жим ногами 45°",
+            "name": "Leg Press (Machine)",
+            "nameRu": "Жим ногами (в тренажёре)",
             "reps": "8-12",
             "rest": 120,
             "sets": [
@@ -1173,8 +1175,8 @@ const MIKHAIL2_PROGRAM = {
           "type": "single",
           "exercise": {
             "id": "D4E3",
-            "name": "Bulgarian split squat",
-            "nameRu": "Болгарский сплит-присед",
+            "name": "Bulgarian Split Squat",
+            "nameRu": "Болгарские сплит-приседания",
             "reps": "12-15",
             "rest": 120,
             "sets": [
@@ -1200,8 +1202,8 @@ const MIKHAIL2_PROGRAM = {
           "type": "single",
           "exercise": {
             "id": "D4E4",
-            "name": "Leg extension",
-            "nameRu": "Разгибание ног сидя",
+            "name": "Leg Extension (Machine)",
+            "nameRu": "Разгибание ног (в тренажёре)",
             "reps": "12-15",
             "rest": 120,
             "sets": [
@@ -1229,8 +1231,8 @@ const MIKHAIL2_PROGRAM = {
           "sectionTitleRu": "ПРИВОДЯЩИЕ И ОТВОДЯЩИЕ",
           "exercise": {
             "id": "D4E5",
-            "name": "Adductor machine",
-            "nameRu": "Сведение ног в тренажёре",
+            "name": "Hip Adduction (Machine)",
+            "nameRu": "Сведение ног (в тренажёре)",
             "reps": "12-15",
             "rest": 120,
             "sets": [
@@ -1256,8 +1258,8 @@ const MIKHAIL2_PROGRAM = {
           "type": "single",
           "exercise": {
             "id": "D4E6",
-            "name": "Abductor machine",
-            "nameRu": "Разведение ног в тренажёре",
+            "name": "Hip Abduction (Machine)",
+            "nameRu": "Разведение ног (в тренажёре)",
             "reps": "12-15",
             "rest": 120,
             "sets": [
@@ -1285,8 +1287,8 @@ const MIKHAIL2_PROGRAM = {
           "sectionTitleRu": "БИЦЕПС БЕДРА",
           "exercise": {
             "id": "D4E7",
-            "name": "Unilateral seated leg curl",
-            "nameRu": "Сгибание ноги сидя (поочерёдно)",
+            "name": "Seated Leg Curl (Machine)",
+            "nameRu": "Сгибание ног сидя (в тренажёре)",
             "reps": "12-15",
             "rest": 120,
             "sets": [
@@ -1314,8 +1316,8 @@ const MIKHAIL2_PROGRAM = {
           "sectionTitleRu": "ЯГОДИЦЫ",
           "exercise": {
             "id": "D4E8",
-            "name": "High cable glute kickbacks",
-            "nameRu": "Отведение ноги назад (верхний блок)",
+            "name": "Standing Cable Glute Kickbacks",
+            "nameRu": "Отведение ноги назад стоя (на блоке)",
             "reps": "12-15",
             "rest": 120,
             "sets": [
@@ -1343,8 +1345,8 @@ const MIKHAIL2_PROGRAM = {
           "sectionTitleRu": "ГОЛЕНИ",
           "exercise": {
             "id": "D4E9",
-            "name": "Calf raises machine",
-            "nameRu": "Подъём на носки (тренажёр)",
+            "name": "Standing Calf Raise (Machine)",
+            "nameRu": "Подъём на носки стоя (в тренажёре)",
             "reps": "12-15",
             "rest": 120,
             "sets": [
@@ -1379,8 +1381,8 @@ const MIKHAIL2_PROGRAM = {
           "exercises": [
             {
               "id": "D5E1",
-              "name": "Machine chest press",
-              "nameRu": "Жим в тренажёре",
+              "name": "Chest Press (Machine)",
+              "nameRu": "Жим от груди (в тренажёре)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -1407,8 +1409,8 @@ const MIKHAIL2_PROGRAM = {
               "options": [
                 {
                   "id": "D5E2_opt1",
-                  "name": "Low cable crossover",
-                  "nameRu": "Сведение рук на нижних блоках",
+                  "name": "Low Cable Fly Crossovers",
+                  "nameRu": "Сведение рук в кроссовере снизу",
                   "reps": "12-15",
                   "rest": 120,
                   "sets": [
@@ -1431,8 +1433,8 @@ const MIKHAIL2_PROGRAM = {
                 },
                 {
                   "id": "D5E2_opt2",
-                  "name": "Seated pec flys",
-                  "nameRu": "Разводка сидя (тренажёр)",
+                  "name": "Seated Chest Flys (Cable)",
+                  "nameRu": "Сведение рук сидя (на блоке)",
                   "reps": "12-15",
                   "rest": 120,
                   "sets": [
@@ -1461,8 +1463,8 @@ const MIKHAIL2_PROGRAM = {
               "options": [
                 {
                   "id": "D5E3_opt1",
-                  "name": "Dip machine for chest",
-                  "nameRu": "Отжимания в тренажёре (грудь)",
+                  "name": "Chest Dip",
+                  "nameRu": "Отжимания на брусьях (на грудь)",
                   "reps": "12-15",
                   "rest": 120,
                   "sets": [
@@ -1485,8 +1487,8 @@ const MIKHAIL2_PROGRAM = {
                 },
                 {
                   "id": "D5E3_opt2",
-                  "name": "Push-ups",
-                  "nameRu": "Отжимания",
+                  "name": "Push Up",
+                  "nameRu": "Отжимание",
                   "reps": "12-15",
                   "rest": 120,
                   "sets": [
@@ -1518,8 +1520,8 @@ const MIKHAIL2_PROGRAM = {
           "exercises": [
             {
               "id": "D5E4",
-              "name": "Machine shoulder press",
-              "nameRu": "Жим в тренажёре (плечи)",
+              "name": "Shoulder Press (Machine Plates)",
+              "nameRu": "Жим на плечи (в тренажёре, диски)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -1546,8 +1548,8 @@ const MIKHAIL2_PROGRAM = {
               "options": [
                 {
                   "id": "D5E5_opt1",
-                  "name": "Lateral raise machine",
-                  "nameRu": "Махи в тренажёре",
+                  "name": "Lateral Raise (Machine)",
+                  "nameRu": "Махи в стороны (в тренажёре)",
                   "reps": "12-15",
                   "rest": 120,
                   "sets": [
@@ -1570,8 +1572,8 @@ const MIKHAIL2_PROGRAM = {
                 },
                 {
                   "id": "D5E5_opt2",
-                  "name": "Seated dumbell lateral raises",
-                  "nameRu": "Махи гантелями сидя",
+                  "name": "Seated Lateral Raise (Dumbbell)",
+                  "nameRu": "Махи в стороны сидя (с гантелями)",
                   "reps": "12-15",
                   "rest": 120,
                   "sets": [
@@ -1596,8 +1598,8 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D5E6",
-              "name": "Inclined bench dumbell swings",
-              "nameRu": "Махи гантелями на наклонной скамье",
+              "name": "Rear Delt Reverse Fly (Dumbbell)",
+              "nameRu": "Разведение на заднюю дельту (с гантелями)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -1627,8 +1629,8 @@ const MIKHAIL2_PROGRAM = {
           "exercises": [
             {
               "id": "D5E7",
-              "name": "Dual rope cable extension",
-              "nameRu": "Разгибания на блоке (двойной канат)",
+              "name": "Triceps Extension (Cable)",
+              "nameRu": "Разгибание на трицепс (на блоке)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -1651,8 +1653,8 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D5E8",
-              "name": "Overhead triceps extension",
-              "nameRu": "Французский жим из-за головы",
+              "name": "Overhead Triceps Extension (Cable)",
+              "nameRu": "Разгибание рук над головой (блок)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -1675,8 +1677,8 @@ const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D5E9",
-              "name": "Incline skull crushers",
-              "nameRu": "Французский жим на наклонной",
+              "name": "Skullcrusher (Dumbbell)",
+              "nameRu": "Французский жим лёжа (с гантелями)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -1705,8 +1707,8 @@ const MIKHAIL2_PROGRAM = {
           "sectionTitleRu": "БИЦЕПС БЕДРА",
           "exercise": {
             "id": "D5E10",
-            "name": "Single leg curl",
-            "nameRu": "Сгибание ноги (поочерёдно)",
+            "name": "Lying Leg Curl (Machine)",
+            "nameRu": "Сгибание ног лёжа (в тренажёре)",
             "reps": "12-15",
             "rest": 120,
             "sets": [

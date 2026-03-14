@@ -45,8 +45,8 @@ const DEFAULT_PROGRAM = {
           options: [
             {
               id: "D1E1_opt1",
-              name: "Stiff legged deadlift",
-              nameRu: "Мёртвая тяга со штангой",
+              name: "Straight Leg Deadlift",
+              nameRu: "Становая тяга на прямых ногах",
               reps: "8-12",
               rest: 120,
               sets: [
@@ -57,8 +57,8 @@ const DEFAULT_PROGRAM = {
             },
             {
               id: "D1E1_opt2",
-              name: "Dumbell stiff legged deadlift",
-              nameRu: "Мёртвая тяга с гантелями",
+              name: "Straight Leg Deadlift",
+              nameRu: "Становая тяга на прямых ногах",
               reps: "8-12",
               rest: 120,
               sets: [
@@ -69,8 +69,8 @@ const DEFAULT_PROGRAM = {
             },
             {
               id: "D1E1_opt3",
-              name: "Smith deadlift",
-              nameRu: "Мёртвая тяга в Смите",
+              name: "Deadlift (Smith Machine)",
+              nameRu: "Становая тяга (в Смите)",
               reps: "8-12",
               rest: 120,
               sets: [
@@ -81,8 +81,8 @@ const DEFAULT_PROGRAM = {
             },
             {
               id: "D1E1_opt4",
-              name: "Romanian deadlift machine",
-              nameRu: "Румынская тяга в тренажёре",
+              name: "Romanian Deadlift (Barbell)",
+              nameRu: "Румынская тяга (со штангой)",
               reps: "8-12",
               rest: 120,
               sets: [
@@ -97,8 +97,8 @@ const DEFAULT_PROGRAM = {
           type: "single",
           exercise: {
             id: "D1E2",
-            name: "Seated leg curl",
-            nameRu: "Сгибание ног сидя",
+            name: "Seated Leg Curl (Machine)",
+            nameRu: "Сгибание ног сидя (в тренажёре)",
             reps: "12-15",
             rest: 120,
             sets: [
@@ -112,8 +112,8 @@ const DEFAULT_PROGRAM = {
           type: "single",
           exercise: {
             id: "D1E3",
-            name: "Lying leg curl",
-            nameRu: "Сгибание ног лёжа",
+            name: "Lying Leg Curl (Machine)",
+            nameRu: "Сгибание ног лёжа (в тренажёре)",
             reps: "12-15",
             rest: 120,
             sets: [
@@ -129,8 +129,8 @@ const DEFAULT_PROGRAM = {
           sectionTitleRu: "ЯГОДИЦЫ",
           exercise: {
             id: "D1E4",
-            name: "Glute split squat",
-            nameRu: "Сплит-присед на ягодицы",
+            name: "Bulgarian Split Squat",
+            nameRu: "Болгарские сплит-приседания",
             reps: "12-15",
             rest: 120,
             sets: [
@@ -144,8 +144,8 @@ const DEFAULT_PROGRAM = {
           type: "single",
           exercise: {
             id: "D1E5",
-            name: "Glute kickback machine",
-            nameRu: "Отведение ноги назад (тренажёр)",
+            name: "Glute Kickback (Machine)",
+            nameRu: "Отведение ноги назад (в тренажёре)",
             reps: "8-12",
             rest: 120,
             sets: [
@@ -162,8 +162,8 @@ const DEFAULT_PROGRAM = {
           exercises: [
             {
               id: "D1E6",
-              name: "Calf raises machine",
-              nameRu: "Подъём на носки (тренажёр)",
+              name: "Standing Calf Raise (Machine)",
+              nameRu: "Подъём на носки стоя (в тренажёре)",
               reps: "15-20",
               rest: 120,
               sets: [
@@ -174,7 +174,7 @@ const DEFAULT_PROGRAM = {
             },
             {
               id: "D1E7",
-              name: "Tibial raises",
+              name: "Tibial Raises",
               nameRu: "Подъём передней части стопы",
               reps: "15-20",
               rest: 120,
@@ -204,8 +204,8 @@ const DEFAULT_PROGRAM = {
           options: [
             {
               id: "D2E1",
-              name: "Supported row",
-              nameRu: "Тяга с опорой на грудь",
+              name: "Chest Supported Incline Row (Dumbbell)",
+              nameRu: "Тяга с упором в наклонную скамью (с гантелями)",
               reps: "8-12",
               rest: 120,
               sets: [
@@ -216,8 +216,8 @@ const DEFAULT_PROGRAM = {
             },
             {
               id: "D2E1_opt2",
-              name: "T-bar supported row",
-              nameRu: "Тяга Т-грифа с опорой",
+              name: "T Bar Row",
+              nameRu: "Тяга Т-грифа",
               reps: "8-12",
               rest: 120,
               sets: [
@@ -228,8 +228,8 @@ const DEFAULT_PROGRAM = {
             },
             {
               id: "D2E1_opt3",
-              name: "Incline dumbbell rows",
-              nameRu: "Тяга гантелей на наклонной скамье",
+              name: "Chest Supported Incline Row (Dumbbell)",
+              nameRu: "Тяга с упором в наклонную скамью (с гантелями)",
               reps: "8-12",
               rest: 120,
               sets: [
@@ -240,7 +240,7 @@ const DEFAULT_PROGRAM = {
             },
             {
               id: "D2E1_opt4",
-              name: "Supported bar rows",
+              name: "Supported Bar Rows",
               nameRu: "Тяга штанги с опорой",
               reps: "8-12",
               rest: 120,
@@ -256,8 +256,8 @@ const DEFAULT_PROGRAM = {
           type: "single",
           exercise: {
             id: "D2E2",
-            name: "Close grip pulldown",
-            nameRu: "Тяга верхнего блока узким хватом",
+            name: "Lat Pulldown - Close Grip (Cable)",
+            nameRu: "Тяга верхнего блока узким хватом (на блоке)",
             reps: "12-15",
             rest: 120,
             sets: [
@@ -275,8 +275,8 @@ const DEFAULT_PROGRAM = {
           options: [
             {
               id: "D2E3_opt1",
-              name: "Dorian row",
-              nameRu: "Тяга Дориана",
+              name: "Bent Over Row (Barbell)",
+              nameRu: "Тяга в наклоне (со штангой)",
               reps: "8-12",
               rest: 120,
               sets: [
@@ -287,8 +287,8 @@ const DEFAULT_PROGRAM = {
             },
             {
               id: "D2E3_opt2",
-              name: "Single arm cable row",
-              nameRu: "Тяга нижнего блока одной рукой",
+              name: "Single Arm Cable Row",
+              nameRu: "Тяга одной рукой (на блоке)",
               reps: "12-15",
               rest: 120,
               sets: [
@@ -299,8 +299,8 @@ const DEFAULT_PROGRAM = {
             },
             {
               id: "D2E3_opt3",
-              name: "Hammer single arm low row",
-              nameRu: "Тяга Хаммер одной рукой (нижняя)",
+              name: "Iso-Lateral Low Row",
+              nameRu: "Нижняя тяга раздельная",
               reps: "12-15",
               rest: 120,
               sets: [
@@ -319,8 +319,8 @@ const DEFAULT_PROGRAM = {
           options: [
             {
               id: "D2E4_opt1",
-              name: "Single arm hammer high row",
-              nameRu: "Тяга Хаммер одной рукой (верхняя)",
+              name: "Iso-Lateral High Row (Machine)",
+              nameRu: "Верхняя тяга раздельная (в тренажёре)",
               reps: "12-15",
               rest: 120,
               sets: [
@@ -331,7 +331,7 @@ const DEFAULT_PROGRAM = {
             },
             {
               id: "D2E4_opt2",
-              name: "Single arm pulldown",
+              name: "Single Arm Lat Pulldown",
               nameRu: "Тяга верхнего блока одной рукой",
               reps: "12-15",
               rest: 120,
@@ -343,8 +343,8 @@ const DEFAULT_PROGRAM = {
             },
             {
               id: "D2E4_opt3",
-              name: "Unilateral pulldown machine",
-              nameRu: "Тяга верхнего блока (унилатеральная)",
+              name: "Lat Pulldown (Machine)",
+              nameRu: "Тяга верхнего блока (в тренажёре)",
               reps: "12-15",
               rest: 120,
               sets: [
@@ -362,8 +362,8 @@ const DEFAULT_PROGRAM = {
           exercises: [
             {
               id: "D2E5",
-              name: "Inclined bench dumbell swings",
-              nameRu: "Махи гантелями на наклонной скамье",
+              name: "Rear Delt Reverse Fly (Dumbbell)",
+              nameRu: "Разведение на заднюю дельту (с гантелями)",
               reps: "15-20",
               rest: 120,
               sets: [
@@ -374,8 +374,8 @@ const DEFAULT_PROGRAM = {
             },
             {
               id: "D2E6",
-              name: "Fly machine / standing cable rear delt fly",
-              nameRu: "Обратные разведения (тренажёр/кабель)",
+              name: "Rear Delt Reverse Fly (Cable)",
+              nameRu: "Разведение на заднюю дельту (на блоке)",
               reps: "12-15",
               rest: 120,
               sets: [
@@ -400,8 +400,8 @@ const DEFAULT_PROGRAM = {
           type: "warmup",
           exercise: {
             id: "D3E0",
-            name: "Abductor machine - WARMUP",
-            nameRu: "Разведение ног (разминка)",
+            name: "Hip Abduction (Machine)",
+            nameRu: "Разведение ног (в тренажёре)",
             reps: "15-20",
             rest: null,
             note: "High repetition warm-ups, do not come close to muscle failure",
@@ -413,8 +413,8 @@ const DEFAULT_PROGRAM = {
           type: "single",
           exercise: {
             id: "D3E1",
-            name: "Unilateral hip thrust machine",
-            nameRu: "Ягодичный мост одной ногой",
+            name: "Hip Thrust (Machine)",
+            nameRu: "Ягодичный мост (в тренажёре)",
             reps: "12-15",
             rest: 120,
             sets: [
@@ -428,8 +428,8 @@ const DEFAULT_PROGRAM = {
           type: "single",
           exercise: {
             id: "D3E2",
-            name: "Glute split squat",
-            nameRu: "Сплит-присед на ягодицы",
+            name: "Bulgarian Split Squat",
+            nameRu: "Болгарские сплит-приседания",
             reps: "12-15",
             rest: 120,
             sets: [
@@ -443,8 +443,8 @@ const DEFAULT_PROGRAM = {
           type: "single",
           exercise: {
             id: "D3E3",
-            name: "Abductor machine",
-            nameRu: "Разведение ног (тренажёр)",
+            name: "Hip Abduction (Machine)",
+            nameRu: "Разведение ног (в тренажёре)",
             reps: "12-15",
             rest: 120,
             note: "Tilted torso, partial range at max contraction",
@@ -460,8 +460,8 @@ const DEFAULT_PROGRAM = {
           type: "single",
           exercise: {
             id: "D3E4",
-            name: "Adductor machine",
-            nameRu: "Сведение ног (тренажёр)",
+            name: "Hip Adduction (Machine)",
+            nameRu: "Сведение ног (в тренажёре)",
             reps: "12-15",
             rest: 120,
             sets: [
@@ -475,8 +475,8 @@ const DEFAULT_PROGRAM = {
           type: "single",
           exercise: {
             id: "D3E5",
-            name: "Single leg press",
-            nameRu: "Жим ногой одной ногой",
+            name: "Single Leg Press (Machine)",
+            nameRu: "Жим ногой (в тренажёре)",
             reps: "15-20",
             rest: 120,
             sets: [
@@ -490,8 +490,8 @@ const DEFAULT_PROGRAM = {
           type: "single",
           exercise: {
             id: "D3E6",
-            name: "Leg extension",
-            nameRu: "Разгибание ног",
+            name: "Leg Extension (Machine)",
+            nameRu: "Разгибание ног (в тренажёре)",
             reps: "15-20",
             rest: 120,
             sets: [
@@ -505,8 +505,8 @@ const DEFAULT_PROGRAM = {
           type: "single",
           exercise: {
             id: "D3E7",
-            name: "Calf raises machine",
-            nameRu: "Подъём на носки (тренажёр)",
+            name: "Standing Calf Raise (Machine)",
+            nameRu: "Подъём на носки стоя (в тренажёре)",
             reps: "15-20",
             rest: 120,
             sets: [
@@ -532,8 +532,8 @@ const DEFAULT_PROGRAM = {
           sectionTitleRu: "ПЛЕЧИ",
           exercise: {
             id: "D4E1",
-            name: "Machine shoulder press",
-            nameRu: "Жим плечами (тренажёр)",
+            name: "Shoulder Press (Machine Plates)",
+            nameRu: "Жим на плечи (в тренажёре, диски)",
             reps: "12-15",
             rest: 120,
             sets: [
@@ -549,8 +549,8 @@ const DEFAULT_PROGRAM = {
           options: [
             {
               id: "D4E2_opt1",
-              name: "Lateral raise machine",
-              nameRu: "Подъём гантелей в стороны (тренажёр)",
+              name: "Lateral Raise (Machine)",
+              nameRu: "Махи в стороны (в тренажёре)",
               reps: "12-15",
               rest: 120,
               sets: [
@@ -561,8 +561,8 @@ const DEFAULT_PROGRAM = {
             },
             {
               id: "D4E2_opt2",
-              name: "Seated dumbell lateral raises",
-              nameRu: "Подъём гантелей в стороны сидя",
+              name: "Seated Lateral Raise (Dumbbell)",
+              nameRu: "Махи в стороны сидя (с гантелями)",
               reps: "12-15",
               rest: 120,
               sets: [
@@ -580,8 +580,8 @@ const DEFAULT_PROGRAM = {
           exercises: [
             {
               id: "D4E3",
-              name: "Inclined bench dumbell swings",
-              nameRu: "Махи гантелями на наклонной скамье",
+              name: "Rear Delt Reverse Fly (Dumbbell)",
+              nameRu: "Разведение на заднюю дельту (с гантелями)",
               reps: "15-20",
               rest: 120,
               sets: [
@@ -592,8 +592,8 @@ const DEFAULT_PROGRAM = {
             },
             {
               id: "D4E4",
-              name: "Fly machine / cable rear delt fly",
-              nameRu: "Обратные разведения (тренажёр/кабель)",
+              name: "Rear Delt Reverse Fly (Cable)",
+              nameRu: "Разведение на заднюю дельту (на блоке)",
               reps: "12-15",
               rest: 120,
               sets: [
@@ -615,8 +615,8 @@ const DEFAULT_PROGRAM = {
               options: [
                 {
                   id: "D4E5_opt1",
-                  name: "Hammer high row",
-                  nameRu: "Тяга Хаммер (верхняя)",
+                  name: "Iso-Lateral High Row (Machine)",
+                  nameRu: "Верхняя тяга раздельная (в тренажёре)",
                   reps: "8-12",
                   rest: 120,
                   sets: [
@@ -627,8 +627,8 @@ const DEFAULT_PROGRAM = {
                 },
                 {
                   id: "D4E5_opt2",
-                  name: "Close grip pulldown",
-                  nameRu: "Тяга верхнего блока узким хватом",
+                  name: "Lat Pulldown - Close Grip (Cable)",
+                  nameRu: "Тяга верхнего блока узким хватом (на блоке)",
                   reps: "8-12",
                   rest: 120,
                   sets: [
@@ -641,8 +641,8 @@ const DEFAULT_PROGRAM = {
             },
             {
               id: "D4E6",
-              name: "Hammer low row",
-              nameRu: "Тяга Хаммер (нижняя)",
+              name: "Iso-Lateral Low Row",
+              nameRu: "Нижняя тяга раздельная",
               reps: "12-15",
               rest: 120,
               sets: [
@@ -664,7 +664,7 @@ const DEFAULT_PROGRAM = {
               options: [
                 {
                   id: "D4E7_opt1",
-                  name: "Single arm pulldown",
+                  name: "Single Arm Lat Pulldown",
                   nameRu: "Тяга верхнего блока одной рукой",
                   reps: "12-15",
                   rest: 120,
@@ -676,8 +676,8 @@ const DEFAULT_PROGRAM = {
                 },
                 {
                   id: "D4E7_opt2",
-                  name: "Unilateral pulldown machine",
-                  nameRu: "Тяга верхнего блока (унилатеральная)",
+                  name: "Lat Pulldown (Machine)",
+                  nameRu: "Тяга верхнего блока (в тренажёре)",
                   reps: "12-15",
                   rest: 120,
                   sets: [
@@ -694,8 +694,8 @@ const DEFAULT_PROGRAM = {
               options: [
                 {
                   id: "D4E8_opt1",
-                  name: "Single arm cable row",
-                  nameRu: "Тяга нижнего блока одной рукой",
+                  name: "Single Arm Cable Row",
+                  nameRu: "Тяга одной рукой (на блоке)",
                   reps: "12-15",
                   rest: 120,
                   sets: [
@@ -706,8 +706,8 @@ const DEFAULT_PROGRAM = {
                 },
                 {
                   id: "D4E8_opt2",
-                  name: "Hammer single arm low row",
-                  nameRu: "Тяга Хаммер одной рукой (нижняя)",
+                  name: "Iso-Lateral Low Row",
+                  nameRu: "Нижняя тяга раздельная",
                   reps: "12-15",
                   rest: 120,
                   sets: [
@@ -718,8 +718,8 @@ const DEFAULT_PROGRAM = {
                 },
                 {
                   id: "D4E8_opt3",
-                  name: "Dorian row",
-                  nameRu: "Тяга Дориана",
+                  name: "Bent Over Row (Barbell)",
+                  nameRu: "Тяга в наклоне (со штангой)",
                   reps: "12-15",
                   rest: 120,
                   sets: [
@@ -746,8 +746,8 @@ const DEFAULT_PROGRAM = {
           type: "single",
           exercise: {
             id: "D5E1",
-            name: "Abductor machine",
-            nameRu: "Разведение ног (тренажёр)",
+            name: "Hip Abduction (Machine)",
+            nameRu: "Разведение ног (в тренажёре)",
             reps: "15-20",
             rest: 120,
             note: "Tilted torso, partial range",
@@ -765,8 +765,8 @@ const DEFAULT_PROGRAM = {
           options: [
             {
               id: "D5E2_opt1",
-              name: "Barbell hip thrust",
-              nameRu: "Ягодичный мост со штангой",
+              name: "Hip Thrust (Barbell)",
+              nameRu: "Ягодичный мост (со штангой)",
               reps: "8-12",
               rest: 120,
               sets: [
@@ -777,8 +777,8 @@ const DEFAULT_PROGRAM = {
             },
             {
               id: "D5E2_opt2",
-              name: "Hip thrust machine",
-              nameRu: "Ягодичный мост (тренажёр)",
+              name: "Hip Thrust (Machine)",
+              nameRu: "Ягодичный мост (в тренажёре)",
               reps: "8-12",
               rest: 120,
               sets: [
@@ -795,8 +795,8 @@ const DEFAULT_PROGRAM = {
           options: [
             {
               id: "D5E3_opt1",
-              name: "Glute cable kickbacks",
-              nameRu: "Отведение ноги назад (кабель)",
+              name: "Standing Cable Glute Kickbacks",
+              nameRu: "Отведение ноги назад стоя (на блоке)",
               reps: "8-12",
               rest: 120,
               sets: [
@@ -807,8 +807,8 @@ const DEFAULT_PROGRAM = {
             },
             {
               id: "D5E3_opt2",
-              name: "Glute kickback machine",
-              nameRu: "Отведение ноги назад (тренажёр)",
+              name: "Glute Kickback (Machine)",
+              nameRu: "Отведение ноги назад (в тренажёре)",
               reps: "8-12",
               rest: 120,
               sets: [
@@ -823,7 +823,7 @@ const DEFAULT_PROGRAM = {
           type: "single",
           exercise: {
             id: "D5E4",
-            name: "Medium gluteus on low pulley",
+            name: "Medium Gluteus on Low Pulley",
             nameRu: "Средняя ягодичная на нижнем блоке",
             reps: "12-15",
             rest: 120,
@@ -838,8 +838,8 @@ const DEFAULT_PROGRAM = {
           type: "single",
           exercise: {
             id: "D5E5",
-            name: "Leg extension",
-            nameRu: "Разгибание ног",
+            name: "Leg Extension (Machine)",
+            nameRu: "Разгибание ног (в тренажёре)",
             reps: "15-20",
             rest: 120,
             sets: [
@@ -853,8 +853,8 @@ const DEFAULT_PROGRAM = {
           type: "single",
           exercise: {
             id: "D5E6",
-            name: "Seated leg curl",
-            nameRu: "Сгибание ног сидя",
+            name: "Seated Leg Curl (Machine)",
+            nameRu: "Сгибание ног сидя (в тренажёре)",
             reps: "15-20",
             rest: 120,
             sets: [
@@ -868,8 +868,8 @@ const DEFAULT_PROGRAM = {
           type: "single",
           exercise: {
             id: "D5E7",
-            name: "Calf raises machine",
-            nameRu: "Подъём на носки (тренажёр)",
+            name: "Standing Calf Raise (Machine)",
+            nameRu: "Подъём на носки стоя (в тренажёре)",
             reps: "15-20",
             rest: 120,
             sets: [

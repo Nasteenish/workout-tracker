@@ -449,4 +449,13 @@ const EXERCISE_DB = [
     { nameRu: 'Ходьба', name: 'Walking', category: 'cardio' },
     { nameRu: 'Шраги с прыжком', name: 'Jump Shrug', category: 'cardio' },
     { nameRu: 'Эллиптический тренажёр', name: 'Elliptical Trainer', category: 'cardio' },
+
+    // === Custom (trainer exercises) ===
+    { nameRu: '6 Ways (комбо на дельты)', name: '6 Ways', category: 'shoulders' },
+    { nameRu: 'Байесовский сгиб (блок)', name: 'Dual Bayesian Curl', category: 'arms' },
+    { nameRu: 'Средняя ягодичная (нижний блок)', name: 'Medium Gluteus on Low Pulley', category: 'glutes' },
+    { nameRu: 'Разгибание на трицепс одной рукой (канат)', name: 'One Arm Rope Triceps Extension', category: 'arms' },
+    { nameRu: 'Тяга штанги с опорой на грудь', name: 'Supported Bar Rows', category: 'back' },
+    { nameRu: 'Подъём передней части голени', name: 'Tibial Raises', category: 'legs' },
+    { nameRu: 'Подъём на нижнем блоке одной рукой', name: 'Unilateral Low Pulley Raises', category: 'shoulders' },
 ];
