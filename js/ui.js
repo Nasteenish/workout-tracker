@@ -1103,47 +1103,54 @@ const UI = {
     },
 
     // ===== EQUIPMENT MODAL =====
-    _getExerciseMuscleGroup(exerciseId) {
-        // Find exercise name in program
-        var name = '';
+    _getExerciseInfo(exerciseId) {
+        // Find exercise in program and return {name, nameRu, category}
+        var ex = null;
         var program = typeof PROGRAM !== 'undefined' ? PROGRAM : null;
         if (program && program.weeks) {
-            for (var w = 0; w < program.weeks.length && !name; w++) {
+            for (var w = 0; w < program.weeks.length && !ex; w++) {
                 var days = program.weeks[w].days;
-                for (var d = 0; d < days.length && !name; d++) {
+                for (var d = 0; d < days.length && !ex; d++) {
                     var items = days[d].items || [];
-                    for (var it = 0; it < items.length && !name; it++) {
+                    for (var it = 0; it < items.length && !ex; it++) {
                         var item = items[it];
                         if (item.type === 'single' && item.exercise && item.exercise.id === exerciseId) {
-                            name = exName(item.exercise);
+                            ex = item.exercise;
                         }
                         if (item.type === 'superset' && item.exercises) {
                             for (var s = 0; s < item.exercises.length; s++) {
                                 var se = item.exercises[s].exercise || item.exercises[s];
-                                if (se.id === exerciseId) { name = exName(se); break; }
+                                if (se.id === exerciseId) { ex = se; break; }
+                            }
+                        }
+                        if (item.type === 'choose_one' && item.options) {
+                            for (var o = 0; o < item.options.length && !ex; o++) {
+                                var opt = item.options[o];
+                                if (opt.exercise && opt.exercise.id === exerciseId) ex = opt.exercise;
                             }
                         }
                     }
                 }
             }
         }
-        if (!name) return 'all';
-        // Look up in EXERCISE_DB
-        var nl = name.toLowerCase();
+        if (!ex) return { name: '', nameRu: '', category: 'all' };
+        // Look up category in EXERCISE_DB
+        var displayName = exName(ex);
+        var nl = displayName.toLowerCase();
         for (var i = 0; i < EXERCISE_DB.length; i++) {
             if ((EXERCISE_DB[i].nameRu && EXERCISE_DB[i].nameRu.toLowerCase() === nl) ||
                 (EXERCISE_DB[i].name && EXERCISE_DB[i].name.toLowerCase() === nl)) {
-                return EXERCISE_DB[i].category;
+                return { name: ex.name || EXERCISE_DB[i].name, nameRu: ex.nameRu || EXERCISE_DB[i].nameRu, category: EXERCISE_DB[i].category };
             }
         }
-        return 'all';
+        return { name: ex.name || '', nameRu: ex.nameRu || '', category: 'all' };
     },
 
     showEquipmentModal(exerciseId) {
-        // Show only equipment linked to this exercise
         const exerciseEquipment = Storage.getExerciseEquipmentOptions(exerciseId);
         const currentEqId = Storage.getExerciseEquipment(exerciseId);
-        const muscleGroup = this._getExerciseMuscleGroup(exerciseId);
+        const exInfo = this._getExerciseInfo(exerciseId);
+        const muscleGroup = exInfo.category;
 
         let optionsHtml = `
             <div class="eq-option ${!currentEqId ? 'selected' : ''}" data-eq-id="" data-exercise="${exerciseId}">
@@ -1167,12 +1174,16 @@ const UI = {
                 <div class="modal-header">
                     <h3>Оборудование</h3>
                 </div>
+                <div id="eq-gym-results"></div>
                 <div class="eq-list">
                     ${optionsHtml}
                 </div>
-                <div id="eq-shared-results"></div>
+                <div class="eq-search-row">
+                    <input type="text" id="eq-search" placeholder="Поиск тренажёра..." class="eq-new-input" autocomplete="off">
+                </div>
+                <div id="eq-search-results"></div>
                 <div class="eq-add-row">
-                    <input type="text" id="eq-new-name" placeholder="Новое оборудование..." class="eq-new-input">
+                    <input type="text" id="eq-new-name" placeholder="Своё оборудование..." class="eq-new-input">
                     <button class="eq-add-btn" id="eq-add-btn">+</button>
                 </div>
             </div>
@@ -1182,11 +1193,13 @@ const UI = {
 
         overlay._exerciseId = exerciseId;
         overlay._muscleGroup = muscleGroup;
+        overlay._exerciseName = exInfo.name;
 
         blockOverlayScroll(overlay, '.equipment-modal');
         overlay.addEventListener('click', function(e) { App.handleClick(e); });
         overlay.addEventListener('input', function(e) { App.handleInput(e); });
 
+        App._loadGymEquipment(exerciseId);
         App._loadSharedEquipment(muscleGroup);
     },
 

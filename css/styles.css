@@ -3413,6 +3413,34 @@ body.modal-open {
     font-size: 14px;
     color: var(--text-primary);
 }
+.eq-gym-item, .eq-search-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    margin: 2px 0;
+    background: rgba(157, 141, 245, 0.08);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+.eq-gym-item:active, .eq-search-item:active {
+    background: rgba(157, 141, 245, 0.2);
+}
+.eq-catalog-model {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-left: 8px;
+    flex-shrink: 0;
+}
+.eq-search-row {
+    padding: 8px 0 4px;
+}
+.eq-search-empty {
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 12px 4px;
+    text-align: center;
+}
 /* Equipment muscle group prompt */
 .eq-muscle-chips {
     display: flex;

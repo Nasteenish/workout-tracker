@@ -2543,15 +2543,16 @@ const App = {
             const eqId = opt.dataset.eqId;
             const exId = opt.dataset.exercise;
             Storage.setExerciseEquipment(exId, eqId || null);
-            // Propagate to gym-equipment map
             var activeGym = this._getActiveGymId();
             if (activeGym && eqId) Storage.setGymExerciseEquipment(activeGym, exId, eqId);
+            // Share to gym_equipment
+            if (eqId) this._shareToGymEquipment(exId, Storage.getEquipmentById(eqId));
             UI.hideEquipmentModal();
             UI.renderDay(this._currentWeek, this._currentDay);
             return;
         }
 
-        // Equipment modal — add new
+        // Equipment modal — add new custom
         if (target.id === 'eq-add-btn' || target.closest('#eq-add-btn')) {
             const input = document.getElementById('eq-new-name');
             const name = input ? input.value.trim() : '';
@@ -2560,7 +2561,6 @@ const App = {
             const exId = modal ? modal._exerciseId : null;
             const muscleGroup = modal ? modal._muscleGroup : null;
             const newId = Storage.addEquipment(name);
-            // Save to shared DB with auto-detected muscle group
             if (typeof Social !== 'undefined' && muscleGroup && muscleGroup !== 'all') {
                 Social.addSharedEquipment(name, muscleGroup).catch(function() {});
             }
@@ -2568,22 +2568,45 @@ const App = {
                 Storage.setExerciseEquipment(exId, newId);
                 var activeGym = this._getActiveGymId();
                 if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, newId);
+                this._shareToGymEquipment(exId, { name: name });
                 UI.hideEquipmentModal();
                 UI.renderDay(this._currentWeek, this._currentDay);
             }
             return;
         }
 
-
-
-        // Equipment modal — click shared item
-        if (target.closest('.eq-shared-item')) {
-            var item = target.closest('.eq-shared-item');
-            var sharedName = item.dataset.name;
-            if (!sharedName) return;
+        // Equipment modal — click search result (catalog or shared)
+        if (target.closest('.eq-search-item')) {
+            var item = target.closest('.eq-search-item');
+            var eqName = item.dataset.name;
+            var catalogId = item.dataset.catalogId ? parseInt(item.dataset.catalogId) : null;
+            if (!eqName) return;
             var modal = document.getElementById('equipment-modal');
             var exId = modal ? modal._exerciseId : null;
-            var newId = Storage.addEquipment(sharedName);
+            var muscleGroup = modal ? modal._muscleGroup : null;
+            var newId = Storage.addEquipment(eqName);
+            if (typeof Social !== 'undefined' && muscleGroup && muscleGroup !== 'all') {
+                Social.addSharedEquipment(eqName, muscleGroup).catch(function() {});
+            }
+            if (exId) {
+                Storage.setExerciseEquipment(exId, newId);
+                var activeGym = this._getActiveGymId();
+                if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, newId);
+                this._shareToGymEquipment(exId, { name: eqName, catalogId: catalogId });
+            }
+            UI.hideEquipmentModal();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return;
+        }
+
+        // Equipment modal — click gym equipment item
+        if (target.closest('.eq-gym-item')) {
+            var item = target.closest('.eq-gym-item');
+            var eqName = item.dataset.name;
+            if (!eqName) return;
+            var modal = document.getElementById('equipment-modal');
+            var exId = modal ? modal._exerciseId : null;
+            var newId = Storage.addEquipment(eqName);
             if (exId) {
                 Storage.setExerciseEquipment(exId, newId);
                 var activeGym = this._getActiveGymId();
@@ -2755,6 +2778,13 @@ const App = {
             const setIdx = parseInt(target.dataset.set);
             const segIdx = parseInt(target.dataset.seg);
             Storage.saveSegWeight(this._currentWeek, this._currentDay, exId, setIdx, segIdx, target.value);
+            return;
+        }
+
+        // Equipment search
+        if (target.id === 'eq-search') {
+            var query = target.value.trim();
+            this._searchEquipment(query);
             return;
         }
 
@@ -3005,36 +3035,106 @@ const App = {
     },
 
     _loadSharedEquipment(muscleGroup) {
+        // Pre-load shared + catalog for search
         if (typeof Social === 'undefined') return;
-        if (!muscleGroup || muscleGroup === 'all') return;
         var self = this;
-        Social.searchSharedEquipment('', muscleGroup).then(function(items) {
-            self._sharedEquipmentCache = items || [];
-            self._renderSharedEquipment(muscleGroup);
+        self._sharedEquipmentCache = [];
+        self._catalogCache = [];
+        if (muscleGroup && muscleGroup !== 'all') {
+            Social.searchSharedEquipment('', muscleGroup).then(function(items) {
+                self._sharedEquipmentCache = items || [];
+            }).catch(function() {});
+            Social.searchCatalog('', muscleGroup).then(function(items) {
+                self._catalogCache = items || [];
+            }).catch(function() {});
+        }
+    },
+
+    _loadGymEquipment(exerciseId) {
+        if (typeof Social === 'undefined') return;
+        var activeGymId = this._getActiveGymId();
+        if (!activeGymId) return;
+        var gym = Storage.getGymById(activeGymId);
+        if (!gym || !gym.city) return;
+        var modal = document.getElementById('equipment-modal');
+        var exerciseName = modal ? modal._exerciseName : '';
+        if (!exerciseName) return;
+
+        Social.getGymEquipment(gym.name, gym.city, exerciseName).then(function(items) {
+            var div = document.getElementById('eq-gym-results');
+            if (!div || !items || !items.length) return;
+            var html = '<div class="eq-shared-label">В этом зале:</div>';
+            for (var i = 0; i < items.length; i++) {
+                html += '<div class="eq-gym-item" data-name="' + items[i].equipment_name.replace(/"/g, '&quot;') + '">'
+                    + '<span class="eq-shared-name">' + items[i].equipment_name + '</span>'
+                    + '</div>';
+            }
+            div.innerHTML = html;
         }).catch(function() {});
     },
 
-    _renderSharedEquipment(muscleGroup) {
-        var resultsDiv = document.getElementById('eq-shared-results');
+    _searchEquipment(query) {
+        var resultsDiv = document.getElementById('eq-search-results');
         if (!resultsDiv) return;
-        var items = this._sharedEquipmentCache || [];
-        // Filter by muscle group
-        if (muscleGroup && muscleGroup !== 'all') {
-            items = items.filter(function(it) { return it.muscle_group === muscleGroup; });
-        }
-        // Filter out equipment user already has
+        if (!query || query.length < 2) { resultsDiv.innerHTML = ''; return; }
+        var ql = query.toLowerCase();
+        var html = '';
+        var seen = {};
+
+        // Search local equipment
         var myEq = Storage.getEquipmentList();
-        var myNames = {};
-        for (var i = 0; i < myEq.length; i++) myNames[myEq[i].name.toLowerCase()] = true;
-        var filtered = items.filter(function(it) { return !myNames[it.name.toLowerCase()]; });
-        if (!filtered.length) { resultsDiv.innerHTML = ''; return; }
-        var html = '<div class="eq-shared-label">Из базы:</div>';
-        for (var i = 0; i < filtered.length; i++) {
-            html += '<div class="eq-shared-item" data-name="' + filtered[i].name.replace(/"/g, '&quot;') + '">'
-                + '<span class="eq-shared-name">' + filtered[i].name + '</span>'
-                + '</div>';
+        for (var i = 0; i < myEq.length; i++) {
+            if (myEq[i].name.toLowerCase().indexOf(ql) !== -1) {
+                var k = myEq[i].name.toLowerCase();
+                if (seen[k]) continue;
+                seen[k] = true;
+                html += '<div class="eq-search-item" data-name="' + myEq[i].name.replace(/"/g, '&quot;') + '">'
+                    + '<span class="eq-shared-name">' + myEq[i].name + '</span></div>';
+            }
         }
+
+        // Search catalog cache
+        var catalog = this._catalogCache || [];
+        for (var i = 0; i < catalog.length; i++) {
+            var c = catalog[i];
+            var cName = (c.brand ? c.brand + ' ' : '') + c.name;
+            if (cName.toLowerCase().indexOf(ql) !== -1 || (c.model && c.model.toLowerCase().indexOf(ql) !== -1)) {
+                var k = cName.toLowerCase();
+                if (seen[k]) continue;
+                seen[k] = true;
+                html += '<div class="eq-search-item" data-name="' + cName.replace(/"/g, '&quot;') + '" data-catalog-id="' + c.id + '">'
+                    + '<span class="eq-shared-name">' + cName + '</span>'
+                    + (c.model ? '<span class="eq-catalog-model">' + c.model + '</span>' : '')
+                    + '</div>';
+            }
+        }
+
+        // Search shared equipment cache
+        var shared = this._sharedEquipmentCache || [];
+        for (var i = 0; i < shared.length; i++) {
+            if (shared[i].name.toLowerCase().indexOf(ql) !== -1) {
+                var k = shared[i].name.toLowerCase();
+                if (seen[k]) continue;
+                seen[k] = true;
+                html += '<div class="eq-search-item" data-name="' + shared[i].name.replace(/"/g, '&quot;') + '">'
+                    + '<span class="eq-shared-name">' + shared[i].name + '</span></div>';
+            }
+        }
+
+        if (!html) html = '<div class="eq-search-empty">Ничего не найдено</div>';
         resultsDiv.innerHTML = html;
+    },
+
+    _shareToGymEquipment(exerciseId, equipment) {
+        if (typeof Social === 'undefined' || !equipment || !equipment.name) return;
+        var activeGymId = this._getActiveGymId();
+        if (!activeGymId) return;
+        var gym = Storage.getGymById(activeGymId);
+        if (!gym || !gym.city) return;
+        var modal = document.getElementById('equipment-modal');
+        var exerciseName = modal ? modal._exerciseName : '';
+        if (!exerciseName) return;
+        Social.addGymEquipment(gym.name, gym.city, exerciseName, equipment.name, equipment.catalogId || null).catch(function() {});
     },
 
     _suggestNearbyGym() {

@@ -742,5 +742,47 @@ const Social = {
             .upsert({ name: name, muscle_group: muscleGroup, created_by: myId }, { onConflict: 'name,muscle_group' })
             .select().single();
         return r.data;
+    },
+
+    // ===== GYM EQUIPMENT (gym ↔ exercise ↔ equipment) =====
+
+    async getGymEquipment(gymName, gymCity, exerciseName) {
+        if (!supa || !gymName || !gymCity) return [];
+        var q = supa.from('gym_equipment')
+            .select('equipment_name, catalog_id')
+            .eq('gym_name', gymName)
+            .eq('gym_city', gymCity);
+        if (exerciseName) q = q.eq('exercise_name', exerciseName);
+        var r = await q;
+        return r.data || [];
+    },
+
+    async addGymEquipment(gymName, gymCity, exerciseName, equipmentName, catalogId) {
+        if (!supa || !gymName || !gymCity || !exerciseName || !equipmentName) return null;
+        var myId = this._getSupaUserId();
+        var r = await supa.from('gym_equipment')
+            .upsert({
+                gym_name: gymName,
+                gym_city: gymCity,
+                exercise_name: exerciseName,
+                equipment_name: equipmentName,
+                catalog_id: catalogId || null,
+                created_by: myId || null
+            }, { onConflict: 'gym_name,gym_city,exercise_name,equipment_name' });
+        return r.data;
+    },
+
+    // ===== EQUIPMENT CATALOG (read-only, 293 machines) =====
+
+    async searchCatalog(query, muscleGroup) {
+        if (!supa) return [];
+        var q = supa.from('equipment_catalog')
+            .select('id, brand, model, name, muscle_group, image_url')
+            .order('brand')
+            .limit(30);
+        if (query) q = q.ilike('name', '%' + query + '%');
+        if (muscleGroup && muscleGroup !== 'all') q = q.eq('muscle_group', muscleGroup);
+        var r = await q;
+        return r.data || [];
     }
 };
