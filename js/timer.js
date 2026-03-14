@@ -107,9 +107,12 @@ const RestTimer = {
         bar.classList.add('active');
         this._saveState();
 
-        // Scroll into view
+        // Gentle scroll: only if bar is below the visible area
         setTimeout(() => {
-            bar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            var rect = bar.getBoundingClientRect();
+            if (rect.bottom > window.innerHeight) {
+                window.scrollBy({ top: rect.bottom - window.innerHeight + 20, behavior: 'smooth' });
+            }
         }, 50);
 
         this._interval = setInterval(() => {
