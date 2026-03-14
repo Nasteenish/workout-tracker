@@ -49,7 +49,13 @@ const App = {
         }, 300);
 
         // Route handling
-        window.addEventListener('hashchange', () => this.route());
+        window.addEventListener('hashchange', () => {
+            if (document.getElementById('equipment-modal')) {
+                console.log('[EQ-HASH] hash changed to ' + location.hash + ' while equipment modal open');
+                console.trace('[EQ-HASH] stack');
+            }
+            this.route();
+        });
 
         // Global event delegation
         document.getElementById('app').addEventListener('click', (e) => this.handleClick(e));
@@ -1251,6 +1257,11 @@ const App = {
 
     handleClick(e) {
         const target = e.target;
+
+        // DEBUG: trace what closes equipment modal
+        if (document.getElementById('equipment-modal')) {
+            console.log('[EQ-CLICK] tag=' + target.tagName + ' id=' + target.id + ' class=' + target.className + ' closest-modal=' + !!target.closest('#equipment-modal'));
+        }
 
         // Login form submit
         if (target.id === 'login-submit' || target.closest('#login-submit')) {
