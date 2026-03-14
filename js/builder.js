@@ -1120,7 +1120,7 @@ const Builder = {
             }).catch(function() {});
         }
 
-        // Search input listener
+        // Search input listener — hide categories & custom when searching
         var searchInput = document.getElementById('picker-search-input');
         if (searchInput) {
             searchInput.addEventListener('input', function() {
@@ -1129,12 +1129,36 @@ const Builder = {
                 var cat = activeCat ? activeCat.dataset.cat : 'all';
                 var listHtml = Builder._buildPickerList(cat, query);
                 document.getElementById('picker-list').innerHTML = listHtml;
-                // Auto-fill custom input when no results found
-                var customInput = document.getElementById('picker-custom-name');
-                if (customInput && query && listHtml.indexOf('picker-empty') !== -1) {
-                    customInput.value = query;
+                // Hide categories & custom input when searching to show more results
+                var catsW = document.getElementById('picker-categories-wrap');
+                var customSec = document.querySelector('.picker-custom');
+                if (query) {
+                    if (catsW) catsW.style.display = 'none';
+                    if (customSec) customSec.style.display = 'none';
+                } else {
+                    if (catsW) catsW.style.display = '';
+                    if (customSec) customSec.style.display = '';
                 }
             });
+            // Restore on blur if empty
+            searchInput.addEventListener('blur', function() {
+                if (!searchInput.value.trim()) {
+                    var catsW = document.getElementById('picker-categories-wrap');
+                    var customSec = document.querySelector('.picker-custom');
+                    if (catsW) catsW.style.display = '';
+                    if (customSec) customSec.style.display = '';
+                }
+            });
+        }
+
+        // Adjust modal height to visual viewport (keyboard-aware)
+        var pickerModal = overlay.querySelector('.picker-modal');
+        if (pickerModal && window.visualViewport) {
+            var adjustHeight = function() {
+                pickerModal.style.maxHeight = (window.visualViewport.height * 0.92) + 'px';
+            };
+            window.visualViewport.addEventListener('resize', adjustHeight);
+            overlay._vpListener = adjustHeight;
         }
 
         // Scroll custom input into view when keyboard opens
@@ -1273,6 +1297,10 @@ const Builder = {
     _closeExercisePicker() {
         var modal = document.getElementById('exercise-picker-modal');
         if (modal) {
+            // Remove visualViewport listener
+            if (modal._vpListener && window.visualViewport) {
+                window.visualViewport.removeEventListener('resize', modal._vpListener);
+            }
             modal.classList.remove('visible');
             setTimeout(function() { modal.remove(); }, 200);
         }

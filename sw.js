@@ -1,4 +1,4 @@
-const CACHE_NAME = 'workout-tracker-v434';
+const CACHE_NAME = 'workout-tracker-v435';
 const ASSETS = [
     './',
     './index.html',
