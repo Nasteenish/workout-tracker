@@ -1203,37 +1203,74 @@ const UI = {
         var eqModal = overlay.querySelector('.equipment-modal');
         var searchInput = document.getElementById('eq-search');
 
-        searchInput.addEventListener('focus', function() {
+        function enterEqSearch() {
             overlay._inputFocusedAt = Date.now();
-            // Hide everything except search + results
-            var header = overlay.querySelector('.eq-modal-header');
             var gymResults = document.getElementById('eq-gym-results');
             var eqList = document.getElementById('eq-list');
             var addRow = document.getElementById('eq-add-row');
-            if (header) header.style.display = 'none';
+            // Keep header (with close button) visible!
             if (gymResults) gymResults.style.display = 'none';
             if (eqList) eqList.style.display = 'none';
             if (addRow) addRow.style.display = 'none';
-            // Expand search results area
             var searchResults = document.getElementById('eq-search-results');
             if (searchResults) searchResults.style.flex = '1';
-            if (eqModal) eqModal.style.maxHeight = '88vh';
-        });
+            // Move modal to top (like exercise picker)
+            eqModal.style.bottom = 'auto';
+            eqModal.style.top = 'env(safe-area-inset-top, 44px)';
+            eqModal.style.borderRadius = '0 0 var(--radius-xl) var(--radius-xl)';
+            eqModal.style.position = 'fixed';
+            eqModal.style.left = '0';
+            eqModal.style.right = '0';
+            overlay.style.alignItems = 'flex-start';
+            adjustEqViewport();
+        }
 
-        searchInput.addEventListener('blur', function() {
-            if (searchInput.value.trim()) return;
-            var header = overlay.querySelector('.eq-modal-header');
+        function exitEqSearch() {
             var gymResults = document.getElementById('eq-gym-results');
             var eqList = document.getElementById('eq-list');
             var addRow = document.getElementById('eq-add-row');
-            if (header) header.style.display = '';
             if (gymResults) gymResults.style.display = '';
             if (eqList) eqList.style.display = '';
             if (addRow) addRow.style.display = '';
             var searchResults = document.getElementById('eq-search-results');
             if (searchResults) { searchResults.innerHTML = ''; searchResults.style.flex = ''; }
-            if (eqModal) eqModal.style.maxHeight = '';
+            eqModal.style.bottom = '';
+            eqModal.style.top = '';
+            eqModal.style.borderRadius = '';
+            eqModal.style.position = '';
+            eqModal.style.left = '';
+            eqModal.style.right = '';
+            eqModal.style.maxHeight = '';
+            overlay.style.alignItems = '';
+        }
+
+        function adjustEqViewport() {
+            if (window.visualViewport) {
+                eqModal.style.maxHeight = (window.visualViewport.height - 10) + 'px';
+            }
+        }
+
+        searchInput.addEventListener('focus', enterEqSearch);
+
+        searchInput.addEventListener('blur', function() {
+            if (searchInput.value.trim()) return;
+            exitEqSearch();
         });
+
+        // Close button should also exit search mode
+        var closeBtn = document.getElementById('eq-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                UI.hideEquipmentModal();
+            });
+        }
+
+        // visualViewport resize listener for keyboard
+        if (window.visualViewport) {
+            overlay._vpListener = function() { adjustEqViewport(); };
+            window.visualViewport.addEventListener('resize', overlay._vpListener);
+        }
 
         searchInput.addEventListener('input', function() {
             App._searchEquipment(searchInput.value.trim());
