@@ -2183,7 +2183,9 @@ const App = {
             const mins = parseInt(document.getElementById('td-min-val')?.textContent) || 0;
             const secs = parseInt(document.getElementById('td-sec-val')?.textContent) || 0;
             const timerDuration = Math.max(30, mins * 60 + secs);
-            Storage.saveSettings({ cycleType, startDate, weightUnit, timerDuration });
+            const langBtn = document.querySelector('.cycle-toggle button.active[data-lang]');
+            const exerciseLang = langBtn ? langBtn.dataset.lang : 'ru';
+            Storage.saveSettings({ cycleType, startDate, weightUnit, timerDuration, exerciseLang });
             RestTimer.setDefaultDuration(timerDuration);
             location.hash = `#/week/${this._currentWeek}`;
             return;
@@ -2828,7 +2830,7 @@ const App = {
     _renameExercise(exerciseId) {
         var ex = this._findExerciseInProgram(exerciseId);
         if (!ex) return;
-        var current = ex.nameRu || ex.name || '';
+        var current = exName(ex) || '';
         var newName = prompt('Название упражнения:', current);
         if (newName !== null && newName.trim()) {
             ex.nameRu = newName.trim();
@@ -3157,7 +3159,7 @@ const Celebration = {
             var totalSets = 0;
             // Build detailed exercise data with logged sets
             var buildExDetail = function(ex) {
-                var name = ex.nameRu || ex.name;
+                var name = exName(ex);
                 var numSets = ex.sets ? ex.sets.length : 0;
                 totalSets += numSets;
                 var loggedSets = [];

@@ -500,7 +500,7 @@ const UI = {
                 }
                 if (group.type === 'warmup' && group.exercise) {
                     const wu = group.exercise;
-                    exerciseHtml += `<div class="warmup-section"><div class="warmup-label">Разминка</div><div class="warmup-text">${wu.nameRu || wu.name}</div></div>`;
+                    exerciseHtml += `<div class="warmup-section"><div class="warmup-label">Разминка</div><div class="warmup-text">${exName(wu)}</div></div>`;
                 } else if (group.type === 'superset') {
                     exerciseHtml += this._renderSuperset(group, weekNum, dayNum);
                 } else if (group.type === 'choose_one') {
@@ -570,7 +570,7 @@ const UI = {
                     html += `
                         <div class="warmup-section">
                             <div class="warmup-label">Разминка</div>
-                            <div class="warmup-text">${wu.nameRu || wu.name}${wu.noteRu ? ' — ' + wu.noteRu : ''}</div>
+                            <div class="warmup-text">${exName(wu)}${wu.noteRu ? ' — ' + wu.noteRu : ''}</div>
                         </div>
                     `;
                 }
@@ -645,7 +645,7 @@ const UI = {
 
     _getExerciseDisplayName(ex) {
         const sub = Storage.getSubstitution(ex.id);
-        return sub || ex.nameRu || ex.name;
+        return sub || exName(ex);
     },
 
     _isSubstituted(exerciseId) {
@@ -708,7 +708,7 @@ const UI = {
 
     _findSiblingExercises(ex, currentDayNum) {
         if (!PROGRAM || !PROGRAM.dayTemplates) return null;
-        var name = ex.nameRu || ex.name;
+        var name = exName(ex);
         if (!name) return null;
         var siblings = [];
         for (var dNum in PROGRAM.dayTemplates) {
@@ -951,7 +951,7 @@ const UI = {
                 const exercises = getGroupExercises(group);
                 for (const ex of exercises) {
                     if (ex.id === exerciseId) {
-                        exerciseName = ex.nameRu || ex.name;
+                        exerciseName = exName(ex);
                         break;
                     }
                 }
@@ -1113,12 +1113,12 @@ const UI = {
                     for (var it = 0; it < items.length && !name; it++) {
                         var item = items[it];
                         if (item.type === 'single' && item.exercise && item.exercise.id === exerciseId) {
-                            name = item.exercise.nameRu || item.exercise.name || '';
+                            name = exName(item.exercise);
                         }
                         if (item.type === 'superset' && item.exercises) {
                             for (var s = 0; s < item.exercises.length; s++) {
                                 var se = item.exercises[s].exercise || item.exercises[s];
-                                if (se.id === exerciseId) { name = se.nameRu || se.name || ''; break; }
+                                if (se.id === exerciseId) { name = exName(se); break; }
                             }
                         }
                     }
@@ -1271,7 +1271,7 @@ const UI = {
             optionsHtml += `
                 <div class="eq-option ${isSelected ? 'selected' : ''}"
                      data-choice-key="${choiceKey}" data-exercise-id="${ex.id}">
-                    ${ex.nameRu || ex.name}
+                    ${exName(ex)}
                 </div>
             `;
         }
@@ -1317,7 +1317,7 @@ const UI = {
                 const exercises = getGroupExercises(group);
                 for (const ex of exercises) {
                     if (ex.id === exerciseId) {
-                        originalName = ex.nameRu || ex.name;
+                        originalName = exName(ex);
                         break;
                     }
                 }
@@ -1336,7 +1336,7 @@ const UI = {
             for (const group of tmpl.exerciseGroups) {
                 const exercises = getGroupExercises(group);
                 for (const ex of exercises) {
-                    const name = ex.nameRu || ex.name;
+                    const name = exName(ex);
                     if (ex.id !== exerciseId && !seenNames.has(name)) {
                         seenNames.add(name);
                         allExercises.push(name);
@@ -1809,6 +1809,16 @@ const UI = {
                             <button data-unit="kg" ${unit === 'kg' ? 'class="active"' : ''}>кг</button>
                             <button data-unit="lbs" ${unit === 'lbs' ? 'class="active"' : ''}>lbs</button>
                             <button data-unit="plates" ${unit === 'plates' ? 'class="active"' : ''}>плитки</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <div class="settings-card-label">Язык упражнений</div>
+                    <div class="setup-field" style="margin-bottom: 0;">
+                        <div class="cycle-toggle">
+                            <button data-lang="ru" ${(settings.exerciseLang || 'ru') === 'ru' ? 'class="active"' : ''}>Русский</button>
+                            <button data-lang="en" ${settings.exerciseLang === 'en' ? 'class="active"' : ''}>English</button>
                         </div>
                     </div>
                 </div>

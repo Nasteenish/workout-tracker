@@ -466,7 +466,7 @@ const Builder = {
         return '<div class="editor-exercise-card" data-sub-idx="' + subIdx + '">'
             + '<div class="editor-ex-main">'
             + '<div class="editor-ex-info">'
-            + '<div class="editor-ex-name" data-item="' + itemIdx + '" data-sub="' + subIdx + '">' + (ex.nameRu || ex.name) + '</div>'
+            + '<div class="editor-ex-name" data-item="' + itemIdx + '" data-sub="' + subIdx + '">' + exName(ex) + '</div>'
             + '<div class="editor-ex-meta">' + (setsArr.length || 3) + ' \u00D7 ' + ex.reps
             + (ex.rest && ex.rest !== 120 ? ' \u00B7 ' + Math.floor(ex.rest / 60) + ':' + String(ex.rest % 60).padStart(2, '0') : '')
             + '</div></div>'
@@ -1200,7 +1200,7 @@ const Builder = {
         var html = '';
         for (var i = 0; i < filtered.length; i++) {
             var ex = filtered[i];
-            html += `<div class="picker-item" data-name-ru="${ex.nameRu}" data-name="${ex.name}">${ex.nameRu}</div>`;
+            html += `<div class="picker-item" data-name-ru="${ex.nameRu}" data-name="${ex.name}">${exName(ex)}</div>`;
         }
 
         // Add shared exercises (filter out duplicates with EXERCISE_DB)

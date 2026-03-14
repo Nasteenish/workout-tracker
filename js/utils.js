@@ -1,5 +1,14 @@
 /* ===== Utility Functions ===== */
 
+// Exercise display name based on language setting
+function exName(ex) {
+    if (!ex) return '';
+    var lang = (typeof Storage !== 'undefined' && Storage._data && Storage._data.settings)
+        ? Storage._data.settings.exerciseLang : 'ru';
+    if (lang === 'en') return ex.name || ex.nameRu || '';
+    return ex.nameRu || ex.name || '';
+}
+
 const MONTHS_RU = [
     'янв', 'фев', 'мар', 'апр', 'май', 'июн',
     'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'
