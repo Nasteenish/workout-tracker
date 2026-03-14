@@ -1120,45 +1120,81 @@ const Builder = {
             }).catch(function() {});
         }
 
-        // Search input listener — hide categories & custom when searching
+        // Search mode: hide extra UI, fit modal above keyboard
         var searchInput = document.getElementById('picker-search-input');
+        var pickerModal = overlay.querySelector('.picker-modal');
+        var pickerList = document.getElementById('picker-list');
+
+        function enterSearchMode() {
+            var header = overlay.querySelector('.picker-header');
+            var catsW = document.getElementById('picker-categories-wrap');
+            var customSec = overlay.querySelector('.picker-custom');
+            if (header) header.style.display = 'none';
+            if (catsW) catsW.style.display = 'none';
+            if (customSec) customSec.style.display = 'none';
+            if (pickerList) pickerList.style.maxHeight = 'none';
+            // Move modal to top so it's above keyboard
+            if (pickerModal) {
+                pickerModal.style.bottom = 'auto';
+                pickerModal.style.top = '0';
+                pickerModal.style.borderRadius = '0 0 var(--radius-xl) var(--radius-xl)';
+            }
+            adjustToViewport();
+        }
+
+        function exitSearchMode() {
+            var header = overlay.querySelector('.picker-header');
+            var catsW = document.getElementById('picker-categories-wrap');
+            var customSec = overlay.querySelector('.picker-custom');
+            if (header) header.style.display = '';
+            if (catsW) catsW.style.display = '';
+            if (customSec) customSec.style.display = '';
+            if (pickerList) pickerList.style.maxHeight = '';
+            // Restore modal to bottom
+            if (pickerModal) {
+                pickerModal.style.maxHeight = '';
+                pickerModal.style.bottom = '';
+                pickerModal.style.top = '';
+                pickerModal.style.borderRadius = '';
+            }
+        }
+
+        function adjustToViewport() {
+            if (pickerModal && window.visualViewport) {
+                pickerModal.style.maxHeight = (window.visualViewport.height - 10) + 'px';
+            }
+        }
+
         if (searchInput) {
+            searchInput.addEventListener('focus', function() {
+                enterSearchMode();
+            });
             searchInput.addEventListener('input', function() {
                 var query = searchInput.value.trim();
                 var activeCat = document.querySelector('.picker-cat.active');
                 var cat = activeCat ? activeCat.dataset.cat : 'all';
-                var listHtml = Builder._buildPickerList(cat, query);
-                document.getElementById('picker-list').innerHTML = listHtml;
-                // Hide categories & custom input when searching to show more results
-                var catsW = document.getElementById('picker-categories-wrap');
-                var customSec = document.querySelector('.picker-custom');
-                if (query) {
-                    if (catsW) catsW.style.display = 'none';
-                    if (customSec) customSec.style.display = 'none';
-                } else {
-                    if (catsW) catsW.style.display = '';
-                    if (customSec) customSec.style.display = '';
-                }
+                document.getElementById('picker-list').innerHTML = Builder._buildPickerList(cat, query);
             });
-            // Restore on blur if empty
             searchInput.addEventListener('blur', function() {
                 if (!searchInput.value.trim()) {
-                    var catsW = document.getElementById('picker-categories-wrap');
-                    var customSec = document.querySelector('.picker-custom');
-                    if (catsW) catsW.style.display = '';
-                    if (customSec) customSec.style.display = '';
+                    exitSearchMode();
+                    // Re-render full list
+                    var activeCat = document.querySelector('.picker-cat.active');
+                    var cat = activeCat ? activeCat.dataset.cat : 'all';
+                    document.getElementById('picker-list').innerHTML = Builder._buildPickerList(cat, '');
                 }
             });
         }
 
-        // Adjust modal height to visual viewport (keyboard-aware)
-        var pickerModal = overlay.querySelector('.picker-modal');
-        if (pickerModal && window.visualViewport) {
-            var adjustHeight = function() {
-                pickerModal.style.maxHeight = (window.visualViewport.height * 0.92) + 'px';
+        // Adjust modal when keyboard appears/disappears
+        if (window.visualViewport) {
+            var vpHandler = function() {
+                if (document.activeElement === searchInput) {
+                    adjustToViewport();
+                }
             };
-            window.visualViewport.addEventListener('resize', adjustHeight);
-            overlay._vpListener = adjustHeight;
+            window.visualViewport.addEventListener('resize', vpHandler);
+            overlay._vpListener = vpHandler;
         }
 
         // Scroll custom input into view when keyboard opens
