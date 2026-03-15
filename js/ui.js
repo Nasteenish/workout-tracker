@@ -1145,20 +1145,23 @@ const UI = {
 
     showEquipmentModal(exerciseId, exEnName, exRuName) {
         var exInfo;
-        if (exEnName) {
-            // Use name directly from button data attributes — more reliable
+        if (exEnName || exRuName) {
+            // Resolve English name from EXERCISE_DB (custom programs may only have Russian names)
             var cat = 'all';
-            var coreName = exEnName.replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
-            var coreNameRu = (exRuName || '').replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
+            var resolvedEnName = exEnName || '';
+            var coreName = (exEnName || '').replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
+            var coreNameRu = (exRuName || exEnName || '').replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
             for (var i = 0; i < EXERCISE_DB.length; i++) {
                 var dbCore = (EXERCISE_DB[i].name || '').replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
                 var dbCoreRu = (EXERCISE_DB[i].nameRu || '').replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
-                if ((dbCore && dbCore === coreName) || (dbCoreRu && dbCoreRu === coreNameRu)) {
+                if ((dbCore && dbCore === coreName) || (dbCoreRu && dbCoreRu === coreNameRu) ||
+                    (dbCore && dbCore === coreNameRu) || (dbCoreRu && dbCoreRu === coreName)) {
                     cat = EXERCISE_DB[i].category;
+                    resolvedEnName = EXERCISE_DB[i].name;
                     break;
                 }
             }
-            exInfo = { name: exEnName, nameRu: exRuName || '', category: cat };
+            exInfo = { name: resolvedEnName, nameRu: exRuName || exEnName || '', category: cat };
         } else {
             exInfo = this._getExerciseInfo(exerciseId);
         }
