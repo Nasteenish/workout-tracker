@@ -18,7 +18,7 @@ function exThumbUrl(name) {
 function exThumbHtml(name, size) {
     if (!name) return '';
     var cls = size ? ' style="width:' + size + 'px;height:' + size + 'px"' : '';
-    return '<img class="ex-thumb" src="' + exThumbUrl(name) + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'"' + cls + '>';
+    return '<img class="ex-thumb" src="' + exThumbUrl(name) + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.visibility=\'hidden\'"' + cls + '>';
 }
 
 const MONTHS_RU = [

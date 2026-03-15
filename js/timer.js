@@ -212,8 +212,11 @@ const RestTimer = {
             alertUser();
             this._showNotification(null);
         } else {
-            // App is in background — defer sound/vibration until user returns
-            this._showNotification(alertUser);
+            // App is in background — defer sound/vibration until user returns (but only within 30s)
+            var finishedAt = Date.now();
+            this._showNotification(function() {
+                if (Date.now() - finishedAt < 30000) alertUser();
+            });
             // Also try client-side Notification API (Android fallback if SW failed)
             if ('Notification' in window && Notification.permission === 'granted') {
                 try { new Notification('Пора!', { body: 'Отдых завершён', tag: 'rest-timer', renotify: true }); } catch(e) {}
@@ -379,10 +382,27 @@ const RestTimer = {
         // Recalculate remaining based on real time
         this._remaining = Math.ceil((this._endTime - Date.now()) / 1000);
         if (this._remaining <= 0) {
-            this._finish();
+            // If timer expired more than 30s ago, silently clean up (user was away too long)
+            if (this._remaining < -30) {
+                this._silentCleanup();
+            } else {
+                this._finish();
+            }
         } else {
             this._updateDisplay();
         }
+    },
+
+    _silentCleanup() {
+        clearInterval(this._interval);
+        this._interval = null;
+        this._endTime = null;
+        this._remaining = 0;
+        this._saveState();
+        this._swTimer('STOP_TIMER');
+        var bar = this._bar;
+        bar.classList.remove('active');
+        if (bar.parentNode) bar.remove();
     },
 
     _saveState() {

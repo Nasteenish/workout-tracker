@@ -51,6 +51,13 @@ const App = {
         // Route handling
         window.addEventListener('hashchange', () => this.route());
 
+        // Rollback equipment on page close/refresh if no sets completed
+        window.addEventListener('beforeunload', () => {
+            if (this._inDayView) {
+                Storage.rollbackEquipmentIfNoSets(this._currentWeek, this._currentDay);
+            }
+        });
+
         // Global event delegation
         document.getElementById('app').addEventListener('click', (e) => this.handleClick(e));
         document.getElementById('app').addEventListener('input', (e) => this.handleInput(e));
