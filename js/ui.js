@@ -1183,6 +1183,7 @@ const UI = {
                     ${optionsHtml}
                 </div>
                 <div id="eq-search-results" class="eq-search-results"></div>
+                <div id="eq-catalog-results"></div>
                 <div class="eq-add-row" id="eq-add-row">
                     <input type="text" id="eq-new-name" placeholder="Своё оборудование..." class="eq-new-input">
                     <button class="eq-add-btn" id="eq-add-btn">+</button>
@@ -1209,9 +1210,11 @@ const UI = {
             var eqList = document.getElementById('eq-list');
             var addRow = document.getElementById('eq-add-row');
             // Keep header (with close button) visible!
+            var catalogResults = document.getElementById('eq-catalog-results');
             if (gymResults) gymResults.style.display = 'none';
             if (eqList) eqList.style.display = 'none';
             if (addRow) addRow.style.display = 'none';
+            if (catalogResults) catalogResults.style.display = 'none';
             var searchResults = document.getElementById('eq-search-results');
             if (searchResults) searchResults.style.flex = '1';
             // Move modal to top (like exercise picker)
@@ -1229,9 +1232,11 @@ const UI = {
             var gymResults = document.getElementById('eq-gym-results');
             var eqList = document.getElementById('eq-list');
             var addRow = document.getElementById('eq-add-row');
+            var catalogResults = document.getElementById('eq-catalog-results');
             if (gymResults) gymResults.style.display = '';
             if (eqList) eqList.style.display = '';
             if (addRow) addRow.style.display = '';
+            if (catalogResults) catalogResults.style.display = '';
             var searchResults = document.getElementById('eq-search-results');
             if (searchResults) { searchResults.innerHTML = ''; searchResults.style.flex = ''; }
             eqModal.style.bottom = '';
@@ -1277,6 +1282,7 @@ const UI = {
         });
 
         App._loadGymEquipment(exerciseId);
+        App._loadCatalogRecommendations(exerciseId);
     },
 
     hideEquipmentModal() {

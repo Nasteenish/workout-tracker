@@ -3075,6 +3075,48 @@ const App = {
         }).catch(function() {});
     },
 
+    _loadCatalogRecommendations(exerciseId) {
+        if (typeof Social === 'undefined') return;
+        var modal = document.getElementById('equipment-modal');
+        var exName = modal ? modal._exerciseName : '';
+        var muscleGroup = modal ? modal._muscleGroup : 'all';
+        if (!exName) return;
+        // Extract core keywords: remove parenthetical (Machine, Barbell, etc.)
+        var core = exName.replace(/\s*\(.*?\)\s*/g, '').trim();
+        // Remove common modifiers that don't help matching
+        var stopWords = ['iso-lateral', 'single leg', 'single arm', 'one arm', 'standing', 'seated', 'lying', 'prone', 'kneeling', 'close grip', 'wide grip', 'feet up'];
+        var coreLower = core.toLowerCase();
+        for (var i = 0; i < stopWords.length; i++) {
+            coreLower = coreLower.replace(stopWords[i], '');
+        }
+        core = coreLower.replace(/\s+/g, ' ').trim();
+        if (!core || core.length < 3) return;
+
+        Social.searchCatalog(core, muscleGroup !== 'all' ? muscleGroup : null).then(function(catalog) {
+            var div = document.getElementById('eq-catalog-results');
+            if (!div || !catalog || !catalog.length) return;
+            // Deduplicate with already selected equipment
+            var myEq = Storage.getEquipmentList();
+            var seen = {};
+            for (var i = 0; i < myEq.length; i++) seen[myEq[i].name.toLowerCase().trim()] = true;
+            var html = '<div class="eq-shared-label">Из каталога:</div>';
+            var count = 0;
+            for (var i = 0; i < catalog.length; i++) {
+                var c = catalog[i];
+                var cName = (c.brand ? c.brand + ' ' : '') + c.name;
+                var k = cName.toLowerCase();
+                if (seen[k]) continue;
+                seen[k] = true;
+                count++;
+                html += '<div class="eq-search-item" data-name="' + cName.replace(/"/g, '&quot;') + '" data-catalog-id="' + c.id + '">'
+                    + '<span class="eq-shared-name">' + cName + '</span>'
+                    + (c.model ? '<span class="eq-catalog-model">' + c.model + '</span>' : '')
+                    + '</div>';
+            }
+            if (count > 0) div.innerHTML = html;
+        }).catch(function() {});
+    },
+
     _eqSearchTimer: null,
 
     _searchEquipment(query) {
