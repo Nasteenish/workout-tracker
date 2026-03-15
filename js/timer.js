@@ -58,6 +58,12 @@ const RestTimer = {
         window.addEventListener('focus', () => this._onVisibilityChange());
         window.addEventListener('pageshow', () => this._onVisibilityChange());
 
+        // Kill timer completely on page close/refresh — no stale beeps on reopen
+        window.addEventListener('beforeunload', () => {
+            localStorage.removeItem('_wt_timer');
+            this._swTimer('STOP_TIMER');
+        });
+
         this._updateDisplay();
         this._restoreState();
     },
