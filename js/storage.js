@@ -520,30 +520,16 @@ const Storage = {
         }));
     },
 
-    rollbackEquipmentIfNoSets(week, day) {
+    rollbackEquipmentIfNoSets() {
         var snap = localStorage.getItem('_wt_eq_snapshot');
         if (!snap) return;
         var s = JSON.parse(snap);
-        // Only rollback if snapshot matches the week/day (or use snapshot's week/day)
-        var w = week || s.week;
-        var d = day || s.day;
+        // Snapshot exists = no set was completed this session
+        // (toggleSetComplete removes the snapshot on line 822)
         var data = this._load();
-        var dayLog = (data.log[String(w)] || {})[String(d)] || {};
-        var hasCompletedSet = false;
-        for (var exId in dayLog) {
-            for (var setIdx in dayLog[exId]) {
-                if (dayLog[exId][setIdx] && dayLog[exId][setIdx].completed) {
-                    hasCompletedSet = true;
-                    break;
-                }
-            }
-            if (hasCompletedSet) break;
-        }
-        if (!hasCompletedSet) {
-            data.exerciseEquipment = s.exerciseEquipment;
-            data.equipment = s.equipment;
-            this._save();
-        }
+        data.exerciseEquipment = s.exerciseEquipment;
+        data.equipment = s.equipment;
+        this._save();
         localStorage.removeItem('_wt_eq_snapshot');
     },
 

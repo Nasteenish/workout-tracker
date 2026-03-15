@@ -1231,7 +1231,7 @@ const App = {
 
         // Rollback equipment if leaving day view without completed sets
         if (this._inDayView) {
-            Storage.rollbackEquipmentIfNoSets(this._currentWeek, this._currentDay);
+            Storage.rollbackEquipmentIfNoSets();
             this._inDayView = false;
         }
 
@@ -3182,16 +3182,19 @@ const App = {
         // Expand modal to full screen for scrollable list
         var eqModal = modal.querySelector('.equipment-modal');
         if (eqModal) {
+            var vh = window.innerHeight + 'px';
             eqModal.style.position = 'fixed';
             eqModal.style.top = '0';
             eqModal.style.left = '0';
             eqModal.style.right = '0';
             eqModal.style.bottom = '0';
             eqModal.style.borderRadius = '0';
-            eqModal.style.maxHeight = '100vh';
-            eqModal.style.height = '100vh';
+            eqModal.style.maxHeight = vh;
+            eqModal.style.height = vh;
             eqModal.style.overflow = 'hidden';
             eqModal.style.paddingTop = 'max(env(safe-area-inset-top, 44px), 44px)';
+            eqModal.style.paddingBottom = 'env(safe-area-inset-bottom, 0px)';
+            eqModal.style.boxSizing = 'border-box';
         }
 
         var brandList = document.getElementById('eq-brand-list');

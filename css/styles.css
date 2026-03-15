@@ -3561,6 +3561,7 @@ body.modal-open {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     flex: 1;
+    min-height: 0;
 }
 #eq-brand-list {
     padding-bottom: env(safe-area-inset-bottom, 20px);
