@@ -671,7 +671,7 @@ const UI = {
         const eqLabel = eq ? eq.name : 'Оборудование';
         const eqHtml = `
             <div class="equipment-row">
-                <button class="equipment-btn" data-exercise="${ex.id}">
+                <button class="equipment-btn" data-exercise="${ex.id}" data-exname="${(ex.name || '').replace(/"/g, '&quot;')}" data-exname-ru="${(ex.nameRu || '').replace(/"/g, '&quot;')}">
                     ${eqLabel}<span class="chooser-badge"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                 </button>
             </div>
@@ -1143,8 +1143,25 @@ const UI = {
         return { name: ex.name || '', nameRu: ex.nameRu || '', category: 'all' };
     },
 
-    showEquipmentModal(exerciseId) {
-        const exInfo = this._getExerciseInfo(exerciseId);
+    showEquipmentModal(exerciseId, exEnName, exRuName) {
+        var exInfo;
+        if (exEnName) {
+            // Use name directly from button data attributes — more reliable
+            var cat = 'all';
+            var coreName = exEnName.replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
+            var coreNameRu = (exRuName || '').replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
+            for (var i = 0; i < EXERCISE_DB.length; i++) {
+                var dbCore = (EXERCISE_DB[i].name || '').replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
+                var dbCoreRu = (EXERCISE_DB[i].nameRu || '').replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
+                if ((dbCore && dbCore === coreName) || (dbCoreRu && dbCoreRu === coreNameRu)) {
+                    cat = EXERCISE_DB[i].category;
+                    break;
+                }
+            }
+            exInfo = { name: exEnName, nameRu: exRuName || '', category: cat };
+        } else {
+            exInfo = this._getExerciseInfo(exerciseId);
+        }
         const muscleGroup = exInfo.category;
 
         const overlay = document.createElement('div');
@@ -1161,9 +1178,7 @@ const UI = {
                 </div>
                 <div id="eq-main-content">
                     <div id="eq-gym-section"></div>
-                    <div id="eq-brands-section">
-                        <div class="eq-section-label">Загрузка каталога...</div>
-                    </div>
+                    <div id="eq-brands-section"></div>
                 </div>
                 <div id="eq-brand-content" style="display:none">
                     <div id="eq-brand-list"></div>

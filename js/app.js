@@ -2380,7 +2380,7 @@ const App = {
         if (target.matches('.equipment-btn') || target.closest('.equipment-btn')) {
             const btn = target.matches('.equipment-btn') ? target : target.closest('.equipment-btn');
             const exId = btn.dataset.exercise;
-            UI.showEquipmentModal(exId);
+            UI.showEquipmentModal(exId, btn.dataset.exname || '', btn.dataset.exnameRu || '');
             return;
         }
 
