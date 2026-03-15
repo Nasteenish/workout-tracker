@@ -774,6 +774,16 @@ const Social = {
 
     // ===== EQUIPMENT CATALOG (read-only, 293 machines) =====
 
+    async getCatalogByExerciseType(exerciseType) {
+        if (!supa) return [];
+        var q = supa.from('equipment_catalog')
+            .select('id, brand, model, name, muscle_group, image_url, exercise_type')
+            .ilike('exercise_type', '%' + exerciseType + '%')
+            .order('brand');
+        var r = await q;
+        return r.data || [];
+    },
+
     async getCatalogByGroup(muscleGroup) {
         if (!supa) return [];
         var q = supa.from('equipment_catalog')

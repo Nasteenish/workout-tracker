@@ -3075,118 +3075,88 @@ const App = {
         }).catch(function() {});
     },
 
-    // Synonyms: exercise keyword → additional patterns to match in equipment name
-    _eqAliases: {
-        'abduction': ['abduct', 'inner', 'outer thigh', 'ab-ad', 'ab/ad'],
-        'adduction': ['adduct', 'inner', 'outer thigh', 'ab-ad', 'ab/ad'],
-        'crunch': ['abdominal', 'ab ', 'total ab'],
-        'triceps extension': ['arm extension'],
-        'triceps': ['arm extension'],
-        'bicep curl': ['arm curl', 'scott', 'preacher'],
-        'preacher curl': ['scott', 'arm curl'],
-        'chest fly': ['butterfly', 'pec fly', 'pec deck', 'crossover'],
-        'butterfly': ['fly', 'pec', 'crossover'],
-        'rear delt': ['butterfly reverse', 'fly', 'rear delt'],
-        'lateral raise': ['deltoid', 'lateral'],
-        'glute kickback': ['glute', 'gluteus', 'total hip'],
-        'rear kick': ['glute', 'gluteus', 'total hip'],
-        'hip thrust': ['glute', 'booty', 'hip thrust', 'total hip'],
-        'back extension': ['lower back', 'back extension'],
-        'hyperextension': ['lower back', 'back extension'],
-        'back extension hyperextension': ['back extension', 'lower back'],
-        'weighted hyperextension': ['back extension', 'lower back'],
-        'torso rotation': ['rotary torso', 'twister'],
-        'pullover': ['pull over'],
-        'pull up': ['lat pull', 'pulldown', 'iso lat'],
-        'chin up': ['lat pull', 'pulldown', 'iso lat'],
-        'lat pulldown': ['iso lat', 'lat pull'],
-        'overhead press': ['shoulder press', 'overhead'],
-        'shoulder press': ['overhead press', 'overhead'],
-        'cable crossover': ['crossover', 'cable art'],
-        'seated cable row': ['seated row', 'row'],
-        'row': ['rowing', 'row'],
-        'low row': ['row', 'low row'],
-        'high row': ['row', 'high row'],
-        'calf raise': ['calf'],
-        'calf extension': ['calf'],
-        'calf press': ['calf'],
-        'dip': ['dip'],
-        'bench press': ['bench'],
-        'incline bench press': ['incline bench', 'incline press'],
-        'decline bench press': ['decline'],
+    // Exercise name → equipment exercise_type in catalog
+    _exerciseTypeMap: {
+        // Chest
+        'chest press': 'chest_press', 'iso-lateral chest press': 'chest_press',
+        'incline chest press': 'incline_press',
+        'decline bench press': 'decline_press',
+        'bench press': 'bench', 'incline bench press': 'incline_press',
+        'floor press': 'bench', 'hex press': 'bench',
+        'chest fly': 'chest_fly', 'butterfly': 'chest_fly', 'chest dip': 'chest_dip',
+        'cable crossover': 'chest_fly', 'single arm cable crossover': 'chest_fly',
+        'pullover': 'pullover',
+        // Back
+        'lat pulldown': 'lat_pulldown', 'pull up': 'lat_pulldown', 'chin up': 'lat_pulldown',
+        'seated row': 'seated_row', 'seated cable row': 'seated_row',
+        'iso-lateral row': 'seated_row', 'iso-lateral high row': 'seated_row',
+        'iso-lateral low row': 'seated_row', 'low row': 'seated_row',
+        'back extension': 'back_extension', 'hyperextension': 'back_extension',
+        'deadlift': 'deadlift', 'romanian deadlift': 'deadlift',
+        // Legs
+        'leg press': 'leg_press', 'leg press horizontal': 'leg_press', 'single leg press': 'leg_press',
+        'leg extension': 'leg_extension', 'single leg extensions': 'leg_extension',
+        'leg curl': 'leg_curl', 'lying leg curl': 'leg_curl', 'seated leg curl': 'leg_curl',
+        'hip abduction': 'hip_abduction',
+        'hip adduction': 'hip_adduction',
+        'glute kickback': 'glute_kickback', 'rear kick': 'glute_kickback',
+        'hip thrust': 'hip_thrust', 'glute bridge': 'hip_thrust',
+        'hack squat': 'squat', 'squat': 'squat', 'belt squat': 'squat',
+        'pendulum squat': 'squat', 'bulgarian split squat': 'squat',
+        'calf raise': 'calf', 'calf extension': 'calf', 'calf press': 'calf',
+        'standing calf raise': 'calf', 'seated calf raise': 'calf',
+        // Shoulders
+        'shoulder press': 'shoulder_press', 'overhead press': 'shoulder_press',
+        'lateral raise': 'lateral_raise',
+        'rear delt': 'rear_delt', 'rear delt reverse fly': 'rear_delt', 'face pull': 'rear_delt',
+        // Arms
+        'bicep curl': 'bicep_curl', 'hammer curl': 'bicep_curl', 'concentration curl': 'bicep_curl',
+        'preacher curl': 'preacher_curl',
+        'triceps extension': 'tricep_extension', 'triceps pushdown': 'tricep_extension',
+        'skull crusher': 'tricep_extension',
+        'triceps dip': 'tricep_dip', 'seated dip machine': 'chest_dip',
+        // Core
+        'crunch': 'crunch', 'sit up': 'crunch',
+        'torso rotation': 'torso_rotation',
+        'hanging knee raise': 'crunch', 'leg raise': 'crunch',
     },
 
-    _eqMatchScore(exerciseCore, catalogFullName) {
-        var cl = catalogFullName.toLowerCase();
-        var score = 0;
-        // Stem matching: each word (3+ chars) → first 5 chars as stem
-        var words = exerciseCore.split(/[\s\-\/]+/).filter(function(w) { return w.length >= 3; });
-        for (var i = 0; i < words.length; i++) {
-            var stem = words[i].substring(0, 5);
-            if (cl.indexOf(stem) !== -1) score++;
+    _getExerciseType(exerciseName) {
+        var core = exerciseName.replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
+        // Try exact match first, then progressively shorter
+        if (this._exerciseTypeMap[core]) return this._exerciseTypeMap[core];
+        // Try without modifiers
+        var mods = ['iso-lateral ', 'single leg ', 'single arm ', 'one arm ', 'standing ', 'seated ', 'lying ', 'prone ', 'kneeling ', 'close grip ', 'wide grip ', 'feet up '];
+        var stripped = core;
+        for (var i = 0; i < mods.length; i++) stripped = stripped.replace(mods[i], '');
+        stripped = stripped.replace(/\s+/g, ' ').trim();
+        if (this._exerciseTypeMap[stripped]) return this._exerciseTypeMap[stripped];
+        // Try last resort: check if any key is contained in the core
+        for (var key in this._exerciseTypeMap) {
+            if (core.indexOf(key) !== -1) return this._exerciseTypeMap[key];
         }
-        // Synonym matching
-        var aliases = this._eqAliases;
-        for (var key in aliases) {
-            if (exerciseCore.indexOf(key) !== -1) {
-                var patterns = aliases[key];
-                for (var j = 0; j < patterns.length; j++) {
-                    if (cl.indexOf(patterns[j]) !== -1) score += 2;
-                }
-            }
-        }
-        return score;
-    },
-
-    // Map exercise category → catalog muscle_group(s)
-    _eqGroupMap: {
-        'glutes': ['legs'],
-        'cardio': [],
-        'core': ['core', 'back'],
-        'chest': ['chest'],
-        'back': ['back'],
-        'legs': ['legs'],
-        'shoulders': ['shoulders'],
-        'arms': ['arms'],
+        return null;
     },
 
     _loadCatalogRecommendations(exerciseId) {
         if (typeof Social === 'undefined') return;
         var modal = document.getElementById('equipment-modal');
         var exName = modal ? modal._exerciseName : '';
-        var muscleGroup = modal ? modal._muscleGroup : 'all';
-        if (!exName || muscleGroup === 'all') return;
-        var groups = this._eqGroupMap[muscleGroup] || [muscleGroup];
-        if (!groups.length) return;
-        // Extract core exercise name
-        var core = exName.replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
-        var self = this;
+        if (!exName) return;
+        var exType = this._getExerciseType(exName);
+        if (!exType) return;
 
-        var promises = groups.map(function(g) { return Social.getCatalogByGroup(g); });
-        Promise.all(promises).then(function(results) {
-            var catalog = [];
-            for (var r = 0; r < results.length; r++) catalog = catalog.concat(results[r] || []);
+        Social.getCatalogByExerciseType(exType).then(function(catalog) {
             var div = document.getElementById('eq-catalog-results');
-            if (!div || !catalog.length) return;
-            // Score each item
-            var scored = [];
-            for (var i = 0; i < catalog.length; i++) {
-                var c = catalog[i];
-                var fullName = (c.brand ? c.brand + ' ' : '') + c.name;
-                var s = self._eqMatchScore(core, fullName);
-                if (s > 0) scored.push({ item: c, name: fullName, score: s });
-            }
-            scored.sort(function(a, b) { return b.score - a.score; });
-            if (!scored.length) return;
-            // Deduplicate with local equipment
+            if (!div || !catalog || !catalog.length) return;
             var myEq = Storage.getEquipmentList();
             var seen = {};
             for (var i = 0; i < myEq.length; i++) seen[myEq[i].name.toLowerCase().trim()] = true;
             var html = '<div class="eq-shared-label">Из каталога:</div>';
             var count = 0;
-            for (var i = 0; i < scored.length; i++) {
-                var c = scored[i].item;
-                var cName = scored[i].name;
+            for (var i = 0; i < catalog.length; i++) {
+                var c = catalog[i];
+                var cName = (c.brand ? c.brand + ' ' : '') + c.name;
                 var k = cName.toLowerCase();
                 if (seen[k]) continue;
                 seen[k] = true;
