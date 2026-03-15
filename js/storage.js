@@ -508,6 +508,17 @@ const Storage = {
         return null;
     },
 
+    removeExerciseEquipment(exerciseId) {
+        var data = this._load();
+        delete data.exerciseEquipment[exerciseId];
+        // Also remove from siblings
+        var sibs = this._getSiblingIds(exerciseId);
+        for (var i = 0; i < sibs.length; i++) {
+            delete data.exerciseEquipment[sibs[i]];
+        }
+        this._save();
+    },
+
     // Snapshot equipment state for rollback if no sets completed
     // Persisted to localStorage so it survives app close on mobile
     snapshotEquipment(week, day) {

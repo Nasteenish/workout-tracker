@@ -1173,12 +1173,26 @@ const UI = {
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
         overlay.id = 'equipment-modal';
+        // Check if equipment is currently assigned
+        var currentEqId = Storage.getExerciseEquipment(exerciseId);
+        var currentEq = currentEqId ? Storage.getEquipmentById(currentEqId) : null;
+        var currentEqHtml = '';
+        if (currentEq) {
+            var thumbHtml = currentEq.imageUrl ? '<img class="eq-current-thumb" src="' + currentEq.imageUrl + '">' : '';
+            currentEqHtml = '<div id="eq-current-row" class="eq-current-row">'
+                + thumbHtml
+                + '<span class="eq-current-name">Выбрано: <b>' + currentEq.name + '</b></span>'
+                + '<button class="eq-current-remove" id="eq-remove-btn">\u2715</button>'
+                + '</div>';
+        }
+
         overlay.innerHTML = `
             <div class="equipment-modal">
                 <div class="eq-modal-header">
                     <h3>Оборудование</h3>
                     <button class="picker-close-btn" id="eq-close">\u2715</button>
                 </div>
+                ${currentEqHtml}
                 <div class="eq-search-row">
                     <input type="text" id="eq-search" placeholder="Поиск тренажёра..." class="eq-new-input" autocomplete="off">
                 </div>

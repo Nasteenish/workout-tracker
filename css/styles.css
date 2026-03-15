@@ -3566,6 +3566,44 @@ body.modal-open {
 #eq-brand-list {
     padding-bottom: env(safe-area-inset-bottom, 20px);
 }
+.eq-current-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-sm);
+}
+.eq-current-thumb {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    border-radius: 6px;
+    background: #fff;
+}
+.eq-current-name {
+    flex: 1;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+.eq-current-name b {
+    color: var(--text-primary);
+}
+.eq-current-remove {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #ef4444;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 .eq-modal-header {
     display: flex;
     align-items: center;

@@ -12,6 +12,26 @@ const App = {
     _pageCache: {},
 
     init() {
+        // One-time: remove Precor Seated Leg Curl from D1E2 (test data)
+        if (!localStorage.getItem('_fix_precor_d1e2')) {
+            var allUsers = Storage.getUsers ? Storage.getUsers() : [];
+            for (var i = 0; i < allUsers.length; i++) {
+                var key = 'wt_data_' + allUsers[i].id;
+                try {
+                    var d = JSON.parse(localStorage.getItem(key) || '{}');
+                    if (d.exerciseEquipment && d.exerciseEquipment.D1E2) {
+                        var eq = d.equipment || [];
+                        var eqObj = eq.find(function(e) { return e.id === d.exerciseEquipment.D1E2; });
+                        if (eqObj && eqObj.name && eqObj.name.toLowerCase().indexOf('precor') !== -1) {
+                            delete d.exerciseEquipment.D1E2;
+                            localStorage.setItem(key, JSON.stringify(d));
+                        }
+                    }
+                } catch(e) {}
+            }
+            localStorage.setItem('_fix_precor_d1e2', '1');
+        }
+
         // Multi-user migration (once)
         Storage.migrateToMultiUser();
 
@@ -2679,6 +2699,20 @@ const App = {
             return;
         }
 
+        // Equipment modal — remove current equipment
+        if (target.id === 'eq-remove-btn' || target.closest('#eq-remove-btn')) {
+            var modal = document.getElementById('equipment-modal');
+            var exId = modal ? modal._exerciseId : null;
+            if (exId) {
+                Storage.removeExerciseEquipment(exId);
+                var row = document.getElementById('eq-current-row');
+                if (row) row.remove();
+            }
+            UI.hideEquipmentModal();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return;
+        }
+
         // Equipment modal — close on overlay or X button
         if (target.id === 'eq-close' || target.closest('#eq-close')) {
             UI.hideEquipmentModal();
@@ -3179,10 +3213,13 @@ const App = {
         if (addRow) addRow.style.display = 'none';
         if (searchRow) searchRow.style.display = 'none';
 
-        // Let modal grow to fit content — just remove max-height cap
+        // Force fullscreen for brand list
         var eqModal = modal.querySelector('.equipment-modal');
         if (eqModal) {
-            eqModal.style.maxHeight = '95vh';
+            eqModal.style.maxHeight = 'none';
+            eqModal.style.height = '100vh';
+            eqModal.style.minHeight = '100vh';
+            eqModal.style.borderRadius = '0';
         }
 
         var brandList = document.getElementById('eq-brand-list');
