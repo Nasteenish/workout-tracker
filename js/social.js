@@ -779,8 +779,14 @@ const Social = {
         var q = supa.from('equipment_catalog')
             .select('id, brand, model, name, muscle_group, image_url')
             .order('brand')
-            .limit(30);
-        if (query) q = q.or('name.ilike.%' + query + '%,brand.ilike.%' + query + '%');
+            .limit(50);
+        if (query) {
+            var words = query.trim().split(/\s+/);
+            for (var i = 0; i < words.length; i++) {
+                var w = words[i].replace(/[%_]/g, '');
+                if (w) q = q.or('name.ilike.%' + w + '%,brand.ilike.%' + w + '%');
+            }
+        }
         if (muscleGroup && muscleGroup !== 'all') q = q.eq('muscle_group', muscleGroup);
         var r = await q;
         return r.data || [];
