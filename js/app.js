@@ -3186,6 +3186,8 @@ const App = {
             eqModal.style.bottom = '0';
             eqModal.style.borderRadius = '0';
             eqModal.style.maxHeight = '100vh';
+            eqModal.style.height = '100vh';
+            eqModal.style.overflow = 'hidden';
             eqModal.style.paddingTop = 'max(env(safe-area-inset-top, 44px), 44px)';
         }
 
