@@ -128,6 +128,8 @@ const App = {
         // Background sync — re-render after merge to avoid stale UI
         var self = this;
         SupaSync.syncOnLogin(supaUserId, 'wt_data_' + userId).then(function() {
+            // Rollback equipment after sync (sync may overwrite a pre-sync rollback)
+            Storage.checkPendingEquipmentRollback();
             self.route();
         }).catch(function(e) {
             console.error('Init sync error:', e);
