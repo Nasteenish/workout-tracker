@@ -1887,6 +1887,58 @@ body.modal-open {
     opacity: 0.7;
 }
 
+/* ===== Exercise & Equipment Thumbnails ===== */
+.ex-thumb {
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.05);
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.ex-thumb.loaded {
+    opacity: 1;
+}
+
+/* Exercise picker — 36px circle */
+.picker-item {
+    display: flex;
+    align-items: center;
+}
+.picker-item .ex-thumb {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    margin-right: 12px;
+}
+
+/* Exercise card header — 28px circle */
+.exercise-name-row .ex-thumb {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    margin-right: 8px;
+    align-self: center;
+}
+
+/* Equipment modal item — 44px rounded rect */
+.eq-option .ex-thumb,
+.eq-catalog-item .ex-thumb,
+.eq-search-item .ex-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    margin-right: 8px;
+}
+
+/* Equipment button pill — 24px circle */
+.equipment-btn .ex-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    margin-right: 4px;
+    margin-left: -2px;
+}
+
 /* ===== Substitution Modal ===== */
 #substitution-modal {
     justify-content: flex-start;

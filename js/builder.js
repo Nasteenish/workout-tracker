@@ -1232,7 +1232,7 @@ const Builder = {
         var html = '';
         for (var i = 0; i < filtered.length; i++) {
             var ex = filtered[i];
-            html += `<div class="picker-item" data-name-ru="${ex.nameRu}" data-name="${ex.name}">${exName(ex)}</div>`;
+            html += `<div class="picker-item" data-name-ru="${ex.nameRu}" data-name="${ex.name}">${exThumbHtml(ex.name)}${exName(ex)}</div>`;
         }
 
         // Add shared exercises (filter out duplicates with EXERCISE_DB)

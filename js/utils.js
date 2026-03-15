@@ -9,6 +9,18 @@ function exName(ex) {
     return ex.nameRu || ex.name || '';
 }
 
+// Exercise thumbnail URL from name (matches Supabase storage path)
+var EX_THUMB_BASE = 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/exercise-thumbs/';
+function exThumbUrl(name) {
+    if (!name) return '';
+    return EX_THUMB_BASE + name.replace(/ /g, '_').replace(/[()\/]/g, '_') + '.jpg';
+}
+function exThumbHtml(name, size) {
+    if (!name) return '';
+    var cls = size ? ' style="width:' + size + 'px;height:' + size + 'px"' : '';
+    return '<img class="ex-thumb" src="' + exThumbUrl(name) + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'"' + cls + '>';
+}
+
 const MONTHS_RU = [
     'янв', 'фев', 'мар', 'апр', 'май', 'июн',
     'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'

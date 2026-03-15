@@ -2592,7 +2592,8 @@ const App = {
             var modal = document.getElementById('equipment-modal');
             var exId = modal ? modal._exerciseId : null;
             var muscleGroup = modal ? modal._muscleGroup : null;
-            var newId = Storage.addEquipment(eqName);
+            var eqImageUrl2 = item.dataset.image || null;
+            var newId = Storage.addEquipment(eqName, undefined, eqImageUrl2);
             if (typeof Social !== 'undefined' && muscleGroup && muscleGroup !== 'all') {
                 Social.addSharedEquipment(eqName, muscleGroup).catch(function() {});
             }
@@ -2648,7 +2649,8 @@ const App = {
             if (!eqName) return;
             var modal = document.getElementById('equipment-modal');
             var exId = modal ? modal._exerciseId : null;
-            var newId = Storage.addEquipment(eqName);
+            var eqImageUrl = catItem.dataset.image || null;
+            var newId = Storage.addEquipment(eqName, undefined, eqImageUrl);
             if (exId) {
                 Storage.setExerciseEquipment(exId, newId);
                 Storage.linkEquipmentToExercise(exId, newId);
@@ -3190,7 +3192,9 @@ const App = {
             for (var i = 0; i < items.length; i++) {
                 var c = items[i];
                 var fullName = brand + ' ' + c.name;
-                html += '<div class="eq-catalog-item" data-name="' + fullName.replace(/"/g, '&quot;') + '" data-catalog-id="' + c.id + '">'
+                var eqImgHtml = c.image_url ? '<img class="ex-thumb" src="' + c.image_url + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
+                html += '<div class="eq-catalog-item" data-name="' + fullName.replace(/"/g, '&quot;') + '" data-catalog-id="' + c.id + '"' + (c.image_url ? ' data-image="' + c.image_url.replace(/"/g, '&quot;') + '"' : '') + '>'
+                    + eqImgHtml
                     + '<span class="eq-shared-name">' + c.name + '</span>'
                     + (c.model ? '<span class="eq-catalog-model">' + c.model + '</span>' : '')
                     + '</div>';
@@ -3363,7 +3367,9 @@ const App = {
                     var k = cName.toLowerCase();
                     if (seen2[k]) continue;
                     seen2[k] = true;
-                    html2 += '<div class="eq-search-item" data-name="' + cName.replace(/"/g, '&quot;') + '" data-catalog-id="' + c.id + '">'
+                    var sImgHtml = c.image_url ? '<img class="ex-thumb" src="' + c.image_url + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
+                    html2 += '<div class="eq-search-item" data-name="' + cName.replace(/"/g, '&quot;') + '" data-catalog-id="' + c.id + '"' + (c.image_url ? ' data-image="' + c.image_url.replace(/"/g, '&quot;') + '"' : '') + '>'
+                        + sImgHtml
                         + '<span class="eq-shared-name">' + cName + '</span>'
                         + (c.model ? '<span class="eq-catalog-model">' + c.model + '</span>' : '')
                         + '</div>';

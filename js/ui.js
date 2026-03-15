@@ -669,10 +669,11 @@ const UI = {
         const eqId = Storage.getExerciseEquipment(ex.id);
         const eq = eqId ? Storage.getEquipmentById(eqId) : null;
         const eqLabel = eq ? eq.name : 'Оборудование';
+        const eqThumb = eq && eq.imageUrl ? '<img class="ex-thumb" src="' + eq.imageUrl + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
         const eqHtml = `
             <div class="equipment-row">
                 <button class="equipment-btn" data-exercise="${ex.id}" data-exname="${(ex.name || '').replace(/"/g, '&quot;')}" data-exname-ru="${(ex.nameRu || '').replace(/"/g, '&quot;')}">
-                    ${eqLabel}<span class="chooser-badge"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    ${eqThumb}${eqLabel}<span class="chooser-badge"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                 </button>
             </div>
         `;
@@ -691,6 +692,7 @@ const UI = {
             <div class="exercise-card ${choiceKey ? 'is-chooser' : ''}">
                 <div class="exercise-header">
                     <div class="exercise-name-row">
+                        ${exThumbHtml(ex.name)}
                         <div class="${nameClass}" ${nameAttrs}>${nameContent}</div>
                     </div>
                     <div class="exercise-meta">

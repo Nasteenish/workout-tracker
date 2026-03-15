@@ -429,10 +429,12 @@ const Storage = {
         return this._load().equipment || [];
     },
 
-    addEquipment(name, type) {
+    addEquipment(name, type, imageUrl) {
         var data = this._load();
         var id = 'eq_' + Date.now();
-        data.equipment.push({ id: id, name: name, type: type || 'other' });
+        var eq = { id: id, name: name, type: type || 'other' };
+        if (imageUrl) eq.imageUrl = imageUrl;
+        data.equipment.push(eq);
         this._save();
         return id;
     },
