@@ -51,13 +51,6 @@ const App = {
         // Route handling
         window.addEventListener('hashchange', () => this.route());
 
-        // Rollback equipment on page close/refresh if no sets completed
-        window.addEventListener('beforeunload', () => {
-            if (this._inDayView) {
-                Storage.rollbackEquipmentIfNoSets(this._currentWeek, this._currentDay);
-            }
-        });
-
         // Global event delegation
         document.getElementById('app').addEventListener('click', (e) => this.handleClick(e));
         document.getElementById('app').addEventListener('input', (e) => this.handleInput(e));
@@ -113,6 +106,9 @@ const App = {
 
         // Pull-to-refresh
         this._initPullToRefresh();
+
+        // Rollback equipment from previous session if no sets were completed
+        Storage.checkPendingEquipmentRollback();
 
         // Init rest timer
         RestTimer.init();
@@ -1242,7 +1238,7 @@ const App = {
         if (dayMatch) {
             this._currentWeek = parseInt(dayMatch[1]);
             this._currentDay = parseInt(dayMatch[2]);
-            Storage.snapshotEquipment();
+            Storage.snapshotEquipment(this._currentWeek, this._currentDay);
             this._inDayView = true;
             UI.renderDay(this._currentWeek, this._currentDay);
             return;

@@ -509,16 +509,26 @@ const Storage = {
     },
 
     // Snapshot equipment state for rollback if no sets completed
-    snapshotEquipment() {
+    // Persisted to localStorage so it survives app close on mobile
+    snapshotEquipment(week, day) {
         var data = this._load();
-        this._eqSnapshot = JSON.stringify(data.exerciseEquipment || {});
-        this._eqListSnapshot = JSON.stringify(data.equipment || []);
+        localStorage.setItem('_wt_eq_snapshot', JSON.stringify({
+            week: week,
+            day: day,
+            exerciseEquipment: data.exerciseEquipment || {},
+            equipment: data.equipment || []
+        }));
     },
 
     rollbackEquipmentIfNoSets(week, day) {
-        if (!this._eqSnapshot) return;
+        var snap = localStorage.getItem('_wt_eq_snapshot');
+        if (!snap) return;
+        var s = JSON.parse(snap);
+        // Only rollback if snapshot matches the week/day (or use snapshot's week/day)
+        var w = week || s.week;
+        var d = day || s.day;
         var data = this._load();
-        var dayLog = (data.log[String(week)] || {})[String(day)] || {};
+        var dayLog = (data.log[String(w)] || {})[String(d)] || {};
         var hasCompletedSet = false;
         for (var exId in dayLog) {
             for (var setIdx in dayLog[exId]) {
@@ -530,12 +540,17 @@ const Storage = {
             if (hasCompletedSet) break;
         }
         if (!hasCompletedSet) {
-            data.exerciseEquipment = JSON.parse(this._eqSnapshot);
-            data.equipment = JSON.parse(this._eqListSnapshot);
+            data.exerciseEquipment = s.exerciseEquipment;
+            data.equipment = s.equipment;
             this._save();
         }
-        this._eqSnapshot = null;
-        this._eqListSnapshot = null;
+        localStorage.removeItem('_wt_eq_snapshot');
+    },
+
+    // Called on app init — rollback any pending snapshot from a previous session
+    checkPendingEquipmentRollback() {
+        var snap = localStorage.getItem('_wt_eq_snapshot');
+        if (snap) this.rollbackEquipmentIfNoSets();
     },
 
     setExerciseEquipment(exerciseId, equipmentId) {
@@ -803,6 +818,8 @@ const Storage = {
             if (current.segs) data.log[w][d][exerciseId][s].segs = current.segs;
             if (equipmentId) data.log[w][d][exerciseId][s].equipmentId = equipmentId;
             this._save();
+            // Set completed — equipment is now permanent, clear snapshot
+            localStorage.removeItem('_wt_eq_snapshot');
             return true;
         }
     },
