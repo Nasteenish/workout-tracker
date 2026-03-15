@@ -2629,7 +2629,8 @@ const App = {
         if (target.closest('.eq-brand-item')) {
             var brandItem = target.closest('.eq-brand-item');
             var brand = brandItem.dataset.brand;
-            if (brand) this._loadBrandEquipment(brand);
+            var extype = brandItem.dataset.extype || null;
+            if (brand) this._loadBrandEquipment(brand, extype);
             return;
         }
 
@@ -3127,8 +3128,9 @@ const App = {
             if (brandsSection) {
                 if (brands.length > 0) {
                     var bHtml = '<div class="eq-section-label">Каталог:</div>';
+                    var et = exType || '';
                     for (var i = 0; i < brands.length; i++) {
-                        bHtml += '<div class="eq-brand-item" data-brand="' + brands[i].replace(/"/g, '&quot;') + '">'
+                        bHtml += '<div class="eq-brand-item" data-brand="' + brands[i].replace(/"/g, '&quot;') + '" data-extype="' + et + '">'
                             + '<span class="eq-brand-name">' + brands[i] + '</span>'
                             + '<span class="eq-brand-arrow">\u203A</span>'
                             + '</div>';
@@ -3141,10 +3143,10 @@ const App = {
         }).catch(function() {});
     },
 
-    _loadBrandEquipment(brand) {
+    _loadBrandEquipment(brand, exerciseType) {
         var modal = document.getElementById('equipment-modal');
         if (!modal) return;
-        var exType = modal._exerciseType;
+        var exType = exerciseType || modal._exerciseType || null;
 
         // Show brand content, hide main
         var mainContent = document.getElementById('eq-main-content');
@@ -3248,7 +3250,7 @@ const App = {
         // Legs
         'leg press': 'leg_press', 'leg press horizontal': 'leg_press', 'single leg press': 'leg_press',
         'leg extension': 'leg_extension', 'single leg extensions': 'leg_extension',
-        'leg curl': 'leg_curl', 'lying leg curl': 'leg_curl', 'seated leg curl': 'leg_curl',
+        'leg curl': 'leg_curl', 'lying leg curl': 'lying_leg_curl', 'seated leg curl': 'seated_leg_curl',
         'hip abduction': 'hip_abduction',
         'hip adduction': 'hip_adduction',
         'glute kickback': 'glute_kickback', 'rear kick': 'glute_kickback',
