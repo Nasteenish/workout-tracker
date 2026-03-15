@@ -3110,7 +3110,9 @@ const App = {
         if (!modal) return;
         var exName = modal._exerciseName || '';
         var exType = exName ? this._getExerciseType(exName) : null;
+        var isFreeWeight = exName ? this._isFreeWeightExercise(exName) : false;
         modal._exerciseType = exType;
+        modal._isFreeWeight = isFreeWeight;
 
         // Load gym equipment for this exercise (from gym_equipment table)
         var activeGymId = this._getActiveGymId();
@@ -3119,8 +3121,8 @@ const App = {
             ? Social.getGymEquipmentForExercise(gym.name, gym.city, exName)
             : Promise.resolve([]);
 
-        // Load brands from catalog for this exercise type
-        var brandsPromise = Social.getCatalogBrands(exType);
+        // Skip machine catalog for free weight exercises (barbell, dumbbell, etc.)
+        var brandsPromise = isFreeWeight ? Promise.resolve([]) : Social.getCatalogBrands(exType);
 
         Promise.all([gymPromise, brandsPromise]).then(function(results) {
             var gymItems = results[0] || [];
@@ -3298,6 +3300,24 @@ const App = {
         'hanging knee raise': 'crunch', 'leg raise': 'crunch',
     },
 
+    // Returns equipment modifier from parenthetical: barbell, dumbbell, machine, cable, etc.
+    _getEquipmentModifier(exerciseName) {
+        var m = exerciseName.match(/\(([^)]+)\)/);
+        if (!m) return null;
+        return m[1].toLowerCase().trim();
+    },
+
+    // Returns true if exercise uses free weights / bodyweight (no machine catalog needed)
+    _isFreeWeightExercise(exerciseName) {
+        var mod = this._getEquipmentModifier(exerciseName);
+        if (!mod) return false;
+        var freeTypes = ['barbell', 'dumbbell', 'bodyweight', 'band', 'resistance band', 'kettlebell', 'plate', 'ez bar', 'trap bar'];
+        for (var i = 0; i < freeTypes.length; i++) {
+            if (mod === freeTypes[i]) return true;
+        }
+        return false;
+    },
+
     _getExerciseType(exerciseName) {
         var nameLower = exerciseName.toLowerCase();
         // Equipment type from parenthetical: (Smith Machine), (Machine), (Cable) etc.
@@ -3347,10 +3367,11 @@ const App = {
         var muscleGroup = modal ? modal._muscleGroup : 'all';
         var self = this;
 
+        var isFreeWeight = modal ? modal._isFreeWeight : false;
         this._eqSearchTimer = setTimeout(function() {
             if (typeof Social === 'undefined') return;
             var promises = [
-                Social.searchCatalog(query, muscleGroup !== 'all' ? muscleGroup : null),
+                isFreeWeight ? Promise.resolve([]) : Social.searchCatalog(query, muscleGroup !== 'all' ? muscleGroup : null),
                 Social.searchSharedEquipment(query, muscleGroup !== 'all' ? muscleGroup : null)
             ];
             Promise.all(promises).then(function(results) {
