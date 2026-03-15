@@ -3138,18 +3138,36 @@ const App = {
         return score;
     },
 
+    // Map exercise category → catalog muscle_group(s)
+    _eqGroupMap: {
+        'glutes': ['legs'],
+        'cardio': [],
+        'core': ['core', 'back'],
+        'chest': ['chest'],
+        'back': ['back'],
+        'legs': ['legs'],
+        'shoulders': ['shoulders'],
+        'arms': ['arms'],
+    },
+
     _loadCatalogRecommendations(exerciseId) {
         if (typeof Social === 'undefined') return;
         var modal = document.getElementById('equipment-modal');
         var exName = modal ? modal._exerciseName : '';
-        if (!exName) return;
+        var muscleGroup = modal ? modal._muscleGroup : 'all';
+        if (!exName || muscleGroup === 'all') return;
+        var groups = this._eqGroupMap[muscleGroup] || [muscleGroup];
+        if (!groups.length) return;
         // Extract core exercise name
         var core = exName.replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
         var self = this;
 
-        Social.getCatalogByGroup(null).then(function(catalog) {
+        var promises = groups.map(function(g) { return Social.getCatalogByGroup(g); });
+        Promise.all(promises).then(function(results) {
+            var catalog = [];
+            for (var r = 0; r < results.length; r++) catalog = catalog.concat(results[r] || []);
             var div = document.getElementById('eq-catalog-results');
-            if (!div || !catalog || !catalog.length) return;
+            if (!div || !catalog.length) return;
             // Score each item
             var scored = [];
             for (var i = 0; i < catalog.length; i++) {
