@@ -3075,35 +3075,100 @@ const App = {
         }).catch(function() {});
     },
 
+    // Synonyms: exercise keyword → additional patterns to match in equipment name
+    _eqAliases: {
+        'abduction': ['abduct', 'inner', 'outer thigh', 'ab-ad', 'ab/ad'],
+        'adduction': ['adduct', 'inner', 'outer thigh', 'ab-ad', 'ab/ad'],
+        'crunch': ['abdominal', 'ab ', 'total ab'],
+        'triceps extension': ['arm extension'],
+        'triceps': ['arm extension'],
+        'bicep curl': ['arm curl', 'scott', 'preacher'],
+        'preacher curl': ['scott', 'arm curl'],
+        'chest fly': ['butterfly', 'pec fly', 'pec deck', 'crossover'],
+        'butterfly': ['fly', 'pec', 'crossover'],
+        'rear delt': ['butterfly reverse', 'fly', 'rear delt'],
+        'lateral raise': ['deltoid', 'lateral'],
+        'glute kickback': ['glute', 'gluteus', 'total hip'],
+        'rear kick': ['glute', 'gluteus', 'total hip'],
+        'hip thrust': ['glute', 'booty', 'hip thrust', 'total hip'],
+        'back extension': ['lower back', 'back extension'],
+        'hyperextension': ['lower back', 'back extension'],
+        'back extension hyperextension': ['back extension', 'lower back'],
+        'weighted hyperextension': ['back extension', 'lower back'],
+        'torso rotation': ['rotary torso', 'twister'],
+        'pullover': ['pull over'],
+        'pull up': ['lat pull', 'pulldown', 'iso lat'],
+        'chin up': ['lat pull', 'pulldown', 'iso lat'],
+        'lat pulldown': ['iso lat', 'lat pull'],
+        'overhead press': ['shoulder press', 'overhead'],
+        'shoulder press': ['overhead press', 'overhead'],
+        'cable crossover': ['crossover', 'cable art'],
+        'seated cable row': ['seated row', 'row'],
+        'row': ['rowing', 'row'],
+        'low row': ['row', 'low row'],
+        'high row': ['row', 'high row'],
+        'calf raise': ['calf'],
+        'calf extension': ['calf'],
+        'calf press': ['calf'],
+        'dip': ['dip'],
+        'bench press': ['bench'],
+        'incline bench press': ['incline bench', 'incline press'],
+        'decline bench press': ['decline'],
+    },
+
+    _eqMatchScore(exerciseCore, catalogFullName) {
+        var cl = catalogFullName.toLowerCase();
+        var score = 0;
+        // Stem matching: each word (3+ chars) → first 5 chars as stem
+        var words = exerciseCore.split(/[\s\-\/]+/).filter(function(w) { return w.length >= 3; });
+        for (var i = 0; i < words.length; i++) {
+            var stem = words[i].substring(0, 5);
+            if (cl.indexOf(stem) !== -1) score++;
+        }
+        // Synonym matching
+        var aliases = this._eqAliases;
+        for (var key in aliases) {
+            if (exerciseCore.indexOf(key) !== -1) {
+                var patterns = aliases[key];
+                for (var j = 0; j < patterns.length; j++) {
+                    if (cl.indexOf(patterns[j]) !== -1) score += 2;
+                }
+            }
+        }
+        return score;
+    },
+
     _loadCatalogRecommendations(exerciseId) {
         if (typeof Social === 'undefined') return;
         var modal = document.getElementById('equipment-modal');
         var exName = modal ? modal._exerciseName : '';
-        var muscleGroup = modal ? modal._muscleGroup : 'all';
         if (!exName) return;
-        // Extract core keywords: remove parenthetical (Machine, Barbell, etc.)
-        var core = exName.replace(/\s*\(.*?\)\s*/g, '').trim();
-        // Remove common modifiers that don't help matching
-        var stopWords = ['iso-lateral', 'single leg', 'single arm', 'one arm', 'standing', 'seated', 'lying', 'prone', 'kneeling', 'close grip', 'wide grip', 'feet up'];
-        var coreLower = core.toLowerCase();
-        for (var i = 0; i < stopWords.length; i++) {
-            coreLower = coreLower.replace(stopWords[i], '');
-        }
-        core = coreLower.replace(/\s+/g, ' ').trim();
-        if (!core || core.length < 3) return;
+        // Extract core exercise name
+        var core = exName.replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
+        var self = this;
 
-        Social.searchCatalog(core, muscleGroup !== 'all' ? muscleGroup : null).then(function(catalog) {
+        Social.getCatalogByGroup(null).then(function(catalog) {
             var div = document.getElementById('eq-catalog-results');
             if (!div || !catalog || !catalog.length) return;
-            // Deduplicate with already selected equipment
+            // Score each item
+            var scored = [];
+            for (var i = 0; i < catalog.length; i++) {
+                var c = catalog[i];
+                var fullName = (c.brand ? c.brand + ' ' : '') + c.name;
+                var s = self._eqMatchScore(core, fullName);
+                if (s > 0) scored.push({ item: c, name: fullName, score: s });
+            }
+            scored.sort(function(a, b) { return b.score - a.score; });
+            if (!scored.length) return;
+            // Deduplicate with local equipment
             var myEq = Storage.getEquipmentList();
             var seen = {};
             for (var i = 0; i < myEq.length; i++) seen[myEq[i].name.toLowerCase().trim()] = true;
             var html = '<div class="eq-shared-label">Из каталога:</div>';
             var count = 0;
-            for (var i = 0; i < catalog.length; i++) {
-                var c = catalog[i];
-                var cName = (c.brand ? c.brand + ' ' : '') + c.name;
+            for (var i = 0; i < scored.length; i++) {
+                var c = scored[i].item;
+                var cName = scored[i].name;
                 var k = cName.toLowerCase();
                 if (seen[k]) continue;
                 seen[k] = true;

@@ -774,6 +774,16 @@ const Social = {
 
     // ===== EQUIPMENT CATALOG (read-only, 293 machines) =====
 
+    async getCatalogByGroup(muscleGroup) {
+        if (!supa) return [];
+        var q = supa.from('equipment_catalog')
+            .select('id, brand, model, name, muscle_group, image_url')
+            .order('brand');
+        if (muscleGroup) q = q.eq('muscle_group', muscleGroup);
+        var r = await q;
+        return r.data || [];
+    },
+
     async searchCatalog(query, muscleGroup) {
         if (!supa) return [];
         var q = supa.from('equipment_catalog')
