@@ -1924,10 +1924,10 @@ body.modal-open {
 .eq-option .ex-thumb,
 .eq-catalog-item .ex-thumb,
 .eq-search-item .ex-thumb {
-    width: 64px;
-    height: 64px;
-    border-radius: 12px;
-    margin-right: 10px;
+    width: 120px;
+    height: 120px;
+    border-radius: 14px;
+    margin-right: 12px;
     object-fit: contain;
     background: #FFFFFF;
 }
