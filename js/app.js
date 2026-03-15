@@ -148,13 +148,15 @@ const App = {
         // Background sync — re-render after merge to avoid stale UI
         var self = this;
         SupaSync.syncOnLogin(supaUserId, 'wt_data_' + userId).then(function() {
-            // Remove stuck Precor from D1E2 AFTER sync
+            // Remove stuck Precor from D1E2 AFTER sync + immediate push
             try {
                 Storage._invalidateCache();
                 var dd = Storage._load();
                 if (dd && dd.exerciseEquipment && dd.exerciseEquipment.D1E2) {
                     delete dd.exerciseEquipment.D1E2;
                     Storage._save();
+                    // Immediate push — don't wait 3s debounce
+                    SupaSync.pushData(supaUserId, dd, '').catch(function(){});
                 }
             } catch(e) {}
             // Rollback equipment after sync (sync may overwrite a pre-sync rollback)
