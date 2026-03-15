@@ -148,16 +148,15 @@ const App = {
         // Background sync — re-render after merge to avoid stale UI
         var self = this;
         SupaSync.syncOnLogin(supaUserId, 'wt_data_' + userId).then(function() {
-            // Remove stuck Precor from D1E2 AFTER sync (sync can re-download it)
-            var dd = Storage._load ? Storage._load() : null;
-            if (dd && dd.exerciseEquipment && dd.exerciseEquipment.D1E2) {
-                var eqList = dd.equipment || [];
-                var eqObj = eqList.find(function(e) { return e.id === dd.exerciseEquipment.D1E2; });
-                if (eqObj && eqObj.name && eqObj.name.toLowerCase().indexOf('precor') !== -1 && eqObj.name.toLowerCase().indexOf('leg curl') !== -1) {
+            // Remove stuck Precor from D1E2 AFTER sync
+            try {
+                Storage._invalidateCache();
+                var dd = Storage._load();
+                if (dd && dd.exerciseEquipment && dd.exerciseEquipment.D1E2) {
                     delete dd.exerciseEquipment.D1E2;
                     Storage._save();
                 }
-            }
+            } catch(e) {}
             // Rollback equipment after sync (sync may overwrite a pre-sync rollback)
             Storage.checkPendingEquipmentRollback();
             self.route();
