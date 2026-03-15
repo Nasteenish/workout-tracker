@@ -3213,13 +3213,19 @@ const App = {
         if (addRow) addRow.style.display = 'none';
         if (searchRow) searchRow.style.display = 'none';
 
-        // Force fullscreen for brand list
+        // Force fullscreen for brand list — use fixed positioning to cover entire viewport
         var eqModal = modal.querySelector('.equipment-modal');
         if (eqModal) {
+            eqModal.style.position = 'fixed';
+            eqModal.style.top = '0';
+            eqModal.style.left = '0';
+            eqModal.style.right = '0';
+            eqModal.style.bottom = '0';
             eqModal.style.maxHeight = 'none';
-            eqModal.style.height = '100vh';
-            eqModal.style.minHeight = '100vh';
+            eqModal.style.height = 'auto';
+            eqModal.style.minHeight = '0';
             eqModal.style.borderRadius = '0';
+            eqModal.style.paddingTop = 'max(env(safe-area-inset-top, 20px), 20px)';
         }
 
         var brandList = document.getElementById('eq-brand-list');
