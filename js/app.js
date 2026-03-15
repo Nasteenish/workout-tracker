@@ -3232,11 +3232,15 @@ const App = {
         if (addRow) addRow.style.display = 'none';
         if (searchRow) searchRow.style.display = 'none';
 
-        // Fix brand list: let modal itself scroll, just enlarge it
+        // Fix brand list: break flex constraint so modal scrolls all content
         var eqModal = modal.querySelector('.equipment-modal');
         if (eqModal) {
             eqModal.style.maxHeight = '90vh';
             eqModal.style.minHeight = '0';
+        }
+        if (brandContent) {
+            brandContent.style.flex = 'none';
+            brandContent.style.height = 'auto';
         }
 
         var brandList = document.getElementById('eq-brand-list');
@@ -3288,6 +3292,10 @@ const App = {
         if (eqModal) {
             eqModal.style.maxHeight = '';
             eqModal.style.minHeight = '';
+        }
+        if (brandContent) {
+            brandContent.style.flex = '';
+            brandContent.style.height = '';
         }
         var header = modal.querySelector('.eq-modal-header h3');
         if (header) header.textContent = 'Оборудование';
