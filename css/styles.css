@@ -3481,6 +3481,14 @@ body.modal-open {
 .eq-catalog-item:active {
     background: rgba(157, 141, 245, 0.2);
 }
+#eq-brand-content {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    flex: 1;
+}
+#eq-brand-list {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+}
 .eq-modal-header {
     display: flex;
     align-items: center;

@@ -1104,42 +1104,39 @@ const UI = {
 
     // ===== EQUIPMENT MODAL =====
     _getExerciseInfo(exerciseId) {
-        // Find exercise in program and return {name, nameRu, category}
+        // Find exercise in program via dayTemplates
         var ex = null;
         var program = typeof PROGRAM !== 'undefined' ? PROGRAM : null;
-        if (program && program.weeks) {
-            for (var w = 0; w < program.weeks.length && !ex; w++) {
-                var days = program.weeks[w].days;
-                for (var d = 0; d < days.length && !ex; d++) {
-                    var items = days[d].items || [];
-                    for (var it = 0; it < items.length && !ex; it++) {
-                        var item = items[it];
-                        if (item.type === 'single' && item.exercise && item.exercise.id === exerciseId) {
-                            ex = item.exercise;
+        if (program && program.dayTemplates) {
+            for (var dNum in program.dayTemplates) {
+                if (ex) break;
+                var groups = program.dayTemplates[dNum].exerciseGroups || [];
+                for (var g = 0; g < groups.length && !ex; g++) {
+                    var gr = groups[g];
+                    if (gr.exercise && gr.exercise.id === exerciseId) { ex = gr.exercise; break; }
+                    if (gr.options) {
+                        for (var o = 0; o < gr.options.length; o++) {
+                            if (gr.options[o].id === exerciseId) { ex = gr.options[o]; break; }
                         }
-                        if (item.type === 'superset' && item.exercises) {
-                            for (var s = 0; s < item.exercises.length; s++) {
-                                var se = item.exercises[s].exercise || item.exercises[s];
-                                if (se.id === exerciseId) { ex = se; break; }
-                            }
-                        }
-                        if (item.type === 'choose_one' && item.options) {
-                            for (var o = 0; o < item.options.length && !ex; o++) {
-                                var opt = item.options[o];
-                                if (opt.exercise && opt.exercise.id === exerciseId) ex = opt.exercise;
-                            }
+                    }
+                    if (gr.exercises) {
+                        for (var s = 0; s < gr.exercises.length; s++) {
+                            var se = gr.exercises[s].exercise || gr.exercises[s];
+                            if (se.id === exerciseId) { ex = se; break; }
                         }
                     }
                 }
             }
         }
         if (!ex) return { name: '', nameRu: '', category: 'all' };
-        // Look up category in EXERCISE_DB
-        var displayName = exName(ex);
-        var nl = displayName.toLowerCase();
+        // Look up category in EXERCISE_DB — always use DB's English name
+        var coreName = (ex.name || ex.nameRu || '').replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
+        var coreNameRu = (ex.nameRu || ex.name || '').replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
         for (var i = 0; i < EXERCISE_DB.length; i++) {
-            if ((EXERCISE_DB[i].nameRu && EXERCISE_DB[i].nameRu.toLowerCase() === nl) ||
-                (EXERCISE_DB[i].name && EXERCISE_DB[i].name.toLowerCase() === nl)) {
+            var dbCoreName = (EXERCISE_DB[i].name || '').replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
+            var dbCoreNameRu = (EXERCISE_DB[i].nameRu || '').replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
+            if ((dbCoreName && dbCoreName === coreName) ||
+                (dbCoreNameRu && dbCoreNameRu === coreNameRu)) {
                 return { name: ex.name || EXERCISE_DB[i].name, nameRu: ex.nameRu || EXERCISE_DB[i].nameRu, category: EXERCISE_DB[i].category };
             }
         }
@@ -1147,7 +1144,6 @@ const UI = {
     },
 
     showEquipmentModal(exerciseId) {
-        const currentEqId = Storage.getExerciseEquipment(exerciseId);
         const exInfo = this._getExerciseInfo(exerciseId);
         const muscleGroup = exInfo.category;
 
@@ -1164,16 +1160,12 @@ const UI = {
                     <input type="text" id="eq-search" placeholder="Поиск тренажёра..." class="eq-new-input" autocomplete="off">
                 </div>
                 <div id="eq-main-content">
-                    <div class="eq-option ${!currentEqId ? 'selected' : ''}" data-eq-id="" data-exercise="${exerciseId}">
-                        Без оборудования
-                    </div>
                     <div id="eq-gym-section"></div>
                     <div id="eq-brands-section">
                         <div class="eq-section-label">Загрузка каталога...</div>
                     </div>
                 </div>
                 <div id="eq-brand-content" style="display:none">
-                    <div class="eq-brand-back" id="eq-brand-back">\u2190 Назад</div>
                     <div id="eq-brand-list"></div>
                 </div>
                 <div id="eq-search-results" class="eq-search-results"></div>
@@ -1248,14 +1240,41 @@ const UI = {
             exitEqSearch();
         });
 
-        // Close button should also exit search mode
+        // Close button
         var closeBtn = document.getElementById('eq-close');
         if (closeBtn) {
             closeBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
-                UI.hideEquipmentModal();
+                // If in brand view, go back first
+                var brandContent = document.getElementById('eq-brand-content');
+                if (brandContent && brandContent.style.display !== 'none') {
+                    App._eqBackToBrands();
+                } else {
+                    UI.hideEquipmentModal();
+                }
             });
         }
+
+        // Swipe right to go back (brand view → brands list)
+        var touchStartX = 0;
+        var touchStartY = 0;
+        eqModal.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+        eqModal.addEventListener('touchend', function(e) {
+            var dx = e.changedTouches[0].clientX - touchStartX;
+            var dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+            // Swipe right: dx > 80px, mostly horizontal
+            if (dx > 80 && dy < 100) {
+                var brandContent = document.getElementById('eq-brand-content');
+                if (brandContent && brandContent.style.display !== 'none') {
+                    App._eqBackToBrands();
+                } else {
+                    UI.hideEquipmentModal();
+                }
+            }
+        }, { passive: true });
 
         // visualViewport resize listener for keyboard
         if (window.visualViewport) {

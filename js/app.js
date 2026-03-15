@@ -3145,18 +3145,32 @@ const App = {
         var modal = document.getElementById('equipment-modal');
         if (!modal) return;
         var exType = modal._exerciseType;
-        var exerciseId = modal._exerciseId;
 
         // Show brand content, hide main
         var mainContent = document.getElementById('eq-main-content');
         var brandContent = document.getElementById('eq-brand-content');
         var addRow = document.getElementById('eq-add-row');
+        var searchRow = modal.querySelector('.eq-search-row');
         if (mainContent) mainContent.style.display = 'none';
         if (brandContent) brandContent.style.display = '';
         if (addRow) addRow.style.display = 'none';
+        if (searchRow) searchRow.style.display = 'none';
+
+        // Expand modal to full screen for scrollable list
+        var eqModal = modal.querySelector('.equipment-modal');
+        if (eqModal) {
+            eqModal.style.position = 'fixed';
+            eqModal.style.top = '0';
+            eqModal.style.left = '0';
+            eqModal.style.right = '0';
+            eqModal.style.bottom = '0';
+            eqModal.style.borderRadius = '0';
+            eqModal.style.maxHeight = '100vh';
+            eqModal.style.paddingTop = 'max(env(safe-area-inset-top, 44px), 44px)';
+        }
 
         var brandList = document.getElementById('eq-brand-list');
-        if (brandList) brandList.innerHTML = '<div class="eq-section-label">Загрузка ' + brand + '...</div>';
+        if (brandList) brandList.innerHTML = '<div class="eq-section-label">Загрузка...</div>';
 
         // Update header
         var header = modal.querySelector('.eq-modal-header h3');
@@ -3192,9 +3206,23 @@ const App = {
         var mainContent = document.getElementById('eq-main-content');
         var brandContent = document.getElementById('eq-brand-content');
         var addRow = document.getElementById('eq-add-row');
+        var searchRow = modal.querySelector('.eq-search-row');
         if (mainContent) mainContent.style.display = '';
         if (brandContent) brandContent.style.display = 'none';
         if (addRow) addRow.style.display = '';
+        if (searchRow) searchRow.style.display = '';
+        // Restore modal size
+        var eqModal = modal.querySelector('.equipment-modal');
+        if (eqModal) {
+            eqModal.style.position = '';
+            eqModal.style.top = '';
+            eqModal.style.left = '';
+            eqModal.style.right = '';
+            eqModal.style.bottom = '';
+            eqModal.style.borderRadius = '';
+            eqModal.style.maxHeight = '';
+            eqModal.style.paddingTop = '';
+        }
         var header = modal.querySelector('.eq-modal-header h3');
         if (header) header.textContent = 'Оборудование';
     },
