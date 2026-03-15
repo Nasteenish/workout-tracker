@@ -84,12 +84,6 @@ const RestTimer = {
         var staleNotif = document.querySelector('.rtn-overlay');
         if (staleNotif) staleNotif.remove();
 
-        // DEBUG: log timer init state
-        var dbg = document.getElementById('debug');
-        if (dbg) {
-            dbg.style.display = 'block';
-            dbg.innerHTML = '<b>Timer init:</b> interval=' + !!this._interval + ' endTime=' + this._endTime + ' _wt_timer=' + !!localStorage.getItem('_wt_timer') + '<br>';
-        }
     },
 
     // Call this whenever settings change
@@ -272,12 +266,6 @@ const RestTimer = {
     },
 
     _playBeep(reason) {
-        // DEBUG: show why beep was called
-        var dbg = document.getElementById('debug');
-        var stack = new Error().stack || '';
-        var info = 'BEEP! reason=' + (reason || '?') + ' interval=' + !!this._interval + ' endTime=' + this._endTime + ' timer_ls=' + !!localStorage.getItem('_wt_timer') + '\n' + stack.split('\n').slice(1, 4).join('\n');
-        console.warn(info);
-        if (dbg) { dbg.style.display = 'block'; dbg.innerHTML += '<b>BEEP:</b> ' + (reason || '?') + ' interval=' + !!this._interval + ' endTime=' + this._endTime + '<br>'; }
         var played = false;
         // Try Web Audio API first
         try {

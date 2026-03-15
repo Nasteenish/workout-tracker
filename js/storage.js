@@ -530,30 +530,17 @@ const Storage = {
             exerciseEquipment: data.exerciseEquipment || {},
             equipment: data.equipment || []
         }));
-        // DEBUG
-        var dbg = document.getElementById('debug');
-        if (dbg) { dbg.style.display = 'block'; dbg.innerHTML += '<b>Snapshot:</b> w' + week + 'd' + day + ' eq=' + eqCount + '<br>'; }
     },
 
     rollbackEquipmentIfNoSets() {
         var snap = localStorage.getItem('_wt_eq_snapshot');
-        var dbg = document.getElementById('debug');
-        if (!snap) {
-            if (dbg) { dbg.style.display = 'block'; dbg.innerHTML += '<b>Rollback:</b> NO snapshot<br>'; }
-            return;
-        }
+        if (!snap) return;
         var s = JSON.parse(snap);
-        // Snapshot exists = no set was completed this session
-        // (toggleSetComplete removes the snapshot on line 822)
         var data = this._load();
-        var oldCount = Object.keys(data.exerciseEquipment || {}).length;
-        var snapCount = Object.keys(s.exerciseEquipment || {}).length;
         data.exerciseEquipment = s.exerciseEquipment;
         data.equipment = s.equipment;
         this._save();
         localStorage.removeItem('_wt_eq_snapshot');
-        // DEBUG
-        if (dbg) { dbg.style.display = 'block'; dbg.innerHTML += '<b>Rollback:</b> eq ' + oldCount + '→' + snapCount + ' (rolled back)<br>'; }
     },
 
     // Called on app init — rollback any pending snapshot from a previous session
