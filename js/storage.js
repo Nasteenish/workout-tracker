@@ -250,6 +250,13 @@ const Storage = {
             'Single leg curl': ['Lying Leg Curl (Machine)', '\u0421\u0433\u0438\u0431\u0430\u043D\u0438\u0435 \u043D\u043E\u0433 \u043B\u0451\u0436\u0430 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
             'Single leg step up': ['Step Up', '\u0417\u0430\u0448\u0430\u0433\u0438\u0432\u0430\u043D\u0438\u044F']
         };
+        // v419: also fix wrong Russian names (nameRu) when English name is already correct
+        var RU_MAP = {
+            'Мёртвая тяга со штангой': ['Straight Leg Deadlift', 'Становая тяга на прямых ногах'],
+            'Мёртвая тяга с гантелями': ['Straight Leg Deadlift', 'Становая тяга на прямых ногах'],
+            'Мёртвая тяга в Смите': ['Deadlift (Smith Machine)', 'Становая тяга (в Смите)'],
+            'Румынская тяга в тренажёре': ['Romanian Deadlift (Barbell)', 'Румынская тяга (со штангой)']
+        };
         var d = this._data;
         if (!d || !d.program || !d.program.days) return;
         var count = 0;
@@ -262,14 +269,23 @@ const Storage = {
                 if (g.type === 'choose_one' && g.options) exList = exList.concat(g.options);
                 exList.forEach(function(ex) {
                     if (!ex) return;
-                    // Check exercise itself
+                    // Check by English name
                     var m = MAP[ex.name];
                     if (m) { ex.name = m[0]; ex.nameRu = m[1]; count++; }
+                    // Check by Russian name
+                    if (!m && ex.nameRu) {
+                        var mr = RU_MAP[ex.nameRu];
+                        if (mr) { ex.name = mr[0]; ex.nameRu = mr[1]; count++; }
+                    }
                     // Check nested options (choose_one inside superset)
                     if (ex.options) {
                         ex.options.forEach(function(opt) {
                             var m2 = MAP[opt.name];
                             if (m2) { opt.name = m2[0]; opt.nameRu = m2[1]; count++; }
+                            if (!m2 && opt.nameRu) {
+                                var mr2 = RU_MAP[opt.nameRu];
+                                if (mr2) { opt.name = mr2[0]; opt.nameRu = mr2[1]; count++; }
+                            }
                         });
                     }
                 });
