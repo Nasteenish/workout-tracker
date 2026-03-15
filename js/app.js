@@ -3232,14 +3232,11 @@ const App = {
         if (addRow) addRow.style.display = 'none';
         if (searchRow) searchRow.style.display = 'none';
 
-        // Force fullscreen for brand list — use px to avoid iOS vh bugs
+        // Let modal fit content — remove min-height, allow full height
         var eqModal = modal.querySelector('.equipment-modal');
         if (eqModal) {
-            var h = window.innerHeight;
-            eqModal.style.height = h + 'px';
-            eqModal.style.maxHeight = h + 'px';
-            eqModal.style.minHeight = h + 'px';
-            eqModal.style.borderRadius = '0';
+            eqModal.style.minHeight = '0';
+            eqModal.style.maxHeight = '90vh';
         }
 
         var brandList = document.getElementById('eq-brand-list');
