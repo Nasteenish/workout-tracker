@@ -3434,6 +3434,53 @@ body.modal-open {
     margin-left: 8px;
     flex-shrink: 0;
 }
+.eq-section-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding: 12px 4px 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.eq-brand-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    margin: 2px 0;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+.eq-brand-item:active {
+    background: rgba(157, 141, 245, 0.2);
+}
+.eq-brand-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.eq-brand-arrow {
+    font-size: 20px;
+    color: var(--text-muted);
+}
+.eq-brand-back {
+    padding: 10px 4px;
+    color: var(--primary);
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 600;
+}
+.eq-catalog-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    margin: 2px 0;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+.eq-catalog-item:active {
+    background: rgba(157, 141, 245, 0.2);
+}
 .eq-modal-header {
     display: flex;
     align-items: center;

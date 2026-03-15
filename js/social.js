@@ -810,5 +810,44 @@ const Social = {
         if (muscleGroup && muscleGroup !== 'all') q = q.eq('muscle_group', muscleGroup);
         var r = await q;
         return r.data || [];
+    },
+
+    async getCatalogBrands(exerciseType) {
+        if (!supa) return [];
+        var q = supa.from('equipment_catalog')
+            .select('brand')
+            .order('brand');
+        if (exerciseType) q = q.ilike('exercise_type', '%' + exerciseType + '%');
+        var r = await q;
+        if (!r.data) return [];
+        var seen = {};
+        var brands = [];
+        for (var i = 0; i < r.data.length; i++) {
+            var b = r.data[i].brand;
+            if (!seen[b]) { seen[b] = true; brands.push(b); }
+        }
+        return brands;
+    },
+
+    async getCatalogByBrandAndType(brand, exerciseType) {
+        if (!supa) return [];
+        var q = supa.from('equipment_catalog')
+            .select('id, brand, model, name, muscle_group, image_url, exercise_type')
+            .eq('brand', brand)
+            .order('name');
+        if (exerciseType) q = q.ilike('exercise_type', '%' + exerciseType + '%');
+        var r = await q;
+        return r.data || [];
+    },
+
+    async getGymEquipmentForExercise(gymName, gymCity, exerciseName) {
+        if (!supa) return [];
+        var q = supa.from('gym_equipment')
+            .select('equipment_name')
+            .eq('gym_name', gymName)
+            .eq('gym_city', gymCity)
+            .eq('exercise_name', exerciseName);
+        var r = await q;
+        return (r.data || []).map(function(row) { return row.equipment_name; });
     }
 };

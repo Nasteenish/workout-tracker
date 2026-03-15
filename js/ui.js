@@ -1147,24 +1147,9 @@ const UI = {
     },
 
     showEquipmentModal(exerciseId) {
-        const exerciseEquipment = Storage.getExerciseEquipmentOptions(exerciseId);
         const currentEqId = Storage.getExerciseEquipment(exerciseId);
         const exInfo = this._getExerciseInfo(exerciseId);
         const muscleGroup = exInfo.category;
-
-        let optionsHtml = `
-            <div class="eq-option ${!currentEqId ? 'selected' : ''}" data-eq-id="" data-exercise="${exerciseId}">
-                Без оборудования
-            </div>
-        `;
-        for (const eq of exerciseEquipment) {
-            const isSelected = eq.id === currentEqId;
-            optionsHtml += `
-                <div class="eq-option ${isSelected ? 'selected' : ''}" data-eq-id="${eq.id}" data-exercise="${exerciseId}">
-                    ${eq.name}
-                </div>
-            `;
-        }
 
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
@@ -1178,12 +1163,20 @@ const UI = {
                 <div class="eq-search-row">
                     <input type="text" id="eq-search" placeholder="Поиск тренажёра..." class="eq-new-input" autocomplete="off">
                 </div>
-                <div id="eq-gym-results"></div>
-                <div class="eq-list" id="eq-list">
-                    ${optionsHtml}
+                <div id="eq-main-content">
+                    <div class="eq-option ${!currentEqId ? 'selected' : ''}" data-eq-id="" data-exercise="${exerciseId}">
+                        Без оборудования
+                    </div>
+                    <div id="eq-gym-section"></div>
+                    <div id="eq-brands-section">
+                        <div class="eq-section-label">Загрузка каталога...</div>
+                    </div>
+                </div>
+                <div id="eq-brand-content" style="display:none">
+                    <div class="eq-brand-back" id="eq-brand-back">\u2190 Назад</div>
+                    <div id="eq-brand-list"></div>
                 </div>
                 <div id="eq-search-results" class="eq-search-results"></div>
-                <div id="eq-catalog-results"></div>
                 <div class="eq-add-row" id="eq-add-row">
                     <input type="text" id="eq-new-name" placeholder="Своё оборудование..." class="eq-new-input">
                     <button class="eq-add-btn" id="eq-add-btn">+</button>
@@ -1206,15 +1199,12 @@ const UI = {
 
         function enterEqSearch() {
             overlay._inputFocusedAt = Date.now();
-            var gymResults = document.getElementById('eq-gym-results');
-            var eqList = document.getElementById('eq-list');
+            var mainContent = document.getElementById('eq-main-content');
+            var brandContent = document.getElementById('eq-brand-content');
             var addRow = document.getElementById('eq-add-row');
-            // Keep header (with close button) visible!
-            var catalogResults = document.getElementById('eq-catalog-results');
-            if (gymResults) gymResults.style.display = 'none';
-            if (eqList) eqList.style.display = 'none';
+            if (mainContent) mainContent.style.display = 'none';
+            if (brandContent) brandContent.style.display = 'none';
             if (addRow) addRow.style.display = 'none';
-            if (catalogResults) catalogResults.style.display = 'none';
             var searchResults = document.getElementById('eq-search-results');
             if (searchResults) searchResults.style.flex = '1';
             // Move modal to top (like exercise picker)
@@ -1229,14 +1219,10 @@ const UI = {
         }
 
         function exitEqSearch() {
-            var gymResults = document.getElementById('eq-gym-results');
-            var eqList = document.getElementById('eq-list');
+            var mainContent = document.getElementById('eq-main-content');
             var addRow = document.getElementById('eq-add-row');
-            var catalogResults = document.getElementById('eq-catalog-results');
-            if (gymResults) gymResults.style.display = '';
-            if (eqList) eqList.style.display = '';
+            if (mainContent) mainContent.style.display = '';
             if (addRow) addRow.style.display = '';
-            if (catalogResults) catalogResults.style.display = '';
             var searchResults = document.getElementById('eq-search-results');
             if (searchResults) { searchResults.innerHTML = ''; searchResults.style.flex = ''; }
             eqModal.style.bottom = '';
@@ -1281,8 +1267,7 @@ const UI = {
             App._searchEquipment(searchInput.value.trim());
         });
 
-        App._loadGymEquipment(exerciseId);
-        App._loadCatalogRecommendations(exerciseId);
+        App._loadEquipmentBrands(exerciseId);
     },
 
     hideEquipmentModal() {

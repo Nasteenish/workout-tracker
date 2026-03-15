@@ -2625,6 +2625,41 @@ const App = {
             return;
         }
 
+        // Equipment modal — brand click → show brand equipment
+        if (target.closest('.eq-brand-item')) {
+            var brandItem = target.closest('.eq-brand-item');
+            var brand = brandItem.dataset.brand;
+            if (brand) this._loadBrandEquipment(brand);
+            return;
+        }
+
+        // Equipment modal — back to brands
+        if (target.id === 'eq-brand-back' || target.closest('#eq-brand-back')) {
+            this._eqBackToBrands();
+            return;
+        }
+
+        // Equipment modal — select from catalog
+        if (target.closest('.eq-catalog-item')) {
+            var catItem = target.closest('.eq-catalog-item');
+            var eqName = catItem.dataset.name;
+            var catalogId = catItem.dataset.catalogId ? parseInt(catItem.dataset.catalogId) : null;
+            if (!eqName) return;
+            var modal = document.getElementById('equipment-modal');
+            var exId = modal ? modal._exerciseId : null;
+            var newId = Storage.addEquipment(eqName);
+            if (exId) {
+                Storage.setExerciseEquipment(exId, newId);
+                Storage.linkEquipmentToExercise(exId, newId);
+                var activeGym = this._getActiveGymId();
+                if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, newId);
+                this._shareToGymEquipment(exId, { name: eqName, catalogId: catalogId });
+            }
+            UI.hideEquipmentModal();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return;
+        }
+
         // Equipment modal — close on overlay or X button
         if (target.id === 'eq-close' || target.closest('#eq-close')) {
             UI.hideEquipmentModal();
@@ -3052,27 +3087,116 @@ const App = {
         resultsDiv.innerHTML = html;
     },
 
-    _loadGymEquipment(exerciseId) {
+    _loadEquipmentBrands(exerciseId) {
         if (typeof Social === 'undefined') return;
-        var activeGymId = this._getActiveGymId();
-        if (!activeGymId) return;
-        var gym = Storage.getGymById(activeGymId);
-        if (!gym || !gym.city) return;
         var modal = document.getElementById('equipment-modal');
-        var exerciseName = modal ? modal._exerciseName : '';
-        if (!exerciseName) return;
+        if (!modal) return;
+        var exName = modal._exerciseName || '';
+        var exType = exName ? this._getExerciseType(exName) : null;
+        modal._exerciseType = exType;
 
-        Social.getGymEquipment(gym.name, gym.city, exerciseName).then(function(items) {
-            var div = document.getElementById('eq-gym-results');
-            if (!div || !items || !items.length) return;
-            var html = '<div class="eq-shared-label">В этом зале:</div>';
+        // Load gym equipment for this exercise (from gym_equipment table)
+        var activeGymId = this._getActiveGymId();
+        var gym = activeGymId ? Storage.getGymById(activeGymId) : null;
+        var gymPromise = (gym && gym.city && exName)
+            ? Social.getGymEquipmentForExercise(gym.name, gym.city, exName)
+            : Promise.resolve([]);
+
+        // Load brands from catalog for this exercise type
+        var brandsPromise = Social.getCatalogBrands(exType);
+
+        Promise.all([gymPromise, brandsPromise]).then(function(results) {
+            var gymItems = results[0] || [];
+            var brands = results[1] || [];
+            if (!document.getElementById('equipment-modal')) return;
+
+            // Render gym section
+            var gymSection = document.getElementById('eq-gym-section');
+            if (gymSection && gymItems.length > 0) {
+                var gymHtml = '<div class="eq-section-label">В этом зале:</div>';
+                for (var i = 0; i < gymItems.length; i++) {
+                    gymHtml += '<div class="eq-gym-item" data-name="' + gymItems[i].replace(/"/g, '&quot;') + '">'
+                        + '<span class="eq-shared-name">' + gymItems[i] + '</span>'
+                        + '</div>';
+                }
+                gymSection.innerHTML = gymHtml;
+            }
+
+            // Render brands
+            var brandsSection = document.getElementById('eq-brands-section');
+            if (brandsSection) {
+                if (brands.length > 0) {
+                    var bHtml = '<div class="eq-section-label">Каталог:</div>';
+                    for (var i = 0; i < brands.length; i++) {
+                        bHtml += '<div class="eq-brand-item" data-brand="' + brands[i].replace(/"/g, '&quot;') + '">'
+                            + '<span class="eq-brand-name">' + brands[i] + '</span>'
+                            + '<span class="eq-brand-arrow">\u203A</span>'
+                            + '</div>';
+                    }
+                    brandsSection.innerHTML = bHtml;
+                } else {
+                    brandsSection.innerHTML = '';
+                }
+            }
+        }).catch(function() {});
+    },
+
+    _loadBrandEquipment(brand) {
+        var modal = document.getElementById('equipment-modal');
+        if (!modal) return;
+        var exType = modal._exerciseType;
+        var exerciseId = modal._exerciseId;
+
+        // Show brand content, hide main
+        var mainContent = document.getElementById('eq-main-content');
+        var brandContent = document.getElementById('eq-brand-content');
+        var addRow = document.getElementById('eq-add-row');
+        if (mainContent) mainContent.style.display = 'none';
+        if (brandContent) brandContent.style.display = '';
+        if (addRow) addRow.style.display = 'none';
+
+        var brandList = document.getElementById('eq-brand-list');
+        if (brandList) brandList.innerHTML = '<div class="eq-section-label">Загрузка ' + brand + '...</div>';
+
+        // Update header
+        var header = modal.querySelector('.eq-modal-header h3');
+        if (header) header.textContent = brand;
+
+        Social.getCatalogByBrandAndType(brand, exType).then(function(items) {
+            if (!document.getElementById('equipment-modal')) return;
+            var div = document.getElementById('eq-brand-list');
+            if (!div) return;
+            if (!items || !items.length) {
+                div.innerHTML = '<div class="eq-section-label">Нет тренажёров для этого упражнения</div>';
+                return;
+            }
+            var html = '';
             for (var i = 0; i < items.length; i++) {
-                html += '<div class="eq-gym-item" data-name="' + items[i].equipment_name.replace(/"/g, '&quot;') + '">'
-                    + '<span class="eq-shared-name">' + items[i].equipment_name + '</span>'
+                var c = items[i];
+                var fullName = brand + ' ' + c.name;
+                html += '<div class="eq-catalog-item" data-name="' + fullName.replace(/"/g, '&quot;') + '" data-catalog-id="' + c.id + '">'
+                    + '<span class="eq-shared-name">' + c.name + '</span>'
+                    + (c.model ? '<span class="eq-catalog-model">' + c.model + '</span>' : '')
                     + '</div>';
             }
             div.innerHTML = html;
-        }).catch(function() {});
+        }).catch(function() {
+            var div = document.getElementById('eq-brand-list');
+            if (div) div.innerHTML = '<div class="eq-section-label">Ошибка загрузки</div>';
+        });
+    },
+
+    _eqBackToBrands() {
+        var modal = document.getElementById('equipment-modal');
+        if (!modal) return;
+        var mainContent = document.getElementById('eq-main-content');
+        var brandContent = document.getElementById('eq-brand-content');
+        var addRow = document.getElementById('eq-add-row');
+        if (mainContent) mainContent.style.display = '';
+        if (brandContent) brandContent.style.display = 'none';
+        if (addRow) addRow.style.display = '';
+        var header = modal.querySelector('.eq-modal-header h3');
+        if (header) header.textContent = 'Оборудование';
     },
 
     // Exercise name → equipment exercise_type in catalog
@@ -3139,38 +3263,6 @@ const App = {
             if (core.indexOf(key) !== -1) return this._exerciseTypeMap[key];
         }
         return null;
-    },
-
-    _loadCatalogRecommendations(exerciseId) {
-        if (typeof Social === 'undefined') return;
-        var modal = document.getElementById('equipment-modal');
-        var exName = modal ? modal._exerciseName : '';
-        if (!exName) return;
-        var exType = this._getExerciseType(exName);
-        if (!exType) return;
-
-        Social.getCatalogByExerciseType(exType).then(function(catalog) {
-            var div = document.getElementById('eq-catalog-results');
-            if (!div || !catalog || !catalog.length) return;
-            var myEq = Storage.getEquipmentList();
-            var seen = {};
-            for (var i = 0; i < myEq.length; i++) seen[myEq[i].name.toLowerCase().trim()] = true;
-            var html = '<div class="eq-shared-label">Из каталога:</div>';
-            var count = 0;
-            for (var i = 0; i < catalog.length; i++) {
-                var c = catalog[i];
-                var cName = (c.brand ? c.brand + ' ' : '') + c.name;
-                var k = cName.toLowerCase();
-                if (seen[k]) continue;
-                seen[k] = true;
-                count++;
-                html += '<div class="eq-search-item" data-name="' + cName.replace(/"/g, '&quot;') + '" data-catalog-id="' + c.id + '">'
-                    + '<span class="eq-shared-name">' + cName + '</span>'
-                    + (c.model ? '<span class="eq-catalog-model">' + c.model + '</span>' : '')
-                    + '</div>';
-            }
-            if (count > 0) div.innerHTML = html;
-        }).catch(function() {});
     },
 
     _eqSearchTimer: null,
