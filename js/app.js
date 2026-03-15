@@ -3245,8 +3245,11 @@ const App = {
         'seated row': 'seated_row', 'seated cable row': 'seated_row',
         'iso-lateral row': 'seated_row', 'iso-lateral high row': 'seated_row',
         'iso-lateral low row': 'seated_row', 'low row': 'seated_row',
+        'cable row': 'seated_row', 'single arm cable row': 'seated_row',
+        'bent over row': 'seated_row', 't bar row': 'seated_row',
+        'supported bar rows': 'seated_row', 'chest supported incline row': 'seated_row',
         'back extension': 'back_extension', 'hyperextension': 'back_extension',
-        'deadlift': 'deadlift', 'romanian deadlift': 'deadlift',
+        'deadlift': 'deadlift', 'romanian deadlift': 'deadlift', 'straight leg deadlift': 'deadlift',
         // Legs
         'leg press': 'leg_press', 'leg press horizontal': 'leg_press', 'single leg press': 'leg_press',
         'leg extension': 'leg_extension', 'single leg extensions': 'leg_extension',
@@ -3259,6 +3262,8 @@ const App = {
         'pendulum squat': 'squat', 'bulgarian split squat': 'squat',
         'calf raise': 'calf', 'calf extension': 'calf', 'calf press': 'calf',
         'standing calf raise': 'calf', 'seated calf raise': 'calf',
+        'tibial raises': 'calf', 'tibial raise': 'calf',
+        'medium gluteus on low pulley': 'hip_abduction', 'cable hip abduction': 'hip_abduction',
         // Shoulders
         'shoulder press': 'shoulder_press', 'overhead press': 'shoulder_press',
         'lateral raise': 'lateral_raise',
