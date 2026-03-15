@@ -148,7 +148,9 @@ const App = {
         // Background sync — re-render after merge to avoid stale UI
         var self = this;
         SupaSync.syncOnLogin(supaUserId, 'wt_data_' + userId).then(function() {
-            // Remove stuck Precor from D1E2 AFTER sync + immediate push
+            // Rollback equipment after sync (sync may overwrite a pre-sync rollback)
+            Storage.checkPendingEquipmentRollback();
+            // Remove stuck Precor from D1E2 AFTER rollback (rollback restores old snapshot with D1E2)
             try {
                 Storage._invalidateCache();
                 var dd = Storage._load();
@@ -159,8 +161,6 @@ const App = {
                     SupaSync.pushData(supaUserId, dd, '').catch(function(){});
                 }
             } catch(e) {}
-            // Rollback equipment after sync (sync may overwrite a pre-sync rollback)
-            Storage.checkPendingEquipmentRollback();
             self.route();
         }).catch(function(e) {
             console.error('Init sync error:', e);
