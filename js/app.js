@@ -148,6 +148,16 @@ const App = {
         // Background sync — re-render after merge to avoid stale UI
         var self = this;
         SupaSync.syncOnLogin(supaUserId, 'wt_data_' + userId).then(function() {
+            // Remove stuck Precor from D1E2 AFTER sync (sync can re-download it)
+            var dd = Storage._load ? Storage._load() : null;
+            if (dd && dd.exerciseEquipment && dd.exerciseEquipment.D1E2) {
+                var eqList = dd.equipment || [];
+                var eqObj = eqList.find(function(e) { return e.id === dd.exerciseEquipment.D1E2; });
+                if (eqObj && eqObj.name && eqObj.name.toLowerCase().indexOf('precor') !== -1 && eqObj.name.toLowerCase().indexOf('leg curl') !== -1) {
+                    delete dd.exerciseEquipment.D1E2;
+                    Storage._save();
+                }
+            }
             // Rollback equipment after sync (sync may overwrite a pre-sync rollback)
             Storage.checkPendingEquipmentRollback();
             self.route();
@@ -3213,16 +3223,11 @@ const App = {
         if (addRow) addRow.style.display = 'none';
         if (searchRow) searchRow.style.display = 'none';
 
-        // Force fullscreen for brand list — use fixed positioning to cover entire viewport
+        // Force fullscreen for brand list — flex:1 fills the overlay
         var eqModal = modal.querySelector('.equipment-modal');
         if (eqModal) {
-            eqModal.style.position = 'fixed';
-            eqModal.style.top = '0';
-            eqModal.style.left = '0';
-            eqModal.style.right = '0';
-            eqModal.style.bottom = '0';
+            eqModal.style.flex = '1';
             eqModal.style.maxHeight = 'none';
-            eqModal.style.height = 'auto';
             eqModal.style.minHeight = '0';
             eqModal.style.borderRadius = '0';
             eqModal.style.paddingTop = 'max(env(safe-area-inset-top, 20px), 20px)';
@@ -3275,14 +3280,10 @@ const App = {
         // Restore modal size
         var eqModal = modal.querySelector('.equipment-modal');
         if (eqModal) {
-            eqModal.style.position = '';
-            eqModal.style.top = '';
-            eqModal.style.left = '';
-            eqModal.style.right = '';
-            eqModal.style.bottom = '';
+            eqModal.style.flex = '';
             eqModal.style.borderRadius = '';
             eqModal.style.maxHeight = '';
-            eqModal.style.paddingTop = '';
+            eqModal.style.minHeight = '';
         }
         var header = modal.querySelector('.eq-modal-header h3');
         if (header) header.textContent = 'Оборудование';
