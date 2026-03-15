@@ -779,7 +779,7 @@ const Social = {
         var q = supa.from('equipment_catalog')
             .select('id, brand, model, name, muscle_group, image_url')
             .order('brand')
-            .limit(50);
+            .limit(100);
         if (query) {
             var words = query.trim().split(/\s+/);
             for (var i = 0; i < words.length; i++) {
