@@ -129,6 +129,9 @@ const SupaSync = {
             } else if (remote && !localData) {
                 // New device: pull from cloud
                 localStorage.setItem(localStorageKey, JSON.stringify(remote.data));
+                if (typeof Storage !== 'undefined' && Storage._data) {
+                    Storage._data = null;
+                }
             } else if (remote && localData) {
                 // Deep merge logs from both sides
                 var remoteData = remote.data;
@@ -141,6 +144,10 @@ const SupaSync = {
                 base._lastModified = Date.now();
                 // Save merged result locally and push to cloud
                 localStorage.setItem(localStorageKey, JSON.stringify(base));
+                // Invalidate in-memory cache so UI reads fresh data
+                if (typeof Storage !== 'undefined' && Storage._data) {
+                    Storage._data = null;
+                }
                 await this.pushData(supaUserId, base, '');
             }
         } catch (e) {

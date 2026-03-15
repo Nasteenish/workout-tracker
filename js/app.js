@@ -122,8 +122,11 @@ const App = {
         if (!supaUserId) return;
         SupaSync._currentSupaUserId = supaUserId;
         SupaSync._currentStorageKey = 'wt_data_' + userId;
-        // Background sync
-        SupaSync.syncOnLogin(supaUserId, 'wt_data_' + userId).catch(function(e) {
+        // Background sync — re-render after merge to avoid stale UI
+        var self = this;
+        SupaSync.syncOnLogin(supaUserId, 'wt_data_' + userId).then(function() {
+            self.route();
+        }).catch(function(e) {
             console.error('Init sync error:', e);
         });
     },
