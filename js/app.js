@@ -3182,19 +3182,28 @@ const App = {
         // Expand modal to full screen for scrollable list
         var eqModal = modal.querySelector('.equipment-modal');
         if (eqModal) {
-            var vh = window.innerHeight + 'px';
             eqModal.style.position = 'fixed';
             eqModal.style.top = '0';
             eqModal.style.left = '0';
             eqModal.style.right = '0';
             eqModal.style.bottom = '0';
             eqModal.style.borderRadius = '0';
-            eqModal.style.maxHeight = vh;
-            eqModal.style.height = vh;
+            eqModal.style.maxHeight = 'none';
+            eqModal.style.height = '100%';
             eqModal.style.overflow = 'hidden';
             eqModal.style.paddingTop = 'max(env(safe-area-inset-top, 44px), 44px)';
-            eqModal.style.paddingBottom = 'env(safe-area-inset-bottom, 0px)';
             eqModal.style.boxSizing = 'border-box';
+        }
+        // Make brand content fill remaining space with explicit height
+        var brandContent = document.getElementById('eq-brand-content');
+        if (brandContent && eqModal) {
+            // Header is ~50px + padding, calculate remaining
+            var header = eqModal.querySelector('.eq-modal-header');
+            var headerH = header ? header.offsetHeight + 16 : 60;
+            brandContent.style.height = 'calc(100vh - ' + headerH + 'px - env(safe-area-inset-top, 44px) - env(safe-area-inset-bottom, 0px))';
+            brandContent.style.maxHeight = 'none';
+            brandContent.style.overflowY = 'auto';
+            brandContent.style.webkitOverflowScrolling = 'touch';
         }
 
         var brandList = document.getElementById('eq-brand-list');

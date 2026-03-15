@@ -69,11 +69,20 @@ const RestTimer = {
         // Always stop any lingering SW timer on init (beforeunload doesn't fire on mobile)
         this._swTimer('STOP_TIMER');
         // Clean up any stale timer state
-        var savedTimer = localStorage.getItem('_wt_timer');
-        if (savedTimer) {
-            // Timer existed — remove it, don't restore (app was closed/reopened)
-            localStorage.removeItem('_wt_timer');
+        localStorage.removeItem('_wt_timer');
+        // Close any stale push notifications from previous session
+        if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+            navigator.serviceWorker.ready.then(function(reg) {
+                if (reg.getNotifications) {
+                    reg.getNotifications({ tag: 'rest-timer' }).then(function(notifs) {
+                        notifs.forEach(function(n) { n.close(); });
+                    });
+                }
+            });
         }
+        // Remove any stale in-app notification overlays
+        var staleNotif = document.querySelector('.rtn-overlay');
+        if (staleNotif) staleNotif.remove();
     },
 
     // Call this whenever settings change
@@ -146,10 +155,10 @@ const RestTimer = {
         this._endTime = null;
         this._pausedAt = null;
         this._swTimer('STOP_TIMER');
+        localStorage.removeItem('_wt_timer');
         var bar = this._bar;
         bar.classList.remove('active');
         if (bar.parentNode) bar.remove();
-        this._saveState();
     },
 
     togglePause() {
@@ -208,7 +217,7 @@ const RestTimer = {
         clearInterval(this._interval);
         this._interval = null;
         this._endTime = null;
-        this._saveState();
+        localStorage.removeItem('_wt_timer');
 
         // Auto-hide the inline timer
         var bar = this._bar;
@@ -226,16 +235,9 @@ const RestTimer = {
             alertUser();
             this._showNotification(null);
         } else {
-            // App is in background — let SW show the push notification!
-            // Do NOT send STOP_TIMER here — SW needs to fire its notification
-            var finishedAt = Date.now();
-            this._showNotification(function() {
-                if (Date.now() - finishedAt < 30000) alertUser();
-            });
-            // Also try client-side Notification API (Android fallback if SW failed)
-            if ('Notification' in window && Notification.permission === 'granted') {
-                try { new Notification('Пора!', { body: 'Отдых завершён', tag: 'rest-timer', renotify: true }); } catch(e) {}
-            }
+            // App is in background — let SW show the push notification
+            // NO sound callback — SW notification is enough, no beep on return
+            this._showNotification(null);
         }
         setTimeout(() => { this._finishing = false; }, 500);
     },
