@@ -3111,8 +3111,9 @@ const App = {
         var modal = document.getElementById('equipment-modal');
         if (!modal) return;
         var exName = modal._exerciseName || '';
+        var exNameRu = modal._exerciseNameRu || '';
         var exType = exName ? this._getExerciseType(exName) : null;
-        var isFreeWeight = exName ? this._isFreeWeightExercise(exName) : false;
+        var isFreeWeight = this._isFreeWeightExercise(exName, exNameRu);
         modal._exerciseType = exType;
         modal._isFreeWeight = isFreeWeight;
 
@@ -3312,12 +3313,22 @@ const App = {
     },
 
     // Returns true if exercise uses free weights / bodyweight (no machine catalog needed)
-    _isFreeWeightExercise(exerciseName) {
-        var mod = this._getEquipmentModifier(exerciseName);
-        if (!mod) return false;
-        var freeTypes = ['barbell', 'dumbbell', 'bodyweight', 'band', 'resistance band', 'kettlebell', 'plate', 'ez bar', 'trap bar'];
-        for (var i = 0; i < freeTypes.length; i++) {
-            if (mod === freeTypes[i]) return true;
+    _isFreeWeightExercise(exerciseEnName, exerciseRuName) {
+        // Check English name
+        var mod = this._getEquipmentModifier(exerciseEnName || '');
+        if (mod) {
+            var freeTypes = ['barbell', 'dumbbell', 'bodyweight', 'band', 'resistance band', 'kettlebell', 'plate', 'ez bar', 'trap bar'];
+            for (var i = 0; i < freeTypes.length; i++) {
+                if (mod === freeTypes[i]) return true;
+            }
+        }
+        // Check Russian name
+        var modRu = this._getEquipmentModifier(exerciseRuName || '');
+        if (modRu) {
+            var freeRu = ['со штангой', 'с гантелями', 'с гантелью', 'с гирей', 'с резиной', 'с диском', 'с собственным весом', 'штанга', 'гантели'];
+            for (var i = 0; i < freeRu.length; i++) {
+                if (modRu === freeRu[i]) return true;
+            }
         }
         return false;
     },
