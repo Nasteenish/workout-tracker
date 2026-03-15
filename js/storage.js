@@ -508,6 +508,36 @@ const Storage = {
         return null;
     },
 
+    // Snapshot equipment state for rollback if no sets completed
+    snapshotEquipment() {
+        var data = this._load();
+        this._eqSnapshot = JSON.stringify(data.exerciseEquipment || {});
+        this._eqListSnapshot = JSON.stringify(data.equipment || []);
+    },
+
+    rollbackEquipmentIfNoSets(week, day) {
+        if (!this._eqSnapshot) return;
+        var data = this._load();
+        var dayLog = (data.log[String(week)] || {})[String(day)] || {};
+        var hasCompletedSet = false;
+        for (var exId in dayLog) {
+            for (var setIdx in dayLog[exId]) {
+                if (dayLog[exId][setIdx] && dayLog[exId][setIdx].completed) {
+                    hasCompletedSet = true;
+                    break;
+                }
+            }
+            if (hasCompletedSet) break;
+        }
+        if (!hasCompletedSet) {
+            data.exerciseEquipment = JSON.parse(this._eqSnapshot);
+            data.equipment = JSON.parse(this._eqListSnapshot);
+            this._save();
+        }
+        this._eqSnapshot = null;
+        this._eqListSnapshot = null;
+    },
+
     setExerciseEquipment(exerciseId, equipmentId) {
         var data = this._load();
         data.exerciseEquipment[exerciseId] = equipmentId;

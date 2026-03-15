@@ -1224,11 +1224,19 @@ const App = {
             return;
         }
 
+        // Rollback equipment if leaving day view without completed sets
+        if (this._inDayView) {
+            Storage.rollbackEquipmentIfNoSets(this._currentWeek, this._currentDay);
+            this._inDayView = false;
+        }
+
         // Day view: #/week/{n}/day/{n}
         const dayMatch = hash.match(/^#\/week\/(\d+)\/day\/(\d+)$/);
         if (dayMatch) {
             this._currentWeek = parseInt(dayMatch[1]);
             this._currentDay = parseInt(dayMatch[2]);
+            Storage.snapshotEquipment();
+            this._inDayView = true;
             UI.renderDay(this._currentWeek, this._currentDay);
             return;
         }
