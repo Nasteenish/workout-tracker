@@ -150,15 +150,23 @@ const App = {
         SupaSync.syncOnLogin(supaUserId, 'wt_data_' + userId).then(function() {
             // Rollback equipment after sync (sync may overwrite a pre-sync rollback)
             Storage.checkPendingEquipmentRollback();
-            // Remove stuck Precor from D1E2 AFTER rollback (rollback restores old snapshot with D1E2)
+            // Remove stuck Precor from D1E2/D5E6 (siblings) AFTER rollback
             try {
                 Storage._invalidateCache();
                 var dd = Storage._load();
-                if (dd && dd.exerciseEquipment && dd.exerciseEquipment.D1E2) {
-                    delete dd.exerciseEquipment.D1E2;
-                    Storage._save();
-                    // Immediate push — don't wait 3s debounce
-                    SupaSync.pushData(supaUserId, dd, '').catch(function(){});
+                if (dd && dd.exerciseEquipment) {
+                    var precorId = 'eq_1773590725238';
+                    var changed = false;
+                    for (var k in dd.exerciseEquipment) {
+                        if (dd.exerciseEquipment[k] === precorId) {
+                            delete dd.exerciseEquipment[k];
+                            changed = true;
+                        }
+                    }
+                    if (changed) {
+                        Storage._save();
+                        SupaSync.pushData(supaUserId, dd, '').catch(function(){});
+                    }
                 }
             } catch(e) {}
             self.route();
