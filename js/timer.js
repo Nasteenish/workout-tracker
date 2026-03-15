@@ -65,7 +65,15 @@ const RestTimer = {
         });
 
         this._updateDisplay();
-        this._restoreState();
+
+        // Always stop any lingering SW timer on init (beforeunload doesn't fire on mobile)
+        this._swTimer('STOP_TIMER');
+        // Clean up any stale timer state
+        var savedTimer = localStorage.getItem('_wt_timer');
+        if (savedTimer) {
+            // Timer existed — remove it, don't restore (app was closed/reopened)
+            localStorage.removeItem('_wt_timer');
+        }
     },
 
     // Call this whenever settings change
