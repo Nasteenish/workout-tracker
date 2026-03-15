@@ -3122,6 +3122,9 @@ const App = {
     },
 
     _getExerciseType(exerciseName) {
+        var nameLower = exerciseName.toLowerCase();
+        // Equipment type from parenthetical: (Smith Machine), (Machine), (Cable) etc.
+        if (nameLower.indexOf('(smith machine)') !== -1) return 'smith_machine';
         var core = exerciseName.replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
         // Try exact match first, then progressively shorter
         if (this._exerciseTypeMap[core]) return this._exerciseTypeMap[core];
