@@ -83,6 +83,13 @@ const RestTimer = {
         // Remove any stale in-app notification overlays
         var staleNotif = document.querySelector('.rtn-overlay');
         if (staleNotif) staleNotif.remove();
+
+        // DEBUG: log timer init state
+        var dbg = document.getElementById('debug');
+        if (dbg) {
+            dbg.style.display = 'block';
+            dbg.innerHTML = '<b>Timer init:</b> interval=' + !!this._interval + ' endTime=' + this._endTime + ' _wt_timer=' + !!localStorage.getItem('_wt_timer') + '<br>';
+        }
     },
 
     // Call this whenever settings change
@@ -195,12 +202,7 @@ const RestTimer = {
             if (this._audioCtx.state === 'suspended') {
                 this._audioCtx.resume();
             }
-            // Prime audio element for playback
-            var a = this._ensureAudioEl();
-            if (a && !a._primed) {
-                a.volume = 0;
-                a.play().then(() => { a.pause(); a.currentTime = 0; a.volume = 1; a._primed = true; }).catch(() => {});
-            }
+            // Do NOT play the beep for priming — iOS ignores volume=0
         } catch(e) {}
     },
 
@@ -224,9 +226,10 @@ const RestTimer = {
         bar.classList.remove('active');
         if (bar.parentNode) bar.remove();
 
-        const alertUser = () => {
+        var self = this;
+        const alertUser = (src) => {
             if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
-            this._playBeep();
+            self._playBeep('finish:' + (src || 'visible'));
         };
 
         if (document.visibilityState === 'visible') {
@@ -268,7 +271,13 @@ const RestTimer = {
         return this._audioEl;
     },
 
-    _playBeep() {
+    _playBeep(reason) {
+        // DEBUG: show why beep was called
+        var dbg = document.getElementById('debug');
+        var stack = new Error().stack || '';
+        var info = 'BEEP! reason=' + (reason || '?') + ' interval=' + !!this._interval + ' endTime=' + this._endTime + ' timer_ls=' + !!localStorage.getItem('_wt_timer') + '\n' + stack.split('\n').slice(1, 4).join('\n');
+        console.warn(info);
+        if (dbg) { dbg.style.display = 'block'; dbg.innerHTML += '<b>BEEP:</b> ' + (reason || '?') + ' interval=' + !!this._interval + ' endTime=' + this._endTime + '<br>'; }
         var played = false;
         // Try Web Audio API first
         try {

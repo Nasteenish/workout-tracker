@@ -3194,16 +3194,19 @@ const App = {
             eqModal.style.paddingTop = 'max(env(safe-area-inset-top, 44px), 44px)';
             eqModal.style.boxSizing = 'border-box';
         }
-        // Make brand content fill remaining space with explicit height
+        // Make brand content fill remaining space with explicit pixel height
         var brandContent = document.getElementById('eq-brand-content');
         if (brandContent && eqModal) {
-            // Header is ~50px + padding, calculate remaining
             var header = eqModal.querySelector('.eq-modal-header');
             var headerH = header ? header.offsetHeight + 16 : 60;
-            brandContent.style.height = 'calc(100vh - ' + headerH + 'px - env(safe-area-inset-top, 44px) - env(safe-area-inset-bottom, 0px))';
+            var contentH = window.innerHeight - headerH;
+            brandContent.style.height = contentH + 'px';
             brandContent.style.maxHeight = 'none';
             brandContent.style.overflowY = 'auto';
             brandContent.style.webkitOverflowScrolling = 'touch';
+            // DEBUG
+            var dbg = document.getElementById('debug');
+            if (dbg) { dbg.style.display = 'block'; dbg.innerHTML += '<b>Brand modal:</b> vh=' + window.innerHeight + ' headerH=' + headerH + ' contentH=' + contentH + '<br>'; }
         }
 
         var brandList = document.getElementById('eq-brand-list');
