@@ -2670,7 +2670,10 @@ const App = {
                 Storage.saveSetLog(this._currentWeek, this._currentDay, exId, setIdx, weight, reps, eqId);
                 // Passive gym-equipment learning
                 var activeGym = this._getActiveGymId();
-                if (activeGym && eqId) Storage.setGymExerciseEquipment(activeGym, exId, eqId);
+                if (activeGym && eqId) {
+                    Storage.setGymExerciseEquipment(activeGym, exId, eqId);
+                    this._shareToGymEquipment(exId, Storage.getEquipmentById(eqId));
+                }
 
                 // Explicitly save all drop set / segment values from DOM
                 row.querySelectorAll('.seg-weight-input[data-seg]').forEach(inp => {
@@ -3160,8 +3163,15 @@ const App = {
         if (!activeGymId) return;
         var gym = Storage.getGymById(activeGymId);
         if (!gym || !gym.city) return;
+        // Get exercise name from modal or from program data
+        var exerciseName = '';
         var modal = document.getElementById('equipment-modal');
-        var exerciseName = modal ? modal._exerciseName : '';
+        if (modal && modal._exerciseName) {
+            exerciseName = modal._exerciseName;
+        } else {
+            var exInfo = this._findExerciseInProgram(exerciseId);
+            if (exInfo) exerciseName = exInfo.name || exInfo.nameEn || '';
+        }
         if (!exerciseName) return;
         Social.addGymEquipment(gym.name, gym.city, exerciseName, equipment.name, equipment.catalogId || null).catch(function() {});
     },
