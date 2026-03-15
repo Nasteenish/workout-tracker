@@ -183,10 +183,10 @@ const Storage = {
     // v431: rename exercises to Hevy DB standard names
     _migrateExerciseNames() {
         var MAP = {
-            'Stiff legged deadlift': ['Straight Leg Deadlift', '\u0421\u0442\u0430\u043D\u043E\u0432\u0430\u044F \u0442\u044F\u0433\u0430 \u043D\u0430 \u043F\u0440\u044F\u043C\u044B\u0445 \u043D\u043E\u0433\u0430\u0445'],
-            'Dumbell stiff legged deadlift': ['Straight Leg Deadlift', '\u0421\u0442\u0430\u043D\u043E\u0432\u0430\u044F \u0442\u044F\u0433\u0430 \u043D\u0430 \u043F\u0440\u044F\u043C\u044B\u0445 \u043D\u043E\u0433\u0430\u0445'],
+            'Stiff legged deadlift': ['Straight Leg Deadlift', '\u0421\u0442\u0430\u043D\u043E\u0432\u0430\u044F \u0442\u044F\u0433\u0430 \u043D\u0430 \u043F\u0440\u044F\u043C\u044B\u0445 \u043D\u043E\u0433\u0430\u0445 (\u0441\u043E \u0448\u0442\u0430\u043D\u0433\u043E\u0439)'],
+            'Dumbell stiff legged deadlift': ['Straight Leg Deadlift (Dumbbell)', '\u0421\u0442\u0430\u043D\u043E\u0432\u0430\u044F \u0442\u044F\u0433\u0430 \u043D\u0430 \u043F\u0440\u044F\u043C\u044B\u0445 \u043D\u043E\u0433\u0430\u0445 (\u0441 \u0433\u0430\u043D\u0442\u0435\u043B\u044F\u043C\u0438)'],
             'Smith deadlift': ['Deadlift (Smith Machine)', '\u0421\u0442\u0430\u043D\u043E\u0432\u0430\u044F \u0442\u044F\u0433\u0430 (\u0432 \u0421\u043C\u0438\u0442\u0435)'],
-            'Romanian deadlift machine': ['Romanian Deadlift (Barbell)', '\u0420\u0443\u043C\u044B\u043D\u0441\u043A\u0430\u044F \u0442\u044F\u0433\u0430 (\u0441\u043E \u0448\u0442\u0430\u043D\u0433\u043E\u0439)'],
+            'Romanian deadlift machine': ['Romanian Deadlift (Machine)', '\u0420\u0443\u043C\u044B\u043D\u0441\u043A\u0430\u044F \u0442\u044F\u0433\u0430 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
             'Seated leg curl': ['Seated Leg Curl (Machine)', '\u0421\u0433\u0438\u0431\u0430\u043D\u0438\u0435 \u043D\u043E\u0433 \u0441\u0438\u0434\u044F (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
             'Lying leg curl': ['Lying Leg Curl (Machine)', '\u0421\u0433\u0438\u0431\u0430\u043D\u0438\u0435 \u043D\u043E\u0433 \u043B\u0451\u0436\u0430 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
             'Glute split squat': ['Bulgarian Split Squat', '\u0411\u043E\u043B\u0433\u0430\u0440\u0441\u043A\u0438\u0435 \u0432\u044B\u043F\u0430\u0434\u044B'],
@@ -252,10 +252,14 @@ const Storage = {
         };
         // v419: also fix wrong Russian names (nameRu) when English name is already correct
         var RU_MAP = {
-            'Мёртвая тяга со штангой': ['Straight Leg Deadlift', 'Становая тяга на прямых ногах'],
-            'Мёртвая тяга с гантелями': ['Straight Leg Deadlift', 'Становая тяга на прямых ногах'],
+            'Мёртвая тяга со штангой': ['Straight Leg Deadlift', 'Становая тяга на прямых ногах (со штангой)'],
+            'Мёртвая тяга с гантелями': ['Straight Leg Deadlift (Dumbbell)', 'Становая тяга на прямых ногах (с гантелями)'],
             'Мёртвая тяга в Смите': ['Deadlift (Smith Machine)', 'Становая тяга (в Смите)'],
-            'Румынская тяга в тренажёре': ['Romanian Deadlift (Barbell)', 'Румынская тяга (со штангой)']
+            'Румынская тяга в тренажёре': ['Romanian Deadlift (Machine)', 'Румынская тяга (в тренажёре)'],
+            'Становая тяга на прямых ногах': ['Straight Leg Deadlift', 'Становая тяга на прямых ногах (со штангой)'],
+            'Подъём передней части стопы': ['Tibial Raises', 'Подъём передней части голени'],
+            'Тяга штанги с опорой': ['Supported Bar Rows', 'Тяга штанги с опорой на грудь'],
+            'Средняя ягодичная на нижнем блоке': ['Medium Gluteus on Low Pulley', 'Средняя ягодичная (нижний блок)']
         };
         var d = this._data;
         if (!d || !d.program || !d.program.days) return;
@@ -286,6 +290,34 @@ const Storage = {
                                 var mr2 = RU_MAP[opt.nameRu];
                                 if (mr2) { opt.name = mr2[0]; opt.nameRu = mr2[1]; count++; }
                             }
+                        });
+                    }
+                });
+            });
+        });
+        // v419: fix specific exercises by ID (can't distinguish by name alone)
+        var ID_MAP = {
+            'D1E1_opt1': ['Straight Leg Deadlift', '\u0421\u0442\u0430\u043D\u043E\u0432\u0430\u044F \u0442\u044F\u0433\u0430 \u043D\u0430 \u043F\u0440\u044F\u043C\u044B\u0445 \u043D\u043E\u0433\u0430\u0445 (\u0441\u043E \u0448\u0442\u0430\u043D\u0433\u043E\u0439)'],
+            'D1E1_opt2': ['Straight Leg Deadlift (Dumbbell)', '\u0421\u0442\u0430\u043D\u043E\u0432\u0430\u044F \u0442\u044F\u0433\u0430 \u043D\u0430 \u043F\u0440\u044F\u043C\u044B\u0445 \u043D\u043E\u0433\u0430\u0445 (\u0441 \u0433\u0430\u043D\u0442\u0435\u043B\u044F\u043C\u0438)'],
+            'D1E1_opt4': ['Romanian Deadlift (Machine)', '\u0420\u0443\u043C\u044B\u043D\u0441\u043A\u0430\u044F \u0442\u044F\u0433\u0430 (\u0432 \u0442\u0440\u0435\u043D\u0430\u0436\u0451\u0440\u0435)'],
+            'D1E4_opt1': ['Straight Leg Deadlift', '\u0421\u0442\u0430\u043D\u043E\u0432\u0430\u044F \u0442\u044F\u0433\u0430 \u043D\u0430 \u043F\u0440\u044F\u043C\u044B\u0445 \u043D\u043E\u0433\u0430\u0445 (\u0441\u043E \u0448\u0442\u0430\u043D\u0433\u043E\u0439)'],
+            'D1E4_opt2': ['Straight Leg Deadlift (Dumbbell)', '\u0421\u0442\u0430\u043D\u043E\u0432\u0430\u044F \u0442\u044F\u0433\u0430 \u043D\u0430 \u043F\u0440\u044F\u043C\u044B\u0445 \u043D\u043E\u0433\u0430\u0445 (\u0441 \u0433\u0430\u043D\u0442\u0435\u043B\u044F\u043C\u0438)']
+        };
+        d.program.days.forEach(function(day) {
+            if (!day.groups) return;
+            day.groups.forEach(function(g) {
+                var allEx = [];
+                if (g.type === 'single' && g.exercise) allEx.push(g.exercise);
+                if (g.type === 'superset' && g.exercises) allEx = allEx.concat(g.exercises);
+                if (g.type === 'choose_one' && g.options) allEx = allEx.concat(g.options);
+                allEx.forEach(function(ex) {
+                    if (!ex) return;
+                    var idm = ID_MAP[ex.id];
+                    if (idm) { ex.name = idm[0]; ex.nameRu = idm[1]; count++; }
+                    if (ex.options) {
+                        ex.options.forEach(function(opt) {
+                            var idm2 = ID_MAP[opt.id];
+                            if (idm2) { opt.name = idm2[0]; opt.nameRu = idm2[1]; count++; }
                         });
                     }
                 });

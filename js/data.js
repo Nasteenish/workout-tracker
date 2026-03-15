@@ -46,7 +46,7 @@ const DEFAULT_PROGRAM = {
             {
               id: "D1E1_opt1",
               name: "Straight Leg Deadlift",
-              nameRu: "Становая тяга на прямых ногах",
+              nameRu: "Становая тяга на прямых ногах (со штангой)",
               reps: "8-12",
               rest: 120,
               sets: [
@@ -57,8 +57,8 @@ const DEFAULT_PROGRAM = {
             },
             {
               id: "D1E1_opt2",
-              name: "Straight Leg Deadlift",
-              nameRu: "Становая тяга на прямых ногах",
+              name: "Straight Leg Deadlift (Dumbbell)",
+              nameRu: "Становая тяга на прямых ногах (с гантелями)",
               reps: "8-12",
               rest: 120,
               sets: [
@@ -81,8 +81,8 @@ const DEFAULT_PROGRAM = {
             },
             {
               id: "D1E1_opt4",
-              name: "Romanian Deadlift (Barbell)",
-              nameRu: "Румынская тяга (со штангой)",
+              name: "Romanian Deadlift (Machine)",
+              nameRu: "Румынская тяга (в тренажёре)",
               reps: "8-12",
               rest: 120,
               sets: [
@@ -175,7 +175,7 @@ const DEFAULT_PROGRAM = {
             {
               id: "D1E7",
               name: "Tibial Raises",
-              nameRu: "Подъём передней части стопы",
+              nameRu: "Подъём передней части голени",
               reps: "15-20",
               rest: 120,
               sets: [
@@ -241,7 +241,7 @@ const DEFAULT_PROGRAM = {
             {
               id: "D2E1_opt4",
               name: "Supported Bar Rows",
-              nameRu: "Тяга штанги с опорой",
+              nameRu: "Тяга штанги с опорой на грудь",
               reps: "8-12",
               rest: 120,
               sets: [
@@ -824,7 +824,7 @@ const DEFAULT_PROGRAM = {
           exercise: {
             id: "D5E4",
             name: "Medium Gluteus on Low Pulley",
-            nameRu: "Средняя ягодичная на нижнем блоке",
+            nameRu: "Средняя ягодичная (нижний блок)",
             reps: "12-15",
             rest: 120,
             sets: [

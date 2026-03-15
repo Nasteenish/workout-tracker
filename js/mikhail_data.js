@@ -101,7 +101,7 @@ const MIKHAIL_PROGRAM = {
             {
               "id": "D1E4_opt1",
               "name": "Straight Leg Deadlift",
-              "nameRu": "Становая тяга на прямых ногах",
+              "nameRu": "Становая тяга на прямых ногах (со штангой)",
               "reps": "8-12",
               "rest": 120,
               "sets": [
@@ -124,8 +124,8 @@ const MIKHAIL_PROGRAM = {
             },
             {
               "id": "D1E4_opt2",
-              "name": "Straight Leg Deadlift",
-              "nameRu": "Становая тяга на прямых ногах",
+              "name": "Straight Leg Deadlift (Dumbbell)",
+              "nameRu": "Становая тяга на прямых ногах (с гантелями)",
               "reps": "8-12",
               "rest": 120,
               "sets": [
