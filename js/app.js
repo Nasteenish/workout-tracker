@@ -3232,11 +3232,18 @@ const App = {
         if (addRow) addRow.style.display = 'none';
         if (searchRow) searchRow.style.display = 'none';
 
-        // Let modal fit content — remove min-height, allow full height
+        // Force true fullscreen for brand list
         var eqModal = modal.querySelector('.equipment-modal');
         if (eqModal) {
+            eqModal.style.position = 'fixed';
+            eqModal.style.top = '0';
+            eqModal.style.left = '0';
+            eqModal.style.right = '0';
+            eqModal.style.bottom = '0';
+            eqModal.style.maxHeight = 'none';
             eqModal.style.minHeight = '0';
-            eqModal.style.maxHeight = '90vh';
+            eqModal.style.borderRadius = '0';
+            eqModal.style.zIndex = '201';
         }
 
         var brandList = document.getElementById('eq-brand-list');
@@ -3286,10 +3293,15 @@ const App = {
         // Restore modal size
         var eqModal = modal.querySelector('.equipment-modal');
         if (eqModal) {
-            eqModal.style.height = '';
+            eqModal.style.position = '';
+            eqModal.style.top = '';
+            eqModal.style.left = '';
+            eqModal.style.right = '';
+            eqModal.style.bottom = '';
             eqModal.style.maxHeight = '';
             eqModal.style.minHeight = '';
             eqModal.style.borderRadius = '';
+            eqModal.style.zIndex = '';
         }
         var header = modal.querySelector('.eq-modal-header h3');
         if (header) header.textContent = 'Оборудование';
