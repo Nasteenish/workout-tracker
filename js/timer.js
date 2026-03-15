@@ -202,8 +202,6 @@ const RestTimer = {
         this._endTime = null;
         this._saveState();
 
-        this._swTimer('STOP_TIMER');
-
         // Auto-hide the inline timer
         var bar = this._bar;
         bar.classList.remove('active');
@@ -215,10 +213,13 @@ const RestTimer = {
         };
 
         if (document.visibilityState === 'visible') {
+            // App is visible — beep now, cancel SW timer (not needed)
+            this._swTimer('STOP_TIMER');
             alertUser();
             this._showNotification(null);
         } else {
-            // App is in background — defer sound/vibration until user returns (but only within 30s)
+            // App is in background — let SW show the push notification!
+            // Do NOT send STOP_TIMER here — SW needs to fire its notification
             var finishedAt = Date.now();
             this._showNotification(function() {
                 if (Date.now() - finishedAt < 30000) alertUser();
