@@ -47,165 +47,27 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 .card-imgs { display: flex; gap: 2px; background: #fff; height: 180px; }
 .card-imgs img { flex: 1; height: 100%; object-fit: contain; padding: 4px; }
 
-/* ===== EQUIPMENT DETAIL PANEL ===== */
-#det-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: #0a0a0a;
-  z-index: 100;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-#det-overlay.visible { display: block; }
+.card { cursor: pointer; }
 
-.det-topbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  border-bottom: 1px solid #222;
-  position: sticky;
-  top: 0;
-  background: #0a0a0a;
-  z-index: 10;
-}
-.det-back-btn {
-  background: #1a1a1a;
-  border: 1px solid #333;
-  color: #e0e0e0;
-  padding: 8px 16px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 14px;
-  white-space: nowrap;
-}
-.det-back-btn:hover { border-color: #4a9eff; }
-.det-topbar-title { font-size: 16px; font-weight: 700; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-.det-header {
-  display: flex;
-  gap: 16px;
-  padding: 16px;
-  border-bottom: 1px solid #222;
-  align-items: flex-start;
-}
-.det-header-img {
-  width: 90px;
-  height: 90px;
-  object-fit: contain;
-  background: #fff;
-  border-radius: 10px;
-  padding: 6px;
-  flex-shrink: 0;
-}
-.det-header-img.no-img {
-  background: #222;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 36px;
-}
-.det-header-info { flex: 1; }
-.det-brand { font-size: 11px; color: #4a9eff; text-transform: uppercase; letter-spacing: 1px; }
-.det-name { font-size: 18px; font-weight: 700; margin: 4px 0; }
-.det-model { font-size: 13px; color: #888; margin-bottom: 8px; }
-.det-tags { display: flex; gap: 6px; flex-wrap: wrap; }
-
-.det-section { padding: 16px; border-bottom: 1px solid #1a1a1a; }
-.det-section-title { font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; font-weight: 600; }
-
-/* Linked exercises list */
-.linked-ex-list { display: flex; flex-direction: column; gap: 8px; }
-.linked-ex-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #1a1a1a;
-  border-radius: 10px;
-  padding: 10px 12px;
-}
-.linked-ex-name { flex: 1; font-size: 14px; }
-.linked-ex-name-en { font-size: 11px; color: #666; margin-top: 2px; }
-.linked-ex-remove {
-  background: none;
-  border: none;
-  color: #666;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 6px;
-  line-height: 1;
-}
-.linked-ex-remove:hover { color: #f55; background: #2a1a1a; }
-.linked-ex-empty { color: #555; font-size: 14px; font-style: italic; }
-
-/* Add exercise search */
-.det-search-wrap { position: relative; margin-bottom: 12px; }
-.det-search {
-  width: 100%;
-  padding: 10px 16px 10px 38px;
-  border-radius: 20px;
-  border: 1px solid #333;
-  background: #1a1a1a;
-  color: #e0e0e0;
-  font-size: 14px;
-}
-.det-search:focus { outline: none; border-color: #4a9eff; }
-.det-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #555; font-size: 16px; pointer-events: none; }
-
-/* Search results */
-.det-search-results { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; max-height: 300px; overflow-y: auto; }
-
-/* Muscle group sections */
-.muscle-group {
-  border: 1px solid #222;
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-.muscle-group-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 14px;
-  cursor: pointer;
-  background: #1a1a1a;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.muscle-group-header:hover { background: #222; }
-.muscle-group-label { font-size: 14px; font-weight: 600; }
-.muscle-group-count { font-size: 12px; color: #666; margin-right: 8px; }
-.muscle-group-arrow { color: #666; font-size: 12px; transition: transform 0.2s; }
-.muscle-group.expanded .muscle-group-arrow { transform: rotate(90deg); }
-.muscle-group-exercises { display: none; padding: 6px; background: #111; }
-.muscle-group.expanded .muscle-group-exercises { display: flex; flex-direction: column; gap: 4px; }
-
-/* Exercise option row */
-.ex-option {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.ex-option:hover { background: #1e1e1e; }
-.ex-option.linked { background: #0f2a0f; }
-.ex-option.linked:hover { background: #153015; }
-.ex-option-name { flex: 1; }
-.ex-option-name-ru { font-size: 14px; }
-.ex-option-name-en { font-size: 11px; color: #666; margin-top: 2px; }
-.ex-option-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #333; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.ex-option.linked .ex-option-check { background: #4a9eff; border-color: #4a9eff; color: #fff; font-size: 12px; }
-
-.det-loading { color: #555; font-size: 14px; text-align: center; padding: 20px; }
-
-/* Show-all toggle */
-.toggle-label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #888; cursor: pointer; user-select: none; -webkit-user-select: none; }
-.toggle-label input[type=checkbox] { accent-color: #4a9eff; width: 14px; height: 14px; cursor: pointer; }
+/* Modal */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; padding: 16px; }
+.modal-overlay.open { display: flex; }
+.modal { background: #1a1a1a; border-radius: 16px; border: 1px solid #333; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; }
+.modal-img { width: 100%; height: 240px; object-fit: contain; background: #fff; padding: 12px; border-radius: 16px 16px 0 0; }
+.modal-img.no-img { display: flex; align-items: center; justify-content: center; background: #222; color: #555; font-size: 60px; }
+.modal-imgs { display: flex; gap: 2px; background: #fff; height: 240px; border-radius: 16px 16px 0 0; }
+.modal-imgs img { flex: 1; height: 100%; object-fit: contain; padding: 8px; }
+.modal-body { padding: 20px; }
+.modal-brand { font-size: 12px; color: #4a9eff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.modal-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.modal-subtitle { font-size: 14px; color: #999; margin-bottom: 12px; }
+.modal-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #252525; font-size: 14px; }
+.modal-row-label { color: #888; }
+.modal-row-value { color: #e0e0e0; font-weight: 500; }
+.modal-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+.modal-close { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border-radius: 50%; border: none; background: rgba(0,0,0,0.5); color: #fff; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.modal-overlay { position: fixed; }
+.modal-wrapper { position: relative; max-width: 500px; width: 100%; }
 </style>
 </head>
 <body>
@@ -225,35 +87,10 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 
 <div class="grid" id="grid"></div>
 
-<!-- Equipment Detail Overlay -->
-<div id="det-overlay">
-  <div class="det-topbar">
-    <button class="det-back-btn" id="det-back">← Тренажёры</button>
-    <div class="det-topbar-title" id="det-topbar-title"></div>
-  </div>
-
-  <div class="det-header" id="det-header"></div>
-
-  <div class="det-section">
-    <div class="det-section-title">Привязанные упражнения</div>
-    <div id="det-linked" class="linked-ex-list">
-      <div class="det-loading">Загрузка...</div>
-    </div>
-  </div>
-
-  <div class="det-section">
-    <div class="det-section-title" style="display:flex;justify-content:space-between;align-items:center">
-      <span>Добавить упражнение</span>
-      <label class="toggle-label">
-        <input type="checkbox" id="det-show-all"> все упражнения
-      </label>
-    </div>
-    <div class="det-search-wrap">
-      <span class="det-search-icon">🔍</span>
-      <input type="text" class="det-search" id="det-search" placeholder="Поиск упражнения...">
-    </div>
-    <div id="det-search-results" class="det-search-results" style="display:none"></div>
-    <div id="det-muscle-groups"></div>
+<div class="modal-overlay" id="modal">
+  <div class="modal-wrapper">
+    <button class="modal-close" id="modal-close">&times;</button>
+    <div class="modal" id="modal-content"></div>
   </div>
 </div>
 
@@ -686,77 +523,94 @@ document.getElementById('filters2').addEventListener('click', e => {
 // Search (main catalog)
 document.getElementById('search').addEventListener('input', render);
 
-// Equipment card click → open detail
+// Modal
+const modalOverlay = document.getElementById('modal');
+const modalContent = document.getElementById('modal-content');
+
+document.getElementById('modal-close').addEventListener('click', () => modalOverlay.classList.remove('open'));
+modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) modalOverlay.classList.remove('open'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') modalOverlay.classList.remove('open'); });
+
+function showEquipmentModal(item) {
+  const imgHtml = item.image_url
+    ? `<img class="modal-img" src="${item.image_url}" alt="${item.name}">`
+    : `<div class="modal-img no-img">📷</div>`;
+  modalContent.innerHTML = `
+    ${imgHtml}
+    <div class="modal-body">
+      <div class="modal-brand">${item.brand}</div>
+      <div class="modal-title">${item.name}</div>
+      ${item.model ? `<div class="modal-subtitle">${item.model}</div>` : ''}
+      <div class="modal-row"><span class="modal-row-label">Группа мышц</span><span class="modal-row-value">${item.muscle_group || '—'}</span></div>
+      <div class="modal-row"><span class="modal-row-label">Тип</span><span class="modal-row-value">${item.equipment_type || '—'}</span></div>
+      ${item.category ? `<div class="modal-row"><span class="modal-row-label">Категория</span><span class="modal-row-value">${item.category}</span></div>` : ''}
+      ${item.description ? `<div style="margin-top:12px;color:#bbb;font-size:14px;line-height:1.5">${item.description}</div>` : ''}
+    </div>
+  `;
+  modalOverlay.classList.add('open');
+}
+
+function showExerciseModal(item) {
+  const imgs = item.images || [];
+  let imgHtml;
+  if (imgs.length >= 2) {
+    imgHtml = `<div class="modal-imgs"><img src="${imgs[0]}"><img src="${imgs[1]}"></div>`;
+  } else if (imgs.length === 1) {
+    imgHtml = `<img class="modal-img" src="${imgs[0]}">`;
+  } else {
+    imgHtml = `<div class="modal-img no-img">🏋️</div>`;
+  }
+  const muscles = (item.primary_muscles || []).join(', ') || '—';
+  const secondary = (item.secondary_muscles || []).join(', ');
+  modalContent.innerHTML = `
+    ${imgHtml}
+    <div class="modal-body">
+      <div class="modal-title">${item.name_ru || item.name_en}</div>
+      ${item.name_en && item.name_ru ? `<div class="modal-subtitle">${item.name_en}</div>` : ''}
+      <div class="modal-row"><span class="modal-row-label">Основные мышцы</span><span class="modal-row-value">${muscles}</span></div>
+      ${secondary ? `<div class="modal-row"><span class="modal-row-label">Доп. мышцы</span><span class="modal-row-value">${secondary}</span></div>` : ''}
+      ${item.equipment ? `<div class="modal-row"><span class="modal-row-label">Оборудование</span><span class="modal-row-value">${item.equipment}</span></div>` : ''}
+      ${item.category ? `<div class="modal-row"><span class="modal-row-label">Категория</span><span class="modal-row-value">${item.category}</span></div>` : ''}
+      ${item.level ? `<div class="modal-row"><span class="modal-row-label">Уровень</span><span class="modal-row-value">${item.level}</span></div>` : ''}
+      ${item.mechanic ? `<div class="modal-row"><span class="modal-row-label">Механика</span><span class="modal-row-value">${item.mechanic}</span></div>` : ''}
+      ${item.force ? `<div class="modal-row"><span class="modal-row-label">Сила</span><span class="modal-row-value">${item.force}</span></div>` : ''}
+      ${item.instructions ? `<div style="margin-top:12px;color:#bbb;font-size:14px;line-height:1.5">${Array.isArray(item.instructions) ? item.instructions.map((s,i) => `<div style="margin-bottom:8px">${i+1}. ${s}</div>`).join('') : item.instructions}</div>` : ''}
+    </div>
+  `;
+  modalOverlay.classList.add('open');
+}
+
+// Card clicks
 document.getElementById('grid').addEventListener('click', e => {
-  if (currentTab !== 'equipment') return;
-  const card = e.target.closest('.card[data-eq-id]');
+  const card = e.target.closest('.card');
   if (!card) return;
-  openEquipmentDetail(Number(card.dataset.eqId));
-});
-
-// Back button
-document.getElementById('det-back').addEventListener('click', closeEquipmentDetail);
-
-// Close on Escape
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeEquipmentDetail();
-});
-
-// Linked exercise: remove button
-document.getElementById('det-linked').addEventListener('click', e => {
-  const btn = e.target.closest('.linked-ex-remove');
-  if (!btn) return;
-  toggleExerciseLink(btn.dataset.exId);
-});
-
-// Muscle group toggle
-document.getElementById('det-muscle-groups').addEventListener('click', e => {
-  // Toggle group expand/collapse
-  const header = e.target.closest('.muscle-group-header');
-  if (header) {
-    const group = header.closest('.muscle-group');
-    group.classList.toggle('expanded');
-    return;
-  }
-  // Click exercise row
-  const row = e.target.closest('.ex-option');
-  if (row) {
-    toggleExerciseLink(row.dataset.exId);
-  }
-});
-
-// Search results click
-document.getElementById('det-search-results').addEventListener('click', e => {
-  const row = e.target.closest('.ex-option');
-  if (row) toggleExerciseLink(row.dataset.exId);
-});
-
-// Show-all toggle
-document.getElementById('det-show-all').addEventListener('change', e => {
-  showAllExercises = e.target.checked;
-  const q = document.getElementById('det-search').value;
-  if (q.trim()) {
-    renderSearchResults(q);
+  const idx = [...document.querySelectorAll('.card')].indexOf(card);
+  if (currentTab === 'equipment') {
+    const query = document.getElementById('search').value.toLowerCase();
+    const filtered = equipmentData.filter(item => {
+      if (currentFilter !== 'all' && item.brand !== currentFilter) return false;
+      if (query && !item.name.toLowerCase().includes(query) && !(item.model || '').toLowerCase().includes(query)) return false;
+      return true;
+    });
+    if (filtered[idx]) showEquipmentModal(filtered[idx]);
   } else {
-    renderMuscleGroups();
+    const query = document.getElementById('search').value.toLowerCase();
+    const filtered = exerciseData.filter(item => {
+      if (currentFilter !== 'all' && !(item.primary_muscles || []).includes(currentFilter)) return false;
+      if (currentFilter2 !== 'all' && item.equipment !== currentFilter2) return false;
+      if (query) {
+        const match = (item.name_ru || '').toLowerCase().includes(query) ||
+                      (item.name_en || '').toLowerCase().includes(query) ||
+                      (item.equipment || '').toLowerCase().includes(query);
+        if (!match) return false;
+      }
+      return true;
+    });
+    if (filtered[idx]) showExerciseModal(filtered[idx]);
   }
 });
 
-// Detail search input
-document.getElementById('det-search').addEventListener('input', e => {
-  const q = e.target.value;
-  const groups = document.getElementById('det-muscle-groups');
-  if (q.trim()) {
-    groups.style.display = 'none';
-    renderSearchResults(q);
-  } else {
-    groups.style.display = '';
-    document.getElementById('det-search-results').style.display = 'none';
-    document.getElementById('det-search-results').innerHTML = '';
-  }
-});
-
-// ===== INIT =====
+// Init
 Promise.all([loadEquipment(), loadExercises()]).then(() => {
   renderFilters();
   render();
