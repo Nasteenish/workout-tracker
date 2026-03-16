@@ -159,7 +159,8 @@ const SupaSync = {
                 if (other.exerciseEquipment) {
                     if (!base.exerciseEquipment) base.exerciseEquipment = {};
                     for (var ek in other.exerciseEquipment) {
-                        if (other.exerciseEquipment[ek] && !base.exerciseEquipment[ek]) {
+                        // Use 'in' check so explicit null deletions in base are respected
+                        if (other.exerciseEquipment[ek] && !(ek in base.exerciseEquipment)) {
                             base.exerciseEquipment[ek] = other.exerciseEquipment[ek];
                         }
                     }
@@ -167,7 +168,7 @@ const SupaSync = {
                 if (other.exerciseEquipmentOptions) {
                     if (!base.exerciseEquipmentOptions) base.exerciseEquipmentOptions = {};
                     for (var ek2 in other.exerciseEquipmentOptions) {
-                        if (!base.exerciseEquipmentOptions[ek2]) {
+                        if (!(ek2 in base.exerciseEquipmentOptions)) {
                             base.exerciseEquipmentOptions[ek2] = other.exerciseEquipmentOptions[ek2];
                         }
                     }
