@@ -804,6 +804,25 @@ const Storage = {
         localStorage.removeItem('_wt_eq_snapshot');
     },
 
+    saveWorkoutGym(week, day, gymId) {
+        var data = this._load();
+        var w = String(week), d = String(day);
+        if (!data.log[w]) data.log[w] = {};
+        if (!data.log[w][d]) data.log[w][d] = {};
+        if (gymId) {
+            data.log[w][d]._gym = gymId;
+        } else {
+            delete data.log[w][d]._gym;
+        }
+        this._save();
+    },
+
+    getWorkoutGym(week, day) {
+        var data = this._load();
+        var dayLog = data.log && data.log[String(week)] && data.log[String(week)][String(day)];
+        return dayLog && dayLog._gym || null;
+    },
+
     toggleSetComplete(week, day, exerciseId, setIdx, equipmentId) {
         var existing = this.getSetLog(week, day, exerciseId, setIdx);
         if (existing && existing.completed) {
