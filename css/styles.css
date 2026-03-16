@@ -1609,8 +1609,8 @@ body.modal-open {
     max-width: 500px;
     margin: 0 auto;
     width: 100%;
-    min-height: 45vh;
-    max-height: 70vh;
+    max-height: 85vh;
+    max-height: 85dvh;
     display: flex;
     flex-direction: column;
     overflow-y: auto;

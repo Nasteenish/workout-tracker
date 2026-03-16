@@ -12,6 +12,29 @@ const App = {
     _pageCache: {},
 
     init() {
+        // One-time: fix exerciseChoices for Anastasia (D1_deadlift, D2_support)
+        if (!localStorage.getItem('_fix_choices_v1')) {
+            try {
+                var keys = Object.keys(localStorage);
+                for (var ki = 0; ki < keys.length; ki++) {
+                    if (keys[ki].indexOf('wt_data_') !== 0) continue;
+                    var dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}');
+                    if (!dd.exerciseChoices) continue;
+                    var changed = false;
+                    if (dd.exerciseChoices.D1_deadlift === 'D1E1_opt1') {
+                        dd.exerciseChoices.D1_deadlift = 'D1E1_opt3';
+                        changed = true;
+                    }
+                    if (dd.exerciseChoices.D2_support === 'D2E1_opt4') {
+                        dd.exerciseChoices.D2_support = 'D2E1';
+                        changed = true;
+                    }
+                    if (changed) localStorage.setItem(keys[ki], JSON.stringify(dd));
+                }
+            } catch(e) {}
+            localStorage.setItem('_fix_choices_v1', '1');
+        }
+
         // One-time: remove Precor Seated Leg Curl from D1E2 (test data)
         if (!localStorage.getItem('_fix_precor_d1e2')) {
             var allUsers = Storage.getUsers ? Storage.getUsers() : [];
@@ -3227,15 +3250,10 @@ const App = {
         if (addRow) addRow.style.display = 'none';
         if (searchRow) searchRow.style.display = 'none';
 
-        // Fix brand list: break flex constraint so modal scrolls all content
+        // Use dvh for brand list full height on iOS
         var eqModal = modal.querySelector('.equipment-modal');
         if (eqModal) {
-            eqModal.style.maxHeight = '90vh';
-            eqModal.style.minHeight = '0';
-        }
-        if (brandContent) {
-            brandContent.style.flex = 'none';
-            brandContent.style.height = 'auto';
+            eqModal.style.maxHeight = '92dvh';
         }
 
         var brandList = document.getElementById('eq-brand-list');
@@ -3286,11 +3304,6 @@ const App = {
         var eqModal = modal.querySelector('.equipment-modal');
         if (eqModal) {
             eqModal.style.maxHeight = '';
-            eqModal.style.minHeight = '';
-        }
-        if (brandContent) {
-            brandContent.style.flex = '';
-            brandContent.style.height = '';
         }
         var header = modal.querySelector('.eq-modal-header h3');
         if (header) header.textContent = 'Оборудование';
