@@ -2724,15 +2724,6 @@ const App = {
             return;
         }
 
-        // Equipment modal — "show all" toggle
-        if (target.id === 'eq-show-all-toggle') {
-            var modal = document.getElementById('equipment-modal');
-            if (modal && modal._currentBrand) {
-                this._loadBrandEquipment(modal._currentBrand, modal._exerciseType, target.checked);
-            }
-            return;
-        }
-
         // Equipment modal — back to brands
         if (target.id === 'eq-brand-back' || target.closest('#eq-brand-back')) {
             this._eqBackToBrands();
@@ -2748,10 +2739,6 @@ const App = {
             var modal = document.getElementById('equipment-modal');
             var exId = modal ? modal._exerciseId : null;
             var eqImageUrl = catItem.dataset.image || null;
-            // Auto-bind exercise type if selected from "show all" mode
-            if (catalogId && modal && modal._exerciseType && modal._showAllBrand) {
-                Social.addExerciseTypeToCatalog(catalogId, modal._exerciseType);
-            }
             var newId = Storage.addEquipment(eqName, undefined, eqImageUrl);
             if (exId) {
                 Storage.setExerciseEquipment(exId, newId);
@@ -3264,12 +3251,10 @@ const App = {
         }).catch(function() {});
     },
 
-    _loadBrandEquipment(brand, exerciseType, showAll) {
+    _loadBrandEquipment(brand, exerciseType) {
         var modal = document.getElementById('equipment-modal');
         if (!modal) return;
         var exType = exerciseType || modal._exerciseType || null;
-        modal._currentBrand = brand;
-        modal._showAllBrand = !!showAll;
 
         // Show brand content, hide main
         var mainContent = document.getElementById('eq-main-content');
@@ -3281,15 +3266,10 @@ const App = {
         if (addRow) addRow.style.display = 'none';
         if (searchRow) searchRow.style.display = 'none';
 
-        // Fix: break flex constraint so all items visible, modal itself scrolls
+        // Use dvh for brand list full height on iOS
         var eqModal = modal.querySelector('.equipment-modal');
         if (eqModal) {
-            eqModal.style.maxHeight = '90vh';
-            eqModal.style.minHeight = '0';
-        }
-        if (brandContent) {
-            brandContent.style.flex = 'none';
-            brandContent.style.height = 'auto';
+            eqModal.style.maxHeight = '92dvh';
         }
 
         var brandList = document.getElementById('eq-brand-list');
@@ -3299,33 +3279,23 @@ const App = {
         var header = modal.querySelector('.eq-modal-header h3');
         if (header) header.textContent = brand;
 
-        Social.getCatalogByBrandAndType(brand, exType, showAll).then(function(items) {
+        Social.getCatalogByBrandAndType(brand, exType).then(function(items) {
             if (!document.getElementById('equipment-modal')) return;
             var div = document.getElementById('eq-brand-list');
             if (!div) return;
-
-            // "Show all" toggle
-            var toggleHtml = exType ? '<div class="eq-show-all-row">'
-                + '<label class="eq-show-all-label"><input type="checkbox" id="eq-show-all-toggle"' + (showAll ? ' checked' : '') + '> Показать все тренажёры</label>'
-                + '</div>' : '';
-
             if (!items || !items.length) {
-                div.innerHTML = toggleHtml + '<div class="eq-section-label">Нет тренажёров</div>';
+                div.innerHTML = '<div class="eq-section-label">Нет тренажёров для этого упражнения</div>';
                 return;
             }
-            var html = toggleHtml;
+            var html = '';
             for (var i = 0; i < items.length; i++) {
                 var c = items[i];
                 var fullName = brand + ' ' + c.name;
                 var eqImgHtml = c.image_url ? '<img class="ex-thumb" src="' + c.image_url + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
-                var typesArr = c.exercise_types || [];
-                var matchesCurrent = exType && typesArr.indexOf(exType) !== -1;
-                var bindBadge = (showAll && exType && !matchesCurrent) ? '<span class="eq-bind-badge">+ привязать</span>' : '';
                 html += '<div class="eq-catalog-item" data-name="' + fullName.replace(/"/g, '&quot;') + '" data-catalog-id="' + c.id + '"' + (c.image_url ? ' data-image="' + c.image_url.replace(/"/g, '&quot;') + '"' : '') + '>'
                     + eqImgHtml
                     + '<span class="eq-shared-name">' + c.name + '</span>'
                     + (c.model ? '<span class="eq-catalog-model">' + c.model + '</span>' : '')
-                    + bindBadge
                     + '</div>';
             }
             div.innerHTML = html;
@@ -3346,15 +3316,10 @@ const App = {
         if (brandContent) brandContent.style.display = 'none';
         if (addRow) addRow.style.display = '';
         if (searchRow) searchRow.style.display = '';
-        // Restore modal size and flex
+        // Restore modal size
         var eqModal = modal.querySelector('.equipment-modal');
         if (eqModal) {
             eqModal.style.maxHeight = '';
-            eqModal.style.minHeight = '';
-        }
-        if (brandContent) {
-            brandContent.style.flex = '';
-            brandContent.style.height = '';
         }
         var header = modal.querySelector('.eq-modal-header h3');
         if (header) header.textContent = 'Оборудование';
