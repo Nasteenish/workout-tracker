@@ -517,6 +517,18 @@ const Storage = {
             data.exerciseEquipment[sibs[i]] = null;
         }
         this._save();
+        // Also patch the rollback snapshot so pull-to-refresh doesn't undo this deletion
+        var snap = localStorage.getItem('_wt_eq_snapshot');
+        if (snap) {
+            try {
+                var s = JSON.parse(snap);
+                s.exerciseEquipment[exerciseId] = null;
+                for (var j = 0; j < sibs.length; j++) {
+                    s.exerciseEquipment[sibs[j]] = null;
+                }
+                localStorage.setItem('_wt_eq_snapshot', JSON.stringify(s));
+            } catch(e) {}
+        }
     },
 
     // Snapshot equipment state for rollback if no sets completed
