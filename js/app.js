@@ -3266,10 +3266,15 @@ const App = {
         if (addRow) addRow.style.display = 'none';
         if (searchRow) searchRow.style.display = 'none';
 
-        // Use dvh for brand list full height on iOS
+        // Fix: break flex constraint so all items visible, modal itself scrolls
         var eqModal = modal.querySelector('.equipment-modal');
         if (eqModal) {
-            eqModal.style.maxHeight = '92dvh';
+            eqModal.style.maxHeight = '90vh';
+            eqModal.style.minHeight = '0';
+        }
+        if (brandContent) {
+            brandContent.style.flex = 'none';
+            brandContent.style.height = 'auto';
         }
 
         var brandList = document.getElementById('eq-brand-list');
@@ -3316,10 +3321,15 @@ const App = {
         if (brandContent) brandContent.style.display = 'none';
         if (addRow) addRow.style.display = '';
         if (searchRow) searchRow.style.display = '';
-        // Restore modal size
+        // Restore modal size and flex
         var eqModal = modal.querySelector('.equipment-modal');
         if (eqModal) {
             eqModal.style.maxHeight = '';
+            eqModal.style.minHeight = '';
+        }
+        if (brandContent) {
+            brandContent.style.flex = '';
+            brandContent.style.height = '';
         }
         var header = modal.querySelector('.eq-modal-header h3');
         if (header) header.textContent = 'Оборудование';
