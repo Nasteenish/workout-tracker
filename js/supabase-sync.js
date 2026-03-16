@@ -136,8 +136,10 @@ const SupaSync = {
                 // Deep merge logs from both sides
                 var remoteData = remote.data;
                 var mergedLog = this._deepMergeLogs(localData.log, remoteData.log);
-                // Use the newer version for non-log fields
-                var remoteTime = new Date(remote.updated_at).getTime();
+                // Use the newer version for non-log fields.
+                // Compare client-side _lastModified timestamps (both set by the same
+                // client code) to avoid false "remote wins" due to server clock drift.
+                var remoteTime = remoteData._lastModified || new Date(remote.updated_at).getTime();
                 var localTime = localData._lastModified || 0;
                 var base = remoteTime > localTime ? remoteData : localData;
                 var other = base === remoteData ? localData : remoteData;
@@ -151,8 +153,26 @@ const SupaSync = {
                         }
                     }
                 }
-                // exerciseEquipment: use base (newer) side only — no merge,
-                // because merge resurrects deleted equipment bindings
+                // Merge exerciseEquipment — keep from 'other' for exercises where 'base'
+                // has no value. This prevents equipment loss when remote wins due to clock
+                // drift while still respecting explicit deletions made on the base side.
+                if (other.exerciseEquipment) {
+                    if (!base.exerciseEquipment) base.exerciseEquipment = {};
+                    for (var ek in other.exerciseEquipment) {
+                        // Use 'in' check so explicit null deletions in base are respected
+                        if (other.exerciseEquipment[ek] && !(ek in base.exerciseEquipment)) {
+                            base.exerciseEquipment[ek] = other.exerciseEquipment[ek];
+                        }
+                    }
+                }
+                if (other.exerciseEquipmentOptions) {
+                    if (!base.exerciseEquipmentOptions) base.exerciseEquipmentOptions = {};
+                    for (var ek2 in other.exerciseEquipmentOptions) {
+                        if (!(ek2 in base.exerciseEquipmentOptions)) {
+                            base.exerciseEquipmentOptions[ek2] = other.exerciseEquipmentOptions[ek2];
+                        }
+                    }
+                }
                 base._lastModified = Date.now();
                 // Save merged result locally and push to cloud
                 localStorage.setItem(localStorageKey, JSON.stringify(base));
