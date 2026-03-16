@@ -829,15 +829,39 @@ const Social = {
         return brands;
     },
 
-    async getCatalogByBrandAndType(brand, exerciseType) {
+    async getCatalogByBrandAndType(brand, exerciseType, showAll) {
         if (!supa) return [];
         var q = supa.from('equipment_catalog')
-            .select('id, brand, model, name, muscle_group, image_url, exercise_type')
+            .select('id, brand, model, name, muscle_group, image_url, exercise_type, exercise_types')
             .eq('brand', brand)
             .order('name');
-        if (exerciseType) q = q.ilike('exercise_type', '%' + exerciseType + '%');
+        if (exerciseType && !showAll) q = q.contains('exercise_types', [exerciseType]);
         var r = await q;
         return r.data || [];
+    },
+
+    async addExerciseTypeToCatalog(catalogId, exerciseType) {
+        if (!supa || !catalogId || !exerciseType) return false;
+        var r = await supa.rpc('add_exercise_type', { p_id: catalogId, p_type: exerciseType });
+        if (r.error) {
+            // Fallback: fetch current, append, update
+            var cur = await supa.from('equipment_catalog').select('exercise_types').eq('id', catalogId).single();
+            if (cur.error) return false;
+            var types = cur.data.exercise_types || [];
+            if (types.indexOf(exerciseType) === -1) types.push(exerciseType);
+            var upd = await supa.from('equipment_catalog').update({ exercise_types: types }).eq('id', catalogId);
+            return !upd.error;
+        }
+        return true;
+    },
+
+    async removeExerciseTypeFromCatalog(catalogId, exerciseType) {
+        if (!supa || !catalogId || !exerciseType) return false;
+        var cur = await supa.from('equipment_catalog').select('exercise_types').eq('id', catalogId).single();
+        if (cur.error) return false;
+        var types = (cur.data.exercise_types || []).filter(function(t) { return t !== exerciseType; });
+        var upd = await supa.from('equipment_catalog').update({ exercise_types: types }).eq('id', catalogId);
+        return !upd.error;
     },
 
     async getGymEquipmentForExercise(gymName, gymCity, exerciseName) {

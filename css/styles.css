@@ -3566,6 +3566,31 @@ body.modal-open {
 #eq-brand-list {
     padding-bottom: env(safe-area-inset-bottom, 20px);
 }
+.eq-show-all-row {
+    padding: 8px 4px 12px;
+}
+.eq-show-all-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+.eq-show-all-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-primary);
+}
+.eq-bind-badge {
+    font-size: 11px;
+    color: var(--accent-primary);
+    background: rgba(157, 141, 245, 0.15);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
 .eq-current-row {
     display: flex;
     align-items: center;
