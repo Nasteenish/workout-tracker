@@ -536,7 +536,18 @@ const Storage = {
         var snap = localStorage.getItem('_wt_eq_snapshot');
         if (!snap) return;
         var s = JSON.parse(snap);
+        // Don't rollback if sets were completed for this week/day
         var data = this._load();
+        var w = String(s.week), d = String(s.day);
+        var hasCompletedSets = data.log && data.log[w] && data.log[w][d] &&
+            Object.keys(data.log[w][d]).some(function(exId) {
+                var sets = data.log[w][d][exId];
+                return Object.keys(sets).some(function(si) { return sets[si].completed; });
+            });
+        if (hasCompletedSets) {
+            localStorage.removeItem('_wt_eq_snapshot');
+            return;
+        }
         data.exerciseEquipment = s.exerciseEquipment;
         data.equipment = s.equipment;
         this._save();
@@ -789,6 +800,8 @@ const Storage = {
         if (existing.segs) data.log[w][d][exerciseId][s].segs = existing.segs;
         if (equipmentId) data.log[w][d][exerciseId][s].equipmentId = equipmentId;
         this._save();
+        // Set completed — equipment is now permanent, clear snapshot
+        localStorage.removeItem('_wt_eq_snapshot');
     },
 
     toggleSetComplete(week, day, exerciseId, setIdx, equipmentId) {
