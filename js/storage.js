@@ -510,11 +510,11 @@ const Storage = {
 
     removeExerciseEquipment(exerciseId) {
         var data = this._load();
-        delete data.exerciseEquipment[exerciseId];
-        // Also remove from siblings
+        // Use null as tombstone so sync doesn't resurrect the deleted binding
+        data.exerciseEquipment[exerciseId] = null;
         var sibs = this._getSiblingIds(exerciseId);
         for (var i = 0; i < sibs.length; i++) {
-            delete data.exerciseEquipment[sibs[i]];
+            data.exerciseEquipment[sibs[i]] = null;
         }
         this._save();
     },
