@@ -140,7 +140,26 @@ const SupaSync = {
                 var remoteTime = new Date(remote.updated_at).getTime();
                 var localTime = localData._lastModified || 0;
                 var base = remoteTime > localTime ? remoteData : localData;
+                var other = base === remoteData ? localData : remoteData;
                 base.log = mergedLog;
+                // Merge exerciseChoices — keep all from both sides (prevents choice loss on sync)
+                if (other.exerciseChoices) {
+                    if (!base.exerciseChoices) base.exerciseChoices = {};
+                    for (var ck in other.exerciseChoices) {
+                        if (!(ck in base.exerciseChoices)) {
+                            base.exerciseChoices[ck] = other.exerciseChoices[ck];
+                        }
+                    }
+                }
+                // Merge exerciseEquipment — keep all from both sides
+                if (other.exerciseEquipment) {
+                    if (!base.exerciseEquipment) base.exerciseEquipment = {};
+                    for (var ek in other.exerciseEquipment) {
+                        if (!(ek in base.exerciseEquipment) && other.exerciseEquipment[ek]) {
+                            base.exerciseEquipment[ek] = other.exerciseEquipment[ek];
+                        }
+                    }
+                }
                 base._lastModified = Date.now();
                 // Save merged result locally and push to cloud
                 localStorage.setItem(localStorageKey, JSON.stringify(base));
