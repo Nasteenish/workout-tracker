@@ -43,6 +43,28 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 /* Exercise card images - 2 images side by side */
 .card-imgs { display: flex; gap: 2px; background: #fff; height: 180px; }
 .card-imgs img { flex: 1; height: 100%; object-fit: contain; padding: 4px; }
+
+.card { cursor: pointer; }
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; padding: 16px; }
+.modal-overlay.open { display: flex; }
+.modal { background: #1a1a1a; border-radius: 16px; border: 1px solid #333; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; }
+.modal-img { width: 100%; height: 240px; object-fit: contain; background: #fff; padding: 12px; border-radius: 16px 16px 0 0; }
+.modal-img.no-img { display: flex; align-items: center; justify-content: center; background: #222; color: #555; font-size: 60px; }
+.modal-imgs { display: flex; gap: 2px; background: #fff; height: 240px; border-radius: 16px 16px 0 0; }
+.modal-imgs img { flex: 1; height: 100%; object-fit: contain; padding: 8px; }
+.modal-body { padding: 20px; }
+.modal-brand { font-size: 12px; color: #4a9eff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.modal-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.modal-subtitle { font-size: 14px; color: #999; margin-bottom: 12px; }
+.modal-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #252525; font-size: 14px; }
+.modal-row-label { color: #888; }
+.modal-row-value { color: #e0e0e0; font-weight: 500; }
+.modal-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+.modal-close { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border-radius: 50%; border: none; background: rgba(0,0,0,0.5); color: #fff; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.modal-overlay { position: fixed; }
+.modal-wrapper { position: relative; max-width: 500px; width: 100%; }
 </style>
 </head>
 <body>
@@ -61,6 +83,13 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 <input type="text" class="search" id="search" placeholder="Поиск...">
 
 <div class="grid" id="grid"></div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal-wrapper">
+    <button class="modal-close" id="modal-close">&times;</button>
+    <div class="modal" id="modal-content"></div>
+  </div>
+</div>
 
 <script>
 const SB = 'https://mqyfdbfdeuwojgexhwpy.supabase.co';
@@ -213,6 +242,93 @@ document.getElementById('filters2').addEventListener('click', e => {
 
 // Search
 document.getElementById('search').addEventListener('input', render);
+
+// Modal
+const modalOverlay = document.getElementById('modal');
+const modalContent = document.getElementById('modal-content');
+
+document.getElementById('modal-close').addEventListener('click', () => modalOverlay.classList.remove('open'));
+modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) modalOverlay.classList.remove('open'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') modalOverlay.classList.remove('open'); });
+
+function showEquipmentModal(item) {
+  const imgHtml = item.image_url
+    ? `<img class="modal-img" src="${item.image_url}" alt="${item.name}">`
+    : `<div class="modal-img no-img">📷</div>`;
+  modalContent.innerHTML = `
+    ${imgHtml}
+    <div class="modal-body">
+      <div class="modal-brand">${item.brand}</div>
+      <div class="modal-title">${item.name}</div>
+      ${item.model ? `<div class="modal-subtitle">${item.model}</div>` : ''}
+      <div class="modal-row"><span class="modal-row-label">Группа мышц</span><span class="modal-row-value">${item.muscle_group || '—'}</span></div>
+      <div class="modal-row"><span class="modal-row-label">Тип</span><span class="modal-row-value">${item.equipment_type || '—'}</span></div>
+      ${item.category ? `<div class="modal-row"><span class="modal-row-label">Категория</span><span class="modal-row-value">${item.category}</span></div>` : ''}
+      ${item.description ? `<div style="margin-top:12px;color:#bbb;font-size:14px;line-height:1.5">${item.description}</div>` : ''}
+    </div>
+  `;
+  modalOverlay.classList.add('open');
+}
+
+function showExerciseModal(item) {
+  const imgs = item.images || [];
+  let imgHtml;
+  if (imgs.length >= 2) {
+    imgHtml = `<div class="modal-imgs"><img src="${imgs[0]}"><img src="${imgs[1]}"></div>`;
+  } else if (imgs.length === 1) {
+    imgHtml = `<img class="modal-img" src="${imgs[0]}">`;
+  } else {
+    imgHtml = `<div class="modal-img no-img">🏋️</div>`;
+  }
+  const muscles = (item.primary_muscles || []).join(', ') || '—';
+  const secondary = (item.secondary_muscles || []).join(', ');
+  modalContent.innerHTML = `
+    ${imgHtml}
+    <div class="modal-body">
+      <div class="modal-title">${item.name_ru || item.name_en}</div>
+      ${item.name_en && item.name_ru ? `<div class="modal-subtitle">${item.name_en}</div>` : ''}
+      <div class="modal-row"><span class="modal-row-label">Основные мышцы</span><span class="modal-row-value">${muscles}</span></div>
+      ${secondary ? `<div class="modal-row"><span class="modal-row-label">Доп. мышцы</span><span class="modal-row-value">${secondary}</span></div>` : ''}
+      ${item.equipment ? `<div class="modal-row"><span class="modal-row-label">Оборудование</span><span class="modal-row-value">${item.equipment}</span></div>` : ''}
+      ${item.category ? `<div class="modal-row"><span class="modal-row-label">Категория</span><span class="modal-row-value">${item.category}</span></div>` : ''}
+      ${item.level ? `<div class="modal-row"><span class="modal-row-label">Уровень</span><span class="modal-row-value">${item.level}</span></div>` : ''}
+      ${item.mechanic ? `<div class="modal-row"><span class="modal-row-label">Механика</span><span class="modal-row-value">${item.mechanic}</span></div>` : ''}
+      ${item.force ? `<div class="modal-row"><span class="modal-row-label">Сила</span><span class="modal-row-value">${item.force}</span></div>` : ''}
+      ${item.instructions ? `<div style="margin-top:12px;color:#bbb;font-size:14px;line-height:1.5">${Array.isArray(item.instructions) ? item.instructions.map((s,i) => `<div style="margin-bottom:8px">${i+1}. ${s}</div>`).join('') : item.instructions}</div>` : ''}
+    </div>
+  `;
+  modalOverlay.classList.add('open');
+}
+
+// Card clicks
+document.getElementById('grid').addEventListener('click', e => {
+  const card = e.target.closest('.card');
+  if (!card) return;
+  const idx = [...document.querySelectorAll('.card')].indexOf(card);
+  if (currentTab === 'equipment') {
+    const query = document.getElementById('search').value.toLowerCase();
+    const filtered = equipmentData.filter(item => {
+      if (currentFilter !== 'all' && item.brand !== currentFilter) return false;
+      if (query && !item.name.toLowerCase().includes(query) && !(item.model || '').toLowerCase().includes(query)) return false;
+      return true;
+    });
+    if (filtered[idx]) showEquipmentModal(filtered[idx]);
+  } else {
+    const query = document.getElementById('search').value.toLowerCase();
+    const filtered = exerciseData.filter(item => {
+      if (currentFilter !== 'all' && !(item.primary_muscles || []).includes(currentFilter)) return false;
+      if (currentFilter2 !== 'all' && item.equipment !== currentFilter2) return false;
+      if (query) {
+        const match = (item.name_ru || '').toLowerCase().includes(query) ||
+                      (item.name_en || '').toLowerCase().includes(query) ||
+                      (item.equipment || '').toLowerCase().includes(query);
+        if (!match) return false;
+      }
+      return true;
+    });
+    if (filtered[idx]) showExerciseModal(filtered[idx]);
+  }
+});
 
 // Init
 Promise.all([loadEquipment(), loadExercises()]).then(() => {
