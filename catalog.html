@@ -24,7 +24,7 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 .search:focus { outline: none; border-color: #4a9eff; }
 
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
-.card { background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid #222; transition: transform 0.2s; }
+.card { background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid #222; transition: transform 0.2s; cursor: pointer; }
 .card:hover { transform: translateY(-2px); border-color: #444; }
 .card-img { width: 100%; height: 180px; object-fit: contain; background: #fff; padding: 8px; }
 .card-img.no-img { display: flex; align-items: center; justify-content: center; background: #222; color: #555; font-size: 40px; }
@@ -39,15 +39,31 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 .tag.type { background: #1a1a2a; color: #88f; }
 .tag.cat { background: #2a1a1a; color: #c88; }
 .tag.level { background: #2a2a1a; color: #cc8; }
+.tag.etype { background: #1a1a2a; color: #a8d; font-size: 10px; }
 
-/* Exercise card images - 2 images side by side */
+/* Exercise card images */
 .card-imgs { display: flex; gap: 2px; background: #fff; height: 180px; }
 .card-imgs img { flex: 1; height: 100%; object-fit: contain; padding: 4px; }
+
+/* Edit modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: flex; align-items: flex-end; justify-content: center; }
+.modal { background: #1a1a1a; border-radius: 16px 16px 0 0; padding: 20px; max-width: 500px; width: 100%; max-height: 80vh; overflow-y: auto; }
+.modal h3 { margin-bottom: 4px; font-size: 18px; }
+.modal .modal-subtitle { color: #888; font-size: 13px; margin-bottom: 16px; }
+.modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: #888; font-size: 24px; cursor: pointer; }
+.type-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.type-chip { padding: 8px 16px; border-radius: 20px; border: 1px solid #333; background: #222; color: #ccc; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+.type-chip.active { background: #4a9eff; color: #fff; border-color: #4a9eff; }
+.type-chip:hover { border-color: #4a9eff; }
+.modal-save { display: block; width: 100%; padding: 14px; border-radius: 12px; border: none; background: #4a9eff; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 16px; }
+.modal-save:disabled { background: #333; color: #666; }
+.toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #2a2a2a; color: #4a9eff; padding: 10px 24px; border-radius: 12px; font-size: 14px; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.toast.show { opacity: 1; }
 </style>
 </head>
 <body>
 
-<h1>🏋️ Каталог</h1>
+<h1>Каталог</h1>
 <div class="stats" id="stats"></div>
 
 <div class="tabs">
@@ -61,11 +77,47 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 <input type="text" class="search" id="search" placeholder="Поиск...">
 
 <div class="grid" id="grid"></div>
+<div class="toast" id="toast"></div>
 
 <script>
 const SB = 'https://mqyfdbfdeuwojgexhwpy.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeWZkYmZkZXV3b2pnZXhod3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NzE1OTYsImV4cCI6MjA4NzQ0NzU5Nn0.5okpQM-UffmYatsVjbzjafsHhY3taCqhDYkiyEjiSvg';
-const H = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY };
+const H = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json' };
+
+const ALL_EXERCISE_TYPES = [
+  { key: 'chest_press', label: 'Жим от груди' },
+  { key: 'incline_press', label: 'Жим наклон' },
+  { key: 'decline_press', label: 'Жим вниз' },
+  { key: 'bench', label: 'Скамья' },
+  { key: 'chest_fly', label: 'Разводка' },
+  { key: 'chest_dip', label: 'Отжимания/Дип' },
+  { key: 'pullover', label: 'Пуловер' },
+  { key: 'lat_pulldown', label: 'Тяга верхнего блока' },
+  { key: 'seated_row', label: 'Тяга горизонтальная' },
+  { key: 'back_extension', label: 'Гиперэкстензия' },
+  { key: 'deadlift', label: 'Мёртвая тяга' },
+  { key: 'leg_press', label: 'Жим ногами' },
+  { key: 'leg_extension', label: 'Разгибание ног' },
+  { key: 'lying_leg_curl', label: 'Сгибание ног лёжа' },
+  { key: 'seated_leg_curl', label: 'Сгибание ног сидя' },
+  { key: 'hip_abduction', label: 'Отведение бёдер' },
+  { key: 'hip_adduction', label: 'Приведение бёдер' },
+  { key: 'glute_kickback', label: 'Ягодичный кикбэк' },
+  { key: 'hip_thrust', label: 'Хип траст' },
+  { key: 'squat', label: 'Приседания' },
+  { key: 'lunge', label: 'Выпады' },
+  { key: 'calf', label: 'Икры' },
+  { key: 'shoulder_press', label: 'Жим плечи' },
+  { key: 'lateral_raise', label: 'Махи в стороны' },
+  { key: 'rear_delt', label: 'Задняя дельта' },
+  { key: 'bicep_curl', label: 'Бицепс' },
+  { key: 'preacher_curl', label: 'Скамья Скотта' },
+  { key: 'tricep_extension', label: 'Трицепс' },
+  { key: 'tricep_dip', label: 'Трицепс дип' },
+  { key: 'crunch', label: 'Пресс' },
+  { key: 'torso_rotation', label: 'Ротация торса' },
+  { key: 'smith_machine', label: 'Смит' },
+];
 
 let equipmentData = [];
 let exerciseData = [];
@@ -81,6 +133,13 @@ async function loadEquipment() {
 async function loadExercises() {
   const r = await fetch(SB + '/rest/v1/exercises?select=*&order=name_ru', { headers: H });
   exerciseData = await r.json();
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2000);
 }
 
 function getFilters() {
@@ -111,6 +170,14 @@ function renderFilters() {
   }
 }
 
+function renderExerciseTypeTags(types) {
+  if (!types || !types.length) return '<span class="tag">нет привязок</span>';
+  return types.map(function(t) {
+    var info = ALL_EXERCISE_TYPES.find(function(x) { return x.key === t; });
+    return '<span class="tag etype">' + (info ? info.label : t) + '</span>';
+  }).join('');
+}
+
 function render() {
   const query = document.getElementById('search').value.toLowerCase();
   const grid = document.getElementById('grid');
@@ -118,12 +185,12 @@ function render() {
   if (currentTab === 'equipment') {
     const filtered = equipmentData.filter(item => {
       if (currentFilter !== 'all' && item.brand !== currentFilter) return false;
-      if (query && !item.name.toLowerCase().includes(query) && !(item.model || '').toLowerCase().includes(query)) return false;
+      if (query && !item.name.toLowerCase().includes(query) && !(item.model || '').toLowerCase().includes(query) && !item.brand.toLowerCase().includes(query)) return false;
       return true;
     });
     document.getElementById('stats').textContent = 'Тренажёры: ' + filtered.length + ' / ' + equipmentData.length;
     grid.innerHTML = filtered.map(item => `
-      <div class="card">
+      <div class="card" data-catalog-id="${item.id}">
         ${item.image_url
           ? '<img class="card-img" src="' + item.image_url + '" alt="' + item.name + '" loading="lazy">'
           : '<div class="card-img no-img">📷</div>'}
@@ -133,8 +200,8 @@ function render() {
           <div class="card-model">${item.model || '—'}</div>
           <div class="card-meta">
             <span class="tag muscle">${item.muscle_group || '—'}</span>
-            <span class="tag type">${item.equipment_type || '—'}</span>
           </div>
+          <div class="card-meta">${renderExerciseTypeTags(item.exercise_types)}</div>
         </div>
       </div>
     `).join('');
@@ -181,6 +248,71 @@ function render() {
   }
 }
 
+// Edit modal for equipment exercise types
+function openEditModal(catalogId) {
+  var item = equipmentData.find(function(e) { return e.id === catalogId; });
+  if (!item) return;
+  var currentTypes = item.exercise_types || [];
+
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = '<div class="modal" style="position:relative;">'
+    + '<button class="modal-close" id="modal-close">&times;</button>'
+    + '<h3>' + item.brand + ' ' + item.name + '</h3>'
+    + '<div class="modal-subtitle">Выберите типы упражнений для этого тренажёра</div>'
+    + '<div class="type-chips" id="type-chips">'
+    + ALL_EXERCISE_TYPES.map(function(t) {
+        var active = currentTypes.indexOf(t.key) !== -1 ? ' active' : '';
+        return '<div class="type-chip' + active + '" data-type="' + t.key + '">' + t.label + '</div>';
+      }).join('')
+    + '</div>'
+    + '<button class="modal-save" id="modal-save">Сохранить</button>'
+    + '</div>';
+
+  document.body.appendChild(overlay);
+
+  // Close
+  overlay.querySelector('#modal-close').onclick = function() { overlay.remove(); };
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+
+  // Toggle chips
+  overlay.querySelector('#type-chips').addEventListener('click', function(e) {
+    var chip = e.target.closest('.type-chip');
+    if (chip) chip.classList.toggle('active');
+  });
+
+  // Save
+  overlay.querySelector('#modal-save').addEventListener('click', async function() {
+    var chips = overlay.querySelectorAll('.type-chip.active');
+    var types = [];
+    chips.forEach(function(c) { types.push(c.dataset.type); });
+
+    var btn = overlay.querySelector('#modal-save');
+    btn.disabled = true;
+    btn.textContent = 'Сохраняю...';
+
+    try {
+      var r = await fetch(SB + '/rest/v1/equipment_catalog?id=eq.' + catalogId, {
+        method: 'PATCH',
+        headers: Object.assign({}, H, { 'Prefer': 'return=minimal' }),
+        body: JSON.stringify({ exercise_types: types })
+      });
+      if (r.ok) {
+        item.exercise_types = types;
+        showToast('Сохранено!');
+        render();
+        overlay.remove();
+      } else {
+        btn.textContent = 'Ошибка — попробуйте ещё';
+        btn.disabled = false;
+      }
+    } catch(e) {
+      btn.textContent = 'Ошибка сети';
+      btn.disabled = false;
+    }
+  });
+}
+
 // Tabs
 document.querySelector('.tabs').addEventListener('click', e => {
   if (!e.target.matches('.tab')) return;
@@ -196,7 +328,7 @@ document.querySelector('.tabs').addEventListener('click', e => {
 // Filters
 document.getElementById('filters').addEventListener('click', e => {
   if (!e.target.matches('.filter-btn')) return;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#filters .filter-btn').forEach(b => b.classList.remove('active'));
   e.target.classList.add('active');
   currentFilter = e.target.dataset.filter;
   render();
@@ -213,6 +345,14 @@ document.getElementById('filters2').addEventListener('click', e => {
 
 // Search
 document.getElementById('search').addEventListener('input', render);
+
+// Card click — open edit modal for equipment
+document.getElementById('grid').addEventListener('click', function(e) {
+  var card = e.target.closest('.card');
+  if (!card || currentTab !== 'equipment') return;
+  var id = parseInt(card.dataset.catalogId);
+  if (id) openEditModal(id);
+});
 
 // Init
 Promise.all([loadEquipment(), loadExercises()]).then(() => {
