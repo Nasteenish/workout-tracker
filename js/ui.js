@@ -480,7 +480,8 @@ const UI = {
 
     // Returns full day view HTML (for back-swipe companion)
     _gymIndicatorHTML(weekNum, dayNum) {
-        var gymId = sessionStorage.getItem('wt_gym_' + weekNum + '_' + dayNum);
+        var gymId = sessionStorage.getItem('wt_gym_' + weekNum + '_' + dayNum)
+                    || Storage.getWorkoutGym(weekNum, dayNum);
         if (!gymId) return '';
         var gym = Storage.getGymById(gymId);
         if (!gym) return '';

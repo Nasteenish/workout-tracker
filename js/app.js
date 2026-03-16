@@ -3602,6 +3602,14 @@ const Celebration = {
 
         if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 150]);
 
+        // Persist gym to workout log before any cleanup
+        if (weekNum && dayNum) {
+            var _gymKey = 'wt_gym_' + weekNum + '_' + dayNum;
+            var _gymId = sessionStorage.getItem(_gymKey);
+            if (_gymId) Storage.saveWorkoutGym(weekNum, dayNum, _gymId);
+            sessionStorage.removeItem(_gymKey);
+        }
+
         var phrase = this._phrases[Math.floor(Math.random() * this._phrases.length)];
         var timeText = '';
         if (elapsedSec && elapsedSec > 0) {
@@ -3684,7 +3692,7 @@ const Celebration = {
             if (t.indexOf('бицепс') !== -1 || t.indexOf('трицепс') !== -1 || t.indexOf('рук') !== -1 || t.indexOf('arm') !== -1) muscleGroup = muscleGroup || 'Руки';
             if (!muscleGroup && dayTitle) muscleGroup = dayTitle;
             var gymName = '';
-            var celebGymId = sessionStorage.getItem('wt_gym_' + weekNum + '_' + dayNum);
+            var celebGymId = Storage.getWorkoutGym(weekNum, dayNum);
             if (celebGymId) {
                 var celebGym = Storage.getGymById(celebGymId);
                 if (celebGym) gymName = celebGym.name;
@@ -3696,8 +3704,6 @@ const Celebration = {
                 duration_sec: elapsedSec || 0,
                 gym_name: gymName || undefined
             };
-            // Clean up gym session key
-            sessionStorage.removeItem('wt_gym_' + weekNum + '_' + dayNum);
         }
 
         var self = this;
