@@ -24,8 +24,10 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 .search:focus { outline: none; border-color: #4a9eff; }
 
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
-.card { background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid #222; transition: transform 0.2s; }
+.card { background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid #222; transition: transform 0.2s, border-color 0.2s; }
 .card:hover { transform: translateY(-2px); border-color: #444; }
+.card.clickable { cursor: pointer; }
+.card.clickable:hover { border-color: #4a9eff; }
 .card-img { width: 100%; height: 180px; object-fit: contain; background: #fff; padding: 8px; }
 .card-img.no-img { display: flex; align-items: center; justify-content: center; background: #222; color: #555; font-size: 40px; }
 .card-body { padding: 12px; }
@@ -39,10 +41,167 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 .tag.type { background: #1a1a2a; color: #88f; }
 .tag.cat { background: #2a1a1a; color: #c88; }
 .tag.level { background: #2a2a1a; color: #cc8; }
+.card-ex-count { font-size: 11px; color: #4a9eff; margin-top: 6px; }
 
 /* Exercise card images - 2 images side by side */
 .card-imgs { display: flex; gap: 2px; background: #fff; height: 180px; }
 .card-imgs img { flex: 1; height: 100%; object-fit: contain; padding: 4px; }
+
+/* ===== EQUIPMENT DETAIL PANEL ===== */
+#det-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #0a0a0a;
+  z-index: 100;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+#det-overlay.visible { display: block; }
+
+.det-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid #222;
+  position: sticky;
+  top: 0;
+  background: #0a0a0a;
+  z-index: 10;
+}
+.det-back-btn {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: #e0e0e0;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.det-back-btn:hover { border-color: #4a9eff; }
+.det-topbar-title { font-size: 16px; font-weight: 700; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.det-header {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  border-bottom: 1px solid #222;
+  align-items: flex-start;
+}
+.det-header-img {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 10px;
+  padding: 6px;
+  flex-shrink: 0;
+}
+.det-header-img.no-img {
+  background: #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+}
+.det-header-info { flex: 1; }
+.det-brand { font-size: 11px; color: #4a9eff; text-transform: uppercase; letter-spacing: 1px; }
+.det-name { font-size: 18px; font-weight: 700; margin: 4px 0; }
+.det-model { font-size: 13px; color: #888; margin-bottom: 8px; }
+.det-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.det-section { padding: 16px; border-bottom: 1px solid #1a1a1a; }
+.det-section-title { font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; font-weight: 600; }
+
+/* Linked exercises list */
+.linked-ex-list { display: flex; flex-direction: column; gap: 8px; }
+.linked-ex-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #1a1a1a;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.linked-ex-name { flex: 1; font-size: 14px; }
+.linked-ex-name-en { font-size: 11px; color: #666; margin-top: 2px; }
+.linked-ex-remove {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  line-height: 1;
+}
+.linked-ex-remove:hover { color: #f55; background: #2a1a1a; }
+.linked-ex-empty { color: #555; font-size: 14px; font-style: italic; }
+
+/* Add exercise search */
+.det-search-wrap { position: relative; margin-bottom: 12px; }
+.det-search {
+  width: 100%;
+  padding: 10px 16px 10px 38px;
+  border-radius: 20px;
+  border: 1px solid #333;
+  background: #1a1a1a;
+  color: #e0e0e0;
+  font-size: 14px;
+}
+.det-search:focus { outline: none; border-color: #4a9eff; }
+.det-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #555; font-size: 16px; pointer-events: none; }
+
+/* Search results */
+.det-search-results { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; max-height: 300px; overflow-y: auto; }
+
+/* Muscle group sections */
+.muscle-group {
+  border: 1px solid #222;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.muscle-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  cursor: pointer;
+  background: #1a1a1a;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.muscle-group-header:hover { background: #222; }
+.muscle-group-label { font-size: 14px; font-weight: 600; }
+.muscle-group-count { font-size: 12px; color: #666; margin-right: 8px; }
+.muscle-group-arrow { color: #666; font-size: 12px; transition: transform 0.2s; }
+.muscle-group.expanded .muscle-group-arrow { transform: rotate(90deg); }
+.muscle-group-exercises { display: none; padding: 6px; background: #111; }
+.muscle-group.expanded .muscle-group-exercises { display: flex; flex-direction: column; gap: 4px; }
+
+/* Exercise option row */
+.ex-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ex-option:hover { background: #1e1e1e; }
+.ex-option.linked { background: #0f2a0f; }
+.ex-option.linked:hover { background: #153015; }
+.ex-option-name { flex: 1; }
+.ex-option-name-ru { font-size: 14px; }
+.ex-option-name-en { font-size: 11px; color: #666; margin-top: 2px; }
+.ex-option-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #333; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ex-option.linked .ex-option-check { background: #4a9eff; border-color: #4a9eff; color: #fff; font-size: 12px; }
+
+.det-loading { color: #555; font-size: 14px; text-align: center; padding: 20px; }
 </style>
 </head>
 <body>
@@ -62,16 +221,75 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 
 <div class="grid" id="grid"></div>
 
+<!-- Equipment Detail Overlay -->
+<div id="det-overlay">
+  <div class="det-topbar">
+    <button class="det-back-btn" id="det-back">← Тренажёры</button>
+    <div class="det-topbar-title" id="det-topbar-title"></div>
+  </div>
+
+  <div class="det-header" id="det-header"></div>
+
+  <div class="det-section">
+    <div class="det-section-title">Привязанные упражнения</div>
+    <div id="det-linked" class="linked-ex-list">
+      <div class="det-loading">Загрузка...</div>
+    </div>
+  </div>
+
+  <div class="det-section">
+    <div class="det-section-title">Добавить упражнение</div>
+    <div class="det-search-wrap">
+      <span class="det-search-icon">🔍</span>
+      <input type="text" class="det-search" id="det-search" placeholder="Поиск упражнения...">
+    </div>
+    <div id="det-search-results" class="det-search-results" style="display:none"></div>
+    <div id="det-muscle-groups"></div>
+  </div>
+</div>
+
 <script>
 const SB = 'https://mqyfdbfdeuwojgexhwpy.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeWZkYmZkZXV3b2pnZXhod3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NzE1OTYsImV4cCI6MjA4NzQ0NzU5Nn0.5okpQM-UffmYatsVjbzjafsHhY3taCqhDYkiyEjiSvg';
-const H = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY };
+const H = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json' };
 
 let equipmentData = [];
-let exerciseData = [];
+let exerciseData = [];     // all exercises
+let machineExercises = []; // only equipment=machine
 let currentTab = 'equipment';
 let currentFilter = 'all';
 let currentFilter2 = 'all';
+
+// Exercise link counts per equipment id (loaded once)
+let linkCounts = {};
+
+// Detail panel state
+let detEquipment = null;
+let detLinkedIds = new Set();
+
+// ===== MUSCLE GROUP LABELS =====
+const MUSCLE_RU = {
+  abdominals: 'Пресс',
+  abductors:  'Отводящие',
+  adductors:  'Приводящие',
+  biceps:     'Бицепс',
+  calves:     'Икры',
+  cardio:     'Кардио',
+  chest:      'Грудь',
+  forearms:   'Предплечья',
+  full_body:  'Всё тело',
+  glutes:     'Ягодицы',
+  hamstrings: 'Задняя поверхность бедра',
+  lats:       'Широчайшие',
+  lower_back: 'Поясница',
+  quadriceps: 'Квадрицепс',
+  shoulders:  'Плечи',
+  traps:      'Трапеции',
+  triceps:    'Трицепс',
+  upper_back: 'Верхняя спина',
+};
+
+// ===== API =====
 
 async function loadEquipment() {
   const r = await fetch(SB + '/rest/v1/equipment_catalog?select=*&order=brand,name', { headers: H });
@@ -81,7 +299,48 @@ async function loadEquipment() {
 async function loadExercises() {
   const r = await fetch(SB + '/rest/v1/exercises?select=*&order=name_ru', { headers: H });
   exerciseData = await r.json();
+  machineExercises = exerciseData.filter(e => e.equipment === 'machine');
 }
+
+async function loadLinkCounts() {
+  try {
+    const r = await fetch(SB + '/rest/v1/equipment_exercises?select=equipment_id', { headers: H });
+    if (!r.ok) return;
+    const rows = await r.json();
+    linkCounts = {};
+    rows.forEach(row => {
+      linkCounts[row.equipment_id] = (linkCounts[row.equipment_id] || 0) + 1;
+    });
+  } catch(e) { /* table may not exist yet */ }
+}
+
+async function loadLinkedExercises(equipmentId) {
+  try {
+    const r = await fetch(SB + '/rest/v1/equipment_exercises?equipment_id=eq.' + equipmentId + '&select=exercise_id', { headers: H });
+    if (!r.ok) return [];
+    const rows = await r.json();
+    return rows.map(row => row.exercise_id);
+  } catch(e) { return []; }
+}
+
+async function linkExercise(equipmentId, exerciseId) {
+  const r = await fetch(SB + '/rest/v1/equipment_exercises', {
+    method: 'POST',
+    headers: { ...H, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ equipment_id: equipmentId, exercise_id: exerciseId })
+  });
+  return r.ok || r.status === 409; // 409 = already exists (ok)
+}
+
+async function unlinkExercise(equipmentId, exerciseId) {
+  const r = await fetch(SB + '/rest/v1/equipment_exercises?equipment_id=eq.' + equipmentId + '&exercise_id=eq.' + encodeURIComponent(exerciseId), {
+    method: 'DELETE',
+    headers: H
+  });
+  return r.ok;
+}
+
+// ===== MAIN CATALOG RENDER =====
 
 function getFilters() {
   if (currentTab === 'equipment') {
@@ -122,8 +381,11 @@ function render() {
       return true;
     });
     document.getElementById('stats').textContent = 'Тренажёры: ' + filtered.length + ' / ' + equipmentData.length;
-    grid.innerHTML = filtered.map(item => `
-      <div class="card">
+    grid.innerHTML = filtered.map(item => {
+      const cnt = linkCounts[item.id];
+      const cntHtml = cnt ? '<div class="card-ex-count">▶ ' + cnt + ' упр.</div>' : '';
+      return `
+      <div class="card clickable" data-eq-id="${item.id}">
         ${item.image_url
           ? '<img class="card-img" src="' + item.image_url + '" alt="' + item.name + '" loading="lazy">'
           : '<div class="card-img no-img">📷</div>'}
@@ -135,9 +397,10 @@ function render() {
             <span class="tag muscle">${item.muscle_group || '—'}</span>
             <span class="tag type">${item.equipment_type || '—'}</span>
           </div>
+          ${cntHtml}
         </div>
       </div>
-    `).join('');
+    `}).join('');
   } else {
     const filtered = exerciseData.filter(item => {
       if (currentFilter !== 'all' && !(item.primary_muscles || []).includes(currentFilter)) return false;
@@ -181,6 +444,196 @@ function render() {
   }
 }
 
+// ===== EQUIPMENT DETAIL PANEL =====
+
+function openEquipmentDetail(equipmentId) {
+  const eq = equipmentData.find(e => e.id === equipmentId);
+  if (!eq) return;
+  detEquipment = eq;
+  detLinkedIds = new Set();
+
+  // Render header
+  document.getElementById('det-topbar-title').textContent = eq.name;
+  document.getElementById('det-header').innerHTML = `
+    ${eq.image_url
+      ? '<img class="det-header-img" src="' + eq.image_url + '" alt="' + eq.name + '">'
+      : '<div class="det-header-img no-img">📷</div>'}
+    <div class="det-header-info">
+      <div class="det-brand">${eq.brand}</div>
+      <div class="det-name">${eq.name}</div>
+      <div class="det-model">${eq.model ? 'Модель: ' + eq.model : ''}</div>
+      <div class="det-tags">
+        ${eq.muscle_group ? '<span class="tag muscle">' + eq.muscle_group + '</span>' : ''}
+        ${eq.equipment_type ? '<span class="tag type">' + eq.equipment_type + '</span>' : ''}
+      </div>
+    </div>
+  `;
+
+  // Show overlay
+  const overlay = document.getElementById('det-overlay');
+  overlay.classList.add('visible');
+  overlay.scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+
+  // Clear search
+  document.getElementById('det-search').value = '';
+  document.getElementById('det-search-results').style.display = 'none';
+
+  // Load linked exercises
+  loadAndRenderLinked(equipmentId);
+  renderMuscleGroups();
+}
+
+function closeEquipmentDetail() {
+  document.getElementById('det-overlay').classList.remove('visible');
+  document.body.style.overflow = '';
+  detEquipment = null;
+}
+
+async function loadAndRenderLinked(equipmentId) {
+  document.getElementById('det-linked').innerHTML = '<div class="det-loading">Загрузка...</div>';
+  const ids = await loadLinkedExercises(equipmentId);
+  detLinkedIds = new Set(ids);
+  renderLinked();
+  renderMuscleGroups(); // re-render to show checkmarks
+}
+
+function renderLinked() {
+  const container = document.getElementById('det-linked');
+  if (detLinkedIds.size === 0) {
+    container.innerHTML = '<div class="linked-ex-empty">Нет привязанных упражнений</div>';
+    return;
+  }
+  const items = [];
+  detLinkedIds.forEach(id => {
+    const ex = exerciseData.find(e => e.id === id);
+    if (!ex) return;
+    items.push(`
+      <div class="linked-ex-item">
+        <div class="linked-ex-name">
+          <div>${ex.name_ru || ex.name_en}</div>
+          <div class="linked-ex-name-en">${ex.name_en}</div>
+        </div>
+        <button class="linked-ex-remove" data-ex-id="${escHtml(id)}" title="Убрать привязку">×</button>
+      </div>
+    `);
+  });
+  container.innerHTML = items.join('');
+}
+
+function renderMuscleGroups() {
+  // Group machine exercises by first primary_muscle
+  const groups = {};
+  machineExercises.forEach(ex => {
+    const muscle = (ex.primary_muscles && ex.primary_muscles[0]) || 'other';
+    if (!groups[muscle]) groups[muscle] = [];
+    groups[muscle].push(ex);
+  });
+
+  const sortedMuscles = Object.keys(groups).sort((a, b) => {
+    const ra = MUSCLE_RU[a] || a;
+    const rb = MUSCLE_RU[b] || b;
+    return ra.localeCompare(rb, 'ru');
+  });
+
+  const html = sortedMuscles.map(muscle => {
+    const exercises = groups[muscle];
+    const label = MUSCLE_RU[muscle] || muscle;
+    const exHtml = exercises.map(ex => {
+      const linked = detLinkedIds.has(ex.id);
+      return `
+        <div class="ex-option ${linked ? 'linked' : ''}" data-ex-id="${escHtml(ex.id)}">
+          <div class="ex-option-name">
+            <div class="ex-option-name-ru">${ex.name_ru || ex.name_en}</div>
+            <div class="ex-option-name-en">${ex.name_en}</div>
+          </div>
+          <div class="ex-option-check">${linked ? '✓' : ''}</div>
+        </div>
+      `;
+    }).join('');
+    return `
+      <div class="muscle-group" data-muscle="${muscle}">
+        <div class="muscle-group-header">
+          <span class="muscle-group-label">${label}</span>
+          <span>
+            <span class="muscle-group-count">${exercises.length}</span>
+            <span class="muscle-group-arrow">▶</span>
+          </span>
+        </div>
+        <div class="muscle-group-exercises">${exHtml}</div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('det-muscle-groups').innerHTML = html;
+}
+
+function renderSearchResults(query) {
+  const resultsEl = document.getElementById('det-search-results');
+  if (!query.trim()) {
+    resultsEl.style.display = 'none';
+    resultsEl.innerHTML = '';
+    return;
+  }
+  const q = query.toLowerCase();
+  const matches = machineExercises.filter(ex =>
+    (ex.name_ru || '').toLowerCase().includes(q) ||
+    (ex.name_en || '').toLowerCase().includes(q)
+  ).slice(0, 30);
+
+  if (!matches.length) {
+    resultsEl.style.display = 'block';
+    resultsEl.innerHTML = '<div style="color:#555;font-size:14px;padding:8px">Не найдено</div>';
+    return;
+  }
+  resultsEl.style.display = 'block';
+  resultsEl.innerHTML = matches.map(ex => {
+    const linked = detLinkedIds.has(ex.id);
+    return `
+      <div class="ex-option ${linked ? 'linked' : ''}" data-ex-id="${escHtml(ex.id)}">
+        <div class="ex-option-name">
+          <div class="ex-option-name-ru">${ex.name_ru || ex.name_en}</div>
+          <div class="ex-option-name-en">${ex.name_en}</div>
+        </div>
+        <div class="ex-option-check">${linked ? '✓' : ''}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function toggleExerciseLink(exerciseId) {
+  if (!detEquipment) return;
+  const eqId = detEquipment.id;
+
+  if (detLinkedIds.has(exerciseId)) {
+    // Unlink
+    await unlinkExercise(eqId, exerciseId);
+    detLinkedIds.delete(exerciseId);
+    linkCounts[eqId] = Math.max(0, (linkCounts[eqId] || 1) - 1);
+    if (!linkCounts[eqId]) delete linkCounts[eqId];
+  } else {
+    // Link
+    await linkExercise(eqId, exerciseId);
+    detLinkedIds.add(exerciseId);
+    linkCounts[eqId] = (linkCounts[eqId] || 0) + 1;
+  }
+
+  renderLinked();
+  // Refresh the exercise row states
+  const q = document.getElementById('det-search').value;
+  if (q.trim()) {
+    renderSearchResults(q);
+  } else {
+    renderMuscleGroups();
+  }
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ===== EVENT LISTENERS =====
+
 // Tabs
 document.querySelector('.tabs').addEventListener('click', e => {
   if (!e.target.matches('.tab')) return;
@@ -202,7 +655,7 @@ document.getElementById('filters').addEventListener('click', e => {
   render();
 });
 
-// Filters2 (equipment)
+// Filters2 (equipment type)
 document.getElementById('filters2').addEventListener('click', e => {
   if (!e.target.matches('.filter-btn')) return;
   document.getElementById('filters2').querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -211,13 +664,74 @@ document.getElementById('filters2').addEventListener('click', e => {
   render();
 });
 
-// Search
+// Search (main catalog)
 document.getElementById('search').addEventListener('input', render);
 
-// Init
+// Equipment card click → open detail
+document.getElementById('grid').addEventListener('click', e => {
+  if (currentTab !== 'equipment') return;
+  const card = e.target.closest('.card[data-eq-id]');
+  if (!card) return;
+  openEquipmentDetail(Number(card.dataset.eqId));
+});
+
+// Back button
+document.getElementById('det-back').addEventListener('click', closeEquipmentDetail);
+
+// Close on Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeEquipmentDetail();
+});
+
+// Linked exercise: remove button
+document.getElementById('det-linked').addEventListener('click', e => {
+  const btn = e.target.closest('.linked-ex-remove');
+  if (!btn) return;
+  toggleExerciseLink(btn.dataset.exId);
+});
+
+// Muscle group toggle
+document.getElementById('det-muscle-groups').addEventListener('click', e => {
+  // Toggle group expand/collapse
+  const header = e.target.closest('.muscle-group-header');
+  if (header) {
+    const group = header.closest('.muscle-group');
+    group.classList.toggle('expanded');
+    return;
+  }
+  // Click exercise row
+  const row = e.target.closest('.ex-option');
+  if (row) {
+    toggleExerciseLink(row.dataset.exId);
+  }
+});
+
+// Search results click
+document.getElementById('det-search-results').addEventListener('click', e => {
+  const row = e.target.closest('.ex-option');
+  if (row) toggleExerciseLink(row.dataset.exId);
+});
+
+// Detail search input
+document.getElementById('det-search').addEventListener('input', e => {
+  const q = e.target.value;
+  const groups = document.getElementById('det-muscle-groups');
+  if (q.trim()) {
+    groups.style.display = 'none';
+    renderSearchResults(q);
+  } else {
+    groups.style.display = '';
+    document.getElementById('det-search-results').style.display = 'none';
+    document.getElementById('det-search-results').innerHTML = '';
+  }
+});
+
+// ===== INIT =====
 Promise.all([loadEquipment(), loadExercises()]).then(() => {
   renderFilters();
   render();
+  // Load link counts in background (non-blocking)
+  loadLinkCounts().then(() => render());
 });
 </script>
 </body>
