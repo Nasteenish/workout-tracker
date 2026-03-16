@@ -51,10 +51,16 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 .modal h3 { margin-bottom: 4px; font-size: 18px; }
 .modal .modal-subtitle { color: #888; font-size: 13px; margin-bottom: 16px; }
 .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: #888; font-size: 24px; cursor: pointer; }
-.type-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-.type-chip { padding: 8px 16px; border-radius: 20px; border: 1px solid #333; background: #222; color: #ccc; cursor: pointer; font-size: 13px; transition: all 0.2s; }
-.type-chip.active { background: #4a9eff; color: #fff; border-color: #4a9eff; }
-.type-chip:hover { border-color: #4a9eff; }
+.modal-search { width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid #333; background: #222; color: #e0e0e0; font-size: 14px; margin-bottom: 12px; }
+.modal-search:focus { outline: none; border-color: #4a9eff; }
+.type-list { max-height: 50vh; overflow-y: auto; -webkit-overflow-scrolling: touch; margin-bottom: 8px; }
+.type-group-label { font-size: 12px; font-weight: 700; color: #4a9eff; text-transform: uppercase; letter-spacing: 1px; padding: 12px 0 6px; border-bottom: 1px solid #222; }
+.type-row { display: flex; align-items: center; gap: 12px; padding: 10px 4px; border-bottom: 1px solid #1a1a1a; cursor: pointer; }
+.type-row:active { background: rgba(74, 158, 255, 0.1); }
+.type-cb { width: 20px; height: 20px; accent-color: #4a9eff; flex-shrink: 0; }
+.type-info { flex: 1; min-width: 0; }
+.type-label { font-size: 14px; font-weight: 500; color: #e0e0e0; }
+.type-examples { font-size: 11px; color: #666; margin-top: 2px; }
 .modal-save { display: block; width: 100%; padding: 14px; border-radius: 12px; border: none; background: #4a9eff; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 16px; }
 .modal-save:disabled { background: #333; color: #666; }
 .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #2a2a2a; color: #4a9eff; padding: 10px 24px; border-radius: 12px; font-size: 14px; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
@@ -85,38 +91,46 @@ const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZi
 const H = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json' };
 
 const ALL_EXERCISE_TYPES = [
-  { key: 'chest_press', label: 'Жим от груди' },
-  { key: 'incline_press', label: 'Жим наклон' },
-  { key: 'decline_press', label: 'Жим вниз' },
-  { key: 'bench', label: 'Скамья' },
-  { key: 'chest_fly', label: 'Разводка' },
-  { key: 'chest_dip', label: 'Отжимания/Дип' },
-  { key: 'pullover', label: 'Пуловер' },
-  { key: 'lat_pulldown', label: 'Тяга верхнего блока' },
-  { key: 'seated_row', label: 'Тяга горизонтальная' },
-  { key: 'back_extension', label: 'Гиперэкстензия' },
-  { key: 'deadlift', label: 'Мёртвая тяга' },
-  { key: 'leg_press', label: 'Жим ногами' },
-  { key: 'leg_extension', label: 'Разгибание ног' },
-  { key: 'lying_leg_curl', label: 'Сгибание ног лёжа' },
-  { key: 'seated_leg_curl', label: 'Сгибание ног сидя' },
-  { key: 'hip_abduction', label: 'Отведение бёдер' },
-  { key: 'hip_adduction', label: 'Приведение бёдер' },
-  { key: 'glute_kickback', label: 'Ягодичный кикбэк' },
-  { key: 'hip_thrust', label: 'Хип траст' },
-  { key: 'squat', label: 'Приседания' },
-  { key: 'lunge', label: 'Выпады' },
-  { key: 'calf', label: 'Икры' },
-  { key: 'shoulder_press', label: 'Жим плечи' },
-  { key: 'lateral_raise', label: 'Махи в стороны' },
-  { key: 'rear_delt', label: 'Задняя дельта' },
-  { key: 'bicep_curl', label: 'Бицепс' },
-  { key: 'preacher_curl', label: 'Скамья Скотта' },
-  { key: 'tricep_extension', label: 'Трицепс' },
-  { key: 'tricep_dip', label: 'Трицепс дип' },
-  { key: 'crunch', label: 'Пресс' },
-  { key: 'torso_rotation', label: 'Ротация торса' },
-  { key: 'smith_machine', label: 'Смит' },
+  // Грудь
+  { key: 'chest_press', label: 'Жим от груди (горизонтальный)', group: 'Грудь', examples: 'Chest Press, Iso-Lateral Chest Press' },
+  { key: 'incline_press', label: 'Жим от груди (наклонный)', group: 'Грудь', examples: 'Incline Chest Press, Incline Bench Press' },
+  { key: 'decline_press', label: 'Жим от груди (вниз)', group: 'Грудь', examples: 'Decline Bench Press' },
+  { key: 'bench', label: 'Жим лёжа (скамья)', group: 'Грудь', examples: 'Bench Press, Floor Press, Hex Press' },
+  { key: 'chest_fly', label: 'Разводка / Бабочка / Кроссовер', group: 'Грудь', examples: 'Chest Fly, Butterfly, Cable Crossover' },
+  { key: 'chest_dip', label: 'Отжимания на брусьях / Дип', group: 'Грудь', examples: 'Chest Dip, Seated Dip Machine' },
+  { key: 'pullover', label: 'Пуловер', group: 'Грудь', examples: 'Pullover' },
+  // Спина
+  { key: 'lat_pulldown', label: 'Тяга верхнего блока / Подтягивания', group: 'Спина', examples: 'Lat Pulldown, Pull Up, Chin Up' },
+  { key: 'seated_row', label: 'Тяга горизонтальная / Тяга с опорой', group: 'Спина', examples: 'Seated Row, Iso-Lateral Row, T-Bar Row, Chest Supported Row, Bent Over Row' },
+  { key: 'back_extension', label: 'Гиперэкстензия', group: 'Спина', examples: 'Back Extension, Hyperextension' },
+  { key: 'deadlift', label: 'Мёртвая тяга / Румынская тяга', group: 'Спина', examples: 'Deadlift, Romanian Deadlift, Straight Leg Deadlift' },
+  // Ноги
+  { key: 'leg_press', label: 'Жим ногами', group: 'Ноги', examples: 'Leg Press, Leg Press Horizontal, Single Leg Press' },
+  { key: 'squat', label: 'Приседания / Хак-присед / Болгарские выпады', group: 'Ноги', examples: 'Hack Squat, Squat, Belt Squat, Pendulum Squat, Bulgarian Split Squat' },
+  { key: 'leg_extension', label: 'Разгибание ног', group: 'Ноги', examples: 'Leg Extension, Single Leg Extension' },
+  { key: 'leg_curl', label: 'Сгибание ног (общее)', group: 'Ноги', examples: 'Leg Curl' },
+  { key: 'lying_leg_curl', label: 'Сгибание ног лёжа', group: 'Ноги', examples: 'Lying Leg Curl' },
+  { key: 'seated_leg_curl', label: 'Сгибание ног сидя', group: 'Ноги', examples: 'Seated Leg Curl' },
+  { key: 'hip_abduction', label: 'Отведение бёдер', group: 'Ноги', examples: 'Hip Abduction, Cable Hip Abduction' },
+  { key: 'hip_adduction', label: 'Приведение бёдер', group: 'Ноги', examples: 'Hip Adduction' },
+  { key: 'glute_kickback', label: 'Ягодичный кикбэк / Rear Kick', group: 'Ноги', examples: 'Glute Kickback, Rear Kick' },
+  { key: 'hip_thrust', label: 'Хип траст / Ягодичный мост', group: 'Ноги', examples: 'Hip Thrust, Glute Bridge' },
+  { key: 'calf', label: 'Икры (подъём на носки)', group: 'Ноги', examples: 'Calf Raise, Standing/Seated Calf Raise, Tibial Raise' },
+  { key: 'lunge', label: 'Выпады', group: 'Ноги', examples: 'Lunge, Walking Lunge, Reverse Lunge' },
+  // Плечи
+  { key: 'shoulder_press', label: 'Жим на плечи', group: 'Плечи', examples: 'Shoulder Press, Overhead Press' },
+  { key: 'lateral_raise', label: 'Махи в стороны', group: 'Плечи', examples: 'Lateral Raise' },
+  { key: 'rear_delt', label: 'Задняя дельта / Face Pull', group: 'Плечи', examples: 'Rear Delt Reverse Fly, Face Pull' },
+  // Руки
+  { key: 'bicep_curl', label: 'Бицепс (сгибание рук)', group: 'Руки', examples: 'Bicep Curl, Hammer Curl, Concentration Curl' },
+  { key: 'preacher_curl', label: 'Скамья Скотта', group: 'Руки', examples: 'Preacher Curl' },
+  { key: 'tricep_extension', label: 'Трицепс (разгибание)', group: 'Руки', examples: 'Triceps Extension, Triceps Pushdown, Skull Crusher' },
+  { key: 'tricep_dip', label: 'Трицепс дип', group: 'Руки', examples: 'Triceps Dip' },
+  // Кор
+  { key: 'crunch', label: 'Пресс (скручивания)', group: 'Кор', examples: 'Crunch, Sit Up, Hanging Knee Raise, Leg Raise' },
+  { key: 'torso_rotation', label: 'Ротация торса', group: 'Кор', examples: 'Torso Rotation' },
+  // Другое
+  { key: 'smith_machine', label: 'Машина Смита', group: 'Другое', examples: 'Smith Machine' },
 ];
 
 let equipmentData = [];
@@ -252,20 +266,39 @@ function render() {
 function openEditModal(catalogId) {
   var item = equipmentData.find(function(e) { return e.id === catalogId; });
   if (!item) return;
-  var currentTypes = item.exercise_types || [];
+  var currentTypes = (item.exercise_types || []).slice();
 
   var overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
+
+  // Group exercises
+  var groups = {};
+  ALL_EXERCISE_TYPES.forEach(function(t) {
+    if (!groups[t.group]) groups[t.group] = [];
+    groups[t.group].push(t);
+  });
+
+  var listHtml = '';
+  for (var g in groups) {
+    listHtml += '<div class="type-group-label">' + g + '</div>';
+    groups[g].forEach(function(t) {
+      var checked = currentTypes.indexOf(t.key) !== -1 ? ' checked' : '';
+      listHtml += '<label class="type-row" data-search="' + (t.label + ' ' + t.examples + ' ' + t.key).toLowerCase() + '">'
+        + '<input type="checkbox" class="type-cb" data-type="' + t.key + '"' + checked + '>'
+        + '<div class="type-info">'
+        + '<div class="type-label">' + t.label + '</div>'
+        + '<div class="type-examples">' + t.examples + '</div>'
+        + '</div>'
+        + '</label>';
+    });
+  }
+
   overlay.innerHTML = '<div class="modal" style="position:relative;">'
     + '<button class="modal-close" id="modal-close">&times;</button>'
     + '<h3>' + item.brand + ' ' + item.name + '</h3>'
-    + '<div class="modal-subtitle">Выберите типы упражнений для этого тренажёра</div>'
-    + '<div class="type-chips" id="type-chips">'
-    + ALL_EXERCISE_TYPES.map(function(t) {
-        var active = currentTypes.indexOf(t.key) !== -1 ? ' active' : '';
-        return '<div class="type-chip' + active + '" data-type="' + t.key + '">' + t.label + '</div>';
-      }).join('')
-    + '</div>'
+    + '<div class="modal-subtitle">Отметьте упражнения для этого тренажёра</div>'
+    + '<input type="text" class="modal-search" id="modal-search" placeholder="Поиск упражнения...">'
+    + '<div class="type-list" id="type-list">' + listHtml + '</div>'
     + '<button class="modal-save" id="modal-save">Сохранить</button>'
     + '</div>';
 
@@ -275,17 +308,31 @@ function openEditModal(catalogId) {
   overlay.querySelector('#modal-close').onclick = function() { overlay.remove(); };
   overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
 
-  // Toggle chips
-  overlay.querySelector('#type-chips').addEventListener('click', function(e) {
-    var chip = e.target.closest('.type-chip');
-    if (chip) chip.classList.toggle('active');
+  // Search
+  overlay.querySelector('#modal-search').addEventListener('input', function() {
+    var q = this.value.toLowerCase();
+    var rows = overlay.querySelectorAll('.type-row');
+    var labels = overlay.querySelectorAll('.type-group-label');
+    rows.forEach(function(row) {
+      row.style.display = (!q || row.dataset.search.indexOf(q) !== -1) ? '' : 'none';
+    });
+    // Hide empty group labels
+    labels.forEach(function(lbl) {
+      var next = lbl.nextElementSibling;
+      var hasVisible = false;
+      while (next && !next.classList.contains('type-group-label')) {
+        if (next.style.display !== 'none') hasVisible = true;
+        next = next.nextElementSibling;
+      }
+      lbl.style.display = hasVisible ? '' : 'none';
+    });
   });
 
   // Save
   overlay.querySelector('#modal-save').addEventListener('click', async function() {
-    var chips = overlay.querySelectorAll('.type-chip.active');
+    var cbs = overlay.querySelectorAll('.type-cb:checked');
     var types = [];
-    chips.forEach(function(c) { types.push(c.dataset.type); });
+    cbs.forEach(function(c) { types.push(c.dataset.type); });
 
     var btn = overlay.querySelector('#modal-save');
     btn.disabled = true;
@@ -303,7 +350,8 @@ function openEditModal(catalogId) {
         render();
         overlay.remove();
       } else {
-        btn.textContent = 'Ошибка — попробуйте ещё';
+        var txt = await r.text();
+        btn.textContent = 'Ошибка: ' + r.status;
         btn.disabled = false;
       }
     } catch(e) {
