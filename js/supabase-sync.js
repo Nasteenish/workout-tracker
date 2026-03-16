@@ -151,15 +151,8 @@ const SupaSync = {
                         }
                     }
                 }
-                // Merge exerciseEquipment — keep all from both sides
-                if (other.exerciseEquipment) {
-                    if (!base.exerciseEquipment) base.exerciseEquipment = {};
-                    for (var ek in other.exerciseEquipment) {
-                        if (!(ek in base.exerciseEquipment) && other.exerciseEquipment[ek]) {
-                            base.exerciseEquipment[ek] = other.exerciseEquipment[ek];
-                        }
-                    }
-                }
+                // exerciseEquipment: use base (newer) side only — no merge,
+                // because merge resurrects deleted equipment bindings
                 base._lastModified = Date.now();
                 // Save merged result locally and push to cloud
                 localStorage.setItem(localStorageKey, JSON.stringify(base));

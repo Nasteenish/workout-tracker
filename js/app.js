@@ -35,6 +35,22 @@ const App = {
             localStorage.setItem('_fix_choices_v1', '1');
         }
 
+        // One-time: remove gym80 Abdominal from D2E1 (wrong binding)
+        if (!localStorage.getItem('_fix_d2e1_eq')) {
+            try {
+                var keys2 = Object.keys(localStorage);
+                for (var ki2 = 0; ki2 < keys2.length; ki2++) {
+                    if (keys2[ki2].indexOf('wt_data_') !== 0) continue;
+                    var dd2 = JSON.parse(localStorage.getItem(keys2[ki2]) || '{}');
+                    if (dd2.exerciseEquipment && dd2.exerciseEquipment.D2E1 === 'eq_1773590540310') {
+                        delete dd2.exerciseEquipment.D2E1;
+                        localStorage.setItem(keys2[ki2], JSON.stringify(dd2));
+                    }
+                }
+            } catch(e) {}
+            localStorage.setItem('_fix_d2e1_eq', '1');
+        }
+
         // One-time: remove Precor Seated Leg Curl from D1E2 (test data)
         if (!localStorage.getItem('_fix_precor_d1e2')) {
             var allUsers = Storage.getUsers ? Storage.getUsers() : [];
