@@ -1,0 +1,2147 @@
+[
+  {
+    "nameRu": "Подъём на бицепс 21",
+    "name": "21s Bicep Curl",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Ножницы на пресс",
+    "name": "Ab Scissors",
+    "category": "core"
+  },
+  {
+    "nameRu": "Ролик для пресса",
+    "name": "Ab Wheel",
+    "category": "core"
+  },
+  {
+    "nameRu": "Аэробика",
+    "name": "Aerobics",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Велосипед в воздухе",
+    "name": "Air Bike",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Жим Арнольда (с гантелями)",
+    "name": "Arnold Press (Dumbbell)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Вокруг света",
+    "name": "Around The World",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Приседание «пистолетик» (с помощью)",
+    "name": "Assisted Pistol Squats",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Гиперэкстензия",
+    "name": "Back Extension (Hyperextension)",
+    "category": "core"
+  },
+  {
+    "nameRu": "Разгибание спины (в тренажёре)",
+    "name": "Back Extension (Machine)",
+    "category": "core"
+  },
+  {
+    "nameRu": "Гиперэкстензия (с отягощением)",
+    "name": "Back Extension (Weighted Hyperextension)",
+    "category": "core"
+  },
+  {
+    "nameRu": "Броски мяча в пол",
+    "name": "Ball Slams",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Разведение рук с резиной",
+    "name": "Band Pullaparts",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Канатные волны",
+    "name": "Battle Ropes",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Сгибание запястий за спиной (со штангой)",
+    "name": "Behind the Back Bicep Wrist Curl (Barbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Сгибание рук за спиной (блок)",
+    "name": "Behind the Back Curl (Cable)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Присед с поясом (тренажёр)",
+    "name": "Belt Squat (Machine)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Обратные отжимания от скамьи",
+    "name": "Bench Dip",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Жим лёжа узким хватом (со штангой)",
+    "name": "Bench Press - Close Grip (Barbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Жим лёжа широким хватом (со штангой)",
+    "name": "Bench Press - Wide Grip (Barbell)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Жим лёжа (со штангой)",
+    "name": "Bench Press (Barbell)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Жим лёжа (на блоке)",
+    "name": "Bench Press (Cable)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Жим лёжа (с гантелями)",
+    "name": "Bench Press (Dumbbell)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Жим лёжа (в Смите)",
+    "name": "Bench Press (Smith Machine)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Тяга в наклоне (с резиной)",
+    "name": "Bent Over Row (Band)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Тяга в наклоне (со штангой)",
+    "name": "Bent Over Row (Barbell)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Тяга в наклоне (с гантелями)",
+    "name": "Bent Over Row (Dumbbell)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Подъём на бицепс (со штангой)",
+    "name": "Bicep Curl (Barbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Подъём на бицепс (на блоке)",
+    "name": "Bicep Curl (Cable)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Подъём на бицепс (с гантелями)",
+    "name": "Bicep Curl (Dumbbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Подъём на бицепс (в тренажёре)",
+    "name": "Bicep Curl (Machine)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Подъём на бицепс (в петлях TRX)",
+    "name": "Bicep Curl (Suspension)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Велосипедные скручивания",
+    "name": "Bicycle Crunch",
+    "category": "core"
+  },
+  {
+    "nameRu": "Велосипедные скручивания с поднятыми ногами",
+    "name": "Bicycle Crunch Raised Legs",
+    "category": "core"
+  },
+  {
+    "nameRu": "Бёрд-дог",
+    "name": "Bird Dog",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Прыжки на тумбу",
+    "name": "Box Jump",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Присед на ящик",
+    "name": "Box Squat",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Присед на ящик (со штангой)",
+    "name": "Box Squat (Barbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Бокс",
+    "name": "Boxing",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Болгарские сплит-приседания",
+    "name": "Bulgarian Split Squat",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Бёрпи",
+    "name": "Burpee",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Бёрпи через штангу",
+    "name": "Burpee Over the Bar",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Бабочка (пек-дек)",
+    "name": "Butterfly (Pec Deck)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Жим Палоффа (на блоке)",
+    "name": "Cable Core Palloff Press",
+    "category": "core"
+  },
+  {
+    "nameRu": "Скручивание на блоке",
+    "name": "Cable Crunch",
+    "category": "core"
+  },
+  {
+    "nameRu": "Сведение рук в кроссовере",
+    "name": "Cable Fly Crossovers",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Протяжка на блоке между ног",
+    "name": "Cable Pull Through",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Вращение корпуса на блоке (снизу вверх)",
+    "name": "Cable Twist (Down to up)",
+    "category": "core"
+  },
+  {
+    "nameRu": "Вращение корпуса на блоке (сверху вниз)",
+    "name": "Cable Twist (Up to down)",
+    "category": "core"
+  },
+  {
+    "nameRu": "Подъём на носки (в тренажёре)",
+    "name": "Calf Extension (Machine)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Жим носками (в тренажёре)",
+    "name": "Calf Press (Machine)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Отжимания на брусьях (на грудь)",
+    "name": "Chest Dip",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Отжимания на брусьях на грудь (с помощью)",
+    "name": "Chest Dip (Assisted)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Отжимания на брусьях на грудь (с отягощением)",
+    "name": "Chest Dip (Weighted)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Разведение на грудь (с резиной)",
+    "name": "Chest Fly (Band)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Разведение на грудь (с гантелями)",
+    "name": "Chest Fly (Dumbbell)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Разведение на грудь (в тренажёре)",
+    "name": "Chest Fly (Machine)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Разведение на грудь (в петлях TRX)",
+    "name": "Chest Fly (Suspension)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Жим от груди (с резиной)",
+    "name": "Chest Press (Band)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Жим от груди (в тренажёре)",
+    "name": "Chest Press (Machine)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Тяга с упором в наклонную скамью (с гантелями)",
+    "name": "Chest Supported Incline Row (Dumbbell)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Обратные разведения с упором в скамью (с гантелями)",
+    "name": "Chest Supported Reverse Fly (Dumbbell)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Y-подъёмы с упором в скамью (с гантелями)",
+    "name": "Chest Supported Y Raise (Dumbbell)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Подтягивание обратным хватом",
+    "name": "Chin Up",
+    "category": "back"
+  },
+  {
+    "nameRu": "Подтягивание обратным хватом (с помощью)",
+    "name": "Chin Up (Assisted)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Подтягивание обратным хватом (с отягощением)",
+    "name": "Chin Up (Weighted)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Ракушка",
+    "name": "Clamshell",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Отжимания с хлопком",
+    "name": "Clap Push Ups",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Взятие на грудь",
+    "name": "Clean",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Толчок (взятие на грудь и толчок)",
+    "name": "Clean and Jerk",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Взятие на грудь и жим",
+    "name": "Clean and Press",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Тяга рывковая (для взятия на грудь)",
+    "name": "Clean Pull",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Скалолазание",
+    "name": "Climbing",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Концентрированный подъём на бицепс",
+    "name": "Concentration Curl",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Перекрёстный подъём хватом молот",
+    "name": "Cross Body Hammer Curl",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Скручивание",
+    "name": "Crunch",
+    "category": "core"
+  },
+  {
+    "nameRu": "Скручивание (в тренажёре)",
+    "name": "Crunch (Machine)",
+    "category": "core"
+  },
+  {
+    "nameRu": "Скручивание (с отягощением)",
+    "name": "Crunch (Weighted)",
+    "category": "core"
+  },
+  {
+    "nameRu": "Перекрёстный выпад (с гантелями)",
+    "name": "Curtsy Lunge (Dumbbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Велосипед",
+    "name": "Cycling",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "«Мёртвый жук»",
+    "name": "Dead Bug",
+    "category": "core"
+  },
+  {
+    "nameRu": "Вис на перекладине",
+    "name": "Dead Hang",
+    "category": "back"
+  },
+  {
+    "nameRu": "Становая тяга (с резиной)",
+    "name": "Deadlift (Band)",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Становая тяга (со штангой)",
+    "name": "Deadlift (Barbell)",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Становая тяга (с гантелями)",
+    "name": "Deadlift (Dumbbell)",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Становая тяга (в Смите)",
+    "name": "Deadlift (Smith Machine)",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Становая тяга (с трэп-грифом)",
+    "name": "Deadlift (Trap bar)",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Становая тяга с высокой протяжкой",
+    "name": "Deadlift High Pull",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Жим лёжа на наклонной скамье вниз (со штангой)",
+    "name": "Decline Bench Press (Barbell)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Жим лёжа на наклонной скамье вниз (с гантелями)",
+    "name": "Decline Bench Press (Dumbbell)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Жим лёжа на наклонной скамье вниз (в тренажёре)",
+    "name": "Decline Bench Press (Machine)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Жим лёжа на наклонной скамье вниз (в Смите)",
+    "name": "Decline Bench Press (Smith Machine)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Разведение на наклонной скамье вниз (с гантелями)",
+    "name": "Decline Chest Fly (Dumbbell)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Скручивание на наклонной скамье",
+    "name": "Decline Crunch",
+    "category": "core"
+  },
+  {
+    "nameRu": "Скручивание на наклонной скамье (с отягощением)",
+    "name": "Decline Crunch (Weighted)",
+    "category": "core"
+  },
+  {
+    "nameRu": "Отжимания с ногами на возвышении",
+    "name": "Decline Push Up",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Алмазные отжимания",
+    "name": "Diamond Push Up",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Собака мордой вниз",
+    "name": "Downward Dog",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Подъём штанги «протяжкой» вдоль тела",
+    "name": "Drag Curl",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Флаг дракона",
+    "name": "Dragon Flag",
+    "category": "core"
+  },
+  {
+    "nameRu": "Стрекоза",
+    "name": "Dragonfly",
+    "category": "core"
+  },
+  {
+    "nameRu": "Тяга гантели в наклоне",
+    "name": "Dumbbell Row",
+    "category": "back"
+  },
+  {
+    "nameRu": "Рывок гантели",
+    "name": "Dumbbell Snatch",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Жим гантелей с сжатием",
+    "name": "Dumbbell Squeeze Press",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Зашагивания с гантелями",
+    "name": "Dumbbell Step Up",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Локоть к колену",
+    "name": "Elbow to Knee",
+    "category": "core"
+  },
+  {
+    "nameRu": "Эллиптический тренажёр",
+    "name": "Elliptical Trainer",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Подъём на бицепс (с EZ-грифом)",
+    "name": "EZ Bar Biceps Curl",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Фейс-пул (тяга к лицу)",
+    "name": "Face Pull",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Прогулка фермера",
+    "name": "Farmers Walk",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Прогулка фермера",
+    "name": "Farmers Walk (Distance Duration)",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Жим лёжа с поднятыми ногами",
+    "name": "Feet Up Bench Press (Barbell)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Пожарный гидрант",
+    "name": "Fire Hydrants",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Жим лёжа с пола (со штангой)",
+    "name": "Floor Press (Barbell)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Жим лёжа с пола (с гантелями)",
+    "name": "Floor Press (Dumbbell)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Обратные отжимания от пола на трицепс",
+    "name": "Floor Triceps Dip",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Махи ногами (ножницы)",
+    "name": "Flutter Kicks",
+    "category": "core"
+  },
+  {
+    "nameRu": "Лягушачьи прыжки",
+    "name": "Frog Jumps",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Лягушачий мост (с гантелью)",
+    "name": "Frog Pumps (Dumbbell)",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Передний вис (удержание)",
+    "name": "Front Lever Hold",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Подъём в передний вис",
+    "name": "Front Lever Raise",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Подъём перед собой (с резиной)",
+    "name": "Front Raise (Band)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Подъём перед собой (со штангой)",
+    "name": "Front Raise (Barbell)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Подъём перед собой (на блоке)",
+    "name": "Front Raise (Cable)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Подъём перед собой (с гантелями)",
+    "name": "Front Raise (Dumbbell)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Подъём перед собой (в петлях TRX)",
+    "name": "Front Raise (Suspension)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Фронтальное приседание",
+    "name": "Front Squat",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Полное приседание",
+    "name": "Full Squat",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Ягодичный мостик",
+    "name": "Glute Bridge",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Ягодично-бедренный подъём (GHR)",
+    "name": "Glute Ham Raise",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Отведение ноги назад (в тренажёре)",
+    "name": "Glute Kickback (Machine)",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Отведение ноги назад на полу",
+    "name": "Glute Kickback on Floor",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Гоблет-присед (кубковый присед)",
+    "name": "Goblet Squat",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Гуд морнинг (со штангой)",
+    "name": "Good Morning (Barbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Тяга «горилла» (с гирей)",
+    "name": "Gorilla Row (Kettlebell)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Гакк-приседания",
+    "name": "Hack Squat",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Гакк-присед (в тренажёре)",
+    "name": "Hack Squat (Machine)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Молотковый подъём (с резиной)",
+    "name": "Hammer Curl (Band)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Молотковый подъём (на блоке)",
+    "name": "Hammer Curl (Cable)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Молотковый подъём (с гантелями)",
+    "name": "Hammer Curl (Dumbbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Стойка на руках (удержание)",
+    "name": "Handstand Hold",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Отжимания в стойке на руках",
+    "name": "Handstand Push Up",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Взятие на грудь с виса",
+    "name": "Hang Clean",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Рывок с виса",
+    "name": "Hang Snatch",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Подъём коленей в висе",
+    "name": "Hanging Knee Raise",
+    "category": "core"
+  },
+  {
+    "nameRu": "Подъём ног в висе",
+    "name": "Hanging Leg Raise",
+    "category": "core"
+  },
+  {
+    "nameRu": "Касания пяток",
+    "name": "Heel Taps",
+    "category": "core"
+  },
+  {
+    "nameRu": "Жим гантелей нейтральным хватом (с гантелями)",
+    "name": "Hex Press (Dumbbell)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Подскоки с высоким подъёмом колена",
+    "name": "High Knee Skips",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Бег с высоким подъёмом колена",
+    "name": "High Knees",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "ВИИТ",
+    "name": "HIIT",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Пеший поход",
+    "name": "Hiking",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Разведение ног (в тренажёре)",
+    "name": "Hip Abduction (Machine)",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Сведение ног (в тренажёре)",
+    "name": "Hip Adduction (Machine)",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Ягодичный мост",
+    "name": "Hip Thrust",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Ягодичный мост (со штангой)",
+    "name": "Hip Thrust (Barbell)",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Ягодичный мост (в тренажёре)",
+    "name": "Hip Thrust (Machine)",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Ягодичный мост в Смите",
+    "name": "Hip Thrust (Smith Machine)",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Качели на спине (Hollow Rock)",
+    "name": "Hollow Rock",
+    "category": "core"
+  },
+  {
+    "nameRu": "Жим лёжа на наклонной скамье (со штангой)",
+    "name": "Incline Bench Press (Barbell)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Жим лёжа на наклонной скамье (с гантелями)",
+    "name": "Incline Bench Press (Dumbbell)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Жим лёжа на наклонной скамье (в Смите)",
+    "name": "Incline Bench Press (Smith Machine)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Разведение на наклонной скамье (с гантелями)",
+    "name": "Incline Chest Fly (Dumbbell)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Жим от груди на наклонной скамье (в тренажёре)",
+    "name": "Incline Chest Press (Machine)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Отжимания с руками на возвышении",
+    "name": "Incline Push Ups",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Австралийские подтягивания (горизонтальная тяга)",
+    "name": "Inverted Row",
+    "category": "back"
+  },
+  {
+    "nameRu": "Жим от груди раздельный (в тренажёре)",
+    "name": "Iso-Lateral Chest Press (Machine)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Верхняя тяга раздельная (в тренажёре)",
+    "name": "Iso-Lateral High Row (Machine)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Нижняя тяга раздельная",
+    "name": "Iso-Lateral Low Row",
+    "category": "back"
+  },
+  {
+    "nameRu": "Тяга раздельная (в тренажёре)",
+    "name": "Iso-Lateral Row (Machine)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Складка (в петлях TRX)",
+    "name": "Jack Knife (Suspension)",
+    "category": "core"
+  },
+  {
+    "nameRu": "Складка",
+    "name": "Jackknife Sit Up",
+    "category": "core"
+  },
+  {
+    "nameRu": "JM-жим (со штангой)",
+    "name": "JM Press (Barbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Скакалка",
+    "name": "Jump Rope",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Шраги с прыжком",
+    "name": "Jump Shrug",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Приседание с выпрыгиванием",
+    "name": "Jump Squat",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Прыжки с разведением рук и ног",
+    "name": "Jumping Jack",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Выпады с прыжком",
+    "name": "Jumping Lunge",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Вращение гири вокруг тела",
+    "name": "Kettlebell Around the World",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Взятие гири на грудь",
+    "name": "Kettlebell Clean",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Подъём на бицепс (с гирей)",
+    "name": "Kettlebell Curl",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Гоблет-присед с гирей",
+    "name": "Kettlebell Goblet Squat",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Высокая протяжка (с гирей)",
+    "name": "Kettlebell High Pull",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Жим (с гирей)",
+    "name": "Kettlebell Shoulder Press",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Рывок гири",
+    "name": "Kettlebell Snatch",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Махи гирей (свинг)",
+    "name": "Kettlebell Swing",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Турецкий подъём (с гирей)",
+    "name": "Kettlebell Turkish Get Up",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Подтягивание киппингом",
+    "name": "Kipping Pull Up",
+    "category": "back"
+  },
+  {
+    "nameRu": "Подъём коленей на брусьях",
+    "name": "Knee Raise Parallel Bars",
+    "category": "core"
+  },
+  {
+    "nameRu": "Тяга верхнего блока с колен (с резиной)",
+    "name": "Kneeling Pulldown (band)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Отжимания с колен",
+    "name": "Kneeling Push Up",
+    "category": "chest"
+  },
+  {
+    "nameRu": "L-удержание",
+    "name": "L-Sit Hold",
+    "category": "core"
+  },
+  {
+    "nameRu": "Лэндмайн 180",
+    "name": "Landmine 180",
+    "category": "core"
+  },
+  {
+    "nameRu": "Тяга лэндмайн",
+    "name": "Landmine Row",
+    "category": "back"
+  },
+  {
+    "nameRu": "Приседание с жимом (лэндмайн)",
+    "name": "Landmine Squat and Press",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Тяга верхнего блока узким хватом (на блоке)",
+    "name": "Lat Pulldown - Close Grip (Cable)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Тяга верхнего блока (с резиной)",
+    "name": "Lat Pulldown (Band)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Тяга верхнего блока (на блоке)",
+    "name": "Lat Pulldown (Cable)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Тяга верхнего блока (в тренажёре)",
+    "name": "Lat Pulldown (Machine)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Ходьба с резиной в стороны",
+    "name": "Lateral Band Walks",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Боковой прыжок на тумбу",
+    "name": "Lateral Box Jump",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Боковые подъёмы ног",
+    "name": "Lateral Leg Raises",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Боковой выпад",
+    "name": "Lateral Lunge",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Махи в стороны (с резиной)",
+    "name": "Lateral Raise (Band)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Махи в стороны (на блоке)",
+    "name": "Lateral Raise (Cable)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Махи в стороны (с гантелями)",
+    "name": "Lateral Raise (Dumbbell)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Махи в стороны (в тренажёре)",
+    "name": "Lateral Raise (Machine)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Боковое приседание",
+    "name": "Lateral Squat",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Разгибание ног (в тренажёре)",
+    "name": "Leg Extension (Machine)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Жим ногами (в тренажёре)",
+    "name": "Leg Press (Machine)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Горизонтальный жим ногами (в тренажёре)",
+    "name": "Leg Press Horizontal (Machine)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Подъём ног на брусьях",
+    "name": "Leg Raise Parallel Bars",
+    "category": "core"
+  },
+  {
+    "nameRu": "Сведение рук в кроссовере снизу",
+    "name": "Low Cable Fly Crossovers",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Низкая тяга (в петлях TRX)",
+    "name": "Low Row (Suspension)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Выпад",
+    "name": "Lunge",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Выпад (со штангой)",
+    "name": "Lunge (Barbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Выпад (с гантелями)",
+    "name": "Lunge (Dumbbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Подъём коленей лёжа",
+    "name": "Lying Knee Raise",
+    "category": "core"
+  },
+  {
+    "nameRu": "Сгибание ног лёжа (в тренажёре)",
+    "name": "Lying Leg Curl (Machine)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Подъём ног лёжа",
+    "name": "Lying Leg Raise",
+    "category": "core"
+  },
+  {
+    "nameRu": "Сгибание шеи лёжа",
+    "name": "Lying Neck Curls",
+    "category": "core"
+  },
+  {
+    "nameRu": "Сгибание шеи лёжа (с отягощением)",
+    "name": "Lying Neck Curls (Weighted)",
+    "category": "core"
+  },
+  {
+    "nameRu": "Разгибание шеи лёжа",
+    "name": "Lying Neck Extension",
+    "category": "core"
+  },
+  {
+    "nameRu": "Разгибание шеи лёжа (с отягощением)",
+    "name": "Lying Neck Extension (Weighted)",
+    "category": "core"
+  },
+  {
+    "nameRu": "Тяга Мэдоуза (со штангой)",
+    "name": "Meadows Rows (Barbell)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Скалолаз",
+    "name": "Mountain Climber",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Выход силой",
+    "name": "Muscle Up",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Негативные подтягивания",
+    "name": "Negative Pull Up",
+    "category": "back"
+  },
+  {
+    "nameRu": "Нордические сгибания (на бицепс бедра)",
+    "name": "Nordic Hamstrings Curls",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Косые скручивания",
+    "name": "Oblique Crunch",
+    "category": "core"
+  },
+  {
+    "nameRu": "Отжимание одной рукой",
+    "name": "One Arm Push Up",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Сгибание на бицепс из-за головы (на блоке)",
+    "name": "Overhead Curl (Cable)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Выпад с гантелей над головой",
+    "name": "Overhead Dumbbell Lunge",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Подъём блина над головой",
+    "name": "Overhead Plate Raise",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Жим над головой (со штангой)",
+    "name": "Overhead Press (Barbell)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Жим над головой (с гантелями)",
+    "name": "Overhead Press (Dumbbell)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Жим над головой (в Смите)",
+    "name": "Overhead Press (Smith Machine)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Приседание с весом над головой",
+    "name": "Overhead Squat",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Разгибание рук над головой (блок)",
+    "name": "Overhead Triceps Extension (Cable)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Частичный ягодичный мост со штангой",
+    "name": "Partial Glute Bridge (Barbell)",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Приседание с паузой (со штангой)",
+    "name": "Pause Squat (Barbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Тяга Пендли (со штангой)",
+    "name": "Pendlay Row (Barbell)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Маятниковые приседания (в тренажёре)",
+    "name": "Pendulum Squat (Machine)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Отжимание уголком",
+    "name": "Pike Pushup",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Пилатес",
+    "name": "Pilates",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Сгибание «пинвил» (с гантелями)",
+    "name": "Pinwheel Curl (Dumbbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Приседание «пистолетик»",
+    "name": "Pistol Squat",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Планка",
+    "name": "Plank",
+    "category": "core"
+  },
+  {
+    "nameRu": "Отжимание из планки",
+    "name": "Plank Pushup",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Сгибание на бицепс с диском",
+    "name": "Plate Curl",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Подъём диска перед собой",
+    "name": "Plate Front Raise",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Жим с диском",
+    "name": "Plate Press",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Силовой подъём на грудь",
+    "name": "Power Clean",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Силовой рывок",
+    "name": "Power Snatch",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Подъём на бицепс на скамье Скотта (со штангой)",
+    "name": "Preacher Curl (Barbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Подъём на бицепс на скамье Скотта (с гантелями)",
+    "name": "Preacher Curl (Dumbbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Подъём на бицепс на скамье Скотта (в тренажёре)",
+    "name": "Preacher Curl (Machine)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Жим снизу",
+    "name": "Press Under",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Подтягивание",
+    "name": "Pull Up",
+    "category": "back"
+  },
+  {
+    "nameRu": "Подтягивание (с помощью)",
+    "name": "Pull Up (Assisted)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Подтягивание (с резиной)",
+    "name": "Pull Up (Band)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Подтягивание (с отягощением)",
+    "name": "Pull Up (Weighted)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Пуловер (с гантелей)",
+    "name": "Pullover (Dumbbell)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Пуловер (в тренажёре)",
+    "name": "Pullover (Machine)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Швунг жимовой",
+    "name": "Push Press",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Отжимание",
+    "name": "Push Up",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Отжимание узким хватом",
+    "name": "Push Up - Close Grip",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Отжимание (с отягощением)",
+    "name": "Push Up (Weighted)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Тяга с плинтов (рэк-пулл)",
+    "name": "Rack Pull",
+    "category": "back"
+  },
+  {
+    "nameRu": "Разведение на заднюю дельту (на блоке)",
+    "name": "Rear Delt Reverse Fly (Cable)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Разведение на заднюю дельту (с гантелями)",
+    "name": "Rear Delt Reverse Fly (Dumbbell)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Разведение на заднюю дельту (в тренажёре)",
+    "name": "Rear Delt Reverse Fly (Machine)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Отведение ноги назад (тренажёр)",
+    "name": "Rear Kick (Machine)",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Тяга ренегата (с гантелями)",
+    "name": "Renegade Row (Dumbbell)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Обратные скручивания",
+    "name": "Reverse Crunch",
+    "category": "core"
+  },
+  {
+    "nameRu": "Сгибание обратным хватом (со штангой)",
+    "name": "Reverse Curl (Barbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Сгибание обратным хватом (на блоке)",
+    "name": "Reverse Curl (Cable)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Сгибание обратным хватом (с гантелями)",
+    "name": "Reverse Curl (Dumbbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Разведение одной рукой (на блоке)",
+    "name": "Reverse Fly Single Arm (Cable)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Концентрированное сгибание обратным хватом",
+    "name": "Reverse Grip Concentration Curl",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Тяга верхнего блока обратным хватом (на блоке)",
+    "name": "Reverse Grip Lat Pulldown (Cable)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Обратная гиперэкстензия",
+    "name": "Reverse Hyperextension",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Обратный выпад",
+    "name": "Reverse Lunge",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Обратный выпад (со штангой)",
+    "name": "Reverse Lunge (Barbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Обратный выпад (с гантелями)",
+    "name": "Reverse Lunge (Dumbbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Обратная планка",
+    "name": "Reverse Plank",
+    "category": "core"
+  },
+  {
+    "nameRu": "Отжимания на кольцах",
+    "name": "Ring Dips",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Подтягивания на кольцах",
+    "name": "Ring Pull Up",
+    "category": "back"
+  },
+  {
+    "nameRu": "Отжимания на кольцах",
+    "name": "Ring Push Up",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Румынская тяга (со штангой)",
+    "name": "Romanian Deadlift (Barbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Румынская тяга (с гантелями)",
+    "name": "Romanian Deadlift (Dumbbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Сгибание на бицепс с канатом (на блоке)",
+    "name": "Rope Cable Curl",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Тяга каната прямыми руками (на блоке)",
+    "name": "Rope Straight Arm Pulldown",
+    "category": "back"
+  },
+  {
+    "nameRu": "Гребной тренажёр",
+    "name": "Rowing Machine",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Бег",
+    "name": "Running",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Русский твист (без отягощения)",
+    "name": "Russian Twist (Bodyweight)",
+    "category": "core"
+  },
+  {
+    "nameRu": "Русский твист (с отягощением)",
+    "name": "Russian Twist (Weighted)",
+    "category": "core"
+  },
+  {
+    "nameRu": "Подтягивания на лопатки",
+    "name": "Scapular Pull Ups",
+    "category": "back"
+  },
+  {
+    "nameRu": "Тяга нижнего блока сидя — прямой гриф",
+    "name": "Seated Cable Row - Bar Grip",
+    "category": "back"
+  },
+  {
+    "nameRu": "Тяга нижнего блока сидя — широкий хват",
+    "name": "Seated Cable Row - Bar Wide Grip",
+    "category": "back"
+  },
+  {
+    "nameRu": "Тяга нижнего блока сидя — V-рукоять (на блоке)",
+    "name": "Seated Cable Row - V Grip (Cable)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Подъём на носки сидя",
+    "name": "Seated Calf Raise",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Сведение рук сидя (на блоке)",
+    "name": "Seated Chest Flys (Cable)",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Отжимание на брусьях сидя (в тренажёре)",
+    "name": "Seated Dip Machine",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Сгибание на наклонной скамье сидя (с гантелями)",
+    "name": "Seated Incline Curl (Dumbbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Махи в стороны сидя (с гантелями)",
+    "name": "Seated Lateral Raise (Dumbbell)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Сгибание ног сидя (в тренажёре)",
+    "name": "Seated Leg Curl (Machine)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Жим над головой сидя (со штангой)",
+    "name": "Seated Overhead Press (Barbell)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Жим над головой сидя (с гантелями)",
+    "name": "Seated Overhead Press (Dumbbell)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Сгибание запястий сидя ладонями вверх",
+    "name": "Seated Palms Up Wrist Curl",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Тяга сидя (в тренажёре)",
+    "name": "Seated Row (Machine)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Жим на плечи сидя (в тренажёре)",
+    "name": "Seated Shoulder Press (Machine)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Жим на трицепс сидя",
+    "name": "Seated Triceps Press",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Разгибание запястий сидя (со штангой)",
+    "name": "Seated Wrist Extension (Barbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Жим на плечи (с гантелями)",
+    "name": "Shoulder Press (Dumbbell)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Жим на плечи (в тренажёре, диски)",
+    "name": "Shoulder Press (Machine Plates)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Касание плеч в планке",
+    "name": "Shoulder Taps",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Шраги (со штангой)",
+    "name": "Shrug (Barbell)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Шраги (на блоке)",
+    "name": "Shrug (Cable)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Шраги (с гантелями)",
+    "name": "Shrug (Dumbbell)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Шраги (в тренажёре)",
+    "name": "Shrug (Machine)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Шраги (в Смите)",
+    "name": "Shrug (Smith Machine)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Наклон в сторону",
+    "name": "Side Bend",
+    "category": "core"
+  },
+  {
+    "nameRu": "Наклон в сторону (с гантелей)",
+    "name": "Side Bend (Dumbbell)",
+    "category": "core"
+  },
+  {
+    "nameRu": "Боковая планка",
+    "name": "Side Plank",
+    "category": "core"
+  },
+  {
+    "nameRu": "Сведение одной рукой (на блоке)",
+    "name": "Single Arm Cable Crossover",
+    "category": "chest"
+  },
+  {
+    "nameRu": "Тяга одной рукой (на блоке)",
+    "name": "Single Arm Cable Row",
+    "category": "back"
+  },
+  {
+    "nameRu": "Сгибание одной рукой (на блоке)",
+    "name": "Single Arm Curl (Cable)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Жим одной рукой в лэндмайне (со штангой)",
+    "name": "Single Arm Landmine Press (Barbell)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Тяга верхнего блока одной рукой",
+    "name": "Single Arm Lat Pulldown",
+    "category": "back"
+  },
+  {
+    "nameRu": "Махи в сторону одной рукой (на блоке)",
+    "name": "Single Arm Lateral Raise (Cable)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Разгибание на трицепс одной рукой (с гантелей)",
+    "name": "Single Arm Tricep Extension (Dumbbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Разгибание на трицепс одной рукой (на блоке)",
+    "name": "Single Arm Triceps Pushdown (Cable)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Разгибание одной ногой",
+    "name": "Single Leg Extensions",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Ягодичный мостик на одной ноге",
+    "name": "Single Leg Glute Bridge",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Ягодичный мост на одной ноге",
+    "name": "Single Leg Hip Thrust",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Ягодичный мост на одной ноге (с гантелей)",
+    "name": "Single Leg Hip Thrust (Dumbbell)",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Жим ногой (в тренажёре)",
+    "name": "Single Leg Press (Machine)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Румынская тяга на одной ноге (со штангой)",
+    "name": "Single Leg Romanian Deadlift (Barbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Румынская тяга на одной ноге (с гантелей)",
+    "name": "Single Leg Romanian Deadlift (Dumbbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Подъём на носок стоя на одной ноге",
+    "name": "Single Leg Standing Calf Raise",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Подъём на носок стоя на одной ноге (со штангой)",
+    "name": "Single Leg Standing Calf Raise (Barbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Подъём на носок стоя на одной ноге (с гантелей)",
+    "name": "Single Leg Standing Calf Raise (Dumbbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Подъём на носок стоя на одной ноге (в тренажёре)",
+    "name": "Single Leg Standing Calf Raise (Machine)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Сисси-приседание (с отягощением)",
+    "name": "Sissy Squat (Weighted)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Подъём корпуса",
+    "name": "Sit Up",
+    "category": "core"
+  },
+  {
+    "nameRu": "Подъём корпуса (с отягощением)",
+    "name": "Sit Up (Weighted)",
+    "category": "core"
+  },
+  {
+    "nameRu": "Скольжение (скейтинг)",
+    "name": "Skating",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Лыжи",
+    "name": "Skiing",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Французский жим лёжа (со штангой)",
+    "name": "Skullcrusher (Barbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Французский жим лёжа (с гантелями)",
+    "name": "Skullcrusher (Dumbbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Толкание саней",
+    "name": "Sled Push",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Рывок",
+    "name": "Snatch",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Сноуборд",
+    "name": "Snowboarding",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Паучьи сгибания (со штангой)",
+    "name": "Spider Curl (Barbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Паучьи сгибания (с гантелями)",
+    "name": "Spider Curl (Dumbbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Человек-паук (упражнение)",
+    "name": "Spiderman",
+    "category": "core"
+  },
+  {
+    "nameRu": "Сайклинг",
+    "name": "Spinning",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Толчок в ножницы",
+    "name": "Split Jerk",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Сплит-приседание (с гантелями)",
+    "name": "Split Squat (Dumbbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Спринт",
+    "name": "Sprints",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Приседание (с резиной)",
+    "name": "Squat (Band)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Приседание (со штангой)",
+    "name": "Squat (Barbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Приседание (с собственным весом)",
+    "name": "Squat (Bodyweight)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Приседание (с гантелями)",
+    "name": "Squat (Dumbbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Приседание (в тренажёре)",
+    "name": "Squat (Machine)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Приседание (в Смите)",
+    "name": "Squat (Smith Machine)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Приседание (в петлях TRX)",
+    "name": "Squat (Suspension)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Приседание с тягой",
+    "name": "Squat Row",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Степпер",
+    "name": "Stair Machine",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Степпер (этажи)",
+    "name": "Stair Machine (Floors)",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Степпер (шаги)",
+    "name": "Stair Machine (Steps)",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Отведение ноги назад стоя (на блоке)",
+    "name": "Standing Cable Glute Kickbacks",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Подъём на носки стоя",
+    "name": "Standing Calf Raise",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Подъём на носки стоя (со штангой)",
+    "name": "Standing Calf Raise (Barbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Подъём на носки стоя (с гантелями)",
+    "name": "Standing Calf Raise (Dumbbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Подъём на носки стоя (в тренажёре)",
+    "name": "Standing Calf Raise (Machine)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Подъём на носки стоя (в Смите)",
+    "name": "Standing Calf Raise (Smith)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Сгибание ног стоя",
+    "name": "Standing Leg Curls",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Армейский жим стоя (со штангой)",
+    "name": "Standing Military Press (Barbell)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Зашагивание на платформу",
+    "name": "Step Up",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Подтягивание к груди (Жиронда)",
+    "name": "Sternum Pull up (Gironda)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Тяга прямыми руками (на блоке)",
+    "name": "Straight Arm Lat Pulldown (Cable)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Становая тяга на прямых ногах",
+    "name": "Straight Leg Deadlift",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Растяжка",
+    "name": "Stretching",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Становая тяга сумо",
+    "name": "Sumo Deadlift",
+    "category": "glutes"
+  },
+  {
+    "nameRu": "Приседание сумо",
+    "name": "Sumo Squat",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Приседание сумо (со штангой)",
+    "name": "Sumo Squat (Barbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Приседание сумо (с гантелями)",
+    "name": "Sumo Squat (Dumbbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Приседание сумо (с гирей)",
+    "name": "Sumo Squat (Kettlebell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "«Супермен» (гиперэкстензия на полу)",
+    "name": "Superman",
+    "category": "core"
+  },
+  {
+    "nameRu": "Плавание",
+    "name": "Swimming",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Тяга Т-грифа",
+    "name": "T Bar Row",
+    "category": "back"
+  },
+  {
+    "nameRu": "Трастер (со штангой)",
+    "name": "Thruster (Barbell)",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Трастер (с гирей)",
+    "name": "Thruster (Kettlebell)",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Касание носков",
+    "name": "Toe Touch",
+    "category": "core"
+  },
+  {
+    "nameRu": "Носки к перекладине",
+    "name": "Toes to Bar",
+    "category": "core"
+  },
+  {
+    "nameRu": "Вращение корпуса",
+    "name": "Torso Rotation",
+    "category": "core"
+  },
+  {
+    "nameRu": "Беговая дорожка",
+    "name": "Treadmill",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Отжимание на брусьях",
+    "name": "Triceps Dip",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Отжимание на брусьях (с помощью)",
+    "name": "Triceps Dip (Assisted)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Отжимание на брусьях (с отягощением)",
+    "name": "Triceps Dip (Weighted)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Разгибание на трицепс (со штангой)",
+    "name": "Triceps Extension (Barbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Разгибание на трицепс (на блоке)",
+    "name": "Triceps Extension (Cable)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Разгибание на трицепс (с гантелей)",
+    "name": "Triceps Extension (Dumbbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Разгибание на трицепс (в тренажёре)",
+    "name": "Triceps Extension (Machine)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Разгибание на трицепс (в петлях TRX)",
+    "name": "Triceps Extension (Suspension)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Отведение на трицепс (на блоке)",
+    "name": "Triceps Kickback (Cable)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Отведение на трицепс (с гантелей)",
+    "name": "Triceps Kickback (Dumbbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Разгибание на трицепс на блоке",
+    "name": "Triceps Pressdown",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Разгибание рук на верхнем блоке",
+    "name": "Triceps Pushdown",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Разгибание на трицепс с канатом (на блоке)",
+    "name": "Triceps Rope Pushdown",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Тяга к подбородку (со штангой)",
+    "name": "Upright Row (Barbell)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Тяга к подбородку (на блоке)",
+    "name": "Upright Row (Cable)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Тяга к подбородку (с гантелями)",
+    "name": "Upright Row (Dumbbell)",
+    "category": "shoulders"
+  },
+  {
+    "nameRu": "Складка (V-скручивание)",
+    "name": "V Up",
+    "category": "core"
+  },
+  {
+    "nameRu": "Вертикальная тяга (тренажёр)",
+    "name": "Vertical Traction (Machine)",
+    "category": "back"
+  },
+  {
+    "nameRu": "Сгибание рук официанта (гантель)",
+    "name": "Waiter Curl (Dumbbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Ходьба",
+    "name": "Walking",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Выпады в движении (с гантелями)",
+    "name": "Walking Lunge (Dumbbell)",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Бросок мяча в стену",
+    "name": "Wall Ball",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Стульчик у стены",
+    "name": "Wall Sit",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Разминка",
+    "name": "Warm Up",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Подтягивание широким хватом",
+    "name": "Wide Pull Up",
+    "category": "back"
+  },
+  {
+    "nameRu": "Жим на трицепс широким хватом (гантели)",
+    "name": "Wide-Elbow Triceps Press (Dumbbell)",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Роллер для запястий",
+    "name": "Wrist Roller",
+    "category": "arms"
+  },
+  {
+    "nameRu": "Йога",
+    "name": "Yoga",
+    "category": "cardio"
+  },
+  {
+    "nameRu": "Приседание Зерхера",
+    "name": "Zercher Squat",
+    "category": "legs"
+  },
+  {
+    "nameRu": "Подъём Зоттмана (с гантелями)",
+    "name": "Zottman Curl (Dumbbell)",
+    "category": "arms"
+  }
+]
