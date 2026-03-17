@@ -108,7 +108,10 @@ const App = {
         }, 300);
 
         // Route handling
-        window.addEventListener('hashchange', () => this.route());
+        window.addEventListener('hashchange', () => {
+            if (this._swipeLock) return;
+            this.route();
+        });
 
         // Global event delegation
         document.getElementById('app').addEventListener('click', (e) => this.handleClick(e));
@@ -357,6 +360,7 @@ const App = {
         let tabTarget = null;
         let savedScrollY = 0;
         let cfg = null;
+        let originalHash = '';
 
         const W = () => window.innerWidth;
         const removeCompanion = () => { if (companion) { companion.remove(); companion = null; } };
@@ -395,6 +399,7 @@ const App = {
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
             dragging = false; locked = false; isBack = false; isTabSwipe = false; tabTarget = null;
+            originalHash = location.hash;
             removeCompanion();
             if (cfg.preCreate) {
                 companion = createBackCompanion(cfg.companion, cfg.dayNum, cfg.target);
@@ -419,6 +424,7 @@ const App = {
                 if (cfg.mode === 'tabs' && dx < 0 && !cfg.right) { locked = true; return; }
                 if (cfg.mode === 'tabs' && dx > 0 && !cfg.left) { locked = true; return; }
                 dragging = true;
+                this._swipeLock = true;
                 swipingLeft = dx < 0;
                 savedScrollY = window.scrollY;
                 document.documentElement.style.overflow = 'hidden';
@@ -486,12 +492,20 @@ const App = {
             if (isBack) {
                 const app = document.getElementById('app');
                 if (!dragging || dx < 60) {
+                    this._swipeLock = true;
                     app.style.transition = snap;
                     app.style.transform = 'translateX(0)';
                     if (companion) { companion.style.transition = snap; companion.style.transform = `translateX(${-0.28 * W()}px)`; }
-                    setTimeout(() => { removeCompanion(); unlockScroll(); resetApp(app); window.scrollTo(0, savedScrollY); }, 230);
+                    setTimeout(() => {
+                        removeCompanion(); unlockScroll(); resetApp(app);
+                        // iOS native back may have changed the hash during snap-back — restore it
+                        if (location.hash !== originalHash) history.replaceState(null, '', originalHash);
+                        this._swipeLock = false;
+                        window.scrollTo(0, savedScrollY);
+                    }, 230);
                     return;
                 }
+                this._swipeLock = true;
                 app.style.transition = commit;
                 app.style.transform = `translateX(${W() + 20}px)`;
                 if (companion) { companion.style.transition = commit; companion.style.transform = 'translateX(0)'; }
@@ -504,6 +518,7 @@ const App = {
                     this._isBackSwipe = true;
                     this.route(true);
                     this._isBackSwipe = false;
+                    this._swipeLock = false;
                     resetApp(app);
                     unlockScroll();
                     removeCompanion();
@@ -732,16 +747,9 @@ const App = {
             app.style.opacity = '';
             window.scrollTo(0, 0);
             Builder._editingDay = null;
-            if (Storage.isSetup()) {
-                var target = '#/week/' + weekNum + '/day/' + dayNum;
-                if (location.hash === target) {
-                    App.route();
-                } else {
-                    location.hash = target;
-                }
-            } else {
-                location.hash = '#/setup';
-            }
+            var target = Storage.isSetup() ? '#/week/' + weekNum + '/day/' + dayNum : '#/setup';
+            history.replaceState(null, '', target);
+            App.route();
         }, 190);
     },
 
