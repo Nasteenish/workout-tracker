@@ -145,7 +145,20 @@ const App = {
         }, 300);
 
         // Route handling
-        window.addEventListener('hashchange', () => this.route());
+        window.addEventListener('hashchange', () => {
+            if (this._swipeLock) return;
+            if (this._isBackSwipe) {
+                clearTimeout(this._backSwipeFallbackTimer);
+                this._isBackSwipe = false;
+                this.route(true);
+                if (this._pendingSwipeCleanup) {
+                    this._pendingSwipeCleanup();
+                    this._pendingSwipeCleanup = null;
+                }
+                return;
+            }
+            this.route();
+        });
 
         // Global event delegation
         document.getElementById('app').addEventListener('click', (e) => this.handleClick(e));
@@ -456,6 +469,7 @@ const App = {
         let tabTarget = null;
         let savedScrollY = 0;
         let cfg = null;
+        let originalHash = '';
 
         const W = () => window.innerWidth;
         const removeCompanion = () => { if (companion) { companion.remove(); companion = null; } };
@@ -494,6 +508,7 @@ const App = {
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
             dragging = false; locked = false; isBack = false; isTabSwipe = false; tabTarget = null;
+            originalHash = location.hash;
             removeCompanion();
             if (cfg.preCreate) {
                 companion = createBackCompanion(cfg.companion, cfg.dayNum, cfg.target);
@@ -535,6 +550,7 @@ const App = {
                     companion.style.transform = `translateX(${swipingLeft ? W() : -W()}px)`;
                 } else {
                     isBack = true;
+                    this._swipeLock = true;
                     if (!cfg.preCreate) {
                         companion = createBackCompanion(cfg.companion, cfg.dayNum, cfg.target);
                     }
@@ -585,12 +601,20 @@ const App = {
             if (isBack) {
                 const app = document.getElementById('app');
                 if (!dragging || dx < 60) {
+                    this._swipeLock = true;
                     app.style.transition = snap;
                     app.style.transform = 'translateX(0)';
                     if (companion) { companion.style.transition = snap; companion.style.transform = `translateX(${-0.28 * W()}px)`; }
-                    setTimeout(() => { removeCompanion(); unlockScroll(); resetApp(app); window.scrollTo(0, savedScrollY); }, 230);
+                    setTimeout(() => {
+                        removeCompanion(); unlockScroll(); resetApp(app);
+                        // iOS native back may have changed the hash during snap-back — restore it
+                        if (location.hash !== originalHash) history.replaceState(null, '', originalHash);
+                        this._swipeLock = false;
+                        window.scrollTo(0, savedScrollY);
+                    }, 230);
                     return;
                 }
+                this._swipeLock = true;
                 app.style.transition = commit;
                 app.style.transform = `translateX(${W() + 20}px)`;
                 if (companion) { companion.style.transition = commit; companion.style.transform = 'translateX(0)'; }
@@ -598,15 +622,41 @@ const App = {
                 const onCommit = cfg.onCommit;
                 setTimeout(() => {
                     if (onCommit) onCommit();
-                    history.replaceState(null, '', target);
                     app.classList.add('no-animate');
                     this._isBackSwipe = true;
-                    this.route(true);
-                    this._isBackSwipe = false;
-                    resetApp(app);
-                    unlockScroll();
-                    removeCompanion();
-                    window.scrollTo(0, 0);
+
+                    if (location.hash !== originalHash) {
+                        // iOS native back already navigated — just render
+                        this.route(true);
+                        this._isBackSwipe = false;
+                        this._swipeLock = false;
+                        resetApp(app);
+                        unlockScroll();
+                        removeCompanion();
+                        window.scrollTo(0, 0);
+                    } else {
+                        // Pop history entry properly with history.back()
+                        this._pendingSwipeCleanup = () => {
+                            resetApp(app);
+                            unlockScroll();
+                            removeCompanion();
+                            window.scrollTo(0, 0);
+                        };
+                        this._swipeLock = false;
+                        var self = this;
+                        this._backSwipeFallbackTimer = setTimeout(() => {
+                            if (self._isBackSwipe) {
+                                history.replaceState(null, '', target);
+                                self._isBackSwipe = false;
+                                self.route(true);
+                                if (self._pendingSwipeCleanup) {
+                                    self._pendingSwipeCleanup();
+                                    self._pendingSwipeCleanup = null;
+                                }
+                            }
+                        }, 100);
+                        history.back();
+                    }
                 }, 270);
                 return;
             }
@@ -831,16 +881,9 @@ const App = {
             app.style.opacity = '';
             window.scrollTo(0, 0);
             Builder._editingDay = null;
-            if (Storage.isSetup()) {
-                var target = '#/week/' + weekNum + '/day/' + dayNum;
-                if (location.hash === target) {
-                    App.route();
-                } else {
-                    location.hash = target;
-                }
-            } else {
-                location.hash = '#/setup';
-            }
+            var target = Storage.isSetup() ? '#/week/' + weekNum + '/day/' + dayNum : '#/setup';
+            history.replaceState(null, '', target);
+            App.route();
         }, 190);
     },
 
