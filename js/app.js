@@ -71,6 +71,57 @@ const App = {
             localStorage.setItem('_fix_precor_d1e2', '1');
         }
 
+        // One-time: clean orphaned exercise entries + corrupted _gym in log
+        if (!localStorage.getItem('_fix_orphan_log_v1')) {
+            var allUsers3 = Storage.getUsers ? Storage.getUsers() : [];
+            for (var ui3 = 0; ui3 < allUsers3.length; ui3++) {
+                var key3 = 'wt_data_' + allUsers3[ui3].id;
+                try {
+                    var d3 = JSON.parse(localStorage.getItem(key3) || '{}');
+                    if (!d3.log) continue;
+                    var choices3 = d3.exerciseChoices || {};
+                    var changed3 = false;
+                    for (var w3 in d3.log) {
+                        for (var dd3 in d3.log[w3]) {
+                            var dayLog3 = d3.log[w3][dd3];
+                            // Fix corrupted _gym (object instead of string)
+                            if (dayLog3._gym && typeof dayLog3._gym === 'object') {
+                                var chars3 = [];
+                                for (var ci3 = 0; ci3 < Object.keys(dayLog3._gym).length; ci3++) {
+                                    chars3.push(dayLog3._gym[String(ci3)] || '');
+                                }
+                                dayLog3._gym = chars3.join('');
+                                changed3 = true;
+                            }
+                            // Remove orphaned choose_one entries (e.g. D2E1 when D2E1_opt3 is chosen)
+                            for (var exKey3 in dayLog3) {
+                                if (exKey3.charAt(0) === '_') continue;
+                                // Check if this is a base exercise that has _opt variants chosen
+                                for (var ck3 in choices3) {
+                                    var chosen3 = choices3[ck3];
+                                    // If chosen is an _opt variant of this exercise, and exKey3 is the base
+                                    if (chosen3 && chosen3.indexOf(exKey3 + '_opt') === 0 && exKey3 === exKey3.split('_opt')[0]) {
+                                        delete dayLog3[exKey3];
+                                        changed3 = true;
+                                    }
+                                }
+                            }
+                            // Remove empty exercise entries
+                            for (var ek3 in dayLog3) {
+                                if (ek3.charAt(0) === '_') continue;
+                                if (typeof dayLog3[ek3] === 'object' && dayLog3[ek3] !== null && Object.keys(dayLog3[ek3]).length === 0) {
+                                    delete dayLog3[ek3];
+                                    changed3 = true;
+                                }
+                            }
+                        }
+                    }
+                    if (changed3) localStorage.setItem(key3, JSON.stringify(d3));
+                } catch(e) {}
+            }
+            localStorage.setItem('_fix_orphan_log_v1', '1');
+        }
+
         // Multi-user migration (once)
         Storage.migrateToMultiUser();
 
@@ -212,12 +263,60 @@ const App = {
                     Storage._save();
                 }
             } catch(e) {}
+            // Clean orphaned log entries after sync (choose_one phantoms + corrupted _gym)
+            self._cleanOrphanedLogEntries();
             // Load shared gyms cache + migrate local gyms
             self._initGymCache();
             self.route();
         }).catch(function(e) {
             console.error('Init sync error:', e);
         });
+    },
+
+    // Remove orphaned choose_one exercise entries and corrupted _gym from log
+    _cleanOrphanedLogEntries() {
+        try {
+            Storage._invalidateCache();
+            var d = Storage._load();
+            if (!d || !d.log) return;
+            var choices = d.exerciseChoices || {};
+            var changed = false;
+            for (var w in d.log) {
+                for (var dd in d.log[w]) {
+                    var dayLog = d.log[w][dd];
+                    // Fix corrupted _gym (object instead of string)
+                    if (dayLog._gym && typeof dayLog._gym === 'object') {
+                        var chars = [];
+                        for (var ci = 0; ci < Object.keys(dayLog._gym).length; ci++) {
+                            chars.push(dayLog._gym[String(ci)] || '');
+                        }
+                        dayLog._gym = chars.join('');
+                        changed = true;
+                    }
+                    for (var exKey in dayLog) {
+                        if (exKey.charAt(0) === '_') continue;
+                        // Remove empty exercise entries
+                        if (typeof dayLog[exKey] === 'object' && dayLog[exKey] !== null && Object.keys(dayLog[exKey]).length === 0) {
+                            delete dayLog[exKey];
+                            changed = true;
+                            continue;
+                        }
+                        // Remove orphaned base exercises when an _opt variant is chosen
+                        for (var ck in choices) {
+                            var chosen = choices[ck];
+                            if (chosen && chosen.indexOf(exKey + '_opt') === 0) {
+                                delete dayLog[exKey];
+                                changed = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (changed) Storage._save();
+        } catch (e) {
+            console.error('Log cleanup error:', e);
+        }
     },
 
     _initGymCache() {
@@ -907,6 +1006,7 @@ const App = {
             SupaSync.syncOnLogin(supaUserId, 'wt_data_' + localId).then(function() {
                 // Reload data after sync
                 Storage._invalidateCache();
+                self._cleanOrphanedLogEntries();
                 var user = Storage.getCurrentUser();
                 if (user) self._loadProgramForUser(user);
                 self.route();
