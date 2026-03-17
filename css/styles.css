@@ -1917,16 +1917,18 @@ body.modal-open {
     margin-right: 12px;
 }
 
-/* Exercise card header — fixed size, fade in on load */
+/* Exercise card header — always visible, no fade */
 .exercise-name-row .ex-thumb {
     width: 32px;
     height: 32px;
     border-radius: 50%;
     margin-right: 8px;
     align-self: center;
+    opacity: 1;
+    transition: none;
 }
 
-/* Equipment modal item — 64px rounded rect */
+/* Equipment modal item — 120px rounded rect, no fade */
 .eq-option .ex-thumb,
 .eq-catalog-item .ex-thumb,
 .eq-search-item .ex-thumb {
@@ -1936,9 +1938,11 @@ body.modal-open {
     margin-right: 12px;
     object-fit: contain;
     background: #FFFFFF;
+    opacity: 1;
+    transition: none;
 }
 
-/* Equipment button pill — 28px circle */
+/* Equipment button pill — always visible, no fade */
 .equipment-btn .ex-thumb {
     width: 28px;
     height: 28px;
@@ -1947,6 +1951,8 @@ body.modal-open {
     margin-left: -2px;
     object-fit: contain;
     background: #FFFFFF;
+    opacity: 1;
+    transition: none;
 }
 
 
