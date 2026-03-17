@@ -104,6 +104,52 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 /* Toast */
 .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 20px; border-radius: 10px; font-size: 14px; z-index: 300; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
 .toast.show { opacity: 1; }
+
+/* Equipment exercise count */
+.card-ex-count { font-size: 11px; color: #4a9eff; margin-top: 6px; }
+
+/* Detail overlay */
+.det-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0a0a0a; z-index: 80; overflow-y: auto; transform: translateX(100%); transition: transform 0.3s; }
+.det-overlay.visible { transform: translateX(0); }
+.det-topbar { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #222; position: sticky; top: 0; background: #0a0a0a; z-index: 5; }
+.det-topbar-back { background: none; border: none; color: #4a9eff; font-size: 16px; cursor: pointer; padding: 4px 8px; margin-right: 8px; }
+.det-topbar-title { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.det-header { display: flex; gap: 16px; padding: 16px; }
+.det-header-img { width: 120px; height: 120px; object-fit: contain; background: #fff; border-radius: 12px; padding: 8px; flex-shrink: 0; }
+.det-header-img.no-img { display: flex; align-items: center; justify-content: center; background: #222; color: #555; font-size: 40px; }
+.det-header-info { flex: 1; min-width: 0; }
+.det-brand { font-size: 11px; color: #4a9eff; text-transform: uppercase; letter-spacing: 1px; }
+.det-name { font-size: 18px; font-weight: 700; margin: 4px 0; }
+.det-model { font-size: 13px; color: #888; }
+.det-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.det-section-title { font-size: 14px; font-weight: 600; color: #aaa; padding: 12px 16px 8px; text-transform: uppercase; letter-spacing: 1px; }
+.det-linked { padding: 0 16px; }
+.linked-ex-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1a1a1a; }
+.linked-ex-name { flex: 1; min-width: 0; }
+.linked-ex-name div:first-child { font-size: 14px; font-weight: 500; }
+.linked-ex-name-en { font-size: 12px; color: #666; }
+.linked-ex-remove { background: none; border: none; color: #c55; font-size: 20px; cursor: pointer; padding: 4px 8px; }
+.linked-ex-empty { color: #555; font-size: 14px; padding: 8px 0; }
+.det-search-wrap { padding: 12px 16px; display: flex; gap: 8px; align-items: center; }
+.det-search { flex: 1; padding: 8px 14px; border-radius: 20px; border: 1px solid #333; background: #1a1a1a; color: #e0e0e0; font-size: 14px; }
+.det-search:focus { outline: none; border-color: #4a9eff; }
+.det-show-all-label { font-size: 12px; color: #888; white-space: nowrap; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+.det-search-results { padding: 0 16px; display: none; }
+.muscle-group { border-bottom: 1px solid #1a1a1a; }
+.muscle-group-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; cursor: pointer; }
+.muscle-group-label { font-size: 14px; font-weight: 600; }
+.muscle-group-count { font-size: 12px; color: #666; margin-right: 6px; }
+.muscle-group-arrow { font-size: 10px; color: #666; transition: transform 0.2s; display: inline-block; }
+.muscle-group.open .muscle-group-arrow { transform: rotate(90deg); }
+.muscle-group-exercises { display: none; padding: 0 16px 8px; }
+.muscle-group.open .muscle-group-exercises { display: block; }
+.ex-option { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #111; cursor: pointer; }
+.ex-option:hover { background: #151515; }
+.ex-option.linked { background: #0a1a0a; }
+.ex-option-name { flex: 1; min-width: 0; }
+.ex-option-name-ru { font-size: 14px; }
+.ex-option-name-en { font-size: 11px; color: #666; }
+.ex-option-check { font-size: 16px; color: #4a9eff; width: 24px; text-align: center; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -150,6 +196,24 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- Equipment Detail Panel -->
+<div class="det-overlay" id="det-overlay">
+  <div class="det-topbar">
+    <button class="det-topbar-back" id="det-back">← Назад</button>
+    <div class="det-topbar-title" id="det-topbar-title"></div>
+  </div>
+  <div id="det-header"></div>
+  <div class="det-section-title">Привязанные упражнения</div>
+  <div class="det-linked" id="det-linked"></div>
+  <div class="det-section-title" style="margin-top:16px">Добавить упражнения</div>
+  <div class="det-search-wrap">
+    <input type="text" class="det-search" id="det-search" placeholder="Поиск упражнений...">
+    <label class="det-show-all-label"><input type="checkbox" id="det-show-all"> Все</label>
+  </div>
+  <div class="det-search-results" id="det-search-results"></div>
+  <div id="det-muscle-groups"></div>
+</div>
+
 <script>
 // ===== CONFIG =====
 const SB = 'https://mqyfdbfdeuwojgexhwpy.supabase.co';
@@ -161,7 +225,17 @@ let currentFilter = 'all';
 
 let equipmentData = [];
 let exerciseData = [];
+let machineExercises = [];
 let gymsData = [];
+let linkCounts = {};
+let detEquipment = null;
+let detLinkedIds = new Set();
+let showAllExercises = false;
+
+const FREE_WEIGHT_ONLY = ['barbell', 'dumbbell', 'kettlebell', 'resistance band', 'plate'];
+function getFilteredExercises() {
+  return showAllExercises ? exerciseData : machineExercises;
+}
 
 // ===== TOAST =====
 function toast(msg) {
@@ -263,6 +337,40 @@ async function loadEquipment() {
 async function loadExercises() {
   const r = await fetch(SB + '/rest/v1/exercises?select=*&order=name_ru', { headers: H });
   exerciseData = await r.json();
+  machineExercises = exerciseData.filter(e => e.equipment === 'machine');
+}
+
+async function loadLinkCounts() {
+  try {
+    const r = await fetch(SB + '/rest/v1/equipment_exercises?select=equipment_id', { headers: H });
+    if (!r.ok) return;
+    const rows = await r.json();
+    linkCounts = {};
+    rows.forEach(row => { linkCounts[row.equipment_id] = (linkCounts[row.equipment_id] || 0) + 1; });
+  } catch(e) {}
+}
+
+async function loadLinkedExercises(equipmentId) {
+  try {
+    const r = await fetch(SB + '/rest/v1/equipment_exercises?equipment_id=eq.' + equipmentId + '&select=exercise_id', { headers: H });
+    if (!r.ok) return [];
+    return (await r.json()).map(row => row.exercise_id);
+  } catch(e) { return []; }
+}
+
+async function linkExercise(equipmentId, exerciseId) {
+  const r = await fetch(SB + '/rest/v1/equipment_exercises', {
+    method: 'POST', headers: { ...H, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ equipment_id: equipmentId, exercise_id: exerciseId })
+  });
+  return r.ok || r.status === 409;
+}
+
+async function unlinkExercise(equipmentId, exerciseId) {
+  const r = await fetch(SB + '/rest/v1/equipment_exercises?equipment_id=eq.' + equipmentId + '&exercise_id=eq.' + encodeURIComponent(exerciseId), {
+    method: 'DELETE', headers: H
+  });
+  return r.ok;
 }
 
 async function deleteEquipment(id) {
@@ -410,6 +518,7 @@ function renderEquipmentGrid(container, statsEl, query) {
           <span class="tag muscle">${esc(item.muscle_group || '—')}</span>
           <span class="tag type">${esc(item.equipment_type || '—')}</span>
         </div>
+        ${linkCounts[item.id] ? '<div class="card-ex-count">▶ ' + linkCounts[item.id] + ' упр.</div>' : ''}
       </div>
     </div>
   `).join('') + '</div>';
@@ -636,6 +745,173 @@ function showAddExerciseForm() {
   };
 }
 
+// ===== EQUIPMENT DETAIL PANEL =====
+
+function openEquipmentDetail(equipmentId) {
+  const eq = equipmentData.find(e => e.id === equipmentId);
+  if (!eq) return;
+  detEquipment = eq;
+  detLinkedIds = new Set();
+
+  document.getElementById('det-topbar-title').textContent = eq.name;
+  document.getElementById('det-header').innerHTML = `
+    ${eq.image_url
+      ? '<img class="det-header-img" src="' + esc(eq.image_url) + '">'
+      : '<div class="det-header-img no-img">🏋️</div>'}
+    <div class="det-header-info">
+      <div class="det-brand">${esc(eq.brand)}</div>
+      <div class="det-name">${esc(eq.name)}</div>
+      <div class="det-model">${eq.model ? 'Модель: ' + esc(eq.model) : ''}</div>
+      <div class="det-tags">
+        ${eq.muscle_group ? '<span class="tag muscle">' + esc(eq.muscle_group) + '</span>' : ''}
+        ${eq.equipment_type ? '<span class="tag type">' + esc(eq.equipment_type) + '</span>' : ''}
+      </div>
+    </div>
+  `;
+
+  const overlay = document.getElementById('det-overlay');
+  overlay.classList.add('visible');
+  overlay.scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+
+  showAllExercises = false;
+  document.getElementById('det-show-all').checked = false;
+  document.getElementById('det-search').value = '';
+  document.getElementById('det-search-results').style.display = 'none';
+
+  loadAndRenderLinked(equipmentId);
+  renderMuscleGroups();
+}
+
+function closeEquipmentDetail() {
+  document.getElementById('det-overlay').classList.remove('visible');
+  document.body.style.overflow = '';
+  detEquipment = null;
+  // Refresh main grid to update link counts
+  render();
+}
+
+async function loadAndRenderLinked(equipmentId) {
+  document.getElementById('det-linked').innerHTML = '<div class="linked-ex-empty">Загрузка...</div>';
+  const ids = await loadLinkedExercises(equipmentId);
+  detLinkedIds = new Set(ids);
+  renderLinked();
+  renderMuscleGroups();
+}
+
+function renderLinked() {
+  const container = document.getElementById('det-linked');
+  if (detLinkedIds.size === 0) {
+    container.innerHTML = '<div class="linked-ex-empty">Нет привязанных упражнений</div>';
+    return;
+  }
+  const items = [];
+  detLinkedIds.forEach(id => {
+    const ex = exerciseData.find(e => e.id === id);
+    if (!ex) return;
+    items.push(`
+      <div class="linked-ex-item">
+        <div class="linked-ex-name">
+          <div>${ex.name_ru || ex.name_en}</div>
+          <div class="linked-ex-name-en">${ex.name_en}</div>
+        </div>
+        <button class="linked-ex-remove" data-unlink-ex="${esc(id)}" title="Убрать привязку">×</button>
+      </div>
+    `);
+  });
+  container.innerHTML = items.join('');
+}
+
+function renderMuscleGroups() {
+  const groups = {};
+  getFilteredExercises().forEach(ex => {
+    const muscle = (ex.primary_muscles && ex.primary_muscles[0]) || 'other';
+    if (!groups[muscle]) groups[muscle] = [];
+    groups[muscle].push(ex);
+  });
+
+  const sortedMuscles = Object.keys(groups).sort((a, b) => {
+    return (MUSCLE_RU[a] || a).localeCompare(MUSCLE_RU[b] || b, 'ru');
+  });
+
+  document.getElementById('det-muscle-groups').innerHTML = sortedMuscles.map(muscle => {
+    const exercises = groups[muscle];
+    if (!exercises.length) return '';
+    const label = MUSCLE_RU[muscle] || muscle;
+    const exHtml = exercises.map(ex => {
+      const linked = detLinkedIds.has(ex.id);
+      return `
+        <div class="ex-option ${linked ? 'linked' : ''}" data-toggle-ex="${esc(ex.id)}">
+          <div class="ex-option-name">
+            <div class="ex-option-name-ru">${ex.name_ru || ex.name_en}</div>
+            <div class="ex-option-name-en">${ex.name_en}</div>
+          </div>
+          <div class="ex-option-check">${linked ? '✓' : ''}</div>
+        </div>
+      `;
+    }).join('');
+    return `
+      <div class="muscle-group" data-muscle="${muscle}">
+        <div class="muscle-group-header">
+          <span class="muscle-group-label">${label}</span>
+          <span>
+            <span class="muscle-group-count">${exercises.length}</span>
+            <span class="muscle-group-arrow">▶</span>
+          </span>
+        </div>
+        <div class="muscle-group-exercises">${exHtml}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderDetSearchResults(query) {
+  const resultsEl = document.getElementById('det-search-results');
+  if (!query.trim()) { resultsEl.style.display = 'none'; return; }
+  const q = query.toLowerCase();
+  const matches = getFilteredExercises().filter(ex =>
+    (ex.name_ru || '').toLowerCase().includes(q) || (ex.name_en || '').toLowerCase().includes(q)
+  ).slice(0, 30);
+
+  if (!matches.length) {
+    resultsEl.style.display = 'block';
+    resultsEl.innerHTML = '<div style="color:#555;font-size:14px;padding:8px">Не найдено</div>';
+    return;
+  }
+  resultsEl.style.display = 'block';
+  resultsEl.innerHTML = matches.map(ex => {
+    const linked = detLinkedIds.has(ex.id);
+    return `
+      <div class="ex-option ${linked ? 'linked' : ''}" data-toggle-ex="${esc(ex.id)}">
+        <div class="ex-option-name">
+          <div class="ex-option-name-ru">${ex.name_ru || ex.name_en}</div>
+          <div class="ex-option-name-en">${ex.name_en}</div>
+        </div>
+        <div class="ex-option-check">${linked ? '✓' : ''}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function toggleExerciseLink(exerciseId) {
+  if (!detEquipment) return;
+  const eqId = detEquipment.id;
+  if (detLinkedIds.has(exerciseId)) {
+    await unlinkExercise(eqId, exerciseId);
+    detLinkedIds.delete(exerciseId);
+    linkCounts[eqId] = Math.max(0, (linkCounts[eqId] || 1) - 1);
+    if (!linkCounts[eqId]) delete linkCounts[eqId];
+  } else {
+    await linkExercise(eqId, exerciseId);
+    detLinkedIds.add(exerciseId);
+    linkCounts[eqId] = (linkCounts[eqId] || 0) + 1;
+  }
+  renderLinked();
+  const q = document.getElementById('det-search').value;
+  if (q.trim()) renderDetSearchResults(q);
+  else renderMuscleGroups();
+}
+
 // ===== EVENT LISTENERS =====
 
 // Tabs
@@ -745,6 +1021,54 @@ document.getElementById('content').addEventListener('click', e => {
     });
     return;
   }
+
+  // Equipment card click -> open detail panel
+  if (currentTab === 'equipment') {
+    const card = e.target.closest('.card[data-eq-id]');
+    if (card) {
+      openEquipmentDetail(Number(card.dataset.eqId));
+      return;
+    }
+  }
+});
+
+// Detail panel: back button
+document.getElementById('det-back').addEventListener('click', closeEquipmentDetail);
+
+// Detail panel: search
+document.getElementById('det-search').addEventListener('input', e => renderDetSearchResults(e.target.value));
+
+// Detail panel: show all toggle
+document.getElementById('det-show-all').addEventListener('change', e => {
+  showAllExercises = e.target.checked;
+  renderMuscleGroups();
+  const q = document.getElementById('det-search').value;
+  if (q.trim()) renderDetSearchResults(q);
+});
+
+// Detail panel: clicks (toggle link, unlink, muscle group expand)
+document.getElementById('det-overlay').addEventListener('click', e => {
+  // Toggle exercise link
+  const toggle = e.target.closest('[data-toggle-ex]');
+  if (toggle) { toggleExerciseLink(toggle.dataset.toggleEx); return; }
+
+  // Unlink from linked list
+  const unlink = e.target.closest('[data-unlink-ex]');
+  if (unlink) { toggleExerciseLink(unlink.dataset.unlinkEx); return; }
+
+  // Muscle group expand/collapse
+  const header = e.target.closest('.muscle-group-header');
+  if (header) {
+    header.parentElement.classList.toggle('open');
+    return;
+  }
+});
+
+// Escape closes detail panel
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('det-overlay').classList.contains('visible')) {
+    closeEquipmentDetail();
+  }
 });
 
 // ===== INIT =====
@@ -753,6 +1077,7 @@ async function init() {
   await Promise.all([loadProfiles(), loadGyms(), loadEquipment(), loadExercises()]);
   renderFilters();
   render();
+  loadLinkCounts().then(() => render());
 }
 init();
 </script>
