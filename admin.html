@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Админ-панель</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #e0e0e0; padding: 16px; padding-bottom: 100px; }
+h1 { text-align: center; margin: 16px 0; font-size: 24px; }
+.stats { text-align: center; margin-bottom: 12px; color: #888; font-size: 14px; }
+
+.tabs { display: flex; justify-content: center; gap: 0; margin-bottom: 16px; }
+.tab { padding: 10px 20px; border: 1px solid #333; background: #1a1a1a; color: #ccc; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; }
+.tab:first-child { border-radius: 10px 0 0 10px; }
+.tab:last-child { border-radius: 0 10px 10px 0; }
+.tab.active { background: #4a9eff; color: #fff; border-color: #4a9eff; }
+
+.filters { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px; position: sticky; top: 0; background: #0a0a0a; padding: 12px 0; z-index: 10; }
+.filter-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid #333; background: #1a1a1a; color: #ccc; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+.filter-btn.active { background: #4a9eff; color: #fff; border-color: #4a9eff; }
+.filter-btn:hover { border-color: #4a9eff; }
+
+.search { width: 100%; max-width: 400px; padding: 10px 16px; border-radius: 20px; border: 1px solid #333; background: #1a1a1a; color: #e0e0e0; font-size: 14px; margin: 0 auto 20px; display: block; }
+.search:focus { outline: none; border-color: #4a9eff; }
+
+/* List items (for gyms) */
+.list { max-width: 600px; margin: 0 auto; }
+.list-item { display: flex; align-items: center; justify-content: space-between; background: #1a1a1a; border: 1px solid #222; border-radius: 12px; padding: 16px; margin-bottom: 8px; transition: border-color 0.2s; }
+.list-item:hover { border-color: #333; }
+.list-item-info { flex: 1; min-width: 0; }
+.list-item-name { font-size: 16px; font-weight: 600; margin-bottom: 2px; }
+.list-item-meta { font-size: 13px; color: #888; }
+.list-item-actions { display: flex; gap: 8px; margin-left: 12px; flex-shrink: 0; }
+
+/* Grid (for equipment/exercises) */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+.card { background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid #222; transition: transform 0.2s, border-color 0.2s; cursor: pointer; position: relative; }
+.card:hover { transform: translateY(-2px); border-color: #444; }
+.card-img { width: 100%; height: 180px; object-fit: contain; background: #fff; padding: 8px; }
+.card-img.no-img { display: flex; align-items: center; justify-content: center; background: #222; color: #555; font-size: 40px; }
+.card-body { padding: 12px; }
+.card-brand { font-size: 11px; color: #4a9eff; text-transform: uppercase; letter-spacing: 1px; }
+.card-name { font-size: 14px; font-weight: 600; margin: 4px 0; }
+.card-name-secondary { font-size: 12px; color: #999; margin-bottom: 4px; }
+.card-model { font-size: 12px; color: #888; }
+.card-meta { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.tag { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: #252525; color: #aaa; }
+.tag.muscle { background: #1a2a1a; color: #6c6; }
+.tag.type { background: #1a1a2a; color: #88f; }
+.tag.cat { background: #2a1a1a; color: #c88; }
+.tag.level { background: #2a2a1a; color: #cc8; }
+
+.card-imgs { display: flex; gap: 2px; background: #fff; height: 180px; }
+.card-imgs img { flex: 1; height: 100%; object-fit: contain; padding: 4px; }
+
+.card-delete { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; border: none; background: rgba(220, 50, 50, 0.85); color: #fff; font-size: 16px; cursor: pointer; display: none; align-items: center; justify-content: center; z-index: 5; line-height: 1; }
+.card:hover .card-delete { display: flex; }
+.card-delete:hover { background: #e03030; }
+
+/* Buttons */
+.btn { padding: 8px 16px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-primary { background: #4a9eff; color: #fff; }
+.btn-primary:hover { background: #3a8eef; }
+.btn-danger { background: #dc3545; color: #fff; }
+.btn-danger:hover { background: #c82333; }
+.btn-secondary { background: #333; color: #ccc; }
+.btn-secondary:hover { background: #444; }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+
+/* FAB */
+.fab { position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px; border-radius: 50%; border: none; background: #4a9eff; color: #fff; font-size: 28px; cursor: pointer; box-shadow: 0 4px 16px rgba(74,158,255,0.4); display: flex; align-items: center; justify-content: center; z-index: 50; transition: all 0.2s; }
+.fab:hover { transform: scale(1.1); background: #3a8eef; }
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; padding: 16px; }
+.modal-overlay.open { display: flex; }
+.modal { background: #1a1a1a; border-radius: 16px; border: 1px solid #333; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #252525; }
+.modal-header h2 { font-size: 18px; font-weight: 700; }
+.modal-close { width: 32px; height: 32px; border-radius: 50%; border: none; background: #333; color: #ccc; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.modal-close:hover { background: #444; }
+.modal-body { padding: 20px; }
+
+/* Form */
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 13px; color: #aaa; margin-bottom: 6px; font-weight: 500; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #333; background: #0a0a0a; color: #e0e0e0; font-size: 14px; font-family: inherit; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #4a9eff; }
+.form-group textarea { min-height: 80px; resize: vertical; }
+.form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+/* Empty state */
+.empty { text-align: center; color: #555; font-size: 16px; margin-top: 60px; }
+.empty-icon { font-size: 48px; margin-bottom: 12px; }
+
+/* Confirm dialog */
+.confirm-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 200; justify-content: center; align-items: center; padding: 16px; }
+.confirm-overlay.open { display: flex; }
+.confirm-box { background: #1a1a1a; border-radius: 16px; border: 1px solid #333; padding: 24px; max-width: 400px; width: 100%; text-align: center; }
+.confirm-box p { font-size: 16px; margin-bottom: 20px; line-height: 1.5; }
+.confirm-actions { display: flex; gap: 8px; justify-content: center; }
+
+/* Toast */
+.toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 20px; border-radius: 10px; font-size: 14px; z-index: 300; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<h1>Админ-панель</h1>
+<div class="stats" id="stats"></div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="gyms">Залы</div>
+  <div class="tab" data-tab="equipment">Тренажёры</div>
+  <div class="tab" data-tab="exercises">Упражнения</div>
+</div>
+
+<div class="filters" id="filters"></div>
+
+<input type="text" class="search" id="search" placeholder="Поиск..." style="display:none">
+
+<div id="content"></div>
+
+<button class="fab" id="fab" title="Добавить">+</button>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">Добавить</h2>
+      <button class="modal-close" id="modal-close">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Confirm dialog -->
+<div class="confirm-overlay" id="confirm">
+  <div class="confirm-box">
+    <p id="confirm-text"></p>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" id="confirm-cancel">Отмена</button>
+      <button class="btn btn-danger" id="confirm-ok">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== CONFIG =====
+const SB = 'https://mqyfdbfdeuwojgexhwpy.supabase.co';
+const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeWZkYmZkZXV3b2pnZXhod3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NzE1OTYsImV4cCI6MjA4NzQ0NzU5Nn0.5okpQM-UffmYatsVjbzjafsHhY3taCqhDYkiyEjiSvg';
+const H = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json' };
+
+let currentTab = 'gyms';
+let currentFilter = 'all';
+
+let equipmentData = [];
+let exerciseData = [];
+let gymsData = [];
+
+// ===== TOAST =====
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// ===== CONFIRM =====
+let confirmCallback = null;
+function showConfirm(text, cb) {
+  document.getElementById('confirm-text').textContent = text;
+  document.getElementById('confirm').classList.add('open');
+  confirmCallback = cb;
+}
+document.getElementById('confirm-ok').onclick = () => {
+  document.getElementById('confirm').classList.remove('open');
+  if (confirmCallback) confirmCallback();
+  confirmCallback = null;
+};
+document.getElementById('confirm-cancel').onclick = () => {
+  document.getElementById('confirm').classList.remove('open');
+  confirmCallback = null;
+};
+
+// ===== MODAL =====
+function openModal(title, bodyHtml) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = bodyHtml;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+document.getElementById('modal-close').onclick = closeModal;
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target.id === 'modal') closeModal();
+});
+
+// ===== ESCAPE KEY =====
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeModal();
+    document.getElementById('confirm').classList.remove('open');
+  }
+});
+
+// ===== GYMS (Supabase shared_gyms) =====
+
+let profilesCache = {};
+
+async function loadProfiles() {
+  const r = await fetch(SB + '/rest/v1/profiles?select=user_id,display_name,username', { headers: H });
+  if (!r.ok) return;
+  const rows = await r.json();
+  rows.forEach(p => { profilesCache[p.user_id] = p.display_name || p.username || '?'; });
+}
+
+async function loadGyms() {
+  const r = await fetch(SB + '/rest/v1/shared_gyms?select=*&order=name', { headers: H });
+  if (!r.ok) { gymsData = []; return; }
+  gymsData = await r.json();
+}
+
+async function addGymToDb(name, city) {
+  const r = await fetch(SB + '/rest/v1/shared_gyms', {
+    method: 'POST',
+    headers: { ...H, 'Prefer': 'return=representation' },
+    body: JSON.stringify({ name, city: city || null })
+  });
+  if (!r.ok) throw new Error('Failed to add gym');
+  return (await r.json())[0];
+}
+
+async function deleteGymFromDb(id) {
+  const r = await fetch(SB + '/rest/v1/shared_gyms?id=eq.' + encodeURIComponent(id), {
+    method: 'DELETE', headers: H
+  });
+  return r.ok;
+}
+
+async function renameGymInDb(id, newName) {
+  const r = await fetch(SB + '/rest/v1/shared_gyms?id=eq.' + encodeURIComponent(id), {
+    method: 'PATCH',
+    headers: { ...H, 'Prefer': 'return=representation' },
+    body: JSON.stringify({ name: newName })
+  });
+  return r.ok;
+}
+
+// ===== SUPABASE API =====
+
+async function loadEquipment() {
+  const r = await fetch(SB + '/rest/v1/equipment_catalog?select=*&order=brand,name', { headers: H });
+  equipmentData = await r.json();
+}
+
+async function loadExercises() {
+  const r = await fetch(SB + '/rest/v1/exercises?select=*&order=name_ru', { headers: H });
+  exerciseData = await r.json();
+}
+
+async function deleteEquipment(id) {
+  // Delete linked exercises first
+  await fetch(SB + '/rest/v1/equipment_exercises?equipment_id=eq.' + id, { method: 'DELETE', headers: H });
+  const r = await fetch(SB + '/rest/v1/equipment_catalog?id=eq.' + id, { method: 'DELETE', headers: H });
+  return r.ok;
+}
+
+async function addEquipment(item) {
+  const r = await fetch(SB + '/rest/v1/equipment_catalog', {
+    method: 'POST',
+    headers: { ...H, 'Prefer': 'return=representation' },
+    body: JSON.stringify(item)
+  });
+  if (!r.ok) throw new Error('Failed to add');
+  return (await r.json())[0];
+}
+
+async function deleteExercise(id) {
+  // Delete linked equipment first
+  await fetch(SB + '/rest/v1/equipment_exercises?exercise_id=eq.' + encodeURIComponent(id), { method: 'DELETE', headers: H });
+  const r = await fetch(SB + '/rest/v1/exercises?id=eq.' + encodeURIComponent(id), { method: 'DELETE', headers: H });
+  return r.ok;
+}
+
+async function addExercise(item) {
+  const r = await fetch(SB + '/rest/v1/exercises', {
+    method: 'POST',
+    headers: { ...H, 'Prefer': 'return=representation' },
+    body: JSON.stringify(item)
+  });
+  if (!r.ok) throw new Error('Failed to add');
+  return (await r.json())[0];
+}
+
+// ===== ESCAPE HTML =====
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ===== MUSCLE LABELS =====
+const MUSCLE_RU = {
+  abdominals: 'Пресс', abductors: 'Отводящие', adductors: 'Приводящие',
+  biceps: 'Бицепс', calves: 'Икры', cardio: 'Кардио', chest: 'Грудь',
+  forearms: 'Предплечья', full_body: 'Всё тело', glutes: 'Ягодицы',
+  hamstrings: 'Задняя поверхность бедра', lats: 'Широчайшие',
+  lower_back: 'Поясница', quadriceps: 'Квадрицепс', shoulders: 'Плечи',
+  traps: 'Трапеции', triceps: 'Трицепс', upper_back: 'Верхняя спина',
+};
+
+// ===== RENDER =====
+
+function renderFilters() {
+  const filtersEl = document.getElementById('filters');
+  const searchEl = document.getElementById('search');
+
+  if (currentTab === 'gyms') {
+    filtersEl.innerHTML = '';
+    searchEl.style.display = 'none';
+    return;
+  }
+
+  searchEl.style.display = 'block';
+
+  let filters;
+  if (currentTab === 'equipment') {
+    const brands = [...new Set(equipmentData.map(i => i.brand))].sort();
+    filters = [{ key: 'all', label: 'Все' }, ...brands.map(b => ({ key: b, label: b }))];
+  } else {
+    const muscles = [...new Set(exerciseData.flatMap(e => e.primary_muscles || []))].sort();
+    filters = [{ key: 'all', label: 'Все' }, ...muscles.map(m => ({ key: m, label: MUSCLE_RU[m] || m }))];
+  }
+
+  filtersEl.innerHTML = filters.map(f =>
+    '<button class="filter-btn' + (currentFilter === f.key ? ' active' : '') + '" data-filter="' + f.key + '">' + f.label + '</button>'
+  ).join('');
+}
+
+function render() {
+  const query = document.getElementById('search').value.toLowerCase();
+  const content = document.getElementById('content');
+  const statsEl = document.getElementById('stats');
+
+  if (currentTab === 'gyms') {
+    renderGyms(content, statsEl);
+  } else if (currentTab === 'equipment') {
+    renderEquipmentGrid(content, statsEl, query);
+  } else {
+    renderExerciseGrid(content, statsEl, query);
+  }
+}
+
+function renderGyms(container, statsEl) {
+  statsEl.textContent = 'Залы: ' + gymsData.length;
+
+  if (!gymsData.length) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">🏢</div>Нет сохранённых залов</div>';
+    return;
+  }
+
+  container.innerHTML = '<div class="list">' + gymsData.map(gym => {
+    const date = gym.created_at ? new Date(gym.created_at).toLocaleDateString('ru-RU') : '—';
+    return `
+      <div class="list-item" data-gym-id="${esc(gym.id)}">
+        <div class="list-item-info">
+          <div class="list-item-name">${esc(gym.name)}</div>
+          <div class="list-item-meta">
+            ${gym.city ? esc(gym.city) + ' · ' : ''}Создан: ${date}${gym.created_by && profilesCache[gym.created_by] ? ' · ' + esc(profilesCache[gym.created_by]) : ''}
+          </div>
+        </div>
+        <div class="list-item-actions">
+          <button class="btn btn-secondary btn-sm gym-rename" data-id="${esc(gym.id)}">Переименовать</button>
+          <button class="btn btn-danger btn-sm gym-delete" data-id="${esc(gym.id)}">Удалить</button>
+        </div>
+      </div>
+    `;
+  }).join('') + '</div>';
+}
+
+function renderEquipmentGrid(container, statsEl, query) {
+  const filtered = equipmentData.filter(item => {
+    if (currentFilter !== 'all' && item.brand !== currentFilter) return false;
+    if (query && !item.name.toLowerCase().includes(query) && !(item.model || '').toLowerCase().includes(query) && !(item.brand || '').toLowerCase().includes(query)) return false;
+    return true;
+  });
+  statsEl.textContent = 'Тренажёры: ' + filtered.length + ' / ' + equipmentData.length;
+
+  if (!filtered.length) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">🏋️</div>Тренажёры не найдены</div>';
+    return;
+  }
+
+  container.innerHTML = '<div class="grid">' + filtered.map(item => `
+    <div class="card" data-eq-id="${item.id}">
+      <button class="card-delete" data-delete-eq="${item.id}" title="Удалить">&times;</button>
+      ${item.image_url
+        ? '<img class="card-img" src="' + esc(item.image_url) + '" loading="lazy">'
+        : '<div class="card-img no-img">🏋️</div>'}
+      <div class="card-body">
+        <div class="card-brand">${esc(item.brand)}</div>
+        <div class="card-name">${esc(item.name)}</div>
+        <div class="card-model">${esc(item.model || '—')}</div>
+        <div class="card-meta">
+          <span class="tag muscle">${esc(item.muscle_group || '—')}</span>
+          <span class="tag type">${esc(item.equipment_type || '—')}</span>
+        </div>
+      </div>
+    </div>
+  `).join('') + '</div>';
+}
+
+function renderExerciseGrid(container, statsEl, query) {
+  const filtered = exerciseData.filter(item => {
+    if (currentFilter !== 'all' && !(item.primary_muscles || []).includes(currentFilter)) return false;
+    if (query) {
+      const match = (item.name_ru || '').toLowerCase().includes(query) ||
+                    (item.name_en || '').toLowerCase().includes(query) ||
+                    (item.equipment || '').toLowerCase().includes(query);
+      if (!match) return false;
+    }
+    return true;
+  });
+  statsEl.textContent = 'Упражнения: ' + filtered.length + ' / ' + exerciseData.length;
+
+  if (!filtered.length) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">💪</div>Упражнения не найдены</div>';
+    return;
+  }
+
+  container.innerHTML = '<div class="grid">' + filtered.map(item => {
+    const imgs = item.images || [];
+    let imgHtml;
+    if (imgs.length >= 2) {
+      imgHtml = '<div class="card-imgs"><img src="' + esc(imgs[0]) + '" loading="lazy"><img src="' + esc(imgs[1]) + '" loading="lazy"></div>';
+    } else if (imgs.length === 1) {
+      imgHtml = '<img class="card-img" src="' + esc(imgs[0]) + '" loading="lazy">';
+    } else {
+      imgHtml = '<div class="card-img no-img">💪</div>';
+    }
+    return `
+      <div class="card" data-ex-id="${esc(item.id)}">
+        <button class="card-delete" data-delete-ex="${esc(item.id)}" title="Удалить">&times;</button>
+        ${imgHtml}
+        <div class="card-body">
+          <div class="card-name">${esc(item.name_ru || item.name_en)}</div>
+          <div class="card-name-secondary">${esc(item.name_en)}</div>
+          <div class="card-meta">
+            ${(item.primary_muscles || []).map(m => '<span class="tag muscle">' + esc(MUSCLE_RU[m] || m) + '</span>').join('')}
+            ${item.equipment ? '<span class="tag type">' + esc(item.equipment) + '</span>' : ''}
+            ${item.level ? '<span class="tag level">' + esc(item.level) + '</span>' : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('') + '</div>';
+}
+
+// ===== ADD FORMS =====
+
+function showAddGymForm() {
+  openModal('Добавить зал', `
+    <div class="form-group">
+      <label>Название</label>
+      <input type="text" id="f-gym-name" placeholder="Название зала">
+    </div>
+    <div class="form-group">
+      <label>Город</label>
+      <input type="text" id="f-gym-city" placeholder="Город (необязательно)">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Отмена</button>
+      <button class="btn btn-primary" id="f-gym-save">Сохранить</button>
+    </div>
+  `);
+  document.getElementById('f-gym-name').focus();
+  document.getElementById('f-gym-save').onclick = async () => {
+    const name = document.getElementById('f-gym-name').value.trim();
+    if (!name) return toast('Введите название');
+    const city = document.getElementById('f-gym-city').value.trim();
+    try {
+      await addGymToDb(name, city);
+      closeModal();
+      await loadGyms();
+      render();
+      toast('Зал добавлен');
+    } catch (e) { toast('Ошибка: ' + e.message); }
+  };
+}
+
+function showAddEquipmentForm() {
+  openModal('Добавить тренажёр', `
+    <div class="form-group">
+      <label>Бренд *</label>
+      <input type="text" id="f-eq-brand" placeholder="gym80, precor, cybex...">
+    </div>
+    <div class="form-group">
+      <label>Название *</label>
+      <input type="text" id="f-eq-name" placeholder="Leg Extension">
+    </div>
+    <div class="form-group">
+      <label>Модель</label>
+      <input type="text" id="f-eq-model" placeholder="3001">
+    </div>
+    <div class="form-group">
+      <label>Группа мышц</label>
+      <select id="f-eq-muscle">
+        <option value="">—</option>
+        <option value="legs">Ноги</option>
+        <option value="chest">Грудь</option>
+        <option value="back">Спина</option>
+        <option value="shoulders">Плечи</option>
+        <option value="arms">Руки</option>
+        <option value="core">Кор</option>
+        <option value="cardio">Кардио</option>
+        <option value="full_body">Всё тело</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Тип</label>
+      <select id="f-eq-type">
+        <option value="">—</option>
+        <option value="selectorized">Блочный (selectorized)</option>
+        <option value="plate_loaded">Нагружаемый (plate loaded)</option>
+        <option value="cable">Кабельный (cable)</option>
+        <option value="smith">Смит (smith)</option>
+        <option value="cardio">Кардио</option>
+        <option value="free_weight">Свободный вес</option>
+        <option value="bodyweight">С собственным весом</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>URL картинки</label>
+      <input type="text" id="f-eq-image" placeholder="https://...">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Отмена</button>
+      <button class="btn btn-primary" id="f-eq-save">Сохранить</button>
+    </div>
+  `);
+  document.getElementById('f-eq-brand').focus();
+  document.getElementById('f-eq-save').onclick = async () => {
+    const brand = document.getElementById('f-eq-brand').value.trim();
+    const name = document.getElementById('f-eq-name').value.trim();
+    if (!brand || !name) return toast('Заполните бренд и название');
+    try {
+      await addEquipment({
+        brand: brand.toLowerCase(),
+        name,
+        model: document.getElementById('f-eq-model').value.trim() || null,
+        muscle_group: document.getElementById('f-eq-muscle').value || null,
+        equipment_type: document.getElementById('f-eq-type').value || null,
+        image_url: document.getElementById('f-eq-image').value.trim() || null,
+      });
+      closeModal();
+      await loadEquipment();
+      render();
+      toast('Тренажёр добавлен');
+    } catch (e) { toast('Ошибка: ' + e.message); }
+  };
+}
+
+function showAddExerciseForm() {
+  openModal('Добавить упражнение', `
+    <div class="form-group">
+      <label>Название (рус) *</label>
+      <input type="text" id="f-ex-name-ru" placeholder="Жим лёжа">
+    </div>
+    <div class="form-group">
+      <label>Название (eng)</label>
+      <input type="text" id="f-ex-name-en" placeholder="Bench Press">
+    </div>
+    <div class="form-group">
+      <label>Основные мышцы</label>
+      <input type="text" id="f-ex-muscles" placeholder="chest, triceps (через запятую)">
+    </div>
+    <div class="form-group">
+      <label>Оборудование</label>
+      <select id="f-ex-equipment">
+        <option value="">—</option>
+        <option value="machine">Тренажёр (machine)</option>
+        <option value="barbell">Штанга (barbell)</option>
+        <option value="dumbbell">Гантели (dumbbell)</option>
+        <option value="cable">Кабель (cable)</option>
+        <option value="bodyweight">Своё тело (bodyweight)</option>
+        <option value="kettlebell">Гиря (kettlebell)</option>
+        <option value="resistance band">Резинка (band)</option>
+        <option value="plate">Блин (plate)</option>
+        <option value="other">Другое</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Категория</label>
+      <input type="text" id="f-ex-category" placeholder="strength, stretching, cardio...">
+    </div>
+    <div class="form-group">
+      <label>Уровень</label>
+      <select id="f-ex-level">
+        <option value="">—</option>
+        <option value="beginner">Начинающий</option>
+        <option value="intermediate">Средний</option>
+        <option value="expert">Продвинутый</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Отмена</button>
+      <button class="btn btn-primary" id="f-ex-save">Сохранить</button>
+    </div>
+  `);
+  document.getElementById('f-ex-name-ru').focus();
+  document.getElementById('f-ex-save').onclick = async () => {
+    const nameRu = document.getElementById('f-ex-name-ru').value.trim();
+    if (!nameRu) return toast('Введите название');
+    const muscles = document.getElementById('f-ex-muscles').value.trim()
+      .split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+    try {
+      await addExercise({
+        id: 'custom_' + Date.now(),
+        name_ru: nameRu,
+        name_en: document.getElementById('f-ex-name-en').value.trim() || null,
+        primary_muscles: muscles.length ? muscles : null,
+        equipment: document.getElementById('f-ex-equipment').value || null,
+        category: document.getElementById('f-ex-category').value.trim() || null,
+        level: document.getElementById('f-ex-level').value || null,
+      });
+      closeModal();
+      await loadExercises();
+      render();
+      toast('Упражнение добавлено');
+    } catch (e) { toast('Ошибка: ' + e.message); }
+  };
+}
+
+// ===== EVENT LISTENERS =====
+
+// Tabs
+document.querySelector('.tabs').addEventListener('click', e => {
+  if (!e.target.matches('.tab')) return;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  e.target.classList.add('active');
+  currentTab = e.target.dataset.tab;
+  currentFilter = 'all';
+  document.getElementById('search').value = '';
+  renderFilters();
+  render();
+});
+
+// Filters
+document.getElementById('filters').addEventListener('click', e => {
+  if (!e.target.matches('.filter-btn')) return;
+  document.getElementById('filters').querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  e.target.classList.add('active');
+  currentFilter = e.target.dataset.filter;
+  render();
+});
+
+// Search
+document.getElementById('search').addEventListener('input', render);
+
+// FAB
+document.getElementById('fab').addEventListener('click', () => {
+  if (currentTab === 'gyms') showAddGymForm();
+  else if (currentTab === 'equipment') showAddEquipmentForm();
+  else showAddExerciseForm();
+});
+
+// Content clicks (delete, rename)
+document.getElementById('content').addEventListener('click', e => {
+  // Gym delete
+  const gymDel = e.target.closest('.gym-delete');
+  if (gymDel) {
+    const id = gymDel.dataset.id;
+    const gym = gymsData.find(g => g.id === id);
+    showConfirm('Удалить зал «' + (gym ? gym.name : id) + '»?', async () => {
+      await deleteGymFromDb(id);
+      await loadGyms();
+      render();
+      toast('Зал удалён');
+    });
+    return;
+  }
+
+  // Gym rename
+  const gymRen = e.target.closest('.gym-rename');
+  if (gymRen) {
+    const id = gymRen.dataset.id;
+    const gym = gymsData.find(g => g.id === id);
+    openModal('Переименовать зал', `
+      <div class="form-group">
+        <label>Новое название</label>
+        <input type="text" id="f-rename" value="${esc(gym ? gym.name : '')}">
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-secondary" onclick="closeModal()">Отмена</button>
+        <button class="btn btn-primary" id="f-rename-save">Сохранить</button>
+      </div>
+    `);
+    document.getElementById('f-rename').focus();
+    document.getElementById('f-rename').select();
+    document.getElementById('f-rename-save').onclick = async () => {
+      const newName = document.getElementById('f-rename').value.trim();
+      if (!newName) return toast('Введите название');
+      try {
+        await renameGymInDb(id, newName);
+        closeModal();
+        await loadGyms();
+        render();
+        toast('Зал переименован');
+      } catch (e) { toast('Ошибка: ' + e.message); }
+    };
+    return;
+  }
+
+  // Equipment delete
+  const eqDel = e.target.closest('[data-delete-eq]');
+  if (eqDel) {
+    e.stopPropagation();
+    const id = Number(eqDel.dataset.deleteEq);
+    const eq = equipmentData.find(i => i.id === id);
+    showConfirm('Удалить тренажёр «' + (eq ? eq.brand + ' ' + eq.name : id) + '»?', async () => {
+      await deleteEquipment(id);
+      await loadEquipment();
+      render();
+      toast('Тренажёр удалён');
+    });
+    return;
+  }
+
+  // Exercise delete
+  const exDel = e.target.closest('[data-delete-ex]');
+  if (exDel) {
+    e.stopPropagation();
+    const id = exDel.dataset.deleteEx;
+    const ex = exerciseData.find(i => i.id === id);
+    showConfirm('Удалить упражнение «' + (ex ? (ex.name_ru || ex.name_en) : id) + '»?', async () => {
+      await deleteExercise(id);
+      await loadExercises();
+      render();
+      toast('Упражнение удалено');
+    });
+    return;
+  }
+});
+
+// ===== INIT =====
+async function init() {
+  document.getElementById('stats').textContent = 'Загрузка...';
+  await Promise.all([loadProfiles(), loadGyms(), loadEquipment(), loadExercises()]);
+  renderFilters();
+  render();
+}
+init();
+</script>
+</body>
+</html>
