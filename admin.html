@@ -109,7 +109,7 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 .card-ex-count { font-size: 11px; color: #4a9eff; margin-top: 6px; }
 
 /* Detail overlay */
-.det-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0a0a0a; z-index: 80; overflow-y: auto; transform: translateX(100%); transition: transform 0.3s; }
+.det-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0a0a0a; z-index: 80; overflow-y: auto; -webkit-overflow-scrolling: touch; transform: translateX(100%); transition: transform 0.3s; }
 .det-overlay.visible { transform: translateX(0); }
 .det-topbar { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #222; position: sticky; top: 0; background: #0a0a0a; z-index: 5; }
 .det-topbar-back { background: none; border: none; color: #4a9eff; font-size: 16px; cursor: pointer; padding: 4px 8px; margin-right: 8px; }
@@ -150,6 +150,46 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 .ex-option-name-ru { font-size: 14px; }
 .ex-option-name-en { font-size: 11px; color: #666; }
 .ex-option-check { font-size: 16px; color: #4a9eff; width: 24px; text-align: center; flex-shrink: 0; }
+
+/* Exercise Detail overlay */
+.exdet-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0a0a0a; z-index: 80; overflow-y: auto; transform: translateX(100%); transition: transform 0.3s; -webkit-overflow-scrolling: touch; }
+.exdet-overlay.visible { transform: translateX(0); }
+.exdet-topbar { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #222; position: sticky; top: 0; background: #0a0a0a; z-index: 5; }
+.exdet-topbar-back { background: none; border: none; color: #4a9eff; font-size: 16px; cursor: pointer; padding: 4px 8px; margin-right: 8px; }
+.exdet-topbar-title { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.exdet-images { display: flex; gap: 2px; background: #fff; width: 100%; }
+.exdet-images img { flex: 1; min-width: 0; max-height: 280px; object-fit: contain; padding: 8px; }
+.exdet-images.single img { max-width: 100%; }
+.exdet-no-img { width: 100%; height: 180px; display: flex; align-items: center; justify-content: center; background: #222; color: #555; font-size: 60px; }
+.exdet-body { padding: 16px; }
+.exdet-name { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.exdet-name-en { font-size: 14px; color: #888; margin-bottom: 12px; }
+.exdet-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+.exdet-section { margin-top: 20px; }
+.exdet-section-title { font-size: 13px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.exdet-muscles { display: flex; flex-direction: column; gap: 4px; }
+.exdet-muscle-row { display: flex; align-items: center; gap: 8px; }
+.exdet-muscle-label { font-size: 12px; color: #666; width: 80px; flex-shrink: 0; }
+.exdet-muscle-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+.exdet-instructions { list-style: decimal; padding-left: 20px; font-size: 14px; line-height: 1.6; color: #ccc; }
+.exdet-instructions li { margin-bottom: 6px; }
+.exdet-equipment-list { display: flex; flex-direction: column; gap: 6px; }
+.exdet-eq-item { display: flex; align-items: center; gap: 10px; padding: 8px; background: #1a1a1a; border-radius: 10px; border: 1px solid #222; }
+.exdet-eq-img { width: 50px; height: 50px; object-fit: contain; background: #fff; border-radius: 8px; padding: 4px; flex-shrink: 0; }
+.exdet-eq-img.no-img { display: flex; align-items: center; justify-content: center; background: #222; color: #555; font-size: 20px; }
+.exdet-eq-info { flex: 1; min-width: 0; }
+.exdet-eq-brand { font-size: 10px; color: #4a9eff; text-transform: uppercase; letter-spacing: 0.5px; }
+.exdet-eq-name { font-size: 13px; font-weight: 500; }
+
+/* Mobile fixes */
+@media (hover: none) {
+  .card-delete { display: flex; opacity: 0.7; }
+}
+@media (max-width: 480px) {
+  .det-header { flex-direction: column; align-items: center; text-align: center; }
+  .det-header-img { width: 100px; height: 100px; }
+  .det-tags { justify-content: center; }
+}
 </style>
 </head>
 <body>
@@ -212,6 +252,15 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
   </div>
   <div class="det-search-results" id="det-search-results"></div>
   <div id="det-muscle-groups"></div>
+</div>
+
+<!-- Exercise Detail Panel -->
+<div class="exdet-overlay" id="exdet-overlay">
+  <div class="exdet-topbar">
+    <button class="exdet-topbar-back" id="exdet-back">← Назад</button>
+    <div class="exdet-topbar-title" id="exdet-topbar-title"></div>
+  </div>
+  <div id="exdet-content"></div>
 </div>
 
 <script>
@@ -912,6 +961,109 @@ async function toggleExerciseLink(exerciseId) {
   else renderMuscleGroups();
 }
 
+// ===== EXERCISE DETAIL PANEL =====
+
+async function openExerciseDetail(exerciseId) {
+  const ex = exerciseData.find(e => e.id === exerciseId);
+  if (!ex) return;
+
+  document.getElementById('exdet-topbar-title').textContent = ex.name_ru || ex.name_en;
+
+  // Images
+  const imgs = ex.images || [];
+  let imgHtml;
+  if (imgs.length >= 2) {
+    imgHtml = '<div class="exdet-images"><img src="' + esc(imgs[0]) + '"><img src="' + esc(imgs[1]) + '"></div>';
+  } else if (imgs.length === 1) {
+    imgHtml = '<div class="exdet-images single"><img src="' + esc(imgs[0]) + '"></div>';
+  } else {
+    imgHtml = '<div class="exdet-no-img">💪</div>';
+  }
+
+  // Muscles
+  const primary = (ex.primary_muscles || []).map(m => '<span class="tag muscle">' + esc(MUSCLE_RU[m] || m) + '</span>').join('');
+  const secondary = (ex.secondary_muscles || []).map(m => '<span class="tag muscle" style="background:#1a1a2a;color:#88a">' + esc(MUSCLE_RU[m] || m) + '</span>').join('');
+
+  // Instructions
+  const instr = ex.instructions || [];
+  let instrHtml = '';
+  if (instr.length) {
+    instrHtml = `
+      <div class="exdet-section">
+        <div class="exdet-section-title">Инструкция</div>
+        <ol class="exdet-instructions">${instr.map(s => '<li>' + esc(s) + '</li>').join('')}</ol>
+      </div>
+    `;
+  }
+
+  // Linked equipment
+  let eqHtml = '';
+  try {
+    const r = await fetch(SB + '/rest/v1/equipment_exercises?exercise_id=eq.' + encodeURIComponent(exerciseId) + '&select=equipment_id', { headers: H });
+    if (r.ok) {
+      const rows = await r.json();
+      const eqIds = rows.map(row => row.equipment_id);
+      const linkedEq = eqIds.map(id => equipmentData.find(e => e.id === id)).filter(Boolean);
+      if (linkedEq.length) {
+        eqHtml = `
+          <div class="exdet-section">
+            <div class="exdet-section-title">На каких тренажёрах</div>
+            <div class="exdet-equipment-list">
+              ${linkedEq.map(eq => `
+                <div class="exdet-eq-item" data-goto-eq="${eq.id}">
+                  ${eq.image_url
+                    ? '<img class="exdet-eq-img" src="' + esc(eq.image_url) + '">'
+                    : '<div class="exdet-eq-img no-img">🏋️</div>'}
+                  <div class="exdet-eq-info">
+                    <div class="exdet-eq-brand">${esc(eq.brand)}</div>
+                    <div class="exdet-eq-name">${esc(eq.name)}</div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+    }
+  } catch(e) {}
+
+  document.getElementById('exdet-content').innerHTML = `
+    ${imgHtml}
+    <div class="exdet-body">
+      <div class="exdet-name">${esc(ex.name_ru || ex.name_en)}</div>
+      <div class="exdet-name-en">${esc(ex.name_en || '')}</div>
+      <div class="exdet-tags">
+        ${ex.equipment ? '<span class="tag type">' + esc(ex.equipment) + '</span>' : ''}
+        ${ex.category ? '<span class="tag cat">' + esc(ex.category) + '</span>' : ''}
+        ${ex.level ? '<span class="tag level">' + esc(ex.level) + '</span>' : ''}
+        ${ex.force ? '<span class="tag">' + esc(ex.force) + '</span>' : ''}
+        ${ex.mechanic ? '<span class="tag">' + esc(ex.mechanic) + '</span>' : ''}
+      </div>
+      ${primary || secondary ? `
+        <div class="exdet-section">
+          <div class="exdet-section-title">Мышцы</div>
+          <div class="exdet-muscles">
+            ${primary ? '<div class="exdet-muscle-row"><span class="exdet-muscle-label">Основные:</span><div class="exdet-muscle-tags">' + primary + '</div></div>' : ''}
+            ${secondary ? '<div class="exdet-muscle-row"><span class="exdet-muscle-label">Вторичные:</span><div class="exdet-muscle-tags">' + secondary + '</div></div>' : ''}
+          </div>
+        </div>
+      ` : ''}
+      ${instrHtml}
+      ${eqHtml}
+    </div>
+  `;
+
+  const overlay = document.getElementById('exdet-overlay');
+  overlay.classList.add('visible');
+  overlay.scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeExerciseDetail() {
+  document.getElementById('exdet-overlay').classList.remove('visible');
+  document.body.style.overflow = '';
+}
+
 // ===== EVENT LISTENERS =====
 
 // Tabs
@@ -1030,6 +1182,15 @@ document.getElementById('content').addEventListener('click', e => {
       return;
     }
   }
+
+  // Exercise card click -> open exercise detail panel
+  if (currentTab === 'exercises') {
+    const card = e.target.closest('.card[data-ex-id]');
+    if (card) {
+      openExerciseDetail(card.dataset.exId);
+      return;
+    }
+  }
 });
 
 // Detail panel: back button
@@ -1064,10 +1225,26 @@ document.getElementById('det-overlay').addEventListener('click', e => {
   }
 });
 
-// Escape closes detail panel
+// Exercise detail panel: back button
+document.getElementById('exdet-back').addEventListener('click', closeExerciseDetail);
+
+// Exercise detail panel: click on linked equipment -> open that equipment
+document.getElementById('exdet-overlay').addEventListener('click', e => {
+  const gotoEq = e.target.closest('[data-goto-eq]');
+  if (gotoEq) {
+    closeExerciseDetail();
+    setTimeout(() => openEquipmentDetail(Number(gotoEq.dataset.gotoEq)), 350);
+  }
+});
+
+// Escape closes detail panels
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && document.getElementById('det-overlay').classList.contains('visible')) {
-    closeEquipmentDetail();
+  if (e.key === 'Escape') {
+    if (document.getElementById('exdet-overlay').classList.contains('visible')) {
+      closeExerciseDetail();
+    } else if (document.getElementById('det-overlay').classList.contains('visible')) {
+      closeEquipmentDetail();
+    }
   }
 });
 
