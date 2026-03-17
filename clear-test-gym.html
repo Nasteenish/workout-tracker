@@ -1,42 +1,97 @@
 <!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Удалить Test Gym</title>
+<title>Управление залами</title>
 <style>body{font-family:sans-serif;background:#111;color:#eee;padding:20px;text-align:center}
-button{padding:12px 24px;border-radius:10px;border:none;background:#dc3545;color:#fff;font-size:16px;cursor:pointer;margin:10px}
+button{padding:10px 20px;border-radius:10px;border:none;background:#dc3545;color:#fff;font-size:14px;cursor:pointer;margin:4px}
 .ok{background:#28a745}
+.scan{background:#007bff}
 pre{text-align:left;background:#222;padding:12px;border-radius:8px;font-size:12px;overflow-x:auto;margin:16px 0}
+.gym-item{display:flex;justify-content:space-between;align-items:center;background:#222;padding:10px 14px;border-radius:8px;margin:6px 0;text-align:left}
+.gym-item span{flex:1}
+.gym-item .gym-name{font-weight:bold;color:#fff}
+.gym-item .gym-info{font-size:12px;color:#999;margin-top:2px}
+.gym-item button{margin-left:8px;padding:6px 14px;font-size:13px}
+#gyms-list{max-width:500px;margin:16px auto}
+h2{margin-bottom:4px}
+p{color:#aaa;margin-top:4px}
 </style></head><body>
-<h2>Очистка Test Gym</h2>
-<p>Эта страница найдёт и удалит "Test Gym" из localStorage</p>
-<div id="result"></div>
-<button onclick="run()">Удалить Test Gym</button>
+<h2>Управление залами</h2>
+<p>Все залы из localStorage на этом устройстве</p>
+<button class="scan" onclick="scan()">Сканировать</button>
+<div id="gyms-list"></div>
+<div id="log"></div>
 <script>
-function run() {
+let allData = []; // [{key, data, gyms}]
+
+function scan() {
+  allData = [];
   const keys = [];
   for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
   const wtKeys = keys.filter(k => k.startsWith('wt_data_') || k === 'workout_tracker_v1');
-  let found = false;
-  let log = '';
+
+  let log = 'Найдено ключей: ' + wtKeys.length + '\n';
   wtKeys.forEach(key => {
     try {
       const d = JSON.parse(localStorage.getItem(key));
-      if (d && d.gyms) {
-        const before = d.gyms.length;
-        d.gyms = d.gyms.filter(g => g.name !== 'Test Gym');
-        if (d.gyms.length < before) {
-          localStorage.setItem(key, JSON.stringify(d));
-          found = true;
-          log += 'Ключ: ' + key + ' — удалён Test Gym (было ' + before + ' залов, стало ' + d.gyms.length + ')\n';
-        } else {
-          log += 'Ключ: ' + key + ' — Test Gym не найден (залов: ' + before + ')\n';
-        }
+      if (d && d.gyms && d.gyms.length > 0) {
+        allData.push({key, data: d, gyms: d.gyms});
+        log += key + ': ' + d.gyms.length + ' залов\n';
+      } else {
+        log += key + ': нет залов\n';
       }
-    } catch(e) { log += 'Ключ: ' + key + ' — ошибка: ' + e.message + '\n'; }
+    } catch(e) { log += key + ': ошибка — ' + e.message + '\n'; }
   });
-  if (!wtKeys.length) log = 'Не найдено ключей wt_data_* в localStorage';
-  document.getElementById('result').innerHTML = found
-    ? '<p style="color:#28a745">Test Gym удалён! Перезагрузи приложение.</p>'
-    : '<p style="color:#f80">Test Gym не найден в localStorage</p>';
-  document.getElementById('result').innerHTML += '<pre>' + log + '</pre>';
+
+  // Also check wt_current
+  const cur = localStorage.getItem('wt_current');
+  log += '\nwt_current: ' + (cur || '(не задан)') + '\n';
+
+  document.getElementById('log').innerHTML = '<pre>' + log + '</pre>';
+  renderGyms();
 }
+
+function renderGyms() {
+  const container = document.getElementById('gyms-list');
+  if (allData.length === 0) {
+    container.innerHTML = '<p style="color:#f80">Залов не найдено</p>';
+    return;
+  }
+  let html = '';
+  allData.forEach((entry, ei) => {
+    entry.gyms.forEach((gym, gi) => {
+      html += '<div class="gym-item">' +
+        '<div><div class="gym-name">' + esc(gym.name || '(без имени)') + '</div>' +
+        '<div class="gym-info">id: ' + esc(gym.id || '?') + (gym.city ? ' · ' + esc(gym.city) : '') +
+        ' · ключ: ' + esc(entry.key) + '</div></div>' +
+        '<button onclick="deleteGym(' + ei + ',\'' + esc(gym.id) + '\')">Удалить</button>' +
+        '</div>';
+    });
+  });
+  container.innerHTML = html;
+}
+
+function deleteGym(entryIdx, gymId) {
+  const entry = allData[entryIdx];
+  if (!entry) return;
+  const gym = entry.gyms.find(g => g.id === gymId);
+  if (!confirm('Удалить зал "' + (gym ? gym.name : gymId) + '"?')) return;
+
+  entry.data.gyms = entry.data.gyms.filter(g => g.id !== gymId);
+  // Also clean gymEquipmentMap if exists
+  if (entry.data.gymEquipmentMap && entry.data.gymEquipmentMap[gymId]) {
+    delete entry.data.gymEquipmentMap[gymId];
+  }
+  localStorage.setItem(entry.key, JSON.stringify(entry.data));
+  entry.gyms = entry.data.gyms;
+
+  document.getElementById('log').innerHTML = '<pre style="color:#28a745">Зал удалён! Перезагрузи приложение.</pre>';
+  renderGyms();
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Auto-scan on load
+scan();
 </script></body></html>
