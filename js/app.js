@@ -1508,7 +1508,10 @@ const App = {
                 var edTarget = '#/week/' + this._currentWeek + '/day/' + edDay;
                 history.replaceState(null, '', edTarget);
                 this._lastRouteHash = edTarget;
-                this._renderDay(edDay);
+                this._currentDay = edDay;
+                Storage.snapshotEquipment(this._currentWeek, edDay);
+                this._inDayView = true;
+                UI.renderDay(this._currentWeek, edDay);
                 return;
             }
             this._editorNavigating = false;
