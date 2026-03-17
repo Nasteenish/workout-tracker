@@ -417,7 +417,7 @@ const App = {
         var edMatch = hash.match(/^#\/edit\/day\/(\d+)$/);
         if (edMatch) {
             var dn = Builder._editingDay ? Builder._editingDay.dayNum : parseInt(edMatch[1]);
-            return { mode: 'back', target: '#/week/' + this._currentWeek + '/day/' + dn, companion: 'day', dayNum: dn, onCommit: function() { Builder._editingDay = null; }, useReplace: true };
+            return { mode: 'back', target: '#/week/' + this._currentWeek + '/day/' + dn, companion: 'day', dayNum: dn, onCommit: function() { Builder._editingDay = null; } };
         }
         if (/^#\/history\/.+$/.test(hash))
             return { mode: 'back', target: '#/week/' + this._currentWeek + '/day/' + this._currentDay, companion: 'day', dayNum: this._currentDay };
@@ -887,17 +887,13 @@ const App = {
         app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
         app.style.transform = 'translateX(40px)';
         app.style.opacity = '0';
-        var dayNum = Builder._editingDay ? Builder._editingDay.dayNum : App._currentDay;
-        var weekNum = App._currentWeek;
         setTimeout(function() {
             app.style.transition = 'none';
             app.style.transform = '';
             app.style.opacity = '';
             window.scrollTo(0, 0);
             Builder._editingDay = null;
-            var target = Storage.isSetup() ? '#/week/' + weekNum + '/day/' + dayNum : '#/setup';
-            history.replaceState(null, '', target);
-            App.route();
+            history.back();
         }, 190);
     },
 
@@ -1503,15 +1499,8 @@ const App = {
         var editDayMatch = hash.match(/^#\/edit\/day\/(\d+)$/);
         if (editDayMatch) {
             if (!this._editorNavigating) {
-                // Got here via browser back/forward — redirect to day view
-                var edDay = parseInt(editDayMatch[1]);
-                var edTarget = '#/week/' + this._currentWeek + '/day/' + edDay;
-                history.replaceState(null, '', edTarget);
-                this._lastRouteHash = edTarget;
-                this._currentDay = edDay;
-                Storage.snapshotEquipment(this._currentWeek, edDay);
-                this._inDayView = true;
-                UI.renderDay(this._currentWeek, edDay);
+                // Got here via browser back/forward — skip past this entry
+                history.back();
                 return;
             }
             this._editorNavigating = false;
@@ -2365,8 +2354,7 @@ const App = {
         // Edit day (pencil on training day view)
         if (target.id === 'btn-edit-day' || target.closest('#btn-edit-day')) {
             this._editorNavigating = true;
-            history.replaceState(null, '', '#/edit/day/' + this._currentDay);
-            this.route();
+            location.hash = '#/edit/day/' + this._currentDay;
             return;
         }
 

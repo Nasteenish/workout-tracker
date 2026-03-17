@@ -1036,15 +1036,8 @@ const Builder = {
 
     saveDayEdits() {
         this._autoSave();
-        var ed = this._editingDay;
         this._editingDay = null;
-
-        // Navigate back (replaceState to avoid polluting history with editor entries)
-        var target = Storage.isSetup()
-            ? '#/week/' + App._currentWeek + '/day/' + (ed ? ed.dayNum : App._currentDay)
-            : '#/setup';
-        history.replaceState(null, '', target);
-        App.route();
+        history.back();
     },
 
     // ===== EXERCISE PICKER MODAL =====
