@@ -626,7 +626,11 @@ const App = {
                     this._isBackSwipe = true;
 
                     if (location.hash !== originalHash) {
-                        // iOS native back already navigated — just render
+                        // iOS native back already navigated
+                        if (cfg.useReplace) {
+                            // Editor: also clean forward history by replacing current entry
+                            history.replaceState(null, '', target);
+                        }
                         this.route(true);
                         this._isBackSwipe = false;
                         this._swipeLock = false;
@@ -1498,6 +1502,16 @@ const App = {
         // Day editor (needs user + program)
         var editDayMatch = hash.match(/^#\/edit\/day\/(\d+)$/);
         if (editDayMatch) {
+            if (!this._editorNavigating) {
+                // Got here via browser back/forward — redirect to day view
+                var edDay = parseInt(editDayMatch[1]);
+                var edTarget = '#/week/' + this._currentWeek + '/day/' + edDay;
+                history.replaceState(null, '', edTarget);
+                this._lastRouteHash = edTarget;
+                this._renderDay(edDay);
+                return;
+            }
+            this._editorNavigating = false;
             Builder.renderDayEditor(parseInt(editDayMatch[1]));
             return;
         }
@@ -2347,6 +2361,7 @@ const App = {
 
         // Edit day (pencil on training day view)
         if (target.id === 'btn-edit-day' || target.closest('#btn-edit-day')) {
+            this._editorNavigating = true;
             location.hash = '#/edit/day/' + this._currentDay;
             return;
         }
