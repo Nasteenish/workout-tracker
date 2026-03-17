@@ -203,10 +203,26 @@ const App = {
                     Storage._save();
                 }
             } catch(e) {}
+            // Load shared gyms cache + migrate local gyms
+            self._initGymCache();
             self.route();
         }).catch(function(e) {
             console.error('Init sync error:', e);
         });
+    },
+
+    _initGymCache() {
+        if (typeof Social === 'undefined') return;
+        var self = this;
+        Social.getAllSharedGyms().then(function(gyms) {
+            self._sharedGymsCache = gyms || [];
+            Storage.setGymCache(gyms || []);
+            // Migrate local gyms to Supabase if needed
+            Storage.migrateLocalGyms().then(function() {
+                // Re-render if on settings page
+                if (location.hash === '#/settings') UI.renderSettings();
+            }).catch(function(e) { console.error('Gym migration error:', e); });
+        }).catch(function(e) { console.error('Gym cache load error:', e); });
     },
 
     // Global message notifications: realtime + polling fallback
@@ -2331,47 +2347,12 @@ const App = {
             return;
         }
 
-        // Settings: add gym
-        if (target.id === 'settings-gym-add' || target.closest('#settings-gym-add')) {
-            var input = document.getElementById('settings-gym-name');
-            var name = input ? input.value.trim() : '';
-            if (!name) return;
-            Storage.addGym(name);
-            UI.renderSettings();
-            return;
-        }
-
-        // Settings: edit gym name (inline)
-        if (target.matches('.gym-edit-btn') || target.closest('.gym-edit-btn')) {
-            var btn = target.matches('.gym-edit-btn') ? target : target.closest('.gym-edit-btn');
-            var gymId = btn.dataset.gymId;
-            if (!gymId) return;
-            var item = btn.closest('.settings-eq-item');
-            var span = item ? item.querySelector('span') : null;
-            if (!span || span.querySelector('input')) return;
-            var oldName = span.textContent.trim();
-            document.querySelectorAll('.eq-remove-btn, .gym-remove-btn').forEach(function(b) { b.disabled = true; b.style.opacity = '0.3'; });
-            span.innerHTML = '<input type="text" class="eq-inline-edit" value="' + oldName.replace(/"/g, '&quot;') + '">';
-            var inp = span.querySelector('input');
-            inp.focus(); inp.select();
-            var saved = false;
-            var save = function() {
-                if (saved) return; saved = true;
-                var v = inp.value.trim();
-                if (v && v !== oldName) { Storage.renameGym(gymId, v); }
-                UI.renderSettings();
-            };
-            inp.addEventListener('blur', function() { setTimeout(save, 100); });
-            inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); save(); } });
-            return;
-        }
-
-        // Settings: remove gym
+        // Settings: remove gym (from my list, not from shared DB)
         if (target.matches('.gym-remove-btn') || target.closest('.gym-remove-btn')) {
             var btn = target.matches('.gym-remove-btn') ? target : target.closest('.gym-remove-btn');
             if (btn.disabled) return;
             var gymId = btn.dataset.gymId;
-            if (gymId && confirm('Удалить зал?')) {
+            if (gymId && confirm('Убрать зал из списка?')) {
                 Storage.removeGym(gymId);
                 UI.renderSettings();
             }
@@ -2526,17 +2507,16 @@ const App = {
             return;
         }
 
-        // Gym modal — select shared gym suggestion
+        // Gym modal — select shared gym from search results
         if (target.closest('.gym-shared-item')) {
             var item = target.closest('.gym-shared-item');
-            var sharedName = item.dataset.name;
-            var sharedCity = item.dataset.city || '';
-            if (sharedName) {
-                var newId = Storage.addGym(sharedName, null, null, sharedCity);
+            var sharedId = item.dataset.id;
+            if (sharedId) {
+                Storage.addMyGym(sharedId);
                 var modal = document.getElementById('gym-modal');
                 var onSelect = modal ? modal._onSelect : null;
                 UI.hideGymModal();
-                if (onSelect) onSelect(newId);
+                if (onSelect) onSelect(sharedId);
             }
             return;
         }
@@ -2556,22 +2536,30 @@ const App = {
             return;
         }
 
-        // Gym modal — confirm city and save
+        // Gym modal — confirm city and save (creates in Supabase shared_gyms)
         if (target.id === 'gym-city-ok' || target.closest('#gym-city-ok')) {
             var input = document.getElementById('gym-new-name');
             var cityInput = document.getElementById('gym-new-city');
             var name = input ? input.value.trim() : '';
             var city = cityInput ? cityInput.value.trim() : '';
             if (!name) return;
-            var newId = Storage.addGym(name, App._lastGeoPos ? App._lastGeoPos.lat : null, App._lastGeoPos ? App._lastGeoPos.lng : null, city);
-            // Save to shared database
-            if (typeof Social !== 'undefined' && city) {
-                Social.addSharedGym(name, city).catch(function() {});
-            }
             var modal = document.getElementById('gym-modal');
             var onSelect = modal ? modal._onSelect : null;
-            UI.hideGymModal();
-            if (onSelect) onSelect(newId);
+            // Create gym in Supabase, then add locally
+            if (typeof Social !== 'undefined') {
+                Social.addSharedGym(name, city).then(function(shared) {
+                    if (shared && shared.id) {
+                        // Add to gym cache
+                        Storage._gymCache.push(shared);
+                        Storage.addMyGym(shared.id);
+                        UI.hideGymModal();
+                        if (onSelect) onSelect(shared.id);
+                    }
+                }).catch(function(e) {
+                    console.error('Failed to create gym:', e);
+                    alert('Не удалось создать зал. Проверь интернет.');
+                });
+            }
             return;
         }
 
@@ -2946,8 +2934,8 @@ const App = {
             return;
         }
 
-        // Gym modal — filter shared gyms as user types
-        if (target.id === 'gym-new-name') {
+        // Gym modal — filter shared gyms as user types in search
+        if (target.id === 'gym-search-input') {
             var query = target.value.trim().toLowerCase();
             this._renderSharedGyms(query);
             return;
@@ -3167,8 +3155,10 @@ const App = {
     _loadSharedGyms() {
         if (typeof Social === 'undefined') return;
         var self = this;
-        Social.searchSharedGyms('').then(function(gyms) {
+        Social.getAllSharedGyms().then(function(gyms) {
             self._sharedGymsCache = gyms || [];
+            // Populate Storage gym cache for getGyms()/getGymById()
+            Storage.setGymCache(gyms || []);
             self._renderSharedGyms('');
         }).catch(function() {});
     },
@@ -3178,13 +3168,19 @@ const App = {
         if (!resultsDiv) return;
         var gyms = this._sharedGymsCache || [];
         var myGyms = Storage.getGyms();
-        var myNames = {};
-        for (var i = 0; i < myGyms.length; i++) myNames[myGyms[i].name.toLowerCase()] = true;
-        var filtered = gyms.filter(function(g) { return !myNames[g.name.toLowerCase()]; });
+        var myIds = {};
+        for (var i = 0; i < myGyms.length; i++) myIds[myGyms[i].id] = true;
+        var filtered = gyms.filter(function(g) { return !myIds[g.id]; });
+        if (query) {
+            var q = query.toLowerCase();
+            filtered = filtered.filter(function(g) {
+                return (g.name && g.name.toLowerCase().indexOf(q) !== -1) || (g.city && g.city.toLowerCase().indexOf(q) !== -1);
+            });
+        }
         if (!filtered.length) { resultsDiv.innerHTML = ''; return; }
         var html = '<div class="gym-shared-label">Залы из базы:</div>';
         for (var i = 0; i < filtered.length; i++) {
-            html += '<div class="gym-shared-item" data-name="' + filtered[i].name.replace(/"/g, '&quot;') + '" data-city="' + (filtered[i].city || '').replace(/"/g, '&quot;') + '">'
+            html += '<div class="gym-shared-item" data-id="' + filtered[i].id + '">'
                 + '<span class="gym-shared-name">' + filtered[i].name + '</span>'
                 + '<span class="gym-shared-city">' + (filtered[i].city || '') + '</span>'
                 + '</div>';

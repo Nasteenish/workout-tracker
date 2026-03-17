@@ -1383,11 +1383,14 @@ const UI = {
 
     showGymModal(onSelect) {
         var gyms = Storage.getGyms();
-        var optionsHtml = '<div class="eq-option" data-gym-id="">Без зала</div>';
-        for (var i = 0; i < gyms.length; i++) {
-            var g = gyms[i];
-            optionsHtml += '<div class="eq-option" data-gym-id="' + g.id + '">'
-                + '<span>' + g.name + (g.city ? ' <span class="gym-shared-city">' + g.city + '</span>' : '') + '</span></div>';
+        var myGymsHtml = '';
+        if (gyms.length > 0) {
+            myGymsHtml = '<div class="gym-shared-label">Мои залы:</div>';
+            for (var i = 0; i < gyms.length; i++) {
+                var g = gyms[i];
+                myGymsHtml += '<div class="eq-option" data-gym-id="' + g.id + '">'
+                    + '<span>' + g.name + (g.city ? ' <span class="gym-shared-city">' + g.city + '</span>' : '') + '</span></div>';
+            }
         }
 
         var overlay = document.createElement('div');
@@ -1397,10 +1400,14 @@ const UI = {
             + '<div class="modal-header"><h3>Где тренируешься?</h3></div>'
             + '<div id="gym-geo-suggestion" style="display:none"></div>'
             + '<div id="gym-link-prompt" style="display:none"></div>'
-            + '<div class="eq-list">' + optionsHtml + '</div>'
+            + '<div class="eq-option" data-gym-id="">Без зала</div>'
+            + '<div id="gym-my-list">' + myGymsHtml + '</div>'
+            + '<div class="eq-add-row">'
+            + '<input type="text" id="gym-search-input" placeholder="Поиск зала..." class="eq-new-input">'
+            + '</div>'
             + '<div id="gym-shared-results"></div>'
             + '<div class="eq-add-row">'
-            + '<input type="text" id="gym-new-name" placeholder="Название зала..." class="eq-new-input">'
+            + '<input type="text" id="gym-new-name" placeholder="Новый зал..." class="eq-new-input">'
             + '<button class="eq-add-btn" id="gym-add-btn">+</button>'
             + '</div>'
             + '<div id="gym-city-prompt" class="gym-city-prompt" style="display:none">'
@@ -1924,7 +1931,6 @@ const UI = {
                 <div class="settings-eq-item">
                     <span>${g.name}${g.city ? ' <span class="gym-shared-city">' + g.city + '</span>' : ''}</span>
                     <div class="eq-item-actions">
-                        <button class="gym-edit-btn" data-gym-id="${g.id}">${svgPencil}</button>
                         <button class="gym-remove-btn" data-gym-id="${g.id}"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
                     </div>
                 </div>
@@ -2024,14 +2030,11 @@ const UI = {
                 </div>
 
                 <div class="settings-card" style="margin-top: var(--spacing-lg);">
-                    <div class="settings-card-label">Залы</div>
+                    <div class="settings-card-label">Мои залы</div>
                     <div class="settings-eq-list">
                         ${gymListHtml}
                     </div>
-                    <div class="eq-add-row">
-                        <input type="text" id="settings-gym-name" placeholder="Название зала..." class="eq-new-input">
-                        <button class="eq-add-btn" id="settings-gym-add"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 3v12M3 9h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
-                    </div>
+                    <div class="settings-eq-hint" style="color:var(--text-secondary);font-size:12px;padding:8px 0 0;">Залы добавляются при начале тренировки</div>
                 </div>
 
                 <div class="settings-card settings-danger" style="margin-top: var(--spacing-sm);">

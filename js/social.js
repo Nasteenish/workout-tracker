@@ -692,6 +692,18 @@ const Social = {
         return r.data || [];
     },
 
+    async getAllSharedGyms() {
+        if (!supa) return [];
+        var r = await supa.from('shared_gyms').select('*').order('name');
+        return r.data || [];
+    },
+
+    async getSharedGymsByIds(ids) {
+        if (!supa || !ids || !ids.length) return [];
+        var r = await supa.from('shared_gyms').select('*').in('id', ids);
+        return r.data || [];
+    },
+
     async addSharedGym(name, city) {
         if (!supa) return null;
         var myId = this._getSupaUserId();

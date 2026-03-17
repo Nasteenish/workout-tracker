@@ -25,6 +25,8 @@ const Storage = {
             if (this._data.program === undefined) this._data.program = null;
             if (!this._data.exerciseSubstitutions) this._data.exerciseSubstitutions = {};
             if (!this._data.gyms) this._data.gyms = [];
+            if (!this._data.myGymIds) this._data.myGymIds = [];
+            if (!this._data.gymLastUsed) this._data.gymLastUsed = {};
             if (!this._data.gymEquipmentMap) this._data.gymEquipmentMap = {};
             if (!this._data.exerciseEquipmentOptions) {
                 this._data.exerciseEquipmentOptions = {};
@@ -626,48 +628,135 @@ const Storage = {
         this._save();
     },
 
-    // ===== Gyms =====
+    // ===== Gyms (backed by shared_gyms in Supabase) =====
+    // _gymCache: array of {id, name, city, ...} from Supabase
+    _gymCache: [],
+
+    setGymCache(gyms) {
+        this._gymCache = gyms || [];
+        // Also update local name cache for offline display
+        var data = this._load();
+        if (!data._gymNames) data._gymNames = {};
+        var changed = false;
+        for (var i = 0; i < gyms.length; i++) {
+            var g = gyms[i];
+            if (!data._gymNames[g.id] || data._gymNames[g.id].name !== g.name) {
+                data._gymNames[g.id] = { name: g.name, city: g.city || '' };
+                changed = true;
+            }
+        }
+        if (changed) this._save();
+    },
+
+    _getGymFromCacheOrLocal(id) {
+        // Try Supabase cache first
+        for (var i = 0; i < this._gymCache.length; i++) {
+            if (this._gymCache[i].id === id) return this._gymCache[i];
+        }
+        // Fallback to local name cache (for offline display)
+        var data = this._load();
+        if (data._gymNames && data._gymNames[id]) {
+            return { id: id, name: data._gymNames[id].name, city: data._gymNames[id].city || '' };
+        }
+        return null;
+    },
+
     getGyms() {
         var data = this._load();
-        return (data.gyms || []).slice().sort(function(a, b) { return (b.lastUsed || 0) - (a.lastUsed || 0); });
+        var ids = data.myGymIds || [];
+        var lastUsed = data.gymLastUsed || {};
+        var result = [];
+        for (var i = 0; i < ids.length; i++) {
+            var gym = this._getGymFromCacheOrLocal(ids[i]);
+            if (gym) {
+                result.push({ id: gym.id, name: gym.name, city: gym.city || null, lastUsed: lastUsed[gym.id] || 0 });
+            }
+        }
+        result.sort(function(a, b) { return (b.lastUsed || 0) - (a.lastUsed || 0); });
+        return result;
     },
 
     getGymById(id) {
         if (!id) return null;
-        return (this._load().gyms || []).find(function(g) { return g.id === id; }) || null;
+        var gym = this._getGymFromCacheOrLocal(id);
+        if (!gym) return null;
+        var data = this._load();
+        return { id: gym.id, name: gym.name, city: gym.city || null, lastUsed: (data.gymLastUsed || {})[id] || 0 };
     },
 
-    addGym(name, lat, lng, city) {
+    addMyGym(sharedGymId) {
         var data = this._load();
-        var id = 'gym_' + Date.now();
-        data.gyms.push({ id: id, name: name, lat: lat || null, lng: lng || null, city: city || null, lastUsed: Date.now() });
-        this._save();
-        return id;
+        if (!data.myGymIds) data.myGymIds = [];
+        if (data.myGymIds.indexOf(sharedGymId) === -1) {
+            data.myGymIds.push(sharedGymId);
+            if (!data.gymLastUsed) data.gymLastUsed = {};
+            data.gymLastUsed[sharedGymId] = Date.now();
+            this._save();
+        }
+        return sharedGymId;
     },
 
     removeGym(id) {
         var data = this._load();
-        data.gyms = data.gyms.filter(function(g) { return g.id !== id; });
+        data.myGymIds = (data.myGymIds || []).filter(function(gid) { return gid !== id; });
         delete data.gymEquipmentMap[id];
+        delete data.gymLastUsed[id];
         this._save();
-    },
-
-    renameGym(id, newName) {
-        var data = this._load();
-        var gym = data.gyms.find(function(g) { return g.id === id; });
-        if (gym) { gym.name = newName; this._save(); }
     },
 
     touchGym(id) {
         var data = this._load();
-        var gym = data.gyms.find(function(g) { return g.id === id; });
-        if (gym) { gym.lastUsed = Date.now(); this._save(); }
+        if (!data.gymLastUsed) data.gymLastUsed = {};
+        data.gymLastUsed[id] = Date.now();
+        this._save();
     },
 
-    updateGymCoords(id, lat, lng) {
+    // Migration: convert old local gyms to Supabase IDs
+    async migrateLocalGyms() {
         var data = this._load();
-        var gym = data.gyms.find(function(g) { return g.id === id; });
-        if (gym) { gym.lat = lat; gym.lng = lng; this._save(); }
+        if (!data.gyms || !data.gyms.length) return;
+        if (typeof Social === 'undefined') return;
+        if (!data.myGymIds) data.myGymIds = [];
+        if (!data.gymLastUsed) data.gymLastUsed = {};
+
+        for (var i = 0; i < data.gyms.length; i++) {
+            var oldGym = data.gyms[i];
+            try {
+                var shared = await Social.addSharedGym(oldGym.name, oldGym.city || '');
+                if (shared && shared.id) {
+                    // Transfer gymEquipmentMap from old ID to new ID
+                    if (data.gymEquipmentMap[oldGym.id]) {
+                        data.gymEquipmentMap[shared.id] = data.gymEquipmentMap[oldGym.id];
+                        delete data.gymEquipmentMap[oldGym.id];
+                    }
+                    // Transfer lastUsed
+                    data.gymLastUsed[shared.id] = oldGym.lastUsed || Date.now();
+                    // Save name locally for offline display
+                    if (!data._gymNames) data._gymNames = {};
+                    data._gymNames[shared.id] = { name: shared.name, city: shared.city || '' };
+                    // Add to myGymIds
+                    if (data.myGymIds.indexOf(shared.id) === -1) {
+                        data.myGymIds.push(shared.id);
+                    }
+                    // Update workout log references
+                    if (data.log) {
+                        for (var w in data.log) {
+                            for (var d in data.log[w]) {
+                                if (data.log[w][d]._gym === oldGym.id) {
+                                    data.log[w][d]._gym = shared.id;
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Gym migration error:', oldGym.name, e);
+            }
+        }
+        // Clear old gyms array
+        data.gyms = [];
+        this._save();
+        console.log('Gym migration complete, myGymIds:', data.myGymIds);
     },
 
     getGymExerciseEquipment(gymId, exerciseId) {
