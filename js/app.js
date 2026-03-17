@@ -2340,7 +2340,8 @@ const App = {
 
         // Edit day (pencil on training day view)
         if (target.id === 'btn-edit-day' || target.closest('#btn-edit-day')) {
-            location.hash = '#/edit/day/' + this._currentDay;
+            history.replaceState(null, '', '#/edit/day/' + this._currentDay);
+            this.route();
             return;
         }
 
