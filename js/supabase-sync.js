@@ -75,8 +75,14 @@ const SupaSync = {
         }, { onConflict: 'user_id' });
         if (result.error) {
             console.error('Supabase push error:', result.error.message);
+            this._pushFailCount = (this._pushFailCount || 0) + 1;
+            // Show warning after 2 consecutive failures
+            if (this._pushFailCount >= 2 && typeof App !== 'undefined' && App._showSyncWarning) {
+                App._showSyncWarning('Данные не синхронизируются. Нажмите, чтобы войти заново.');
+            }
             return false;
         }
+        this._pushFailCount = 0;
         return true;
     },
 

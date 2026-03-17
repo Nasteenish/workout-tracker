@@ -184,9 +184,18 @@ const App = {
         if (!supaUserId) return;
         SupaSync._currentSupaUserId = supaUserId;
         SupaSync._currentStorageKey = 'wt_data_' + userId;
-        // Background sync — re-render after merge to avoid stale UI
         var self = this;
-        SupaSync.syncOnLogin(supaUserId, 'wt_data_' + userId).then(function() {
+        // Validate Supabase session before syncing
+        this._ensureSupaSession().then(function(sessionOk) {
+            if (!sessionOk) {
+                console.warn('Supabase session expired — sync disabled until re-login');
+                self._showSyncWarning('Сессия истекла. Войдите заново для синхронизации.');
+                return;
+            }
+            // Background sync — re-render after merge to avoid stale UI
+            return SupaSync.syncOnLogin(supaUserId, 'wt_data_' + userId);
+        }).then(function(result) {
+            if (result === undefined) return; // session was expired, skip post-sync
             // Rollback equipment after sync (sync may overwrite a pre-sync rollback)
             Storage.checkPendingEquipmentRollback();
             // Remove stuck Precor equipment — only local, no immediate push
@@ -883,10 +892,14 @@ const App = {
                 Storage.createSelfRegisteredUser(login, login, '', email, localId);
                 localStorage.setItem('wt_supa_' + localId, supaUserId);
             }
+            // Cache email for future login-by-username
+            localStorage.setItem('wt_email_' + localId, email);
 
             // Set up sync
             SupaSync._currentSupaUserId = supaUserId;
             SupaSync._currentStorageKey = 'wt_data_' + localId;
+            SupaSync._pushFailCount = 0;
+            self._hideSyncWarning();
 
             self.switchUser(localId);
 
@@ -910,7 +923,88 @@ const App = {
         });
     },
 
+    // Login by username — look up email from profiles, then sign in via Supabase
+    async _loginByUsername(username, password) {
+        var errEl = document.getElementById('login-error');
+        var btn = document.getElementById('login-submit');
+        if (btn) { btn.disabled = true; btn.textContent = 'ВХОД...'; }
+        try {
+            if (!supa) throw new Error('Supabase не загружен');
+            var result = await supa.from('profiles').select('user_id').eq('username', username).single();
+            if (result.error || !result.data) {
+                // Try the username as-is with Supabase (in case it's an email without @... unlikely but safe)
+                throw new Error('Пользователь не найден');
+            }
+            // Got user_id, now get their email from auth
+            // We can't query auth directly, but we can try signing in with email
+            // Look up email from auth users via admin... no, we're client-side.
+            // Instead, query profiles or look for stored email mapping
+            // Fallback: try to get user email from Supabase auth metadata
+            var userId = result.data.user_id;
+            // Check if we have a local email cached
+            var cachedEmail = null;
+            var users = Storage.getUsers();
+            for (var i = 0; i < users.length; i++) {
+                if (users[i].id === 'supa_' + userId && users[i].email) {
+                    cachedEmail = users[i].email;
+                    break;
+                }
+            }
+            if (cachedEmail) {
+                await this.loginSupabase(cachedEmail, password);
+                return;
+            }
+            // No cached email — tell user to use email
+            throw new Error('Войдите через email, а не логин');
+        } catch (e) {
+            if (errEl) {
+                errEl.textContent = e.message || 'Неверный логин или пароль';
+                errEl.style.display = 'block';
+            }
+            if (btn) { btn.disabled = false; btn.textContent = 'ВОЙТИ'; }
+        }
+    },
+
+    // Ensure Supabase session is valid, try to refresh if expired
+    async _ensureSupaSession() {
+        if (!supa) return false;
+        try {
+            var result = await supa.auth.getSession();
+            if (result.data && result.data.session) return true;
+            // Session expired — Supabase SDK auto-refreshes, but if that failed too:
+            var refresh = await supa.auth.refreshSession();
+            if (refresh.data && refresh.data.session) return true;
+            return false;
+        } catch (e) {
+            console.error('Session check failed:', e);
+            return false;
+        }
+    },
+
+    // Show sync warning banner
+    _showSyncWarning(msg) {
+        // Remove existing warning
+        var existing = document.getElementById('sync-warning');
+        if (existing) existing.remove();
+        var banner = document.createElement('div');
+        banner.id = 'sync-warning';
+        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff6b35;color:#fff;padding:10px 16px;font-size:13px;text-align:center;cursor:pointer;';
+        banner.textContent = msg;
+        banner.onclick = function() {
+            banner.remove();
+            App.logout();
+        };
+        document.body.appendChild(banner);
+    },
+
+    // Hide sync warning
+    _hideSyncWarning() {
+        var el = document.getElementById('sync-warning');
+        if (el) el.remove();
+    },
+
     logout() {
+        this._hideSyncWarning();
         Storage.logout();
         PROGRAM = null;
         this._pendingMigration = null;
@@ -960,8 +1054,9 @@ const App = {
             // 3. Store Supabase mapping
             localStorage.setItem('wt_supa_' + newLocalId, supaUserId);
 
-            // 4. Mark old account as migrated
+            // 4. Mark old account as migrated + store email for login hint
             localStorage.setItem('wt_migrated_' + account.id, newLocalId);
+            localStorage.setItem('wt_email_' + newLocalId, email);
 
             // 5. Set up sync
             SupaSync._currentSupaUserId = supaUserId;
@@ -1208,17 +1303,28 @@ const App = {
             return;
         }
 
-        // Check if onboarding needed (gender not set)
-        if (!this._onboardingChecked && Social._hasSupaAuth()) {
+        // Check if onboarding needed (gender not set in profile)
+        // Skip if already checked, or if onboarding was completed before (persisted flag)
+        var currentLocalId = Storage.getCurrentUserId();
+        var onboardingDoneKey = 'wt_onboarding_done_' + currentLocalId;
+        if (!this._onboardingChecked && Social._hasSupaAuth() && !localStorage.getItem(onboardingDoneKey)) {
             this._onboardingChecked = true;
             var self = this;
             Social.getMyProfile().then(function(p) {
-                if (p && !p.gender && !location.hash.startsWith('#/onboarding')) {
+                if (!p) return; // profile query failed or doesn't exist — don't force onboarding
+                if (p.gender) {
+                    // Profile is complete — mark as done so we never re-check
+                    localStorage.setItem(onboardingDoneKey, '1');
+                    return;
+                }
+                if (!location.hash.startsWith('#/onboarding')) {
                     Builder._onboardingData = Builder._onboardingData || {};
                     history.replaceState(null, '', '#/onboarding/1');
                     self.route();
                 }
-            }).catch(function() {});
+            }).catch(function() {
+                // Network error — don't force onboarding, just skip
+            });
         }
 
         // Social routes (need user, no program required)
@@ -1368,17 +1474,28 @@ const App = {
             // Try local login first (hardcoded + local self-registered)
             var loginResult = this.login(loginVal, passVal);
             if (loginResult === 'migrated') {
+                // Find the migrated account's email hint
+                var migratedAcct = typeof ACCOUNTS !== 'undefined' ? ACCOUNTS.find(function(a) { return a.login === loginVal; }) : null;
+                var migratedTo = migratedAcct ? localStorage.getItem('wt_migrated_' + migratedAcct.id) : null;
+                var emailHint = migratedTo ? localStorage.getItem('wt_email_' + migratedTo) : null;
                 var err = document.getElementById('login-error');
                 if (err) {
-                    err.textContent = 'Аккаунт обновлён. Войдите через email и пароль.';
+                    err.textContent = emailHint
+                        ? 'Войдите через email: ' + emailHint
+                        : 'Аккаунт обновлён. Войдите через email и пароль.';
                     err.style.display = 'block';
                 }
                 return;
             }
             if (loginResult === true) return;
-            // Try Supabase login (email + password)
-            if (typeof SupaSync !== 'undefined' && loginVal.includes('@')) {
-                this.loginSupabase(loginVal, passVal);
+            // Try Supabase login — by email directly, or look up email by username
+            if (typeof SupaSync !== 'undefined') {
+                if (loginVal.includes('@')) {
+                    this.loginSupabase(loginVal, passVal);
+                } else {
+                    // Try to find email by username in profiles table
+                    this._loginByUsername(loginVal, passVal);
+                }
                 return;
             }
             var err = document.getElementById('login-error');

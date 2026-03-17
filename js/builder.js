@@ -1579,6 +1579,9 @@ const Builder = {
             profileData.display_name = d.login;
         }
         App._onboardingChecked = true;
+        // Persist onboarding completion so it never re-triggers
+        var onbLocalId = d.localId || Storage.getCurrentUserId();
+        if (onbLocalId) localStorage.setItem('wt_onboarding_done_' + onbLocalId, '1');
         var isNew = d.isNew, localId = d.localId;
 
         if (localId) Storage.setCurrentUser(localId);
