@@ -20,6 +20,13 @@ function exThumbHtml(name, size) {
     var cls = size ? ' style="width:' + size + 'px;height:' + size + 'px"' : '';
     return '<img class="ex-thumb" src="' + exThumbUrl(name) + '" loading="lazy" onload="this.classList.add(\'loaded\')"' + cls + '>';
 }
+// Mark already-cached images as loaded instantly (prevents flicker on re-render)
+function markCachedThumbs(root) {
+    var imgs = (root || document).querySelectorAll('.ex-thumb:not(.loaded)');
+    for (var i = 0; i < imgs.length; i++) {
+        if (imgs[i].complete && imgs[i].naturalWidth > 0) imgs[i].classList.add('loaded');
+    }
+}
 
 const MONTHS_RU = [
     'янв', 'фев', 'мар', 'апр', 'май', 'июн',

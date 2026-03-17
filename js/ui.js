@@ -643,6 +643,7 @@ const UI = {
             ${typeof SocialUI !== 'undefined' && Social._hasSupaAuth() ? SocialUI._tabBarHTML('workouts') : ''}
         `;
         if (timerRunning) App.resumeWorkoutTimer();
+        markCachedThumbs();
     },
 
     _getExerciseDisplayName(ex) {
