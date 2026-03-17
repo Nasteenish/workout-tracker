@@ -99,11 +99,20 @@ const SupaSync = {
                 merged[week][day] = {};
                 var ld = lw[day] || {};
                 var rd = rw[day] || {};
+                // Preserve metadata fields (e.g. _gym) — don't merge them as exercises
                 var allEx = new Set(Object.keys(ld).concat(Object.keys(rd)));
                 allEx.forEach(function(ex) {
+                    if (ex.charAt(0) === '_') {
+                        // Metadata field — keep the one from whichever side has it (prefer local)
+                        merged[week][day][ex] = ld[ex] !== undefined ? ld[ex] : rd[ex];
+                        return;
+                    }
                     merged[week][day][ex] = {};
                     var le = ld[ex] || {};
                     var re = rd[ex] || {};
+                    // Skip if value is not an object (corrupted data from previous bug)
+                    if (typeof le !== 'object' || le === null) le = {};
+                    if (typeof re !== 'object' || re === null) re = {};
                     var allSets = new Set(Object.keys(le).concat(Object.keys(re)));
                     allSets.forEach(function(s) {
                         var ls = le[s], rs = re[s];

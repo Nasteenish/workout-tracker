@@ -555,7 +555,9 @@ const Storage = {
         var w = String(s.week), d = String(s.day);
         var hasCompletedSets = data.log && data.log[w] && data.log[w][d] &&
             Object.keys(data.log[w][d]).some(function(exId) {
+                if (exId.charAt(0) === '_') return false; // skip metadata
                 var sets = data.log[w][d][exId];
+                if (typeof sets !== 'object' || sets === null) return false;
                 return Object.keys(sets).some(function(si) { return sets[si].completed; });
             });
         if (hasCompletedSets) {
@@ -1085,7 +1087,10 @@ const Storage = {
         if (!data.log[w] || !data.log[w][d]) return null;
         var maxTs = 0;
         for (var exId of Object.keys(data.log[w][d])) {
-            for (var setData of Object.values(data.log[w][d][exId])) {
+            if (exId.charAt(0) === '_') continue; // skip metadata like _gym
+            var exData = data.log[w][d][exId];
+            if (typeof exData !== 'object' || exData === null) continue;
+            for (var setData of Object.values(exData)) {
                 if (setData && setData.completed && setData.timestamp > maxTs) maxTs = setData.timestamp;
             }
         }
