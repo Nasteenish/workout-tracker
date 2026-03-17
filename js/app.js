@@ -110,6 +110,16 @@ const App = {
         // Route handling
         window.addEventListener('hashchange', () => {
             if (this._swipeLock) return;
+            if (this._isBackSwipe) {
+                clearTimeout(this._backSwipeFallbackTimer);
+                this._isBackSwipe = false;
+                this.route(true);
+                if (this._pendingSwipeCleanup) {
+                    this._pendingSwipeCleanup();
+                    this._pendingSwipeCleanup = null;
+                }
+                return;
+            }
             this.route();
         });
 
@@ -513,16 +523,41 @@ const App = {
                 const onCommit = cfg.onCommit;
                 setTimeout(() => {
                     if (onCommit) onCommit();
-                    history.replaceState(null, '', target);
                     app.classList.add('no-animate');
                     this._isBackSwipe = true;
-                    this.route(true);
-                    this._isBackSwipe = false;
-                    this._swipeLock = false;
-                    resetApp(app);
-                    unlockScroll();
-                    removeCompanion();
-                    window.scrollTo(0, 0);
+
+                    if (location.hash !== originalHash) {
+                        // iOS native back already navigated — just render
+                        this.route(true);
+                        this._isBackSwipe = false;
+                        this._swipeLock = false;
+                        resetApp(app);
+                        unlockScroll();
+                        removeCompanion();
+                        window.scrollTo(0, 0);
+                    } else {
+                        // Pop history entry properly with history.back()
+                        this._pendingSwipeCleanup = () => {
+                            resetApp(app);
+                            unlockScroll();
+                            removeCompanion();
+                            window.scrollTo(0, 0);
+                        };
+                        this._swipeLock = false;
+                        var self = this;
+                        this._backSwipeFallbackTimer = setTimeout(() => {
+                            if (self._isBackSwipe) {
+                                history.replaceState(null, '', target);
+                                self._isBackSwipe = false;
+                                self.route(true);
+                                if (self._pendingSwipeCleanup) {
+                                    self._pendingSwipeCleanup();
+                                    self._pendingSwipeCleanup = null;
+                                }
+                            }
+                        }, 100);
+                        history.back();
+                    }
                 }, 270);
                 return;
             }
