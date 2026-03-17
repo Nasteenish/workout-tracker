@@ -37,9 +37,10 @@ const Storage = {
                 this._save();
             }
             // v431: migrate exercise names to Hevy DB standard
-            if (!this._data._exerciseNamesMigrated) {
+            // v514: re-run migration (sync could overwrite with old names)
+            if (!this._data._exerciseNamesMigrated || this._data._exerciseNamesMigrated < 3) {
                 this._migrateExerciseNames();
-                this._data._exerciseNamesMigrated = true;
+                this._data._exerciseNamesMigrated = 3;
                 this._save();
             }
         } catch (e) {
@@ -261,43 +262,84 @@ const Storage = {
             'Становая тяга на прямых ногах': ['Straight Leg Deadlift', 'Становая тяга на прямых ногах (со штангой)'],
             'Подъём передней части стопы': ['Tibial Raises', 'Подъём передней части голени'],
             'Тяга штанги с опорой': ['Supported Bar Rows', 'Тяга штанги с опорой на грудь'],
-            'Средняя ягодичная на нижнем блоке': ['Medium Gluteus on Low Pulley', 'Средняя ягодичная (нижний блок)']
+            'Средняя ягодичная на нижнем блоке': ['Medium Gluteus on Low Pulley', 'Средняя ягодичная (нижний блок)'],
+            'Сгибание ног сидя': ['Seated Leg Curl (Machine)', 'Сгибание ног сидя (в тренажёре)'],
+            'Сгибание ног лёжа': ['Lying Leg Curl (Machine)', 'Сгибание ног лёжа (в тренажёре)'],
+            'Сплит-присед на ягодицы': ['Bulgarian Split Squat', 'Болгарские выпады'],
+            'Подъём на носки (тренажёр)': ['Standing Calf Raise (Machine)', 'Подъём на носки стоя (в тренажёре)'],
+            'Жим плечами (тренажёр)': ['Shoulder Press (Machine Plates)', 'Жим плечами (в тренажёре, диски)'],
+            'Махи гантелями на наклонной скамье': ['Rear Delt Reverse Fly (Dumbbell)', 'Обратные разведения (с гантелями)'],
+            'Разведение ног (тренажёр)': ['Hip Abduction (Machine)', 'Разведение ног (в тренажёре)']
         };
         var d = this._data;
-        if (!d || !d.program || !d.program.days) return;
+        if (!d || !d.program) return;
         var count = 0;
-        d.program.days.forEach(function(day) {
-            if (!day.groups) return;
-            day.groups.forEach(function(g) {
-                var exList = [];
-                if (g.type === 'single' && g.exercise) exList.push(g.exercise);
-                if (g.type === 'superset' && g.exercises) exList = exList.concat(g.exercises);
-                if (g.type === 'choose_one' && g.options) exList = exList.concat(g.options);
-                exList.forEach(function(ex) {
-                    if (!ex) return;
-                    // Check by English name
-                    var m = MAP[ex.name];
-                    if (m) { ex.name = m[0]; ex.nameRu = m[1]; count++; }
-                    // Check by Russian name
-                    if (!m && ex.nameRu) {
-                        var mr = RU_MAP[ex.nameRu];
-                        if (mr) { ex.name = mr[0]; ex.nameRu = mr[1]; count++; }
-                    }
-                    // Check nested options (choose_one inside superset)
-                    if (ex.options) {
-                        ex.options.forEach(function(opt) {
-                            var m2 = MAP[opt.name];
-                            if (m2) { opt.name = m2[0]; opt.nameRu = m2[1]; count++; }
-                            if (!m2 && opt.nameRu) {
-                                var mr2 = RU_MAP[opt.nameRu];
-                                if (mr2) { opt.name = mr2[0]; opt.nameRu = mr2[1]; count++; }
-                            }
+
+        // Collect all exercises from program (support both old .days[] and new .dayTemplates{})
+        function collectExercises(program) {
+            var all = [];
+            function addFromGroups(groups) {
+                if (!groups) return;
+                groups.forEach(function(g) {
+                    if (g.type === 'single' && g.exercise) all.push(g.exercise);
+                    if ((g.type === 'superset') && g.exercises) {
+                        g.exercises.forEach(function(e) {
+                            if (e._chooseOne && e.options) all = all.concat(e.options);
+                            else all.push(e);
                         });
                     }
+                    if (g.type === 'choose_one' && g.options) all = all.concat(g.options);
+                    if (g.type === 'warmup' && g.exercise) all.push(g.exercise);
                 });
-            });
+            }
+            // New format: dayTemplates { "1": { exerciseGroups: [...] } }
+            if (program.dayTemplates) {
+                Object.keys(program.dayTemplates).forEach(function(k) {
+                    var tmpl = program.dayTemplates[k];
+                    addFromGroups(tmpl.exerciseGroups);
+                });
+            }
+            // Old format: days [ { groups: [...] } ]
+            if (program.days) {
+                program.days.forEach(function(day) {
+                    addFromGroups(day.groups);
+                });
+            }
+            return all;
+        }
+
+        var allExercises = collectExercises(d.program);
+
+        // Also build reverse map: Russian name → English name from EXERCISE_DB
+        var DB_RU = {};
+        if (typeof EXERCISE_DB !== 'undefined') {
+            for (var i = 0; i < EXERCISE_DB.length; i++) {
+                var dbEx = EXERCISE_DB[i];
+                if (dbEx.name && dbEx.nameRu) DB_RU[dbEx.nameRu.toLowerCase()] = [dbEx.name, dbEx.nameRu];
+            }
+        }
+
+        allExercises.forEach(function(ex) {
+            if (!ex) return;
+            // Check by English name in migration MAP
+            var m = MAP[ex.name];
+            if (m) { ex.name = m[0]; ex.nameRu = m[1]; count++; return; }
+            // Check by Russian nameRu in RU_MAP
+            if (ex.nameRu) {
+                var mr = RU_MAP[ex.nameRu];
+                if (mr) { ex.name = mr[0]; ex.nameRu = mr[1]; count++; return; }
+            }
+            // Check if ex.name is actually Russian (not in EXERCISE_DB as English)
+            if (ex.name && /[а-яА-ЯёЁ]/.test(ex.name)) {
+                var dbm = DB_RU[ex.name.toLowerCase()];
+                if (dbm) { ex.name = dbm[0]; ex.nameRu = dbm[1]; count++; return; }
+                // Also check RU_MAP by name (when name field has Russian)
+                var mr2 = RU_MAP[ex.name];
+                if (mr2) { ex.name = mr2[0]; ex.nameRu = mr2[1]; count++; return; }
+            }
         });
-        // v419: fix specific exercises by ID (can't distinguish by name alone)
+
+        // v419: fix specific exercises by ID
         var ID_MAP = {
             'D1E1_opt1': ['Straight Leg Deadlift', '\u0421\u0442\u0430\u043D\u043E\u0432\u0430\u044F \u0442\u044F\u0433\u0430 \u043D\u0430 \u043F\u0440\u044F\u043C\u044B\u0445 \u043D\u043E\u0433\u0430\u0445 (\u0441\u043E \u0448\u0442\u0430\u043D\u0433\u043E\u0439)'],
             'D1E1_opt2': ['Straight Leg Deadlift (Dumbbell)', '\u0421\u0442\u0430\u043D\u043E\u0432\u0430\u044F \u0442\u044F\u0433\u0430 \u043D\u0430 \u043F\u0440\u044F\u043C\u044B\u0445 \u043D\u043E\u0433\u0430\u0445 (\u0441 \u0433\u0430\u043D\u0442\u0435\u043B\u044F\u043C\u0438)'],
@@ -305,25 +347,10 @@ const Storage = {
             'D1E4_opt1': ['Straight Leg Deadlift', '\u0421\u0442\u0430\u043D\u043E\u0432\u0430\u044F \u0442\u044F\u0433\u0430 \u043D\u0430 \u043F\u0440\u044F\u043C\u044B\u0445 \u043D\u043E\u0433\u0430\u0445 (\u0441\u043E \u0448\u0442\u0430\u043D\u0433\u043E\u0439)'],
             'D1E4_opt2': ['Straight Leg Deadlift (Dumbbell)', '\u0421\u0442\u0430\u043D\u043E\u0432\u0430\u044F \u0442\u044F\u0433\u0430 \u043D\u0430 \u043F\u0440\u044F\u043C\u044B\u0445 \u043D\u043E\u0433\u0430\u0445 (\u0441 \u0433\u0430\u043D\u0442\u0435\u043B\u044F\u043C\u0438)']
         };
-        d.program.days.forEach(function(day) {
-            if (!day.groups) return;
-            day.groups.forEach(function(g) {
-                var allEx = [];
-                if (g.type === 'single' && g.exercise) allEx.push(g.exercise);
-                if (g.type === 'superset' && g.exercises) allEx = allEx.concat(g.exercises);
-                if (g.type === 'choose_one' && g.options) allEx = allEx.concat(g.options);
-                allEx.forEach(function(ex) {
-                    if (!ex) return;
-                    var idm = ID_MAP[ex.id];
-                    if (idm) { ex.name = idm[0]; ex.nameRu = idm[1]; count++; }
-                    if (ex.options) {
-                        ex.options.forEach(function(opt) {
-                            var idm2 = ID_MAP[opt.id];
-                            if (idm2) { opt.name = idm2[0]; opt.nameRu = idm2[1]; count++; }
-                        });
-                    }
-                });
-            });
+        allExercises.forEach(function(ex) {
+            if (!ex) return;
+            var idm = ID_MAP[ex.id];
+            if (idm) { ex.name = idm[0]; ex.nameRu = idm[1]; count++; }
         });
         if (count > 0) console.log('Migrated ' + count + ' exercise names to Hevy DB standard');
     },

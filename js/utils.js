@@ -11,14 +11,41 @@ function exName(ex) {
 
 // Exercise thumbnail URL from name (matches Supabase storage path)
 var EX_THUMB_BASE = 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/exercise-thumbs/';
-function exThumbUrl(name) {
-    if (!name) return '';
-    return EX_THUMB_BASE + name.replace(/ /g, '_').replace(/[()\/]/g, '_') + '.jpg';
+var _exThumbLookup = null;
+function _buildThumbLookup() {
+    if (_exThumbLookup) return;
+    _exThumbLookup = {};
+    if (typeof EXERCISE_DB !== 'undefined') {
+        for (var i = 0; i < EXERCISE_DB.length; i++) {
+            var ex = EXERCISE_DB[i];
+            if (ex.name) {
+                _exThumbLookup[ex.name.toLowerCase()] = ex.name;
+                if (ex.nameRu) _exThumbLookup[ex.nameRu.toLowerCase()] = ex.name;
+            }
+        }
+    }
 }
-function exThumbHtml(name, size) {
-    if (!name) return '';
-    var cls = size ? ' style="width:' + size + 'px;height:' + size + 'px"' : '';
-    return '<img class="ex-thumb" src="' + exThumbUrl(name) + '" loading="lazy" onload="this.classList.add(\'loaded\')"' + cls + '>';
+function exThumbUrl(name, nameRu) {
+    if (!name && !nameRu) return '';
+    _buildThumbLookup();
+    // Try resolving via EXERCISE_DB: check name first, then nameRu
+    var resolved = null;
+    if (_exThumbLookup) {
+        if (name) resolved = _exThumbLookup[name.toLowerCase()];
+        if (!resolved && nameRu) resolved = _exThumbLookup[nameRu.toLowerCase()];
+    }
+    var canonical = resolved || name || nameRu;
+    return EX_THUMB_BASE + canonical.replace(/ /g, '_').replace(/[()\/]/g, '_') + '.jpg';
+}
+function exThumbHtml(name, sizeOrNameRu, size) {
+    // Supports: exThumbHtml(name), exThumbHtml(name, size), exThumbHtml(name, nameRu, size)
+    var nameRu = null;
+    var sz = null;
+    if (typeof sizeOrNameRu === 'string') { nameRu = sizeOrNameRu; sz = size; }
+    else { sz = sizeOrNameRu; }
+    if (!name && !nameRu) return '';
+    var cls = sz ? ' style="width:' + sz + 'px;height:' + sz + 'px"' : '';
+    return '<img class="ex-thumb" src="' + exThumbUrl(name, nameRu) + '" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'"' + cls + '>';
 }
 // Mark already-cached images as loaded instantly (prevents flicker on re-render)
 function markCachedThumbs(root) {

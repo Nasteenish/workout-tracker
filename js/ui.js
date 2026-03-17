@@ -736,7 +736,7 @@ const UI = {
             <div class="exercise-card ${choiceKey ? 'is-chooser' : ''}">
                 <div class="exercise-header">
                     <div class="exercise-name-row">
-                        ${exThumbHtml(ex.name)}
+                        ${exThumbHtml(ex.name, ex.nameRu)}
                         <div class="${nameClass}" ${nameAttrs}>${nameContent}</div>
                     </div>
                     <div class="exercise-meta">
