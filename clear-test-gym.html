@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Удалить Test Gym</title>
+<style>body{font-family:sans-serif;background:#111;color:#eee;padding:20px;text-align:center}
+button{padding:12px 24px;border-radius:10px;border:none;background:#dc3545;color:#fff;font-size:16px;cursor:pointer;margin:10px}
+.ok{background:#28a745}
+pre{text-align:left;background:#222;padding:12px;border-radius:8px;font-size:12px;overflow-x:auto;margin:16px 0}
+</style></head><body>
+<h2>Очистка Test Gym</h2>
+<p>Эта страница найдёт и удалит "Test Gym" из localStorage</p>
+<div id="result"></div>
+<button onclick="run()">Удалить Test Gym</button>
+<script>
+function run() {
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
+  const wtKeys = keys.filter(k => k.startsWith('wt_data_') || k === 'workout_tracker_v1');
+  let found = false;
+  let log = '';
+  wtKeys.forEach(key => {
+    try {
+      const d = JSON.parse(localStorage.getItem(key));
+      if (d && d.gyms) {
+        const before = d.gyms.length;
+        d.gyms = d.gyms.filter(g => g.name !== 'Test Gym');
+        if (d.gyms.length < before) {
+          localStorage.setItem(key, JSON.stringify(d));
+          found = true;
+          log += 'Ключ: ' + key + ' — удалён Test Gym (было ' + before + ' залов, стало ' + d.gyms.length + ')\n';
+        } else {
+          log += 'Ключ: ' + key + ' — Test Gym не найден (залов: ' + before + ')\n';
+        }
+      }
+    } catch(e) { log += 'Ключ: ' + key + ' — ошибка: ' + e.message + '\n'; }
+  });
+  if (!wtKeys.length) log = 'Не найдено ключей wt_data_* в localStorage';
+  document.getElementById('result').innerHTML = found
+    ? '<p style="color:#28a745">Test Gym удалён! Перезагрузи приложение.</p>'
+    : '<p style="color:#f80">Test Gym не найден в localStorage</p>';
+  document.getElementById('result').innerHTML += '<pre>' + log + '</pre>';
+}
+</script></body></html>
