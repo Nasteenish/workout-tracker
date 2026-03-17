@@ -622,7 +622,7 @@ const UI = {
             timerHtml = '<button class="btn-start-workout" id="btn-start-workout">НАЧАТЬ ТРЕНИРОВКУ</button>';
         }
 
-        document.getElementById('app').innerHTML = `
+        const newHTML = `
             <div class="app-header">
                 <button class="back-btn" id="btn-back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
                 <div class="header-title">
@@ -642,8 +642,50 @@ const UI = {
             </div>
             ${typeof SocialUI !== 'undefined' && Social._hasSupaAuth() ? SocialUI._tabBarHTML('workouts') : ''}
         `;
-        if (timerRunning) App.resumeWorkoutTimer();
-        markCachedThumbs();
+
+        const appEl = document.getElementById('app');
+        const isPTR = appEl.classList.contains('no-animate');
+
+        if (isPTR) {
+            // Pull-to-refresh: render offscreen, decode images, then swap DOM nodes
+            const offscreen = document.createElement('div');
+            offscreen.style.cssText = 'position:fixed;left:0;top:0;width:100%;visibility:hidden;pointer-events:none';
+            offscreen.innerHTML = newHTML;
+            document.body.appendChild(offscreen);
+
+            const imgs = offscreen.querySelectorAll('img');
+            const decodePromises = [];
+            imgs.forEach(function(img) {
+                if (img.src) {
+                    decodePromises.push(
+                        img.decode().catch(function() {})
+                    );
+                }
+            });
+
+            var swapped = false;
+            var swap = function() {
+                if (swapped) return;
+                swapped = true;
+                // Move actual DOM nodes (with decoded images) — not innerHTML copy
+                while (appEl.firstChild) appEl.removeChild(appEl.firstChild);
+                while (offscreen.firstChild) appEl.appendChild(offscreen.firstChild);
+                offscreen.remove();
+                if (timerRunning) App.resumeWorkoutTimer();
+                markCachedThumbs();
+            };
+
+            if (decodePromises.length > 0) {
+                Promise.all(decodePromises).then(swap);
+                setTimeout(swap, 800);
+            } else {
+                swap();
+            }
+        } else {
+            appEl.innerHTML = newHTML;
+            if (timerRunning) App.resumeWorkoutTimer();
+            markCachedThumbs();
+        }
     },
 
     _getExerciseDisplayName(ex) {
