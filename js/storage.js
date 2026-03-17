@@ -714,6 +714,9 @@ const Storage = {
             var eqId = map[exerciseId];
             if (eqId && this.getEquipmentById(eqId)) {
                 data.exerciseEquipment[exerciseId] = eqId;
+            } else if (eqId === null) {
+                // User explicitly cleared equipment for this exercise at this gym
+                data.exerciseEquipment[exerciseId] = null;
             }
         }
         this._save();

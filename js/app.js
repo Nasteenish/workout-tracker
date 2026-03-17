@@ -2409,8 +2409,7 @@ const App = {
         if (target.id === 'btn-start-workout') {
             var self = this;
             UI.showGymModal(function(gymId) {
-                var gymKey = 'wt_gym_' + self._currentWeek + '_' + self._currentDay;
-                sessionStorage.setItem(gymKey, gymId || '');
+                Storage.saveWorkoutGym(self._currentWeek, self._currentDay, gymId || null);
                 if (gymId) {
                     Storage.touchGym(gymId);
                     if (Storage.gymHasEquipmentMap(gymId)) {
@@ -2641,7 +2640,7 @@ const App = {
             const exId = opt.dataset.exercise;
             Storage.setExerciseEquipment(exId, eqId || null);
             var activeGym = this._getActiveGymId();
-            if (activeGym && eqId) Storage.setGymExerciseEquipment(activeGym, exId, eqId);
+            if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, eqId || null);
             // Share to gym_equipment
             if (eqId) this._shareToGymEquipment(exId, Storage.getEquipmentById(eqId));
             UI.hideEquipmentModal();
@@ -3076,7 +3075,7 @@ const App = {
         }
         sessionStorage.removeItem(this._getTimerKey());
         sessionStorage.removeItem(this._getPauseKey());
-        sessionStorage.removeItem('wt_gym_' + this._currentWeek + '_' + this._currentDay);
+        Storage.saveWorkoutGym(this._currentWeek, this._currentDay, null);
     },
 
     _startTimerDisplay() {
@@ -3581,7 +3580,7 @@ const App = {
 
     _getActiveGymId() {
         if (!this._currentWeek || !this._currentDay) return null;
-        return sessionStorage.getItem('wt_gym_' + this._currentWeek + '_' + this._currentDay) || null;
+        return Storage.getWorkoutGym(this._currentWeek, this._currentDay) || null;
     }
 };
 
@@ -3602,13 +3601,7 @@ const Celebration = {
 
         if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 150]);
 
-        // Persist gym to workout log before any cleanup
-        if (weekNum && dayNum) {
-            var _gymKey = 'wt_gym_' + weekNum + '_' + dayNum;
-            var _gymId = sessionStorage.getItem(_gymKey);
-            if (_gymId) Storage.saveWorkoutGym(weekNum, dayNum, _gymId);
-            sessionStorage.removeItem(_gymKey);
-        }
+        // Gym is already persisted in log via saveWorkoutGym when selected
 
         var phrase = this._phrases[Math.floor(Math.random() * this._phrases.length)];
         var timeText = '';
