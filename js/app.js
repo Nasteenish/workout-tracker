@@ -424,7 +424,6 @@ const App = {
                 if (cfg.mode === 'tabs' && dx < 0 && !cfg.right) { locked = true; return; }
                 if (cfg.mode === 'tabs' && dx > 0 && !cfg.left) { locked = true; return; }
                 dragging = true;
-                this._swipeLock = true;
                 swipingLeft = dx < 0;
                 savedScrollY = window.scrollY;
                 document.documentElement.style.overflow = 'hidden';
@@ -442,6 +441,7 @@ const App = {
                     companion.style.transform = `translateX(${swipingLeft ? W() : -W()}px)`;
                 } else {
                     isBack = true;
+                    this._swipeLock = true;
                     if (!cfg.preCreate) {
                         companion = createBackCompanion(cfg.companion, cfg.dayNum, cfg.target);
                     }
