@@ -881,9 +881,7 @@ const App = {
             app.style.opacity = '';
             window.scrollTo(0, 0);
             Builder._editingDay = null;
-            var target = Storage.isSetup() ? '#/week/' + weekNum + '/day/' + dayNum : '#/setup';
-            history.replaceState(null, '', target);
-            App.route();
+            history.back();
         }, 190);
     },
 
@@ -2326,10 +2324,7 @@ const App = {
         }
 
         // Day editor: back
-        if (target.id === 'btn-back-editor' || target.closest('#btn-back-editor')) {
-            this._handleEditorBack();
-            return;
-        }
+        // btn-back-editor handled by direct listener in Builder.renderDayEditor
 
         // Empty day: add exercise → open editor + picker directly
         if (target.id === 'btn-add-exercise-empty' || target.closest('#btn-add-exercise-empty')) {
@@ -2340,8 +2335,7 @@ const App = {
 
         // Edit day (pencil on training day view)
         if (target.id === 'btn-edit-day' || target.closest('#btn-edit-day')) {
-            history.replaceState(null, '', '#/edit/day/' + this._currentDay);
-            this.route();
+            location.hash = '#/edit/day/' + this._currentDay;
             return;
         }
 
