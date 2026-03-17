@@ -417,7 +417,7 @@ const App = {
         var edMatch = hash.match(/^#\/edit\/day\/(\d+)$/);
         if (edMatch) {
             var dn = Builder._editingDay ? Builder._editingDay.dayNum : parseInt(edMatch[1]);
-            return { mode: 'back', target: '#/week/' + this._currentWeek + '/day/' + dn, companion: 'day', dayNum: dn, onCommit: function() { Builder._editingDay = null; } };
+            return { mode: 'back', target: '#/week/' + this._currentWeek + '/day/' + dn, companion: 'day', dayNum: dn, onCommit: function() { Builder._editingDay = null; }, useReplace: true };
         }
         if (/^#\/history\/.+$/.test(hash))
             return { mode: 'back', target: '#/week/' + this._currentWeek + '/day/' + this._currentDay, companion: 'day', dayNum: this._currentDay };
@@ -630,6 +630,16 @@ const App = {
                         this.route(true);
                         this._isBackSwipe = false;
                         this._swipeLock = false;
+                        resetApp(app);
+                        unlockScroll();
+                        removeCompanion();
+                        window.scrollTo(0, 0);
+                    } else if (cfg.useReplace) {
+                        // Editor: replace entry instead of history.back to avoid forward-history loop
+                        history.replaceState(null, '', target);
+                        this._isBackSwipe = false;
+                        this._swipeLock = false;
+                        this.route(true);
                         resetApp(app);
                         unlockScroll();
                         removeCompanion();
@@ -881,7 +891,9 @@ const App = {
             app.style.opacity = '';
             window.scrollTo(0, 0);
             Builder._editingDay = null;
-            history.back();
+            var target = Storage.isSetup() ? '#/week/' + weekNum + '/day/' + dayNum : '#/setup';
+            history.replaceState(null, '', target);
+            App.route();
         }, 190);
     },
 
