@@ -117,21 +117,21 @@ const SocialUI = {
         html += '<div class="profile-header">';
         html += '<div class="profile-avatar-wrap">';
         html += profile.avatar_url
-            ? '<img class="profile-avatar" src="' + profile.avatar_url + '" alt="">'
+            ? '<img class="profile-avatar" src="' + esc(profile.avatar_url) + '" alt="">'
             : '<div class="profile-avatar profile-avatar-placeholder"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>';
         if (isOwn) html += '<button class="btn-profile-edit" id="btn-profile-edit"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>';
         html += '</div>';
         html += '<div class="profile-info">';
-        html += '<h2 class="profile-name">' + (profile.display_name || profile.username) + (profile.is_pro ? ' <span class="pro-badge">IFBB PRO</span>' : '') + '</h2>';
-        html += '<div class="profile-username">@' + profile.username + '</div>';
+        html += '<h2 class="profile-name">' + esc(profile.display_name || profile.username) + (profile.is_pro ? ' <span class="pro-badge">IFBB PRO</span>' : '') + '</h2>';
+        html += '<div class="profile-username">@' + esc(profile.username) + '</div>';
         if ((profile.is_athlete && profile.category) || profile.phase) {
             html += '<div class="profile-badges-row">';
-            if (profile.is_athlete && profile.category) html += '<span class="profile-badge">' + profile.category + '</span>';
-            if (profile.phase) html += '<span class="profile-phase">' + profile.phase + '</span>';
+            if (profile.is_athlete && profile.category) html += '<span class="profile-badge">' + esc(profile.category) + '</span>';
+            if (profile.phase) html += '<span class="profile-phase">' + esc(profile.phase) + '</span>';
             html += '</div>';
         }
         if (profile.is_athlete && profile.coach) {
-            html += '<div class="profile-coach">Тренер: ' + profile.coach + '</div>';
+            html += '<div class="profile-coach">Тренер: ' + esc(profile.coach) + '</div>';
         }
         html += '</div>';
         html += '</div>';
@@ -158,7 +158,7 @@ const SocialUI = {
 
         // Bio
         if (profile.bio) {
-            html += '<div class="profile-bio">' + profile.bio + '</div>';
+            html += '<div class="profile-bio">' + esc(profile.bio) + '</div>';
         }
 
         // Post type tabs + grid
@@ -215,7 +215,7 @@ const SocialUI = {
         // Avatar
         html += '<div class="edit-avatar-section">';
         html += profile.avatar_url
-            ? '<img class="edit-avatar" id="edit-avatar-preview" src="' + profile.avatar_url + '" alt="">'
+            ? '<img class="edit-avatar" id="edit-avatar-preview" src="' + esc(profile.avatar_url) + '" alt="">'
             : '<div class="edit-avatar edit-avatar-placeholder" id="edit-avatar-preview"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span class="edit-avatar-hint">Фото</span></div>';
         html += '<label class="edit-avatar-btn" for="avatar-file-input">Изменить фото</label>';
         html += '<input type="file" id="avatar-file-input" accept="image/*" style="display:none">';
@@ -223,9 +223,9 @@ const SocialUI = {
 
         // Fields
         html += '<div class="edit-fields">';
-        html += '<div class="edit-field"><label>Имя</label><input type="text" id="edit-display-name" value="' + (profile.display_name || '') + '" placeholder="Ваше имя"></div>';
-        html += '<div class="edit-field"><label>Username</label><input type="text" id="edit-username" value="' + (profile.username || '') + '" placeholder="username" autocapitalize="none"></div>';
-        html += '<div class="edit-field"><label>Bio</label><textarea id="edit-bio" rows="3" placeholder="О себе">' + (profile.bio || '') + '</textarea></div>';
+        html += '<div class="edit-field"><label>Имя</label><input type="text" id="edit-display-name" value="' + esc(profile.display_name || '') + '" placeholder="Ваше имя"></div>';
+        html += '<div class="edit-field"><label>Username</label><input type="text" id="edit-username" value="' + esc(profile.username || '') + '" placeholder="username" autocapitalize="none"></div>';
+        html += '<div class="edit-field"><label>Bio</label><textarea id="edit-bio" rows="3" placeholder="О себе">' + esc(profile.bio || '') + '</textarea></div>';
 
         // Gender
         html += '<div class="edit-field"><label>Пол</label><select id="edit-gender">';
@@ -245,7 +245,7 @@ const SocialUI = {
             html += '<option value="' + c + '"' + (profile.category === c ? ' selected' : '') + '>' + c + '</option>';
         });
         html += '</select></div>';
-        html += '<div class="edit-field"><label>Тренер</label><input type="text" id="edit-coach" value="' + (profile.coach || '') + '" placeholder="Имя тренера"></div>';
+        html += '<div class="edit-field"><label>Тренер</label><input type="text" id="edit-coach" value="' + esc(profile.coach || '') + '" placeholder="Имя тренера"></div>';
         html += '<div class="edit-field"><label>Фаза</label><select id="edit-phase"><option value="">—</option>';
         phases.forEach(function(p) {
             html += '<option value="' + p + '"' + (profile.phase === p ? ' selected' : '') + '>' + p + '</option>';
@@ -270,12 +270,12 @@ const SocialUI = {
             var mg = prefillWorkout.muscle_group || prefillWorkout.title || '';
             var mgColor = SocialUI._muscleGroupColor(mg);
             if (mg) {
-                html += '<div class="share-muscle-tag" style="background:' + mgColor + '">' + mg + '</div>';
+                html += '<div class="share-muscle-tag" style="background:' + mgColor + '">' + esc(mg) + '</div>';
             }
 
             // Workout title — only if different from muscle group
             if (prefillWorkout.title && prefillWorkout.title !== mg) {
-                html += '<div class="share-workout-title">' + prefillWorkout.title + '</div>';
+                html += '<div class="share-workout-title">' + esc(prefillWorkout.title) + '</div>';
             }
 
             // Stats chips
@@ -289,7 +289,7 @@ const SocialUI = {
             html += '</div>';
 
             if (prefillWorkout.gym_name) {
-                html += '<div class="share-gym-tag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + prefillWorkout.gym_name + '</div>';
+                html += '<div class="share-gym-tag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + esc(prefillWorkout.gym_name) + '</div>';
             }
 
             html += '<input type="hidden" id="checkin-workout-data" value=\'' + JSON.stringify(prefillWorkout).replace(/'/g, '&#39;') + '\'>';
@@ -481,7 +481,7 @@ const SocialUI = {
             html += '<span class="photo-tags-label">Отмечены: </span>';
             html += photoTags.map(function(t) {
                 var p = t.profiles || t;
-                return '<a class="photo-tag-link" href="#/u/' + (p.username || '') + '">@' + (p.username || p.display_name || '?') + '</a>';
+                return '<a class="photo-tag-link" href="#/u/' + esc(p.username || '') + '">@' + esc(p.username || p.display_name || '?') + '</a>';
             }).join(', ');
             html += '</div>';
         }
@@ -503,17 +503,17 @@ const SocialUI = {
             var clCount = commentLikes.counts[c.id] || 0;
             var clLiked = commentLikes.myLikes.has ? commentLikes.myLikes.has(c.id) : false;
             var h = '<div class="comment-item' + (isReply ? ' comment-reply' : '') + '">';
-            h += '<div class="comment-avatar comment-profile-link" data-username="' + authorUsername + '">';
+            h += '<div class="comment-avatar comment-profile-link" data-username="' + esc(authorUsername) + '">';
             h += c.profiles && c.profiles.avatar_url
-                ? '<img src="' + c.profiles.avatar_url + '" alt="">'
+                ? '<img src="' + esc(c.profiles.avatar_url) + '" alt="">'
                 : '<div class="avatar-placeholder-sm"></div>';
             h += '</div>';
             h += '<div class="comment-body">';
-            h += '<span class="comment-author comment-profile-link" data-username="' + authorUsername + '">' + authorName + '</span> ';
+            h += '<span class="comment-author comment-profile-link" data-username="' + esc(authorUsername) + '">' + esc(authorName) + '</span> ';
             h += '<span class="comment-text">' + SocialUI._renderMentionText(c.text) + '</span>';
             h += '<div class="comment-meta">';
             h += '<span class="comment-time">' + SocialUI._timeAgo(c.created_at) + '</span>';
-            if (!isMine) h += '<button class="comment-reply-btn" data-username="' + authorUsername + '" data-commentid="' + c.id + '">Ответить</button>';
+            if (!isMine) h += '<button class="comment-reply-btn" data-username="' + esc(authorUsername) + '" data-commentid="' + c.id + '">Ответить</button>';
             h += '<button class="comment-like-btn' + (clLiked ? ' active' : '') + '" data-comment="' + c.id + '">';
             h += '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
             h += '<span class="comment-like-count">' + (clCount > 0 ? clCount : '') + '</span>';
@@ -624,14 +624,14 @@ const SocialUI = {
                 if (ws.duration_sec) stats.push(Math.round(ws.duration_sec / 60) + ' мин');
                 if (!(c.photos && c.photos.length > 0)) {
                     html += '<div class="profile-feed-workout">';
-                    html += '<div class="profile-feed-workout-title">' + title + '</div>';
+                    html += '<div class="profile-feed-workout-title">' + esc(title) + '</div>';
                     if (stats.length) html += '<div class="profile-feed-workout-stats">' + stats.join(' · ') + '</div>';
                     html += '</div>';
                 }
             }
             // Caption
-            if (c.note) html += '<div class="profile-feed-caption">' + c.note + '</div>';
-            if (c.weight) html += '<div class="profile-feed-caption">' + c.weight + ' кг</div>';
+            if (c.note) html += '<div class="profile-feed-caption">' + esc(c.note) + '</div>';
+            if (c.weight) html += '<div class="profile-feed-caption">' + esc(c.weight) + ' кг</div>';
             html += '</div>';
         });
         html += noWrap ? '' : '</div>';
@@ -650,10 +650,10 @@ const SocialUI = {
             // Author row
             html += '<div class="checkin-author">';
             html += c.profiles && c.profiles.avatar_url
-                ? '<img class="checkin-author-avatar" src="' + c.profiles.avatar_url + '" alt="">'
+                ? '<img class="checkin-author-avatar" src="' + esc(c.profiles.avatar_url) + '" alt="">'
                 : '<div class="checkin-author-avatar avatar-placeholder-sm"></div>';
             html += '<div class="checkin-author-info">';
-            html += '<span class="checkin-author-name">' + (c.profiles ? (c.profiles.display_name || c.profiles.username) : '?') + (c.profiles && c.profiles.is_pro ? ' <span class="pro-badge">IFBB PRO</span>' : '') + '</span>';
+            html += '<span class="checkin-author-name">' + esc(c.profiles ? (c.profiles.display_name || c.profiles.username) : '?') + (c.profiles && c.profiles.is_pro ? ' <span class="pro-badge">IFBB PRO</span>' : '') + '</span>';
             html += '<span class="checkin-time">' + SocialUI._timeAgo(c.created_at) + '</span>';
             html += '</div>';
             html += '</div>';
@@ -667,7 +667,7 @@ const SocialUI = {
                 // Photo tags badge
                 var cTags = tagData[c.id];
                 if (cTags && cTags.length) {
-                    html += '<div class="photo-tag-badge">с ' + cTags.map(function(t) { return '@' + (t.username || t.display_name); }).join(', ') + '</div>';
+                    html += '<div class="photo-tag-badge">с ' + cTags.map(function(t) { return '@' + esc(t.username || t.display_name); }).join(', ') + '</div>';
                 }
                 html += '</div>';
             }
@@ -690,25 +690,25 @@ const SocialUI = {
                 var wsLabel = ws.title || ws.muscle_group || 'Тренировка';
                 var mgClr = SocialUI._muscleGroupColor(ws.muscle_group || wsLabel);
                 html += '<div class="checkin-workout">';
-                html += '<span class="checkin-muscle-tag" style="background:' + mgClr + '">' + wsLabel + '</span>';
+                html += '<span class="checkin-muscle-tag" style="background:' + mgClr + '">' + esc(wsLabel) + '</span>';
                 var wStats = [];
                 if (ws.duration_sec) wStats.push(Math.round(ws.duration_sec / 60) + ' мин');
                 if (ws.exercises) wStats.push(ws.exercises.length + ' упр.');
                 if (ws.total_sets) wStats.push(ws.total_sets + ' подх.');
                 if (wStats.length) html += '<span class="checkin-workout-stats">' + wStats.join(' · ') + '</span>';
-                if (ws.gym_name) html += '<span class="checkin-gym-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + ws.gym_name + '</span>';
+                if (ws.gym_name) html += '<span class="checkin-gym-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + esc(ws.gym_name) + '</span>';
                 if (ws.exercises && ws.exercises.length) {
                     html += '<div class="checkin-workout-exercises">';
                     var firstEx = ws.exercises[0];
                     html += '<div class="workout-ex-item">';
-                    html += '<div class="workout-ex-name">' + firstEx.name + '</div>';
+                    html += '<div class="workout-ex-name">' + esc(firstEx.name) + '</div>';
                     if (firstEx.logged && firstEx.logged.length) {
                         firstEx.logged.forEach(function(s, idx) {
                             var parts = [];
                             if (s.weight) parts.push(s.weight + ' ' + (s.unit || 'kg'));
                             if (s.reps) parts.push('x ' + s.reps);
                             var line = parts.join(' ') || '—';
-                            if (s.equipment) line += ' <span class="workout-eq">' + s.equipment + '</span>';
+                            if (s.equipment) line += ' <span class="workout-eq">' + esc(s.equipment) + '</span>';
                             html += '<div class="workout-set-line">' + (idx + 1) + '. ' + line + '</div>';
                         });
                     } else if (firstEx.sets) {
@@ -749,12 +749,12 @@ const SocialUI = {
         var html = '<div class="checkin-card checkin-full">';
 
         // Author
-        html += '<div class="checkin-author" data-username="' + (c.profiles ? c.profiles.username : '') + '">';
+        html += '<div class="checkin-author" data-username="' + esc(c.profiles ? c.profiles.username : '') + '">';
         html += c.profiles && c.profiles.avatar_url
-            ? '<img class="checkin-author-avatar" src="' + c.profiles.avatar_url + '" alt="">'
+            ? '<img class="checkin-author-avatar" src="' + esc(c.profiles.avatar_url) + '" alt="">'
             : '<div class="checkin-author-avatar avatar-placeholder-sm"></div>';
         html += '<div class="checkin-author-info">';
-        html += '<span class="checkin-author-name">' + (c.profiles ? (c.profiles.display_name || c.profiles.username) : '?') + (c.profiles && c.profiles.is_pro ? ' <span class="pro-badge">IFBB PRO</span>' : '') + '</span>';
+        html += '<span class="checkin-author-name">' + esc(c.profiles ? (c.profiles.display_name || c.profiles.username) : '?') + (c.profiles && c.profiles.is_pro ? ' <span class="pro-badge">IFBB PRO</span>' : '') + '</span>';
         html += '<span class="checkin-time">' + SocialUI._timeAgo(c.created_at) + '</span>';
         html += '</div>';
         html += '</div>';
@@ -769,7 +769,7 @@ const SocialUI = {
             if (photoTags && photoTags.length) {
                 html += '<div class="photo-tag-badge">с ' + photoTags.map(function(t) {
                     var p = t.profiles || t;
-                    return '@' + (p.username || p.display_name || '?');
+                    return '@' + esc(p.username || p.display_name || '?');
                 }).join(', ') + '</div>';
             }
             html += '</div>';
@@ -793,21 +793,21 @@ const SocialUI = {
             html += '<div class="checkin-workout">';
             var dLabel = ws.title || ws.muscle_group || 'Тренировка';
             var dMgClr = SocialUI._muscleGroupColor(ws.muscle_group || dLabel);
-            html += '<span class="checkin-muscle-tag" style="background:' + dMgClr + '">' + dLabel + '</span>';
+            html += '<span class="checkin-muscle-tag" style="background:' + dMgClr + '">' + esc(dLabel) + '</span>';
             if (ws.duration_sec) html += ' ' + Math.round(ws.duration_sec / 60) + ' мин';
-            if (ws.gym_name) html += '<div class="checkin-gym-tag" style="margin-top:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + ws.gym_name + '</div>';
+            if (ws.gym_name) html += '<div class="checkin-gym-tag" style="margin-top:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + esc(ws.gym_name) + '</div>';
             if (ws.exercises && ws.exercises.length) {
                 html += '<div class="checkin-workout-exercises">';
                 ws.exercises.forEach(function(e) {
                     html += '<div class="workout-ex-item">';
-                    html += '<div class="workout-ex-name">' + e.name + '</div>';
+                    html += '<div class="workout-ex-name">' + esc(e.name) + '</div>';
                     if (e.logged && e.logged.length) {
                         e.logged.forEach(function(s, idx) {
                             var parts = [];
                             if (s.weight != null && s.weight !== '') parts.push(s.weight + ' ' + (s.unit || 'kg'));
                             if (s.reps) parts.push('x ' + s.reps);
                             var line = parts.join(' ') || '—';
-                            if (s.equipment) line += ' <span class="workout-eq">' + s.equipment + '</span>';
+                            if (s.equipment) line += ' <span class="workout-eq">' + esc(s.equipment) + '</span>';
                             html += '<div class="workout-set-line">' + (idx + 1) + '. ' + line + '</div>';
                         });
                     } else if (e.sets) {
@@ -848,12 +848,12 @@ const SocialUI = {
             var isFollowed = fIds.indexOf(u.user_id) !== -1;
             html += '<div class="discover-user">';
             html += u.avatar_url
-                ? '<img class="discover-user-avatar" src="' + u.avatar_url + '" alt="">'
+                ? '<img class="discover-user-avatar" src="' + esc(u.avatar_url) + '" alt="">'
                 : '<div class="discover-user-avatar avatar-placeholder-sm"></div>';
             html += '<div class="discover-user-info">';
-            html += '<div class="discover-user-name">' + (u.display_name || u.username) + '</div>';
-            html += '<div class="discover-user-username">@' + u.username + '</div>';
-            if (u.is_athlete && u.category) html += '<div class="discover-user-badge">' + u.category + '</div>';
+            html += '<div class="discover-user-name">' + esc(u.display_name || u.username) + '</div>';
+            html += '<div class="discover-user-username">@' + esc(u.username) + '</div>';
+            if (u.is_athlete && u.category) html += '<div class="discover-user-badge">' + esc(u.category) + '</div>';
             html += '</div>';
             if (isFollowed) {
                 html += '<button class="btn-follow-sm followed" data-user="' + u.user_id + '" disabled>Подписан</button>';
@@ -910,7 +910,7 @@ const SocialUI = {
                 var p = n.from_profile;
                 var name = p ? (p.display_name || p.username || '?') : '?';
                 var avatar = p && p.avatar_url
-                    ? '<img class="notif-avatar" src="' + p.avatar_url + '" alt="">'
+                    ? '<img class="notif-avatar" src="' + esc(p.avatar_url) + '" alt="">'
                     : '<div class="notif-avatar avatar-placeholder-sm"></div>';
                 var text = '';
                 var link = '';
@@ -922,7 +922,7 @@ const SocialUI = {
                 html += '<a class="notif-item' + (n.read ? '' : ' unread') + '" href="' + link + '">';
                 html += avatar;
                 html += '<div class="notif-body">';
-                html += '<span class="notif-name">' + name + '</span>';
+                html += '<span class="notif-name">' + esc(name) + '</span>';
                 html += '<span class="notif-text">' + text + '</span>';
                 html += '<div class="notif-time">' + SocialUI._timeAgo(n.created_at) + '</div>';
                 html += '</div>';
@@ -965,9 +965,9 @@ const SocialUI = {
                     var myId = Social._getSupaUserId();
                     var html = '';
                     users.filter(function(u) { return u.user_id !== myId; }).forEach(function(u) {
-                        html += '<div class="tag-search-user" data-uid="' + u.user_id + '" data-username="' + u.username + '" data-name="' + (u.display_name || u.username) + '">';
-                        html += u.avatar_url ? '<img class="tag-search-avatar" src="' + u.avatar_url + '">' : '<div class="tag-search-avatar avatar-placeholder-sm"></div>';
-                        html += '<span>' + (u.display_name || u.username) + ' <span style="color:var(--text-muted)">@' + u.username + '</span></span>';
+                        html += '<div class="tag-search-user" data-uid="' + u.user_id + '" data-username="' + esc(u.username) + '" data-name="' + esc(u.display_name || u.username) + '">';
+                        html += u.avatar_url ? '<img class="tag-search-avatar" src="' + esc(u.avatar_url) + '">' : '<div class="tag-search-avatar avatar-placeholder-sm"></div>';
+                        html += '<span>' + esc(u.display_name || u.username) + ' <span style="color:var(--text-muted)">@' + esc(u.username) + '</span></span>';
                         html += '</div>';
                     });
                     if (!html) html = '<div class="social-empty" style="padding:16px">Никого не найдено</div>';
@@ -990,7 +990,7 @@ const SocialUI = {
     },
 
     _renderMentionText(text) {
-        var safe = text.replace(/</g, '&lt;');
+        var safe = esc(text);
         return safe.replace(/@([A-Za-z0-9_]+)/g, '<a class="mention-link" href="#/u/$1">@$1</a>');
     },
 
@@ -1047,9 +1047,9 @@ const SocialUI = {
             if (!filtered.length) { hide(); return; }
             var html = '';
             filtered.forEach(function(u) {
-                html += '<div class="mention-item" data-username="' + u.username + '">';
-                html += u.avatar_url ? '<img class="mention-avatar" src="' + u.avatar_url + '">' : '<div class="mention-avatar avatar-placeholder-sm"></div>';
-                html += '<div class="mention-info"><span class="mention-name">' + (u.display_name || u.username) + '</span><span class="mention-username">@' + u.username + '</span></div>';
+                html += '<div class="mention-item" data-username="' + esc(u.username) + '">';
+                html += u.avatar_url ? '<img class="mention-avatar" src="' + esc(u.avatar_url) + '">' : '<div class="mention-avatar avatar-placeholder-sm"></div>';
+                html += '<div class="mention-info"><span class="mention-name">' + esc(u.display_name || u.username) + '</span><span class="mention-username">@' + esc(u.username) + '</span></div>';
                 html += '</div>';
             });
             dropdown.innerHTML = html;
@@ -1103,9 +1103,9 @@ const SocialUI = {
 
     _mediaTag(url, cls, extra) {
         if (this._isVideo(url)) {
-            return '<video class="' + cls + '" src="' + url + '" playsinline muted loop' + (extra || '') + '></video>';
+            return '<video class="' + cls + '" src="' + esc(url) + '" playsinline muted loop' + (extra || '') + '></video>';
         }
-        return '<img class="' + cls + '" src="' + url + '" alt=""' + (extra || '') + '>';
+        return '<img class="' + cls + '" src="' + esc(url) + '" alt=""' + (extra || '') + '>';
     },
 
     _muscleGroupColor(mg) {
@@ -1151,13 +1151,13 @@ const SocialUI = {
                 var p = c.other_profile;
                 html += '<div class="conversation-item" data-conv="' + c.id + '" data-user="' + p.user_id + '">';
                 if (p.avatar_url) {
-                    html += '<img class="conversation-avatar" src="' + p.avatar_url + '" alt="">';
+                    html += '<img class="conversation-avatar" src="' + esc(p.avatar_url) + '" alt="">';
                 } else {
                     html += '<div class="conversation-avatar-placeholder"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>';
                 }
                 html += '<div class="conversation-info">';
-                html += '<div class="conversation-name">' + (p.display_name || p.username) + '</div>';
-                html += '<div class="conversation-preview">' + (c.last_message || '') + '</div>';
+                html += '<div class="conversation-name">' + esc(p.display_name || p.username) + '</div>';
+                html += '<div class="conversation-preview">' + esc(c.last_message || '') + '</div>';
                 html += '</div>';
                 html += '<div class="conversation-meta">';
                 html += '<div class="conversation-time">' + SocialUI._timeAgo(c.last_message_at) + '</div>';
@@ -1200,8 +1200,8 @@ const SocialUI = {
         var html = '<div class="chat-screen">';
         html += '<div class="chat-header">';
         html += '<button class="social-back" id="btn-chat-back">&larr;</button>';
-        if (avatarUrl) html += '<img class="chat-header-avatar" src="' + avatarUrl + '" alt="">';
-        html += '<div class="chat-header-name">' + name + '</div>';
+        if (avatarUrl) html += '<img class="chat-header-avatar" src="' + esc(avatarUrl) + '" alt="">';
+        html += '<div class="chat-header-name">' + esc(name) + '</div>';
         html += '</div>';
         html += '<div class="chat-messages" id="chat-messages">';
         html += this._renderChatMessages(messages, myId);
@@ -1266,7 +1266,7 @@ const SocialUI = {
         var isMine = m.sender_id === myId;
         var time = new Date(m.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
         var html = '<div class="chat-bubble ' + (isMine ? 'mine' : 'theirs') + '">';
-        html += m.text;
+        html += esc(m.text);
         html += '<div class="chat-bubble-time">' + time + '</div>';
         html += '</div>';
         return html;

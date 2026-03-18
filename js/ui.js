@@ -485,7 +485,7 @@ const UI = {
         if (!gymId) return '';
         var gym = Storage.getGymById(gymId);
         if (!gym) return '';
-        return '<div class="gym-indicator"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + gym.name + '</div>';
+        return '<div class="gym-indicator"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + esc(gym.name) + '</div>';
     },
 
     _dayViewHTML(weekNum, dayNum) {
@@ -712,12 +712,12 @@ const UI = {
         // Equipment selector
         const eqId = Storage.getExerciseEquipment(ex.id);
         const eq = eqId ? Storage.getEquipmentById(eqId) : null;
-        const eqLabel = eq ? eq.name : 'Оборудование';
-        const eqThumb = eq && eq.imageUrl ? '<img class="ex-thumb" src="' + eq.imageUrl + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
+        const eqLabel = eq ? esc(eq.name) : 'Оборудование';
+        const eqThumb = eq && eq.imageUrl ? '<img class="ex-thumb" src="' + esc(eq.imageUrl) + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
         const eqTrailing = `<span class="chooser-badge"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
         const eqHtml = `
             <div class="equipment-row">
-                <button class="equipment-btn" data-exercise="${ex.id}" data-exname="${(ex.name || '').replace(/"/g, '&quot;')}" data-exname-ru="${(ex.nameRu || '').replace(/"/g, '&quot;')}">
+                <button class="equipment-btn" data-exercise="${ex.id}" data-exname="${esc(ex.name || '')}" data-exname-ru="${esc(ex.nameRu || '')}">
                     ${eqThumb}${eqLabel}${eqTrailing}
                 </button>
             </div>
@@ -1076,7 +1076,7 @@ const UI = {
             }
 
             if (currentEq) {
-                contentHtml += `<div class="history-equipment-title">${currentEq.name}</div>`;
+                contentHtml += `<div class="history-equipment-title">${esc(currentEq.name)}</div>`;
             }
 
             if (history.length > 0) {
@@ -1097,7 +1097,7 @@ const UI = {
                 for (const eqKey of Object.keys(byEquipment)) {
                     const eq = eqKey !== '_none' ? Storage.getEquipmentById(eqKey) : null;
                     const eqName = eq ? eq.name : 'Без оборудования';
-                    contentHtml += `<div class="history-equipment-title history-other-eq">${eqName}</div>`;
+                    contentHtml += `<div class="history-equipment-title history-other-eq">${esc(eqName)}</div>`;
                     contentHtml += renderEntries(byEquipment[eqKey]);
                 }
             }
@@ -1174,10 +1174,10 @@ const UI = {
         var currentEq = currentEqId ? Storage.getEquipmentById(currentEqId) : null;
         var currentEqHtml = '';
         if (currentEq) {
-            var thumbHtml = currentEq.imageUrl ? '<img class="eq-current-thumb" src="' + currentEq.imageUrl + '">' : '';
+            var thumbHtml = currentEq.imageUrl ? '<img class="eq-current-thumb" src="' + esc(currentEq.imageUrl) + '">' : '';
             currentEqHtml = '<div id="eq-current-row" class="eq-current-row">'
                 + thumbHtml
-                + '<span class="eq-current-name">Выбрано: <b>' + currentEq.name + '</b></span>'
+                + '<span class="eq-current-name">Выбрано: <b>' + esc(currentEq.name) + '</b></span>'
                 + '<button class="eq-current-remove" id="eq-remove-btn">\u2715</button>'
                 + '</div>';
         }
@@ -1342,7 +1342,7 @@ const UI = {
             for (var i = 0; i < gyms.length; i++) {
                 var g = gyms[i];
                 myGymsHtml += '<div class="eq-option" data-gym-id="' + g.id + '">'
-                    + '<span>' + g.name + (g.city ? ' <span class="gym-shared-city">' + g.city + '</span>' : '') + '</span></div>';
+                    + '<span>' + esc(g.name) + (g.city ? ' <span class="gym-shared-city">' + esc(g.city) + '</span>' : '') + '</span></div>';
             }
         }
 

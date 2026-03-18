@@ -263,7 +263,7 @@ const App = {
             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
             var toast = document.createElement('div');
             toast.className = 'msg-toast';
-            toast.innerHTML = '<b>Новое сообщение</b><br>' + preview;
+            toast.innerHTML = '<b>Новое сообщение</b><br>' + esc(preview);
             toast.onclick = function() { toast.remove(); location.hash = '#/messages'; };
             document.body.appendChild(toast);
             setTimeout(function() { toast.remove(); }, 4000);
@@ -1180,7 +1180,7 @@ const App = {
             if (!span || span.querySelector('input')) return true;
             var oldName = span.textContent.trim();
             document.querySelectorAll('.eq-remove-btn, .gym-remove-btn').forEach(function(b) { b.disabled = true; b.style.opacity = '0.3'; });
-            span.innerHTML = '<input type="text" class="eq-inline-edit" value="' + oldName.replace(/"/g, '&quot;') + '">';
+            span.innerHTML = '<input type="text" class="eq-inline-edit" value="' + esc(oldName) + '">';
             var inp = span.querySelector('input');
             inp.focus(); inp.select();
             var saved = false;
@@ -2353,7 +2353,7 @@ const App = {
                     var tag = document.createElement('span');
                     tag.className = 'tagged-user-chip';
                     tag.dataset.uid = user.user_id;
-                    tag.innerHTML = '@' + user.username + ' <button class="tagged-user-remove">&times;</button>';
+                    tag.innerHTML = '@' + esc(user.username) + ' <button class="tagged-user-remove">&times;</button>';
                     container.appendChild(tag);
                 }
             });
@@ -2797,8 +2797,8 @@ const App = {
         var html = '<div class="gym-shared-label">Залы из базы:</div>';
         for (var i = 0; i < filtered.length; i++) {
             html += '<div class="gym-shared-item" data-id="' + filtered[i].id + '">'
-                + '<span class="gym-shared-name">' + filtered[i].name + '</span>'
-                + '<span class="gym-shared-city">' + (filtered[i].city || '') + '</span>'
+                + '<span class="gym-shared-name">' + esc(filtered[i].name) + '</span>'
+                + '<span class="gym-shared-city">' + esc(filtered[i].city || '') + '</span>'
                 + '</div>';
         }
         resultsDiv.innerHTML = html;
@@ -2835,8 +2835,8 @@ const App = {
             if (gymSection && gymItems.length > 0) {
                 var gymHtml = '<div class="eq-section-label">В этом зале:</div>';
                 for (var i = 0; i < gymItems.length; i++) {
-                    gymHtml += '<div class="eq-gym-item" data-name="' + gymItems[i].replace(/"/g, '&quot;') + '">'
-                        + '<span class="eq-shared-name">' + gymItems[i] + '</span>'
+                    gymHtml += '<div class="eq-gym-item" data-name="' + esc(gymItems[i]) + '">'
+                        + '<span class="eq-shared-name">' + esc(gymItems[i]) + '</span>'
                         + '</div>';
                 }
                 gymSection.innerHTML = gymHtml;
@@ -2849,8 +2849,8 @@ const App = {
                     var bHtml = '<div class="eq-section-label">Каталог:</div>';
                     var et = exType || '';
                     for (var i = 0; i < brands.length; i++) {
-                        bHtml += '<div class="eq-brand-item" data-brand="' + brands[i].replace(/"/g, '&quot;') + '" data-extype="' + et + '">'
-                            + '<span class="eq-brand-name">' + brands[i] + '</span>'
+                        bHtml += '<div class="eq-brand-item" data-brand="' + esc(brands[i]) + '" data-extype="' + et + '">'
+                            + '<span class="eq-brand-name">' + esc(brands[i]) + '</span>'
                             + '<span class="eq-brand-arrow">\u203A</span>'
                             + '</div>';
                     }
@@ -2907,11 +2907,11 @@ const App = {
             for (var i = 0; i < items.length; i++) {
                 var c = items[i];
                 var fullName = brand + ' ' + c.name;
-                var eqImgHtml = c.image_url ? '<img class="ex-thumb" src="' + c.image_url + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
-                html += '<div class="eq-catalog-item" data-name="' + fullName.replace(/"/g, '&quot;') + '" data-catalog-id="' + c.id + '"' + (c.image_url ? ' data-image="' + c.image_url.replace(/"/g, '&quot;') + '"' : '') + '>'
+                var eqImgHtml = c.image_url ? '<img class="ex-thumb" src="' + esc(c.image_url) + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
+                html += '<div class="eq-catalog-item" data-name="' + esc(fullName) + '" data-catalog-id="' + c.id + '"' + (c.image_url ? ' data-image="' + esc(c.image_url) + '"' : '') + '>'
                     + eqImgHtml
-                    + '<span class="eq-shared-name">' + c.name + '</span>'
-                    + (c.model ? '<span class="eq-catalog-model">' + c.model + '</span>' : '')
+                    + '<span class="eq-shared-name">' + esc(c.name) + '</span>'
+                    + (c.model ? '<span class="eq-catalog-model">' + esc(c.model) + '</span>' : '')
                     + '</div>';
             }
             div.innerHTML = html;
@@ -3062,8 +3062,8 @@ const App = {
                 var k = myEq[i].name.toLowerCase().trim();
                 if (seen[k]) continue;
                 seen[k] = true;
-                html += '<div class="eq-search-item" data-name="' + myEq[i].name.replace(/"/g, '&quot;') + '">'
-                    + '<span class="eq-shared-name">' + myEq[i].name + '</span></div>';
+                html += '<div class="eq-search-item" data-name="' + esc(myEq[i].name) + '">'
+                    + '<span class="eq-shared-name">' + esc(myEq[i].name) + '</span></div>';
             }
         }
         resultsDiv.innerHTML = html || '<div class="eq-search-empty">Поиск...</div>';
@@ -3098,8 +3098,8 @@ const App = {
                         var lk = myEq[i].name.toLowerCase().trim();
                         if (seen2[lk]) continue;
                         seen2[lk] = true;
-                        html2 += '<div class="eq-search-item" data-name="' + myEq[i].name.replace(/"/g, '&quot;') + '">'
-                            + '<span class="eq-shared-name">' + myEq[i].name + '</span></div>';
+                        html2 += '<div class="eq-search-item" data-name="' + esc(myEq[i].name) + '">'
+                            + '<span class="eq-shared-name">' + esc(myEq[i].name) + '</span></div>';
                     }
                 }
                 // Catalog results
@@ -3109,11 +3109,11 @@ const App = {
                     var k = cName.toLowerCase();
                     if (seen2[k]) continue;
                     seen2[k] = true;
-                    var sImgHtml = c.image_url ? '<img class="ex-thumb" src="' + c.image_url + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
-                    html2 += '<div class="eq-search-item" data-name="' + cName.replace(/"/g, '&quot;') + '" data-catalog-id="' + c.id + '"' + (c.image_url ? ' data-image="' + c.image_url.replace(/"/g, '&quot;') + '"' : '') + '>'
+                    var sImgHtml = c.image_url ? '<img class="ex-thumb" src="' + esc(c.image_url) + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
+                    html2 += '<div class="eq-search-item" data-name="' + esc(cName) + '" data-catalog-id="' + c.id + '"' + (c.image_url ? ' data-image="' + esc(c.image_url) + '"' : '') + '>'
                         + sImgHtml
-                        + '<span class="eq-shared-name">' + cName + '</span>'
-                        + (c.model ? '<span class="eq-catalog-model">' + c.model + '</span>' : '')
+                        + '<span class="eq-shared-name">' + esc(cName) + '</span>'
+                        + (c.model ? '<span class="eq-catalog-model">' + esc(c.model) + '</span>' : '')
                         + '</div>';
                 }
                 // Shared results
@@ -3121,8 +3121,8 @@ const App = {
                     var k = shared[i].name.toLowerCase();
                     if (seen2[k]) continue;
                     seen2[k] = true;
-                    html2 += '<div class="eq-search-item" data-name="' + shared[i].name.replace(/"/g, '&quot;') + '">'
-                        + '<span class="eq-shared-name">' + shared[i].name + '</span></div>';
+                    html2 += '<div class="eq-search-item" data-name="' + esc(shared[i].name) + '">'
+                        + '<span class="eq-shared-name">' + esc(shared[i].name) + '</span></div>';
                 }
                 if (!html2) html2 = '<div class="eq-search-empty">Ничего не найдено</div>';
                 div.innerHTML = html2;

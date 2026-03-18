@@ -88,7 +88,7 @@ const Builder = {
             <div class="login-screen">
                 <div class="app-icon">${this._barbellSVG}</div>
                 <h1>Обновление аккаунта</h1>
-                <p class="subtitle">Привет, ${account.name}! Добавьте email для входа.</p>
+                <p class="subtitle">Привет, ${esc(account.name)}! Добавьте email для входа.</p>
 
                 <div class="login-field">
                     <label for="migrate-email">Email</label>
@@ -199,7 +199,7 @@ const Builder = {
 
                 <div class="setup-field">
                     <label>НАЗВАНИЕ ПРОГРАММЫ</label>
-                    <input type="text" id="builder-title" class="form-input" placeholder="Моя программа" value="${cfg.title}">
+                    <input type="text" id="builder-title" class="form-input" placeholder="Моя программа" value="${esc(cfg.title)}">
                 </div>
 
                 <div class="setup-field">
@@ -468,7 +468,7 @@ const Builder = {
         return '<div class="editor-exercise-card" data-sub-idx="' + subIdx + '">'
             + '<div class="editor-ex-main">'
             + '<div class="editor-ex-info">'
-            + '<div class="editor-ex-name" data-item="' + itemIdx + '" data-sub="' + subIdx + '">' + exName(ex) + '</div>'
+            + '<div class="editor-ex-name" data-item="' + itemIdx + '" data-sub="' + subIdx + '">' + esc(exName(ex)) + '</div>'
             + '<div class="editor-ex-meta">' + (setsArr.length || 3) + ' \u00D7 ' + ex.reps
             + (ex.rest && ex.rest !== 120 ? ' \u00B7 ' + Math.floor(ex.rest / 60) + ':' + String(ex.rest % 60).padStart(2, '0') : '')
             + '</div></div>'
@@ -533,7 +533,7 @@ const Builder = {
                 </button>
                 <div class="header-title">
                     <h1>\u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435</h1>
-                    <div class="header-subtitle" id="editor-day-title" style="cursor:pointer">${dayTitle} <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;opacity:0.4"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+                    <div class="header-subtitle" id="editor-day-title" style="cursor:pointer">${esc(dayTitle)} <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;opacity:0.4"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
                 </div>
             </div>
             <div class="app-content">
@@ -1231,7 +1231,7 @@ const Builder = {
         var html = '';
         for (var i = 0; i < filtered.length; i++) {
             var ex = filtered[i];
-            html += `<div class="picker-item" data-name-ru="${ex.nameRu}" data-name="${ex.name}">${exThumbHtml(ex.name)}${exName(ex)}</div>`;
+            html += `<div class="picker-item" data-name-ru="${esc(ex.nameRu)}" data-name="${esc(ex.name)}">${exThumbHtml(ex.name)}${esc(exName(ex))}</div>`;
         }
 
         // Add shared exercises (filter out duplicates with EXERCISE_DB)
@@ -1252,7 +1252,7 @@ const Builder = {
         if (shared.length > 0) {
             html += '<div class="picker-shared-label">Из базы:</div>';
             for (var i = 0; i < shared.length; i++) {
-                html += `<div class="picker-item picker-shared-item" data-name-ru="${shared[i].name}" data-name="${shared[i].name}">${shared[i].name}</div>`;
+                html += `<div class="picker-item picker-shared-item" data-name-ru="${esc(shared[i].name)}" data-name="${esc(shared[i].name)}">${esc(shared[i].name)}</div>`;
             }
         }
 

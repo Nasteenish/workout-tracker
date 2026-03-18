@@ -1,5 +1,11 @@
 /* ===== Utility Functions ===== */
 
+// Escape HTML entities to prevent XSS
+function esc(s) {
+    if (!s && s !== 0) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 // Exercise display name based on language setting
 function exName(ex) {
     if (!ex) return '';
