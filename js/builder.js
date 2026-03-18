@@ -7,6 +7,7 @@ import { ACCOUNTS } from './users.js';
 import { EXERCISE_DB, EXERCISE_CATEGORIES } from './exercises_db.js';
 import { lockBodyScroll, unlockBodyScroll, blockOverlayScroll } from './scroll-lock.js';
 import { esc, exName, getGroupExercises, exThumbHtml } from './utils.js';
+import { BUILDER, WORKOUT, SETTINGS, ONBOARDING, attr, read, readInt, write } from './data-attrs.js';
 
 // Webhook URL for registration notifications (Google Apps Script)
 export const REGISTRATION_WEBHOOK = '';  // Set after creating Apps Script
@@ -61,7 +62,7 @@ export const Builder = {
                     <label for="reg-password">Пароль</label>
                     <div class="password-wrapper">
                         <input type="password" id="reg-password" autocomplete="new-password" placeholder="Придумайте пароль">
-                        <button type="button" class="password-toggle" data-target="reg-password" aria-label="Показать пароль">
+                        <button type="button" class="password-toggle" ${attr(SETTINGS.TARGET, 'reg-password')} aria-label="Показать пароль">
                             <svg class="eye-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                             <svg class="eye-off-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                         </button>
@@ -106,7 +107,7 @@ export const Builder = {
                     <label for="migrate-password">Новый пароль</label>
                     <div class="password-wrapper">
                         <input type="password" id="migrate-password" autocomplete="new-password" placeholder="Минимум 6 символов">
-                        <button type="button" class="password-toggle" data-target="migrate-password" aria-label="Показать пароль">
+                        <button type="button" class="password-toggle" ${attr(SETTINGS.TARGET, 'migrate-password')} aria-label="Показать пароль">
                             <svg class="eye-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                             <svg class="eye-off-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                         </button>
@@ -213,19 +214,19 @@ export const Builder = {
                 <div class="setup-field">
                     <label>ДЛИТЕЛЬНОСТЬ (НЕДЕЛЬ)</label>
                     <div class="builder-toggle" id="builder-weeks-toggle">
-                        <button data-val="1" ${cfg.totalWeeks===1?'class="active"':''}>1</button>
-                        <button data-val="2" ${cfg.totalWeeks===2?'class="active"':''}>2</button>
-                        <button data-val="4" ${cfg.totalWeeks===4?'class="active"':''}>4</button>
-                        <button data-val="8" ${cfg.totalWeeks===8?'class="active"':''}>8</button>
-                        <button data-val="12" ${cfg.totalWeeks===12?'class="active"':''}>12</button>
-                        <button data-val="16" ${cfg.totalWeeks===16?'class="active"':''}>16</button>
+                        <button ${attr(BUILDER.VAL, 1)} ${cfg.totalWeeks===1?'class="active"':''}>1</button>
+                        <button ${attr(BUILDER.VAL, 2)} ${cfg.totalWeeks===2?'class="active"':''}>2</button>
+                        <button ${attr(BUILDER.VAL, 4)} ${cfg.totalWeeks===4?'class="active"':''}>4</button>
+                        <button ${attr(BUILDER.VAL, 8)} ${cfg.totalWeeks===8?'class="active"':''}>8</button>
+                        <button ${attr(BUILDER.VAL, 12)} ${cfg.totalWeeks===12?'class="active"':''}>12</button>
+                        <button ${attr(BUILDER.VAL, 16)} ${cfg.totalWeeks===16?'class="active"':''}>16</button>
                     </div>
                 </div>
 
                 <div class="setup-field">
                     <label>ТРЕНИРОВОК В НЕДЕЛЮ</label>
                     <div class="builder-toggle" id="builder-days-toggle">
-                        ${[1,2,3,4,5,6,7].map(n => `<button data-val="${n}" ${cfg.numDays===n?'class="active"':''}>${n}</button>`).join('')}
+                        ${[1,2,3,4,5,6,7].map(n => `<button ${attr(BUILDER.VAL, n)} ${cfg.numDays===n?'class="active"':''}>${n}</button>`).join('')}
                     </div>
                 </div>
 
@@ -243,8 +244,8 @@ export const Builder = {
         var daysBtn = document.querySelector('#builder-days-toggle button.active');
         this._config = {
             title: title,
-            totalWeeks: weeksBtn ? parseInt(weeksBtn.dataset.val) : 4,
-            numDays: daysBtn ? parseInt(daysBtn.dataset.val) : 4
+            totalWeeks: weeksBtn ? readInt(weeksBtn, BUILDER.VAL) : 4,
+            numDays: daysBtn ? readInt(daysBtn, BUILDER.VAL) : 4
         };
     },
 
@@ -262,7 +263,7 @@ export const Builder = {
             fieldsHtml += `
                 <div class="setup-field">
                     <label>ДЕНЬ ${i}</label>
-                    <input type="text" class="form-input builder-day-name" data-day="${i}" placeholder="Например: ${ph}" value="${val}">
+                    <input type="text" class="form-input builder-day-name" ${attr(BUILDER.DAY, i)} placeholder="Например: ${ph}" value="${val}">
                 </div>
             `;
         }
@@ -286,7 +287,7 @@ export const Builder = {
         var dayInputs = document.querySelectorAll('.builder-day-name');
         var dayNames = [];
         dayInputs.forEach(function(inp) {
-            dayNames.push(inp.value.trim() || ('День ' + inp.dataset.day));
+            dayNames.push(inp.value.trim() || ('День ' + read(inp, BUILDER.DAY)));
         });
 
         // Build program
@@ -427,7 +428,7 @@ export const Builder = {
                 var count = techs.filter(function(x) { return x === tt[t][0]; }).length;
                 var ac = count > 0 ? ' active' : '';
                 var label = tt[t][1] + (count > 1 ? ' \u00D7' + count : '');
-                techHtml += '<button class="editor-tech-btn' + ac + '" data-item="' + itemIdx + '" data-sub="' + subIdx + '" data-set="' + s + '" data-tech="' + tt[t][0] + '">' + label + '</button>';
+                techHtml += '<button class="editor-tech-btn' + ac + '" ' + attr(BUILDER.ITEM, itemIdx) + ' ' + attr(BUILDER.SUB, subIdx) + ' ' + attr(WORKOUT.SET, s) + ' ' + attr(BUILDER.TECH, tt[t][0]) + '>' + label + '</button>';
             }
             techHtml += '</div>';
         }
@@ -441,9 +442,9 @@ export const Builder = {
                 var types = ['S', 'SH', 'H'];
                 for (var ti = 0; ti < types.length; ti++) {
                     var ac = st.type === types[ti] ? ' active' : '';
-                    techHtml += '<button class="editor-type-btn' + ac + '" data-item="' + itemIdx + '" data-sub="' + subIdx + '" data-set="' + s + '" data-type="' + types[ti] + '">' + types[ti] + '</button>';
+                    techHtml += '<button class="editor-type-btn' + ac + '" ' + attr(BUILDER.ITEM, itemIdx) + ' ' + attr(BUILDER.SUB, subIdx) + ' ' + attr(WORKOUT.SET, s) + ' ' + attr(BUILDER.TYPE, types[ti]) + '>' + types[ti] + '</button>';
                 }
-                techHtml += '<input class="editor-rpe-input" type="text" placeholder="RPE" value="' + (st.rpe || '') + '" data-item="' + itemIdx + '" data-sub="' + subIdx + '" data-set="' + s + '">';
+                techHtml += '<input class="editor-rpe-input" type="text" placeholder="RPE" value="' + (st.rpe || '') + '" ' + attr(BUILDER.ITEM, itemIdx) + ' ' + attr(BUILDER.SUB, subIdx) + ' ' + attr(WORKOUT.SET, s) + '>';
                 techHtml += '</div>';
             }
         }
@@ -455,41 +456,41 @@ export const Builder = {
             var r = prog[p];
             var techLabel = r.technique === 'REST_PAUSE' ? 'R-P' : r.technique;
             techHtml += '<div class="editor-prog-rule"><span>\u0421 \u043D\u0435\u0434. ' + r.startWeek + ' \u2192 \u041F.' + (r.setIdx + 1) + ' + ' + techLabel + '</span>';
-            techHtml += '<button class="editor-prog-del" data-item="' + itemIdx + '" data-sub="' + subIdx + '" data-rule="' + p + '">\u2715</button></div>';
+            techHtml += '<button class="editor-prog-del" ' + attr(BUILDER.ITEM, itemIdx) + ' ' + attr(BUILDER.SUB, subIdx) + ' ' + attr(BUILDER.RULE, p) + '>\u2715</button></div>';
         }
-        techHtml += '<button class="editor-prog-add" data-item="' + itemIdx + '" data-sub="' + subIdx + '">+ \u041F\u0440\u0430\u0432\u0438\u043B\u043E</button>';
+        techHtml += '<button class="editor-prog-add" ' + attr(BUILDER.ITEM, itemIdx) + ' ' + attr(BUILDER.SUB, subIdx) + '>+ \u041F\u0440\u0430\u0432\u0438\u043B\u043E</button>';
         // Inline progression form (hidden by default)
         var maxSets = setsArr.length || 3;
         var formId = 'prog-form-' + panelId;
-        techHtml += '<div class="editor-prog-form" id="' + formId + '" style="display:none" data-item="' + itemIdx + '" data-sub="' + subIdx + '">';
+        techHtml += '<div class="editor-prog-form" id="' + formId + '" style="display:none" ' + attr(BUILDER.ITEM, itemIdx) + ' ' + attr(BUILDER.SUB, subIdx) + '>';
         techHtml += '<div class="editor-prog-form-row"><span>\u0421 \u043D\u0435\u0434\u0435\u043B\u0438</span>';
         techHtml += '<div class="prog-stepper"><button class="prog-step prog-week-minus">\u2212</button><span class="prog-week-val">3</span><button class="prog-step prog-week-plus">+</button></div></div>';
         techHtml += '<div class="editor-prog-form-row"><span>\u041F\u043E\u0434\u0445\u043E\u0434</span>';
-        techHtml += '<div class="prog-stepper"><button class="prog-step prog-set-minus">\u2212</button><span class="prog-set-val">' + maxSets + '</span><button class="prog-step prog-set-plus" data-max="' + maxSets + '">+</button></div></div>';
+        techHtml += '<div class="prog-stepper"><button class="prog-step prog-set-minus">\u2212</button><span class="prog-set-val">' + maxSets + '</span><button class="prog-step prog-set-plus" ' + attr(BUILDER.MAX, maxSets) + '>+</button></div></div>';
         techHtml += '<div class="editor-prog-form-row"><span>\u0422\u0435\u0445\u043D\u0438\u043A\u0430</span>';
         techHtml += '<div class="prog-tech-select">';
-        techHtml += '<button class="editor-tech-btn prog-tech-opt" data-val="DROP">DROP</button>';
-        techHtml += '<button class="editor-tech-btn prog-tech-opt" data-val="REST_PAUSE">R-P</button>';
-        techHtml += '<button class="editor-tech-btn prog-tech-opt active" data-val="MP">MP</button>';
+        techHtml += '<button class="editor-tech-btn prog-tech-opt" ' + attr(BUILDER.VAL, 'DROP') + '>DROP</button>';
+        techHtml += '<button class="editor-tech-btn prog-tech-opt" ' + attr(BUILDER.VAL, 'REST_PAUSE') + '>R-P</button>';
+        techHtml += '<button class="editor-tech-btn prog-tech-opt active" ' + attr(BUILDER.VAL, 'MP') + '>MP</button>';
         techHtml += '</div></div>';
         techHtml += '<button class="btn-primary prog-confirm">\u0414\u041E\u0411\u0410\u0412\u0418\u0422\u042C</button>';
         techHtml += '</div>';
 
         var hasTechs = setsArr.some(function(s) { return s.techniques && s.techniques.length > 0; });
         var delAttr = subIdx >= 0
-            ? 'data-del-sub-item="' + itemIdx + '" data-del-sub="' + subIdx + '"'
-            : 'data-idx="' + itemIdx + '"';
+            ? attr(BUILDER.DEL_SUB_ITEM, itemIdx) + ' ' + attr(BUILDER.DEL_SUB, subIdx)
+            : attr(BUILDER.IDX, itemIdx);
         var delClass = subIdx >= 0 ? 'editor-del-sub' : 'editor-delete';
 
-        return '<div class="editor-exercise-card" data-sub-idx="' + subIdx + '">'
+        return '<div class="editor-exercise-card" ' + attr(BUILDER.SUB_IDX, subIdx) + '>'
             + '<div class="editor-ex-main">'
             + '<div class="editor-ex-info">'
-            + '<div class="editor-ex-name" data-item="' + itemIdx + '" data-sub="' + subIdx + '">' + esc(exName(ex)) + '</div>'
+            + '<div class="editor-ex-name" ' + attr(BUILDER.ITEM, itemIdx) + ' ' + attr(BUILDER.SUB, subIdx) + '>' + esc(exName(ex)) + '</div>'
             + '<div class="editor-ex-meta">' + (setsArr.length || 3) + ' \u00D7 ' + ex.reps
             + (ex.rest && ex.rest !== 120 ? ' \u00B7 ' + Math.floor(ex.rest / 60) + ':' + String(ex.rest % 60).padStart(2, '0') : '')
             + '</div></div>'
             + '<div class="editor-ex-actions">'
-            + '<button class="editor-action-btn editor-toggle-tech' + (hasTechs ? ' has-techs' : '') + '" data-item="' + itemIdx + '" data-sub="' + subIdx + '">\u2699</button>'
+            + '<button class="editor-action-btn editor-toggle-tech' + (hasTechs ? ' has-techs' : '') + '" ' + attr(BUILDER.ITEM, itemIdx) + ' ' + attr(BUILDER.SUB, subIdx) + '>\u2699</button>'
             + '<button class="editor-action-btn ' + delClass + '" ' + delAttr + '>\u2715</button>'
             + '</div></div>'
             + '<div class="editor-tech-panel" id="tech-panel-' + panelId + '" style="display:none">' + techHtml + '</div>'
@@ -507,18 +508,18 @@ export const Builder = {
 
         for (var i = 0; i < ed.items.length; i++) {
             var item = ed.items[i];
-            listHtml += '<div class="editor-item' + (item.type !== 'single' ? ' editor-item-group' : '') + '" data-item-idx="' + i + '" data-orig-idx="' + i + '">';
+            listHtml += '<div class="editor-item' + (item.type !== 'single' ? ' editor-item-group' : '') + '" ' + attr(BUILDER.ITEM_IDX, i) + ' ' + attr(BUILDER.ORIG_IDX, i) + '>';
 
             // Checkbox for grouping
-            listHtml += '<label class="editor-item-check"><input type="checkbox" class="editor-check" data-check-idx="' + i + '"><span class="editor-check-mark"></span></label>';
+            listHtml += '<label class="editor-item-check"><input type="checkbox" class="editor-check" ' + attr(BUILDER.CHECK_IDX, i) + '><span class="editor-check-mark"></span></label>';
 
             if (item.type === 'single') {
                 listHtml += this._exerciseCardHTML(item.exercise, i, -1, isPremium);
             } else if (item.type === 'superset') {
                 listHtml += '<div class="editor-group-wrapper editor-superset-wrapper">';
                 listHtml += '<div class="editor-group-header"><span class="editor-group-label superset-label">\u0421\u0423\u041F\u0415\u0420\u0421\u0415\u0422</span>';
-                listHtml += '<div class="editor-group-actions"><button class="editor-split-btn" data-split-idx="' + i + '">\u0420\u0430\u0437\u0434\u0435\u043B\u0438\u0442\u044C</button>';
-                listHtml += '<button class="editor-action-btn editor-delete" data-idx="' + i + '">\u2715</button></div></div>';
+                listHtml += '<div class="editor-group-actions"><button class="editor-split-btn" ' + attr(BUILDER.SPLIT_IDX, i) + '>\u0420\u0430\u0437\u0434\u0435\u043B\u0438\u0442\u044C</button>';
+                listHtml += '<button class="editor-action-btn editor-delete" ' + attr(BUILDER.IDX, i) + '>\u2715</button></div></div>';
                 for (var j = 0; j < item.exercises.length; j++) {
                     listHtml += this._exerciseCardHTML(item.exercises[j], i, j, isPremium);
                 }
@@ -526,8 +527,8 @@ export const Builder = {
             } else if (item.type === 'choose_one') {
                 listHtml += '<div class="editor-group-wrapper editor-choose-wrapper">';
                 listHtml += '<div class="editor-group-header"><span class="editor-group-label choose-label">\u0412\u042B\u0411\u041E\u0420</span>';
-                listHtml += '<div class="editor-group-actions"><button class="editor-split-btn" data-split-idx="' + i + '">\u0420\u0430\u0437\u0434\u0435\u043B\u0438\u0442\u044C</button>';
-                listHtml += '<button class="editor-action-btn editor-delete" data-idx="' + i + '">\u2715</button></div></div>';
+                listHtml += '<div class="editor-group-actions"><button class="editor-split-btn" ' + attr(BUILDER.SPLIT_IDX, i) + '>\u0420\u0430\u0437\u0434\u0435\u043B\u0438\u0442\u044C</button>';
+                listHtml += '<button class="editor-action-btn editor-delete" ' + attr(BUILDER.IDX, i) + '>\u2715</button></div></div>';
                 for (var j = 0; j < item.options.length; j++) {
                     if (j > 0) listHtml += '<div class="editor-or-divider">\u0418\u041B\u0418</div>';
                     listHtml += this._exerciseCardHTML(item.options[j], i, j, isPremium);
@@ -596,19 +597,19 @@ export const Builder = {
 
                 // Toggle tech panel
                 if (target.matches('.editor-toggle-tech')) {
-                    var id = target.dataset.item + '-' + (parseInt(target.dataset.sub) >= 0 ? target.dataset.sub : 'x');
+                    var id = read(target, BUILDER.ITEM) + '-' + (readInt(target, BUILDER.SUB) >= 0 ? read(target, BUILDER.SUB) : 'x');
                     var panel = document.getElementById('tech-panel-' + id);
                     if (panel) panel.style.display = panel.style.display === 'none' ? '' : 'none';
                     return;
                 }
 
                 // Technique counter (tap cycles 0→1→2→3→0) — only per-set buttons (have data-set)
-                if (target.matches('.editor-tech-btn') && target.dataset.set !== undefined) {
-                    var ex = self._getExercise(parseInt(target.dataset.item), parseInt(target.dataset.sub));
+                if (target.matches('.editor-tech-btn') && target.hasAttribute(WORKOUT.SET)) {
+                    var ex = self._getExercise(readInt(target, BUILDER.ITEM), readInt(target, BUILDER.SUB));
                     if (!ex) return;
-                    var setIdx = parseInt(target.dataset.set);
+                    var setIdx = readInt(target, WORKOUT.SET);
                     if (!ex.sets || !ex.sets[setIdx]) return;
-                    var tech = target.dataset.tech;
+                    var tech = read(target, BUILDER.TECH);
                     var techs = ex.sets[setIdx].techniques || [];
                     var count = techs.filter(function(x) { return x === tech; }).length;
                     var next = count >= 3 ? 0 : count + 1;
@@ -631,11 +632,11 @@ export const Builder = {
 
                 // Type toggle (premium)
                 if (target.matches('.editor-type-btn')) {
-                    var ex = self._getExercise(parseInt(target.dataset.item), parseInt(target.dataset.sub));
+                    var ex = self._getExercise(readInt(target, BUILDER.ITEM), readInt(target, BUILDER.SUB));
                     if (!ex) return;
-                    var setIdx = parseInt(target.dataset.set);
+                    var setIdx = readInt(target, WORKOUT.SET);
                     if (ex.sets && ex.sets[setIdx]) {
-                        ex.sets[setIdx].type = target.dataset.type;
+                        ex.sets[setIdx].type = read(target, BUILDER.TYPE);
                         var row = target.closest('.editor-set-techs');
                         if (row) row.querySelectorAll('.editor-type-btn').forEach(function(b) { b.classList.remove('active'); });
                         target.classList.add('active');
@@ -647,19 +648,19 @@ export const Builder = {
                 // Delete sub-exercise from group
                 if (target.closest('.editor-del-sub')) {
                     var btn = target.closest('.editor-del-sub');
-                    self._deleteSubExercise(parseInt(btn.dataset.delSubItem), parseInt(btn.dataset.delSub));
+                    self._deleteSubExercise(readInt(btn, BUILDER.DEL_SUB_ITEM), readInt(btn, BUILDER.DEL_SUB));
                     return;
                 }
 
                 // Split group
                 if (target.matches('.editor-split-btn')) {
-                    self._splitItem(parseInt(target.dataset.splitIdx));
+                    self._splitItem(readInt(target, BUILDER.SPLIT_IDX));
                     return;
                 }
 
                 // Progression: toggle form
                 if (target.matches('.editor-prog-add')) {
-                    var fid = 'prog-form-' + target.dataset.item + '-' + (parseInt(target.dataset.sub) >= 0 ? target.dataset.sub : 'x');
+                    var fid = 'prog-form-' + read(target, BUILDER.ITEM) + '-' + (readInt(target, BUILDER.SUB) >= 0 ? read(target, BUILDER.SUB) : 'x');
                     var form = document.getElementById(fid);
                     if (form) form.style.display = form.style.display === 'none' ? '' : 'none';
                     return;
@@ -683,7 +684,7 @@ export const Builder = {
                 }
                 if (target.matches('.prog-set-plus')) {
                     var val = target.parentElement.querySelector('.prog-set-val');
-                    var max = parseInt(target.dataset.max) || 10;
+                    var max = readInt(target, BUILDER.MAX) || 10;
                     val.textContent = Math.min(max, parseInt(val.textContent) + 1);
                     return;
                 }
@@ -699,12 +700,12 @@ export const Builder = {
                 if (target.matches('.prog-confirm')) {
                     var form = target.closest('.editor-prog-form');
                     if (!form) return;
-                    var ex = self._getExercise(parseInt(form.dataset.item), parseInt(form.dataset.sub));
+                    var ex = self._getExercise(readInt(form, BUILDER.ITEM), readInt(form, BUILDER.SUB));
                     if (!ex) return;
                     var startWeek = parseInt(form.querySelector('.prog-week-val').textContent);
                     var setIdx = parseInt(form.querySelector('.prog-set-val').textContent) - 1;
                     var techBtn = form.querySelector('.prog-tech-opt.active');
-                    var technique = techBtn ? techBtn.dataset.val : 'MP';
+                    var technique = techBtn ? read(techBtn, BUILDER.VAL) : 'MP';
                     if (!ex.progression) ex.progression = [];
                     ex.progression.push({ startWeek: startWeek, setIdx: setIdx, technique: technique });
                     self._autoSave();
@@ -714,9 +715,9 @@ export const Builder = {
 
                 // Progression: delete rule
                 if (target.matches('.editor-prog-del')) {
-                    var ex = self._getExercise(parseInt(target.dataset.item), parseInt(target.dataset.sub));
+                    var ex = self._getExercise(readInt(target, BUILDER.ITEM), readInt(target, BUILDER.SUB));
                     if (ex && ex.progression) {
-                        ex.progression.splice(parseInt(target.dataset.rule), 1);
+                        ex.progression.splice(readInt(target, BUILDER.RULE), 1);
                         self._autoSave();
                         self._renderDayEditorHTML();
                     }
@@ -727,9 +728,9 @@ export const Builder = {
             // RPE input changes
             exList.addEventListener('input', function(e) {
                 if (e.target.matches('.editor-rpe-input')) {
-                    var ex = self._getExercise(parseInt(e.target.dataset.item), parseInt(e.target.dataset.sub));
+                    var ex = self._getExercise(readInt(e.target, BUILDER.ITEM), readInt(e.target, BUILDER.SUB));
                     if (ex && ex.sets) {
-                        var setIdx = parseInt(e.target.dataset.set);
+                        var setIdx = readInt(e.target, WORKOUT.SET);
                         if (ex.sets[setIdx]) {
                             ex.sets[setIdx].rpe = e.target.value.trim();
                             self._autoSave();
@@ -757,7 +758,7 @@ export const Builder = {
     _mergeItems(type) {
         var checkboxes = document.querySelectorAll('.editor-check:checked');
         var indices = [];
-        checkboxes.forEach(function(cb) { indices.push(parseInt(cb.dataset.checkIdx)); });
+        checkboxes.forEach(function(cb) { indices.push(readInt(cb, BUILDER.CHECK_IDX)); });
         if (indices.length < 2) return;
 
         indices.sort(function(a, b) { return a - b; });
@@ -828,7 +829,7 @@ export const Builder = {
 
         function cacheRects() {
             cachedRects = [];
-            var els = container.querySelectorAll('[data-item-idx]');
+            var els = container.querySelectorAll('[' + BUILDER.ITEM_IDX + ']');
             for (var i = 0; i < els.length; i++) {
                 var r = els[i].getBoundingClientRect();
                 cachedRects.push({ el: els[i], top: r.top, bottom: r.bottom, midY: r.top + r.height / 2, height: r.height });
@@ -854,7 +855,7 @@ export const Builder = {
         }
 
         container.addEventListener('touchstart', function(e) {
-            var card = e.target.closest('[data-item-idx]');
+            var card = e.target.closest('[' + BUILDER.ITEM_IDX + ']');
             if (!card || e.target.closest('.editor-action-btn') || e.target.closest('.editor-item-check') || e.target.closest('.editor-split-btn') || e.target.closest('.editor-tech-panel')) return;
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
@@ -906,8 +907,8 @@ export const Builder = {
                     } else {
                         container.insertBefore(dragEl, cr.el.nextSibling);
                     }
-                    var allCards = container.querySelectorAll('[data-item-idx]');
-                    for (var j = 0; j < allCards.length; j++) allCards[j].dataset.itemIdx = j;
+                    var allCards = container.querySelectorAll('[' + BUILDER.ITEM_IDX + ']');
+                    for (var j = 0; j < allCards.length; j++) write(allCards[j], BUILDER.ITEM_IDX, j);
                     swapCooldown = true;
                     cacheRects();
                     if (navigator.vibrate) navigator.vibrate(15);
@@ -921,9 +922,9 @@ export const Builder = {
             if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
             if (!dragging) return;
             var newItems = [];
-            var allCards = container.querySelectorAll('[data-item-idx]');
+            var allCards = container.querySelectorAll('[' + BUILDER.ITEM_IDX + ']');
             for (var i = 0; i < allCards.length; i++) {
-                var origIdx = parseInt(allCards[i].dataset.origIdx);
+                var origIdx = readInt(allCards[i], BUILDER.ORIG_IDX);
                 if (self._editingDay && self._editingDay.items[origIdx]) {
                     newItems.push(self._editingDay.items[origIdx]);
                 }
@@ -932,8 +933,8 @@ export const Builder = {
                 self._editingDay.items = newItems;
                 self._autoSave();
                 for (var i = 0; i < allCards.length; i++) {
-                    allCards[i].dataset.itemIdx = i;
-                    allCards[i].dataset.origIdx = i;
+                    write(allCards[i], BUILDER.ITEM_IDX, i);
+                    write(allCards[i], BUILDER.ORIG_IDX, i);
                 }
             }
             cleanup();
@@ -1077,10 +1078,10 @@ export const Builder = {
         overlay.className = 'modal-overlay';
         overlay.id = 'exercise-picker-modal';
 
-        var catsHtml = '<button class="picker-cat active" data-cat="all">\u0412\u0441\u0435</button>';
+        var catsHtml = '<button class="picker-cat active" ' + attr(BUILDER.CAT, 'all') + '>\u0412\u0441\u0435</button>';
         for (var i = 0; i < EXERCISE_CATEGORIES.length; i++) {
             var cat = EXERCISE_CATEGORIES[i];
-            catsHtml += `<button class="picker-cat" data-cat="${cat.id}">${cat.nameRu}</button>`;
+            catsHtml += `<button class="picker-cat" ${attr(BUILDER.CAT, cat.id)}>${cat.nameRu}</button>`;
         }
 
         var listHtml = this._buildPickerList('all', '');
@@ -1127,7 +1128,7 @@ export const Builder = {
             Social.searchSharedExercises('').then(function(exs) {
                 Builder._sharedExercisesCache = exs || [];
                 var activeCat = document.querySelector('.picker-cat.active');
-                var cat = activeCat ? activeCat.dataset.cat : 'all';
+                var cat = activeCat ? read(activeCat, BUILDER.CAT) : 'all';
                 var searchInput = document.getElementById('picker-search-input');
                 var q = searchInput ? searchInput.value.trim() : '';
                 var listEl = document.getElementById('picker-list');
@@ -1187,7 +1188,7 @@ export const Builder = {
             searchInput.addEventListener('input', function() {
                 var query = searchInput.value.trim();
                 var activeCat = document.querySelector('.picker-cat.active');
-                var cat = activeCat ? activeCat.dataset.cat : 'all';
+                var cat = activeCat ? read(activeCat, BUILDER.CAT) : 'all';
                 document.getElementById('picker-list').innerHTML = Builder._buildPickerList(cat, query);
             });
             searchInput.addEventListener('blur', function() {
@@ -1195,7 +1196,7 @@ export const Builder = {
                     exitSearchMode();
                     // Re-render full list
                     var activeCat = document.querySelector('.picker-cat.active');
-                    var cat = activeCat ? activeCat.dataset.cat : 'all';
+                    var cat = activeCat ? read(activeCat, BUILDER.CAT) : 'all';
                     document.getElementById('picker-list').innerHTML = Builder._buildPickerList(cat, '');
                 }
             });
@@ -1247,7 +1248,7 @@ export const Builder = {
         var html = '';
         for (var i = 0; i < filtered.length; i++) {
             var ex = filtered[i];
-            html += `<div class="picker-item" data-name-ru="${esc(ex.nameRu)}" data-name="${esc(ex.name)}">${exThumbHtml(ex.name)}${esc(exName(ex))}</div>`;
+            html += `<div class="picker-item" ${attr(WORKOUT.EX_NAME_RU, esc(ex.nameRu))} ${attr(WORKOUT.EX_NAME, esc(ex.name))}>${exThumbHtml(ex.name)}${esc(exName(ex))}</div>`;
         }
 
         // Add shared exercises (filter out duplicates with EXERCISE_DB)
@@ -1268,7 +1269,7 @@ export const Builder = {
         if (shared.length > 0) {
             html += '<div class="picker-shared-label">Из базы:</div>';
             for (var i = 0; i < shared.length; i++) {
-                html += `<div class="picker-item picker-shared-item" data-name-ru="${esc(shared[i].name)}" data-name="${esc(shared[i].name)}">${esc(shared[i].name)}</div>`;
+                html += `<div class="picker-item picker-shared-item" ${attr(WORKOUT.EX_NAME_RU, esc(shared[i].name))} ${attr(WORKOUT.EX_NAME, esc(shared[i].name))}>${esc(shared[i].name)}</div>`;
             }
         }
 
@@ -1298,7 +1299,7 @@ export const Builder = {
             var buttons = document.querySelectorAll('.picker-cat');
             buttons.forEach(function(b) { b.classList.remove('active'); });
             target.classList.add('active');
-            var cat = target.dataset.cat;
+            var cat = read(target, BUILDER.CAT);
             this._pickerCategory = cat;
             var searchInput = document.getElementById('picker-search-input');
             var query = searchInput ? searchInput.value.trim() : '';
@@ -1308,8 +1309,8 @@ export const Builder = {
 
         // Exercise item
         if (target.classList.contains('picker-item')) {
-            var nameRu = target.dataset.nameRu;
-            var name = target.dataset.name;
+            var nameRu = read(target, WORKOUT.EX_NAME_RU);
+            var name = read(target, WORKOUT.EX_NAME);
             this._closeExercisePicker();
             this.showExerciseConfig(nameRu, name);
             return;
@@ -1478,8 +1479,8 @@ export const Builder = {
             '<p class="onboard-step">Шаг 1</p>' +
             '<h2 class="onboard-title">Ваш пол?</h2>' +
             '<div class="onboard-options">' +
-            '<button class="onboard-option onboard-gender-btn" data-gender="male">Мужской</button>' +
-            '<button class="onboard-option onboard-gender-btn" data-gender="female">Женский</button>' +
+            '<button class="onboard-option onboard-gender-btn" ' + attr(ONBOARDING.GENDER, 'male') + '>Мужской</button>' +
+            '<button class="onboard-option onboard-gender-btn" ' + attr(ONBOARDING.GENDER, 'female') + '>Женский</button>' +
             '</div>' +
             '</div>';
     },
@@ -1492,9 +1493,9 @@ export const Builder = {
             '<p class="onboard-step">Шаг 2</p>' +
             '<h2 class="onboard-title">Расскажи о себе</h2>' +
             '<div class="onboard-options">' +
-            '<button class="onboard-option onboard-role-btn" data-role="casual">Я тренируюсь для себя</button>' +
-            '<button class="onboard-option onboard-role-btn" data-role="athlete">Я соревнующийся атлет</button>' +
-            // '<button class="onboard-option onboard-role-btn" data-role="trainer">Я тренер</button>' +
+            '<button class="onboard-option onboard-role-btn" ' + attr(ONBOARDING.ROLE, 'casual') + '>Я тренируюсь для себя</button>' +
+            '<button class="onboard-option onboard-role-btn" ' + attr(ONBOARDING.ROLE, 'athlete') + '>Я соревнующийся атлет</button>' +
+            // '<button class="onboard-option onboard-role-btn" ' + attr(ONBOARDING.ROLE, 'trainer') + '>Я тренер</button>' +
             '</div>' +
             '</div>';
     },
@@ -1507,10 +1508,10 @@ export const Builder = {
             '<p class="onboard-step">Шаг 3</p>' +
             '<h2 class="onboard-title">Какая у тебя цель?</h2>' +
             '<div class="onboard-options">' +
-            '<button class="onboard-option onboard-goal-btn" data-goal="muscle">Набрать мышечную массу</button>' +
-            '<button class="onboard-option onboard-goal-btn" data-goal="fat_loss">Сбросить жир</button>' +
-            '<button class="onboard-option onboard-goal-btn" data-goal="strength">Стать сильнее</button>' +
-            '<button class="onboard-option onboard-goal-btn" data-goal="health">Здоровье и самочувствие</button>' +
+            '<button class="onboard-option onboard-goal-btn" ' + attr(ONBOARDING.GOAL, 'muscle') + '>Набрать мышечную массу</button>' +
+            '<button class="onboard-option onboard-goal-btn" ' + attr(ONBOARDING.GOAL, 'fat_loss') + '>Сбросить жир</button>' +
+            '<button class="onboard-option onboard-goal-btn" ' + attr(ONBOARDING.GOAL, 'strength') + '>Стать сильнее</button>' +
+            '<button class="onboard-option onboard-goal-btn" ' + attr(ONBOARDING.GOAL, 'health') + '>Здоровье и самочувствие</button>' +
             '</div>' +
             '</div>';
     },
@@ -1523,8 +1524,8 @@ export const Builder = {
             '<p class="onboard-step">Шаг 3 из 5</p>' +
             '<h2 class="onboard-title">Ваш статус</h2>' +
             '<div class="onboard-options">' +
-            '<button class="onboard-option onboard-pro-btn" data-pro="true">IFBB PRO</button>' +
-            '<button class="onboard-option onboard-pro-btn" data-pro="false">Любитель</button>' +
+            '<button class="onboard-option onboard-pro-btn" ' + attr(ONBOARDING.PRO, 'true') + '>IFBB PRO</button>' +
+            '<button class="onboard-option onboard-pro-btn" ' + attr(ONBOARDING.PRO, 'false') + '>Любитель</button>' +
             '</div>' +
             '</div>';
     },
@@ -1537,9 +1538,9 @@ export const Builder = {
             '<p class="onboard-step">Шаг 3</p>' +
             '<h2 class="onboard-title">Сколько у тебя клиентов?</h2>' +
             '<div class="onboard-options">' +
-            '<button class="onboard-option onboard-clients-btn" data-clients="1-5">1\u20135</button>' +
-            '<button class="onboard-option onboard-clients-btn" data-clients="5-15">5\u201315</button>' +
-            '<button class="onboard-option onboard-clients-btn" data-clients="15+">15+</button>' +
+            '<button class="onboard-option onboard-clients-btn" ' + attr(ONBOARDING.CLIENTS, '1-5') + '>1\u20135</button>' +
+            '<button class="onboard-option onboard-clients-btn" ' + attr(ONBOARDING.CLIENTS, '5-15') + '>5\u201315</button>' +
+            '<button class="onboard-option onboard-clients-btn" ' + attr(ONBOARDING.CLIENTS, '15+') + '>15+</button>' +
             '</div>' +
             '</div>';
     },
@@ -1554,7 +1555,7 @@ export const Builder = {
             '<h2 class="onboard-title">Ваша категория</h2>' +
             '<div class="onboard-chips">';
         cats.forEach(function(c) {
-            html += '<button class="onboard-chip onboard-category-btn" data-category="' + c + '">' + c + '</button>';
+            html += '<button class="onboard-chip onboard-category-btn" ' + attr(ONBOARDING.CATEGORY, c) + '>' + c + '</button>';
         });
         html += '</div></div>';
         document.getElementById('app').innerHTML = html;
@@ -1568,7 +1569,7 @@ export const Builder = {
             '<h2 class="onboard-title">В какой вы фазе?</h2>' +
             '<div class="onboard-chips">';
         this._phases.forEach(function(p) {
-            html += '<button class="onboard-chip onboard-phase-btn" data-phase="' + p + '">' + p + '</button>';
+            html += '<button class="onboard-chip onboard-phase-btn" ' + attr(ONBOARDING.PHASE, p) + '>' + p + '</button>';
         });
         html += '</div></div>';
         document.getElementById('app').innerHTML = html;

@@ -9,6 +9,7 @@ import { EquipmentManager } from './equipment-manager.js';
 import { WorkoutTimer } from './workout-timer.js';
 import { getTotalWeeks, getTotalDays, formatDateISO, getProgressWeek, getCompletedSets, resolveWorkout, exName, markCachedThumbs, esc, exThumbHtml, getGroupExercises, findExerciseInProgram } from './utils.js';
 import { EXERCISE_DB } from './exercises_db.js';
+import { WORKOUT, EQ, SETTINGS, attr } from './data-attrs.js';
 
 export const UI = {
     // ===== LOGIN SCREEN =====
@@ -33,7 +34,7 @@ export const UI = {
                     <label for="password-input">Пароль</label>
                     <div class="password-wrapper">
                         <input type="password" id="password-input" autocomplete="current-password" placeholder="Введите пароль">
-                        <button type="button" class="password-toggle" data-target="password-input" aria-label="Показать пароль">
+                        <button type="button" class="password-toggle" ${attr(SETTINGS.TARGET, 'password-input')} aria-label="Показать пароль">
                             <svg class="eye-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                             <svg class="eye-off-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                         </button>
@@ -668,9 +669,9 @@ export const UI = {
                    : ae.classList.contains('reps-input') ? '.reps-input'
                    : ae.classList.contains('seg-weight-input') ? '.seg-weight-input'
                    : '.seg-reps-input',
-                ex: ae.dataset.exercise,
-                set: ae.dataset.set,
-                seg: ae.dataset.seg,
+                ex: ae.getAttribute(WORKOUT.EXERCISE),
+                set: ae.getAttribute(WORKOUT.SET),
+                seg: ae.getAttribute(WORKOUT.SEG),
                 pos: ae.selectionStart
             };
         }
@@ -750,7 +751,7 @@ export const UI = {
         const eqTrailing = `<span class="chooser-badge"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
         const eqHtml = `
             <div class="equipment-row">
-                <button class="equipment-btn" data-exercise="${ex.id}" data-exname="${esc(ex.name || '')}" data-exname-ru="${esc(ex.nameRu || '')}">
+                <button class="equipment-btn" ${attr(WORKOUT.EXERCISE, ex.id)} ${attr(WORKOUT.EX_NAME, esc(ex.name || ''))} ${attr(WORKOUT.EX_NAME_RU, esc(ex.nameRu || ''))}>
                     ${eqThumb}${eqLabel}${eqTrailing}
                 </button>
             </div>
@@ -758,12 +759,12 @@ export const UI = {
 
         const displayName = this._getExerciseDisplayName(ex);
         const nameClass = `exercise-name exercise-name-editable ${choiceKey ? 'exercise-name-chooser' : ''}`;
-        const nameAttrs = `data-exercise="${ex.id}" ${choiceKey ? `data-choice-key="${choiceKey}"` : ''}`;
+        const nameAttrs = `${attr(WORKOUT.EXERCISE, ex.id)} ${choiceKey ? attr(WORKOUT.CHOICE_KEY, choiceKey) : ''}`;
         const nameContent = choiceKey ? this._nameWithBadge(displayName) : displayName;
 
         const setControls = `<div class="set-controls">
-            <button class="set-ctrl-btn remove-set-btn" data-exercise="${ex.id}">− подход</button>
-            <button class="set-ctrl-btn add-set-btn" data-exercise="${ex.id}">+ подход</button>
+            <button class="set-ctrl-btn remove-set-btn" ${attr(WORKOUT.EXERCISE, ex.id)}>− подход</button>
+            <button class="set-ctrl-btn add-set-btn" ${attr(WORKOUT.EXERCISE, ex.id)}>+ подход</button>
         </div>`;
 
         return `
@@ -781,7 +782,7 @@ export const UI = {
                 ${eqHtml}
                 ${setsHtml}
                 ${setControls}
-                <button class="history-btn" data-exercise="${ex.id}">
+                <button class="history-btn" ${attr(WORKOUT.EXERCISE, ex.id)}>
                     История
                 </button>
             </div>
@@ -831,7 +832,7 @@ export const UI = {
         const { exId, setIdx, set, isCompleted, weightVal, repsVal,
                 unitLabel, prev, prevUnitLabel, weightSegCount, segCount, segs } = vm;
 
-        const prevText = prev ? `пред: ${prev.weight}<span class="set-prev-unit" data-exercise="${exId}">${prevUnitLabel}</span> x ${prev.reps}` : '';
+        const prevText = prev ? `пред: ${prev.weight}<span class="set-prev-unit" ${attr(WORKOUT.EXERCISE, exId)}>${prevUnitLabel}</span> x ${prev.reps}` : '';
 
         // Type badge
         const typeClass = `type-${set.type}`;
@@ -868,18 +869,18 @@ export const UI = {
         if (weightSegCount === 1) {
             weightInputHtml = `<input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
                 class="weight-input"
-                data-exercise="${exId}" data-set="${setIdx}"
+                ${attr(WORKOUT.EXERCISE, exId)} ${attr(WORKOUT.SET, setIdx)}
                 value="${weightVal}" placeholder="${placeholderW}">`;
         } else {
             let parts = `<input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
                 class="weight-input seg-weight-input split-main"
-                data-exercise="${exId}" data-set="${setIdx}" data-seg="0"
+                ${attr(WORKOUT.EXERCISE, exId)} ${attr(WORKOUT.SET, setIdx)} ${attr(WORKOUT.SEG, 0)}
                 value="${weightVal}" placeholder="${placeholderW}">`;
             for (let i = 1; i < weightSegCount; i++) {
                 const sv = segs[i].weight;
                 parts += `<span class="split-sep">+</span><input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
                     class="seg-weight-input split-extra"
-                    data-exercise="${exId}" data-set="${setIdx}" data-seg="${i}"
+                    ${attr(WORKOUT.EXERCISE, exId)} ${attr(WORKOUT.SET, setIdx)} ${attr(WORKOUT.SEG, i)}
                     value="${sv}" placeholder="">`;
             }
             weightInputHtml = `<div class="split-reps">${parts}</div>`;
@@ -890,18 +891,18 @@ export const UI = {
         if (segCount === 1) {
             repsInputHtml = `<input type="text" inputmode="numeric" pattern="[0-9]*"
                 class="reps-input"
-                data-exercise="${exId}" data-set="${setIdx}"
+                ${attr(WORKOUT.EXERCISE, exId)} ${attr(WORKOUT.SET, setIdx)}
                 value="${repsVal}" placeholder="${placeholderR}">`;
         } else {
             let parts = `<input type="text" inputmode="numeric" pattern="[0-9]*"
                 class="reps-input seg-reps-input split-main"
-                data-exercise="${exId}" data-set="${setIdx}" data-seg="0"
+                ${attr(WORKOUT.EXERCISE, exId)} ${attr(WORKOUT.SET, setIdx)} ${attr(WORKOUT.SEG, 0)}
                 value="${repsVal}" placeholder="${placeholderR}">`;
             for (let i = 1; i < segCount; i++) {
                 const sv = segs[i].reps;
                 parts += `<span class="split-sep">+</span><input type="text" inputmode="numeric" pattern="[0-9]*"
                     class="seg-reps-input split-extra"
-                    data-exercise="${exId}" data-set="${setIdx}" data-seg="${i}"
+                    ${attr(WORKOUT.EXERCISE, exId)} ${attr(WORKOUT.SET, setIdx)} ${attr(WORKOUT.SEG, i)}
                     value="${sv}" placeholder="">`;
             }
             repsInputHtml = `<div class="split-reps">${parts}</div>`;
@@ -912,7 +913,7 @@ export const UI = {
             : '<svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18.5" stroke="rgba(157,141,245,0.4)" stroke-width="1.5"/></svg>';
 
         return `
-            <div class="set-row${isCompleted ? ' done' : ''}" data-exercise="${exId}" data-set="${setIdx}">
+            <div class="set-row${isCompleted ? ' done' : ''}" ${attr(WORKOUT.EXERCISE, exId)} ${attr(WORKOUT.SET, setIdx)}>
                 <div class="set-info">
                     <span class="set-number">П.${setIdx + 1}</span>
                     ${(set.type && set.type !== 'H') || (set.rpe && set.rpe !== '8') ? `<span class="set-type-badge ${typeClass}">${typeLabel}</span>
@@ -921,7 +922,7 @@ export const UI = {
                 </div>
                 <div class="set-inputs">
                     <div class="input-group">
-                        <button class="unit-cycle-btn" data-exercise="${exId}">${unitLabel}</button>
+                        <button class="unit-cycle-btn" ${attr(WORKOUT.EXERCISE, exId)}>${unitLabel}</button>
                         ${weightInputHtml}
                     </div>
                     <div class="input-group">
@@ -929,7 +930,7 @@ export const UI = {
                         ${repsInputHtml}
                     </div>
                     <div role="button" class="complete-btn ${isCompleted ? 'completed' : ''}"
-                        data-exercise="${exId}" data-set="${setIdx}">${completeSvg}</div>
+                        ${attr(WORKOUT.EXERCISE, exId)} ${attr(WORKOUT.SET, setIdx)}>${completeSvg}</div>
                 </div>
                 ${prevText ? `<div class="set-prev">${prevText}</div>` : ''}
             </div>
@@ -1448,7 +1449,7 @@ export const UI = {
             const isSelected = ex.id === chosenId || (!chosenId && ex === options[0]);
             optionsHtml += `
                 <div class="eq-option ${isSelected ? 'selected' : ''}"
-                     data-choice-key="${choiceKey}" data-exercise-id="${ex.id}">
+                     ${attr(WORKOUT.CHOICE_KEY, choiceKey)} ${attr(WORKOUT.EXERCISE_ID, ex.id)}>
                     ${exName(ex)}
                 </div>
             `;
@@ -1531,13 +1532,13 @@ export const UI = {
         let listHtml = '';
         for (const name of allExercises) {
             const isActive = currentSub === name;
-            listHtml += `<div class="eq-option sub-option${isActive ? ' selected' : ''}" data-sub-name="${name}" data-target-exercise="${exerciseId}">${name}${isActive ? ' <span class="eq-check">\u2713</span>' : ''}</div>`;
+            listHtml += `<div class="eq-option sub-option${isActive ? ' selected' : ''}" ${attr(WORKOUT.SUB_NAME, name)} ${attr(WORKOUT.TARGET_EXERCISE, exerciseId)}>${name}${isActive ? ' <span class="eq-check">\u2713</span>' : ''}</div>`;
         }
 
         // Revert button (only if currently substituted)
         const revertHtml = isSubbed ? `
             <div class="sub-revert-row">
-                <button class="sub-revert-btn" data-exercise="${exerciseId}">
+                <button class="sub-revert-btn" ${attr(WORKOUT.EXERCISE, exerciseId)}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                     Вернуть оригинал (${originalName})
                 </button>
@@ -1582,7 +1583,7 @@ export const UI = {
             const query = this.value.toLowerCase().trim();
             const items = document.querySelectorAll('#sub-exercise-list .sub-option');
             items.forEach(function(item) {
-                const name = item.dataset.subName.toLowerCase();
+                const name = (item.getAttribute(WORKOUT.SUB_NAME) || '').toLowerCase();
                 item.style.display = name.includes(query) ? '' : 'none';
             });
         });
@@ -1901,8 +1902,8 @@ export const UI = {
                 <div class="settings-eq-item">
                     <span>${eq.name}</span>
                     <div class="eq-item-actions">
-                        <button class="eq-edit-btn" data-eq-id="${eq.id}">${svgPencil}</button>
-                        <button class="eq-remove-btn" data-eq-id="${eq.id}"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+                        <button class="eq-edit-btn" ${attr(EQ.ID, eq.id)}>${svgPencil}</button>
+                        <button class="eq-remove-btn" ${attr(EQ.ID, eq.id)}><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
                     </div>
                 </div>
             `;

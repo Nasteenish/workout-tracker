@@ -163,11 +163,19 @@ Keyframes остаются при своих компонентах, в `animati
 
 ---
 
-### 15. Prop drilling через data-атрибуты
+### ~~15. Prop drilling через data-атрибуты~~ ✅ РЕШЕНО
 
-**Где:** `UI._renderSetRow()` → `App.handleClick()`
+**Что сделано:** Создан `js/data-attrs.js` — единый реестр всех data-атрибутов с константами по доменам (`WORKOUT`, `BUILDER`, `EQ`, `SOCIAL`, `SETTINGS`, `ONBOARDING`) и хелперами:
+- `attr(NAME, value)` — генерация HTML-атрибута в innerHTML-строках
+- `read(el, NAME)` / `readInt(el, NAME)` — чтение через `getAttribute()` (без camelCase-конверсии `dataset`)
+- `write(el, NAME, value)` — программная запись
 
-**Проблема:** Данные передаются через DOM: `<button data-exercise="D1E2" data-set="0">` → `btn.dataset.exercise`. Нет type safety (строки), при изменении имени атрибута — менять в двух файлах.
+Устранены коллизии пространства имён:
+- `data-name` (5 доменов) → `data-eq-name`, `data-ex-name`, `data-display-name`
+- `data-commentid` → `data-comment-id` (kebab-case)
+- `data-exname` / `data-exname-ru` → `data-ex-name` / `data-ex-name-ru`
+
+Мигрированы ~210 сайтов в 7 файлах: app.js, ui.js, builder.js, social-ui.js, equipment-manager.js, scroll-lock.js.
 
 ---
 
@@ -225,7 +233,7 @@ Keyframes остаются при своих компонентах, в `animati
 | 17 | ~~Хрупкая _migrateExerciseNames~~ ✅ | **Средняя** | Среднее | 🟢 P2 |
 | 13 | Монолитный CSS | Средняя | Низкое | 🟢 P3 |
 | 14 | ~~Нет ES-модулей~~ ✅ | **Высокая** | Низкое (пока) | 🟢 P3 |
-| 15 | Prop drilling | Средняя | Низкое | 🟢 P3 |
+| 15 | ~~Prop drilling~~ ✅ | **Средняя** | Низкое | 🟢 P3 |
 | 18 | ~~Stale _pageCache~~ ✅ | **Низкая** | Низкое | 🟢 P3 |
 | 19 | Нет валидации ввода | Низкая | Низкое | 🟢 P3 |
 | 20 | Тихие ошибки Supabase | Средняя | Среднее | 🟢 P3 |
@@ -255,3 +263,4 @@ Keyframes остаются при своих компонентах, в `animati
 - Удалить `users.js` после полной миграции на Supabase Auth (#12)
 - ~~Вынести `_migrateExerciseNames` из storage.js в Migrations (#17)~~ ✅ → карты объединены, идемпотентная функция, sync-конфликт решён через вызов после merge
 - ~~Рассмотреть миграцию на ES-модули (#14)~~ ✅
+- ~~Централизовать data-атрибуты в реестр (#15)~~ ✅ → `data-attrs.js`, ~210 сайтов, 5 коллизий устранены

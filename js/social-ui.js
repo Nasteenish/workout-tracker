@@ -3,6 +3,7 @@ import { Social } from './social.js';
 import { Storage } from './storage.js';
 import { ProfileManager } from './profile-manager.js';
 import { esc } from './utils.js';
+import { SOCIAL, attr } from './data-attrs.js';
 
 export const SocialUI = {
     _feedCursor: null,
@@ -168,10 +169,10 @@ export const SocialUI = {
         if (isOwn) {
             html += '<button class="btn-create-checkin" id="btn-new-checkin">Новый чекин</button>';
         } else {
-            html += '<button class="btn-follow ' + (isFollowing ? 'following' : '') + '" id="btn-follow" data-user="' + targetId + '">';
+            html += '<button class="btn-follow ' + (isFollowing ? 'following' : '') + '" id="btn-follow" ' + attr(SOCIAL.USER, targetId) + '>';
             html += isFollowing ? 'Отписаться' : 'Подписаться';
             html += '</button>';
-            html += '<button class="btn-dm" id="btn-dm" data-user="' + targetId + '">Написать</button>';
+            html += '<button class="btn-dm" id="btn-dm" ' + attr(SOCIAL.USER, targetId) + '>Написать</button>';
         }
         html += '</div>';
 
@@ -182,9 +183,9 @@ export const SocialUI = {
 
         // Post type tabs + grid
         html += '<div class="profile-post-tabs">';
-        html += '<button class="profile-tab active" data-tab="all">Все</button>';
-        html += '<button class="profile-tab" data-tab="workouts">Тренировки</button>';
-        html += '<button class="profile-tab" data-tab="checkins">Чекины</button>';
+        html += '<button class="profile-tab active" ' + attr(SOCIAL.TAB, 'all') + '>Все</button>';
+        html += '<button class="profile-tab" ' + attr(SOCIAL.TAB, 'workouts') + '>Тренировки</button>';
+        html += '<button class="profile-tab" ' + attr(SOCIAL.TAB, 'checkins') + '>Чекины</button>';
         html += '</div>';
         html += '<div class="profile-checkins" id="profile-posts-grid">';
         if (checkins.length === 0) {
@@ -193,7 +194,7 @@ export const SocialUI = {
             html += this._renderProfileFeed(checkins);
         }
         if (this._profileCheckinsCursor) {
-            html += '<button class="btn-load-more" id="btn-load-more-profile" data-user="' + targetId + '">Загрузить ещё</button>';
+            html += '<button class="btn-load-more" id="btn-load-more-profile" ' + attr(SOCIAL.USER, targetId) + '>Загрузить ещё</button>';
         }
         html += '</div>';
         this._profileAllCheckins = checkins;
@@ -537,7 +538,7 @@ export const SocialUI = {
 
         var html = '<div class="social-screen">';
         html += '<div class="social-header"><button class="social-back" id="btn-checkin-detail-back">&larr;</button><h2>Check-in</h2>';
-        if (isOwn) html += '<button class="checkin-delete-btn" id="btn-delete-checkin" data-checkin="' + checkin.id + '"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>';
+        if (isOwn) html += '<button class="checkin-delete-btn" id="btn-delete-checkin" ' + attr(SOCIAL.CHECKIN, checkin.id) + '><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>';
         html += '</div>';
 
         // Full card
@@ -561,24 +562,24 @@ export const SocialUI = {
             var clCount = commentLikes.counts[c.id] || 0;
             var clLiked = commentLikes.myLikes.has ? commentLikes.myLikes.has(c.id) : false;
             var h = '<div class="comment-item' + (isReply ? ' comment-reply' : '') + '">';
-            h += '<div class="comment-avatar comment-profile-link" data-username="' + esc(authorUsername) + '">';
+            h += '<div class="comment-avatar comment-profile-link" ' + attr(SOCIAL.USERNAME, esc(authorUsername)) + '>';
             h += c.profiles && c.profiles.avatar_url
                 ? '<img src="' + esc(c.profiles.avatar_url) + '" alt="">'
                 : '<div class="avatar-placeholder-sm"></div>';
             h += '</div>';
             h += '<div class="comment-body">';
-            h += '<span class="comment-author comment-profile-link" data-username="' + esc(authorUsername) + '">' + esc(authorName) + '</span> ';
+            h += '<span class="comment-author comment-profile-link" ' + attr(SOCIAL.USERNAME, esc(authorUsername)) + '>' + esc(authorName) + '</span> ';
             h += '<span class="comment-text">' + SocialUI._renderMentionText(c.text) + '</span>';
             h += '<div class="comment-meta">';
             h += '<span class="comment-time">' + SocialUI._timeAgo(c.created_at) + '</span>';
-            if (!isMine) h += '<button class="comment-reply-btn" data-username="' + esc(authorUsername) + '" data-commentid="' + c.id + '">Ответить</button>';
-            h += '<button class="comment-like-btn' + (clLiked ? ' active' : '') + '" data-comment="' + c.id + '">';
+            if (!isMine) h += '<button class="comment-reply-btn" ' + attr(SOCIAL.USERNAME, esc(authorUsername)) + ' ' + attr(SOCIAL.COMMENT_ID, c.id) + '>Ответить</button>';
+            h += '<button class="comment-like-btn' + (clLiked ? ' active' : '') + '" ' + attr(SOCIAL.COMMENT, c.id) + '>';
             h += '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
             h += '<span class="comment-like-count">' + (clCount > 0 ? clCount : '') + '</span>';
             h += '</button>';
             h += '</div>';
             h += '</div>';
-            if (isMine) h += '<button class="comment-delete" data-comment="' + c.id + '">&times;</button>';
+            if (isMine) h += '<button class="comment-delete" ' + attr(SOCIAL.COMMENT, c.id) + '>&times;</button>';
             h += '</div>';
             return h;
         }
@@ -604,7 +605,7 @@ export const SocialUI = {
         // Comment input
         html += '<div class="comment-input-row">';
         html += '<input type="text" id="comment-input" placeholder="Написать комментарий...">';
-        html += '<button class="comment-send" id="btn-send-comment" data-checkin="' + checkinId + '">Отправить</button>';
+        html += '<button class="comment-send" id="btn-send-comment" ' + attr(SOCIAL.CHECKIN, checkinId) + '>Отправить</button>';
         html += '</div>';
         html += '</div>'; // comments
 
@@ -664,7 +665,7 @@ export const SocialUI = {
         var html = noWrap ? '' : '<div class="profile-feed">';
         checkins.forEach(function(c) {
             var isWorkout = !!c.workout_summary;
-            html += '<div class="profile-feed-item" data-checkin="' + c.id + '">';
+            html += '<div class="profile-feed-item" ' + attr(SOCIAL.CHECKIN, c.id) + '>';
             // Date
             html += '<div class="profile-feed-date">' + SocialUI._timeAgo(c.created_at) + '</div>';
             // Photos/video
@@ -704,7 +705,7 @@ export const SocialUI = {
         var commentCountData = commentCounts || {};
         var html = '';
         checkins.forEach(function(c) {
-            html += '<div class="checkin-card" data-checkin="' + c.id + '">';
+            html += '<div class="checkin-card" ' + attr(SOCIAL.CHECKIN, c.id) + '>';
             // Author row
             html += '<div class="checkin-author">';
             html += c.profiles && c.profiles.avatar_url
@@ -786,12 +787,12 @@ export const SocialUI = {
             var likeCount = likeData.counts[c.id] || 0;
             var isLiked = likeData.myLikes.has ? likeData.myLikes.has(c.id) : false;
             html += '<div class="like-bar">';
-            html += '<button class="like-btn' + (isLiked ? ' active' : '') + '" data-checkin="' + c.id + '">';
+            html += '<button class="like-btn' + (isLiked ? ' active' : '') + '" ' + attr(SOCIAL.CHECKIN, c.id) + '>';
             html += SocialUI._likeIconSVG;
             html += '<span class="like-count">' + (likeCount > 0 ? likeCount : '') + '</span>';
             html += '</button>';
             var cc = commentCountData[c.id] || 0;
-            html += '<button class="comment-btn-icon" data-checkin="' + c.id + '">';
+            html += '<button class="comment-btn-icon" ' + attr(SOCIAL.CHECKIN, c.id) + '>';
             html += SocialUI._commentIconSVG;
             html += '<span class="comment-count">' + (cc > 0 ? cc : '') + '</span>';
             html += '</button>';
@@ -807,7 +808,7 @@ export const SocialUI = {
         var html = '<div class="checkin-card checkin-full">';
 
         // Author
-        html += '<div class="checkin-author" data-username="' + esc(c.profiles ? c.profiles.username : '') + '">';
+        html += '<div class="checkin-author" ' + attr(SOCIAL.USERNAME, esc(c.profiles ? c.profiles.username : '')) + '>';
         html += c.profiles && c.profiles.avatar_url
             ? '<img class="checkin-author-avatar" src="' + esc(c.profiles.avatar_url) + '" alt="">'
             : '<div class="checkin-author-avatar avatar-placeholder-sm"></div>';
@@ -884,11 +885,11 @@ export const SocialUI = {
         var likeCount = reactions ? reactions.length : 0;
         var isLiked = !!myReaction;
         html += '<div class="like-bar">';
-        html += '<button class="like-btn' + (isLiked ? ' active' : '') + '" data-checkin="' + c.id + '">';
+        html += '<button class="like-btn' + (isLiked ? ' active' : '') + '" ' + attr(SOCIAL.CHECKIN, c.id) + '>';
         html += SocialUI._likeIconSVG;
         html += '<span class="like-count">' + (likeCount > 0 ? likeCount : '') + '</span>';
         html += '</button>';
-        html += '<button class="comment-btn-icon" data-checkin="' + c.id + '">';
+        html += '<button class="comment-btn-icon" ' + attr(SOCIAL.CHECKIN, c.id) + '>';
         html += SocialUI._commentIconSVG;
         html += '</button>';
         html += '</div>';
@@ -914,9 +915,9 @@ export const SocialUI = {
             if (u.is_athlete && u.category) html += '<div class="discover-user-badge">' + esc(u.category) + '</div>';
             html += '</div>';
             if (isFollowed) {
-                html += '<button class="btn-follow-sm followed" data-user="' + u.user_id + '" disabled>Подписан</button>';
+                html += '<button class="btn-follow-sm followed" ' + attr(SOCIAL.USER, u.user_id) + ' disabled>Подписан</button>';
             } else {
-                html += '<button class="btn-follow-sm" data-user="' + u.user_id + '">Подписаться</button>';
+                html += '<button class="btn-follow-sm" ' + attr(SOCIAL.USER, u.user_id) + '>Подписаться</button>';
             }
             html += '</div>';
         });
@@ -1023,7 +1024,7 @@ export const SocialUI = {
                     var myId = Social._getSupaUserId();
                     var html = '';
                     users.filter(function(u) { return u.user_id !== myId; }).forEach(function(u) {
-                        html += '<div class="tag-search-user" data-uid="' + u.user_id + '" data-username="' + esc(u.username) + '" data-name="' + esc(u.display_name || u.username) + '">';
+                        html += '<div class="tag-search-user" ' + attr(SOCIAL.UID, u.user_id) + ' ' + attr(SOCIAL.USERNAME, esc(u.username)) + ' ' + attr(SOCIAL.DISPLAY_NAME, esc(u.display_name || u.username)) + '>';
                         html += u.avatar_url ? '<img class="tag-search-avatar" src="' + esc(u.avatar_url) + '">' : '<div class="tag-search-avatar avatar-placeholder-sm"></div>';
                         html += '<span>' + esc(u.display_name || u.username) + ' <span style="color:var(--text-muted)">@' + esc(u.username) + '</span></span>';
                         html += '</div>';
@@ -1038,9 +1039,9 @@ export const SocialUI = {
             var user = e.target.closest('.tag-search-user');
             if (user) {
                 onSelect({
-                    user_id: user.dataset.uid,
-                    username: user.dataset.username,
-                    display_name: user.dataset.name
+                    user_id: user.getAttribute(SOCIAL.UID),
+                    username: user.getAttribute(SOCIAL.USERNAME),
+                    display_name: user.getAttribute(SOCIAL.DISPLAY_NAME)
                 });
                 overlay.remove();
             }
@@ -1105,7 +1106,7 @@ export const SocialUI = {
             if (!filtered.length) { hide(); return; }
             var html = '';
             filtered.forEach(function(u) {
-                html += '<div class="mention-item" data-username="' + esc(u.username) + '">';
+                html += '<div class="mention-item" ' + attr(SOCIAL.USERNAME, esc(u.username)) + '>';
                 html += u.avatar_url ? '<img class="mention-avatar" src="' + esc(u.avatar_url) + '">' : '<div class="mention-avatar avatar-placeholder-sm"></div>';
                 html += '<div class="mention-info"><span class="mention-name">' + esc(u.display_name || u.username) + '</span><span class="mention-username">@' + esc(u.username) + '</span></div>';
                 html += '</div>';
@@ -1137,13 +1138,13 @@ export const SocialUI = {
             var item = e.target.closest('.mention-item');
             if (!item) return;
             e.preventDefault();
-            selectUser(item.dataset.username);
+            selectUser(item.getAttribute(SOCIAL.USERNAME));
         });
 
         dropdown.addEventListener('click', function(e) {
             var item = e.target.closest('.mention-item');
             if (!item) return;
-            selectUser(item.dataset.username);
+            selectUser(item.getAttribute(SOCIAL.USERNAME));
         });
 
         inputEl.addEventListener('blur', function() {
@@ -1207,7 +1208,7 @@ export const SocialUI = {
             html += '<div class="messages-list">';
             convs.forEach(function(c) {
                 var p = c.other_profile;
-                html += '<div class="conversation-item" data-conv="' + c.id + '" data-user="' + p.user_id + '">';
+                html += '<div class="conversation-item" ' + attr(SOCIAL.CONV, c.id) + ' ' + attr(SOCIAL.USER, p.user_id) + '>';
                 if (p.avatar_url) {
                     html += '<img class="conversation-avatar" src="' + esc(p.avatar_url) + '" alt="">';
                 } else {

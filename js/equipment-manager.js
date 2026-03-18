@@ -5,6 +5,7 @@ import { Storage } from './storage.js';
 import { UI } from './ui.js';
 import { WorkoutTimer } from './workout-timer.js';
 import { esc, findExerciseInProgram } from './utils.js';
+import { EQ, attr } from './data-attrs.js';
 
 export const EquipmentManager = {
     _lastGeoPos: null,
@@ -35,8 +36,8 @@ export const EquipmentManager = {
         prompt.innerHTML = '<div class="gym-geo-card">'
             + '<span>Привязать оборудование к <b>' + gymName + '</b>?</span>'
             + '<div class="gym-geo-btns">'
-            + '<button class="gym-geo-yes" id="gym-link-yes" data-gym-id="' + gymId + '">Да</button>'
-            + '<button class="gym-geo-no" id="gym-link-no" data-gym-id="' + gymId + '">Нет</button>'
+            + '<button class="gym-geo-yes" id="gym-link-yes" ' + attr(EQ.GYM_ID, gymId) + '>Да</button>'
+            + '<button class="gym-geo-no" id="gym-link-no" ' + attr(EQ.GYM_ID, gymId) + '>Нет</button>'
             + '</div></div>';
     },
 
@@ -67,7 +68,7 @@ export const EquipmentManager = {
         if (!filtered.length) { resultsDiv.innerHTML = ''; return; }
         var html = '<div class="gym-shared-label">Залы из базы:</div>';
         for (var i = 0; i < filtered.length; i++) {
-            html += '<div class="gym-shared-item" data-id="' + filtered[i].id + '">'
+            html += '<div class="gym-shared-item" ' + attr(EQ.GYM_SHARED_ID, filtered[i].id) + '>'
                 + '<span class="gym-shared-name">' + esc(filtered[i].name) + '</span>'
                 + '<span class="gym-shared-city">' + esc(filtered[i].city || '') + '</span>'
                 + '</div>';
@@ -103,7 +104,7 @@ export const EquipmentManager = {
             if (gymSection && gymItems.length > 0) {
                 var gymHtml = '<div class="eq-section-label">В этом зале:</div>';
                 for (var i = 0; i < gymItems.length; i++) {
-                    gymHtml += '<div class="eq-gym-item" data-name="' + esc(gymItems[i]) + '">'
+                    gymHtml += '<div class="eq-gym-item" ' + attr(EQ.NAME, esc(gymItems[i])) + '>'
                         + '<span class="eq-shared-name">' + esc(gymItems[i]) + '</span>'
                         + '</div>';
                 }
@@ -116,7 +117,7 @@ export const EquipmentManager = {
                     var bHtml = '<div class="eq-section-label">Каталог:</div>';
                     var et = exType || '';
                     for (var i = 0; i < brands.length; i++) {
-                        bHtml += '<div class="eq-brand-item" data-brand="' + esc(brands[i]) + '" data-extype="' + et + '">'
+                        bHtml += '<div class="eq-brand-item" ' + attr(EQ.BRAND, esc(brands[i])) + ' ' + attr(EQ.EXTYPE, et) + '>'
                             + '<span class="eq-brand-name">' + esc(brands[i]) + '</span>'
                             + '<span class="eq-brand-arrow">\u203A</span>'
                             + '</div>';
@@ -172,7 +173,7 @@ export const EquipmentManager = {
                 var c = items[i];
                 var fullName = brand + ' ' + c.name;
                 var eqImgHtml = c.image_url ? '<img class="ex-thumb" src="' + esc(c.image_url) + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
-                html += '<div class="eq-catalog-item" data-name="' + esc(fullName) + '" data-catalog-id="' + c.id + '"' + (c.image_url ? ' data-image="' + esc(c.image_url) + '"' : '') + '>'
+                html += '<div class="eq-catalog-item" ' + attr(EQ.NAME, esc(fullName)) + ' ' + attr(EQ.CATALOG_ID, c.id) + (c.image_url ? ' ' + attr(EQ.IMAGE, esc(c.image_url)) : '') + '>'
                     + eqImgHtml
                     + '<span class="eq-shared-name">' + esc(c.name) + '</span>'
                     + (c.model ? '<span class="eq-catalog-model">' + esc(c.model) + '</span>' : '')
@@ -314,7 +315,7 @@ export const EquipmentManager = {
                 var k = myEq[i].name.toLowerCase().trim();
                 if (seen[k]) continue;
                 seen[k] = true;
-                html += '<div class="eq-search-item" data-name="' + esc(myEq[i].name) + '">'
+                html += '<div class="eq-search-item" ' + attr(EQ.NAME, esc(myEq[i].name)) + '>'
                     + '<span class="eq-shared-name">' + esc(myEq[i].name) + '</span></div>';
             }
         }
@@ -346,7 +347,7 @@ export const EquipmentManager = {
                         var lk = myEq[i].name.toLowerCase().trim();
                         if (seen2[lk]) continue;
                         seen2[lk] = true;
-                        html2 += '<div class="eq-search-item" data-name="' + esc(myEq[i].name) + '">'
+                        html2 += '<div class="eq-search-item" ' + attr(EQ.NAME, esc(myEq[i].name)) + '>'
                             + '<span class="eq-shared-name">' + esc(myEq[i].name) + '</span></div>';
                     }
                 }
@@ -357,7 +358,7 @@ export const EquipmentManager = {
                     if (seen2[k]) continue;
                     seen2[k] = true;
                     var sImgHtml = c.image_url ? '<img class="ex-thumb" src="' + esc(c.image_url) + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
-                    html2 += '<div class="eq-search-item" data-name="' + esc(cName) + '" data-catalog-id="' + c.id + '"' + (c.image_url ? ' data-image="' + esc(c.image_url) + '"' : '') + '>'
+                    html2 += '<div class="eq-search-item" ' + attr(EQ.NAME, esc(cName)) + ' ' + attr(EQ.CATALOG_ID, c.id) + (c.image_url ? ' ' + attr(EQ.IMAGE, esc(c.image_url)) : '') + '>'
                         + sImgHtml
                         + '<span class="eq-shared-name">' + esc(cName) + '</span>'
                         + (c.model ? '<span class="eq-catalog-model">' + esc(c.model) + '</span>' : '')
@@ -367,7 +368,7 @@ export const EquipmentManager = {
                     var k = shared[i].name.toLowerCase();
                     if (seen2[k]) continue;
                     seen2[k] = true;
-                    html2 += '<div class="eq-search-item" data-name="' + esc(shared[i].name) + '">'
+                    html2 += '<div class="eq-search-item" ' + attr(EQ.NAME, esc(shared[i].name)) + '>'
                         + '<span class="eq-shared-name">' + esc(shared[i].name) + '</span></div>';
                 }
                 if (!html2) html2 = '<div class="eq-search-empty">Ничего не найдено</div>';
@@ -415,7 +416,7 @@ export const EquipmentManager = {
                         suggestion.innerHTML = '<div class="gym-geo-card">'
                             + '<span>Ты в <b>' + nearest.name + '</b>?</span>'
                             + '<div class="gym-geo-btns">'
-                            + '<button class="gym-geo-yes" id="gym-geo-yes" data-gym-id="' + nearest.id + '">Да</button>'
+                            + '<button class="gym-geo-yes" id="gym-geo-yes" ' + attr(EQ.GYM_ID, nearest.id) + '>Да</button>'
                             + '<button class="gym-geo-no" id="gym-geo-no">Нет</button>'
                             + '</div></div>';
                     }

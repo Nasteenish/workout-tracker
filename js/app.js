@@ -19,6 +19,7 @@ import { ACCOUNTS, BUILTIN_PROGRAMS } from './users.js';
 import { DEFAULT_PROGRAM } from './data.js';
 import { lockBodyScroll, unlockBodyScroll } from './scroll-lock.js';
 import { debounce, getTotalDays, formatDateISO, validateProgram, getProgressWeek, getTotalWeeks, esc, getCompletedSets, findExerciseInProgram } from './utils.js';
+import { WORKOUT, BUILDER, EQ, SOCIAL, SETTINGS, ONBOARDING, read, readInt } from './data-attrs.js';
 
 export const App = {
     _currentWeek: 1,
@@ -624,7 +625,7 @@ export const App = {
 
     startSetup() {
         const cycleBtn = document.querySelector('.cycle-toggle button.active');
-        const cycleType = cycleBtn ? parseInt(cycleBtn.dataset.cycle) : 7;
+        const cycleType = cycleBtn ? readInt(cycleBtn, SETTINGS.CYCLE) : 7;
         const dateInput = document.getElementById('start-date');
         const startDate = dateInput ? dateInput.value : formatDateISO(new Date());
         Storage.saveSettings({ cycleType, startDate });
@@ -939,7 +940,7 @@ export const App = {
         // Password visibility toggle
         var togBtn = target.closest('.password-toggle');
         if (togBtn) {
-            var inp = document.getElementById(togBtn.dataset.target);
+            var inp = document.getElementById(read(togBtn, SETTINGS.TARGET));
             if (inp) {
                 var show = inp.type === 'password';
                 inp.type = show ? 'text' : 'password';
@@ -1005,16 +1006,16 @@ export const App = {
 
         // Save settings
         if (target.id === 'settings-save') {
-            const cycleBtn = document.querySelector('.cycle-toggle button.active[data-cycle]');
-            const cycleType = cycleBtn ? parseInt(cycleBtn.dataset.cycle) : 7;
+            const cycleBtn = document.querySelector('.cycle-toggle button.active[' + SETTINGS.CYCLE + ']');
+            const cycleType = cycleBtn ? readInt(cycleBtn, SETTINGS.CYCLE) : 7;
             const startDate = document.getElementById('settings-start-date').value;
-            const unitBtn = document.querySelector('.cycle-toggle button.active[data-unit]');
-            const weightUnit = unitBtn ? unitBtn.dataset.unit : 'kg';
+            const unitBtn = document.querySelector('.cycle-toggle button.active[' + SETTINGS.UNIT + ']');
+            const weightUnit = unitBtn ? read(unitBtn, SETTINGS.UNIT) : 'kg';
             const mins = parseInt(document.getElementById('td-min-val')?.textContent) || 0;
             const secs = parseInt(document.getElementById('td-sec-val')?.textContent) || 0;
             const timerDuration = Math.max(30, mins * 60 + secs);
-            const langBtn = document.querySelector('.cycle-toggle button.active[data-lang]');
-            const exerciseLang = langBtn ? langBtn.dataset.lang : 'ru';
+            const langBtn = document.querySelector('.cycle-toggle button.active[' + SETTINGS.LANG + ']');
+            const exerciseLang = langBtn ? read(langBtn, SETTINGS.LANG) : 'ru';
             Storage.saveSettings({ cycleType, startDate, weightUnit, timerDuration, exerciseLang });
             RestTimer.setDefaultDuration(timerDuration);
             this.invalidatePageCache(); // Settings affect all pages
@@ -1035,7 +1036,7 @@ export const App = {
         // Edit equipment name (inline)
         if (target.closest('.eq-edit-btn')) {
             const btn = target.closest('.eq-edit-btn');
-            const eqId = btn.dataset.eqId;
+            const eqId = read(btn, EQ.ID);
             if (!eqId) return true;
             var item = btn.closest('.settings-eq-item');
             var span = item ? item.querySelector('span') : null;
@@ -1061,7 +1062,7 @@ export const App = {
         if (target.closest('.eq-remove-btn')) {
             const btn = target.closest('.eq-remove-btn');
             if (btn.disabled) return true;
-            const eqId = btn.dataset.eqId;
+            const eqId = read(btn, EQ.ID);
             if (eqId) {
                 Storage.removeEquipment(eqId);
                 UI.renderSettings();
@@ -1073,7 +1074,7 @@ export const App = {
         if (target.closest('.gym-remove-btn')) {
             var btn = target.closest('.gym-remove-btn');
             if (btn.disabled) return true;
-            var gymId = btn.dataset.gymId;
+            var gymId = read(btn, EQ.GYM_ID);
             if (gymId && confirm('Убрать зал из списка?')) {
                 Storage.removeGym(gymId);
                 UI.renderSettings();
@@ -1097,17 +1098,17 @@ export const App = {
     _handleWorkoutClick(target) {
         // Unit cycle button
         if (target.matches('.unit-cycle-btn')) {
-            const exId = target.dataset.exercise;
+            const exId = read(target, WORKOUT.EXERCISE);
             const units = ['kg', 'lbs', 'plates'];
             const labels = { kg: 'кг', lbs: 'lbs', plates: 'пл' };
             const current = Storage.getExerciseUnit(exId) || Storage.getWeightUnit();
             const next = units[(units.indexOf(current) + 1) % units.length];
             Storage.setExerciseUnit(exId, next);
             const nextLabel = labels[next];
-            document.querySelectorAll(`.unit-cycle-btn[data-exercise="${exId}"]`).forEach(b => {
+            document.querySelectorAll('.unit-cycle-btn[' + WORKOUT.EXERCISE + '="' + exId + '"]').forEach(b => {
                 b.textContent = nextLabel;
             });
-            document.querySelectorAll(`.set-prev-unit[data-exercise="${exId}"]`).forEach(s => {
+            document.querySelectorAll('.set-prev-unit[' + WORKOUT.EXERCISE + '="' + exId + '"]').forEach(s => {
                 s.textContent = nextLabel;
             });
             return true;
@@ -1155,7 +1156,7 @@ export const App = {
         // Add set button
         if (target.closest('.add-set-btn')) {
             const btn = target.closest('.add-set-btn');
-            const exId = btn.dataset.exercise;
+            const exId = read(btn, WORKOUT.EXERCISE);
             App._addSet(exId);
             return true;
         }
@@ -1163,7 +1164,7 @@ export const App = {
         // Remove set button
         if (target.closest('.remove-set-btn')) {
             const btn = target.closest('.remove-set-btn');
-            const exId = btn.dataset.exercise;
+            const exId = read(btn, WORKOUT.EXERCISE);
             App._removeSet(exId);
             return true;
         }
@@ -1171,16 +1172,16 @@ export const App = {
         // Equipment button
         if (target.closest('.equipment-btn')) {
             const btn = target.closest('.equipment-btn');
-            const exId = btn.dataset.exercise;
-            UI.showEquipmentModal(exId, btn.dataset.exname || '', btn.dataset.exnameRu || '');
+            const exId = read(btn, WORKOUT.EXERCISE);
+            UI.showEquipmentModal(exId, read(btn, WORKOUT.EX_NAME) || '', read(btn, WORKOUT.EX_NAME_RU) || '');
             return true;
         }
 
         // Complete button
         if (target.closest('.complete-btn')) {
             const btn = target.closest('.complete-btn');
-            const exId = btn.dataset.exercise;
-            const setIdx = parseInt(btn.dataset.set);
+            const exId = read(btn, WORKOUT.EXERCISE);
+            const setIdx = readInt(btn, WORKOUT.SET);
             const eqId = Storage.getExerciseEquipment(exId);
 
             const row = btn.closest('.set-row');
@@ -1209,12 +1210,12 @@ export const App = {
                     EquipmentManager.shareToGymEquipment(exId, Storage.getEquipmentById(eqId), App._currentWeek, App._currentDay);
                 }
 
-                row.querySelectorAll('.seg-weight-input[data-seg]').forEach(inp => {
-                    var si = parseInt(inp.dataset.seg);
+                row.querySelectorAll('.seg-weight-input[' + WORKOUT.SEG + ']').forEach(inp => {
+                    var si = readInt(inp, WORKOUT.SEG);
                     if (si > 0 && inp.value) Storage.saveSegWeight(App._currentWeek, App._currentDay, exId, setIdx, si, inp.value);
                 });
-                row.querySelectorAll('.seg-reps-input[data-seg]').forEach(inp => {
-                    var si = parseInt(inp.dataset.seg);
+                row.querySelectorAll('.seg-reps-input[' + WORKOUT.SEG + ']').forEach(inp => {
+                    var si = readInt(inp, WORKOUT.SEG);
                     if (si > 0 && inp.value) Storage.saveSegReps(App._currentWeek, App._currentDay, exId, setIdx, si, inp.value);
                 });
 
@@ -1240,7 +1241,7 @@ export const App = {
         // Choose one: tap exercise name to open selector
         if (target.closest('.exercise-name-chooser')) {
             const el = target.closest('.exercise-name-chooser');
-            UI.showChoiceModal(el.dataset.choiceKey);
+            UI.showChoiceModal(read(el, WORKOUT.CHOICE_KEY));
             return true;
         }
 
@@ -1253,7 +1254,7 @@ export const App = {
         // History button
         if (target.closest('.history-btn')) {
             const btn = target.closest('.history-btn');
-            const exId = btn.dataset.exercise;
+            const exId = read(btn, WORKOUT.EXERCISE);
             location.hash = `#/history/${encodeURIComponent(exId)}`;
             return true;
         }
@@ -1353,7 +1354,7 @@ export const App = {
         var genderBtn = target.closest('.onboard-gender-btn');
         if (genderBtn) {
             if (!Builder._onboardingData) Builder._onboardingData = {};
-            Builder._onboardingData.gender = genderBtn.dataset.gender;
+            Builder._onboardingData.gender = read(genderBtn, ONBOARDING.GENDER);
             location.hash = '#/onboarding/2';
             return true;
         }
@@ -1362,10 +1363,10 @@ export const App = {
         var roleBtn = target.closest('.onboard-role-btn');
         if (roleBtn) {
             if (!Builder._onboardingData) Builder._onboardingData = {};
-            Builder._onboardingData.role = roleBtn.dataset.role;
-            if (roleBtn.dataset.role === 'casual') location.hash = '#/onboarding/3';
-            else if (roleBtn.dataset.role === 'athlete') location.hash = '#/onboarding/3a';
-            else if (roleBtn.dataset.role === 'trainer') location.hash = '#/onboarding/3t';
+            Builder._onboardingData.role = read(roleBtn, ONBOARDING.ROLE);
+            if (read(roleBtn, ONBOARDING.ROLE) === 'casual') location.hash = '#/onboarding/3';
+            else if (read(roleBtn, ONBOARDING.ROLE) === 'athlete') location.hash = '#/onboarding/3a';
+            else if (read(roleBtn, ONBOARDING.ROLE) === 'trainer') location.hash = '#/onboarding/3t';
             return true;
         }
 
@@ -1373,7 +1374,7 @@ export const App = {
         var goalBtn = target.closest('.onboard-goal-btn');
         if (goalBtn) {
             if (!Builder._onboardingData) Builder._onboardingData = {};
-            Builder._onboardingData.goal = goalBtn.dataset.goal;
+            Builder._onboardingData.goal = read(goalBtn, ONBOARDING.GOAL);
             Builder._finishOnboarding();
             return true;
         }
@@ -1382,7 +1383,7 @@ export const App = {
         var proBtn = target.closest('.onboard-pro-btn');
         if (proBtn) {
             if (!Builder._onboardingData) Builder._onboardingData = {};
-            Builder._onboardingData.is_pro = proBtn.dataset.pro === 'true';
+            Builder._onboardingData.is_pro = read(proBtn, ONBOARDING.PRO) === 'true';
             location.hash = '#/onboarding/4';
             return true;
         }
@@ -1391,7 +1392,7 @@ export const App = {
         var catBtn = target.closest('.onboard-category-btn');
         if (catBtn) {
             if (!Builder._onboardingData) Builder._onboardingData = {};
-            Builder._onboardingData.category = catBtn.dataset.category;
+            Builder._onboardingData.category = read(catBtn, ONBOARDING.CATEGORY);
             location.hash = '#/onboarding/5';
             return true;
         }
@@ -1400,7 +1401,7 @@ export const App = {
         var phaseBtn = target.closest('.onboard-phase-btn');
         if (phaseBtn) {
             if (!Builder._onboardingData) Builder._onboardingData = {};
-            Builder._onboardingData.phase = phaseBtn.dataset.phase;
+            Builder._onboardingData.phase = read(phaseBtn, ONBOARDING.PHASE);
             Builder._finishOnboarding();
             return true;
         }
@@ -1409,7 +1410,7 @@ export const App = {
         var clientsBtn = target.closest('.onboard-clients-btn');
         if (clientsBtn) {
             if (!Builder._onboardingData) Builder._onboardingData = {};
-            Builder._onboardingData.client_count = clientsBtn.dataset.clients;
+            Builder._onboardingData.client_count = read(clientsBtn, ONBOARDING.CLIENTS);
             Builder._finishOnboarding();
             return true;
         }
@@ -1512,7 +1513,7 @@ export const App = {
         // Day editor: delete exercise
         if (target.closest('.editor-delete')) {
             var btn = target.closest('.editor-delete');
-            Builder.deleteExercise(parseInt(btn.dataset.idx));
+            Builder.deleteExercise(readInt(btn, BUILDER.IDX));
             return true;
         }
 
@@ -1613,8 +1614,8 @@ export const App = {
         // Substitution modal — select exercise from list (must be before eq-option handler)
         if (target.closest('.sub-option')) {
             const opt = target.closest('.sub-option');
-            const exId = opt.dataset.targetExercise;
-            const subName = opt.dataset.subName;
+            const exId = read(opt, WORKOUT.TARGET_EXERCISE);
+            const subName = read(opt, WORKOUT.SUB_NAME);
             Storage.setSubstitution(exId, subName);
             UI.hideSubstitutionModal();
             this.invalidatePageCache('#/week/' + this._currentWeek + '/day/' + this._currentDay);
@@ -1640,7 +1641,7 @@ export const App = {
         // Substitution modal — revert to original
         if (target.closest('.sub-revert-btn')) {
             const btn = target.closest('.sub-revert-btn');
-            const exId = btn.dataset.exercise;
+            const exId = read(btn, WORKOUT.EXERCISE);
             Storage.removeSubstitution(exId);
             UI.hideSubstitutionModal();
             UI.renderDay(this._currentWeek, this._currentDay);
@@ -1654,9 +1655,9 @@ export const App = {
         }
 
         // Gym modal — select gym
-        if ((target.closest('.eq-option[data-gym-id]')) && target.closest('#gym-modal')) {
-            var opt = target.closest('.eq-option[data-gym-id]');
-            var gymId = opt.dataset.gymId || null;
+        if ((target.closest('.eq-option[' + EQ.GYM_ID + ']')) && target.closest('#gym-modal')) {
+            var opt = target.closest('.eq-option[' + EQ.GYM_ID + ']');
+            var gymId = read(opt, EQ.GYM_ID) || null;
             var modal = document.getElementById('gym-modal');
             var onSelect = modal ? modal._onSelect : null;
             UI.hideGymModal();
@@ -1667,7 +1668,7 @@ export const App = {
         // Gym modal — select shared gym from search results
         if (target.closest('.gym-shared-item')) {
             var item = target.closest('.gym-shared-item');
-            var sharedId = item.dataset.id;
+            var sharedId = read(item, EQ.GYM_SHARED_ID);
             if (sharedId) {
                 Storage.addMyGym(sharedId);
                 var modal = document.getElementById('gym-modal');
@@ -1728,7 +1729,7 @@ export const App = {
 
         // Gym geo suggestion — Yes
         if (target.id === 'gym-geo-yes') {
-            var gymId = target.dataset.gymId;
+            var gymId = read(target, EQ.GYM_ID);
             var modal = document.getElementById('gym-modal');
             var onSelect = modal ? modal._onSelect : null;
             UI.hideGymModal();
@@ -1745,7 +1746,7 @@ export const App = {
 
         // Gym link prompt — Yes (link current equipment to gym)
         if (target.id === 'gym-link-yes') {
-            var gymId = target.dataset.gymId;
+            var gymId = read(target, EQ.GYM_ID);
             Storage.initGymFromCurrentEquipment(gymId);
             UI.hideGymModal();
             WorkoutTimer.start(this._currentWeek, this._currentDay);
@@ -1755,7 +1756,7 @@ export const App = {
 
         // Gym link prompt — No (skip linking)
         if (target.id === 'gym-link-no') {
-            var gymId = target.dataset.gymId;
+            var gymId = read(target, EQ.GYM_ID);
             UI.hideGymModal();
             WorkoutTimer.start(this._currentWeek, this._currentDay);
             UI.renderDay(this._currentWeek, this._currentDay);
@@ -1763,10 +1764,10 @@ export const App = {
         }
 
         // Choice modal: select option (must be before eq-option handler)
-        if (target.closest('.eq-option[data-choice-key]')) {
-            const opt = target.closest('.eq-option[data-choice-key]');
-            const choiceKey = opt.dataset.choiceKey;
-            const exerciseId = opt.dataset.exerciseId;
+        if (target.closest('.eq-option[' + WORKOUT.CHOICE_KEY + ']')) {
+            const opt = target.closest('.eq-option[' + WORKOUT.CHOICE_KEY + ']');
+            const choiceKey = read(opt, WORKOUT.CHOICE_KEY);
+            const exerciseId = read(opt, WORKOUT.EXERCISE_ID);
             Storage.saveChoice(choiceKey, exerciseId);
             UI.hideChoiceModal();
             this.invalidatePageCache('#/week/' + this._currentWeek + '/day/' + this._currentDay);
@@ -1782,8 +1783,8 @@ export const App = {
         // Equipment modal — select option
         if (target.closest('.eq-option')) {
             const opt = target.closest('.eq-option');
-            const eqId = opt.dataset.eqId;
-            const exId = opt.dataset.exercise;
+            const eqId = read(opt, EQ.ID);
+            const exId = read(opt, WORKOUT.EXERCISE);
             this._bindEquipment(exId, eqId || null, eqId ? Storage.getEquipmentById(eqId) : null);
             return true;
         }
@@ -1809,13 +1810,13 @@ export const App = {
         // Equipment modal — click search result (catalog or shared)
         if (target.closest('.eq-search-item')) {
             var item = target.closest('.eq-search-item');
-            var eqName = item.dataset.name;
-            var catalogId = item.dataset.catalogId ? parseInt(item.dataset.catalogId) : null;
+            var eqName = read(item, EQ.NAME);
+            var catalogId = read(item, EQ.CATALOG_ID) ? readInt(item, EQ.CATALOG_ID) : null;
             if (!eqName) return true;
             var modal = document.getElementById('equipment-modal');
             var exId = modal ? modal._exerciseId : null;
             var muscleGroup = modal ? modal._muscleGroup : null;
-            var eqImageUrl2 = item.dataset.image || null;
+            var eqImageUrl2 = read(item, EQ.IMAGE) || null;
             var newId = Storage.addEquipment(eqName, undefined, eqImageUrl2);
             if (Social && muscleGroup && muscleGroup !== 'all') {
                 Social.addSharedEquipment(eqName, muscleGroup).catch(function() {});
@@ -1832,7 +1833,7 @@ export const App = {
         // Equipment modal — click gym equipment item
         if (target.closest('.eq-gym-item')) {
             var item = target.closest('.eq-gym-item');
-            var eqName = item.dataset.name;
+            var eqName = read(item, EQ.NAME);
             if (!eqName) return true;
             var modal = document.getElementById('equipment-modal');
             var exId = modal ? modal._exerciseId : null;
@@ -1849,8 +1850,8 @@ export const App = {
         // Equipment modal — brand click → show brand equipment
         if (target.closest('.eq-brand-item')) {
             var brandItem = target.closest('.eq-brand-item');
-            var brand = brandItem.dataset.brand;
-            var extype = brandItem.dataset.extype || null;
+            var brand = read(brandItem, EQ.BRAND);
+            var extype = read(brandItem, EQ.EXTYPE) || null;
             if (brand) EquipmentManager.loadBrandEquipment(brand, extype);
             return true;
         }
@@ -1864,12 +1865,12 @@ export const App = {
         // Equipment modal — select from catalog
         if (target.closest('.eq-catalog-item')) {
             var catItem = target.closest('.eq-catalog-item');
-            var eqName = catItem.dataset.name;
-            var catalogId = catItem.dataset.catalogId ? parseInt(catItem.dataset.catalogId) : null;
+            var eqName = read(catItem, EQ.NAME);
+            var catalogId = read(catItem, EQ.CATALOG_ID) ? readInt(catItem, EQ.CATALOG_ID) : null;
             if (!eqName) return true;
             var modal = document.getElementById('equipment-modal');
             var exId = modal ? modal._exerciseId : null;
-            var eqImageUrl = catItem.dataset.image || null;
+            var eqImageUrl = read(catItem, EQ.IMAGE) || null;
             var newId = Storage.addEquipment(eqName, undefined, eqImageUrl);
             if (exId) {
                 Storage.linkEquipmentToExercise(exId, newId);
@@ -1928,7 +1929,7 @@ export const App = {
         // Profile grid item click → detail
         var gridItem = target.closest('.profile-feed-item');
         if (gridItem) {
-            var cid = gridItem.dataset.checkin;
+            var cid = read(gridItem, SOCIAL.CHECKIN);
             if (cid) location.hash = '#/checkin/' + cid;
             return true;
         }
@@ -1938,7 +1939,7 @@ export const App = {
             var allTabs = document.querySelectorAll('.profile-tab');
             allTabs.forEach(function(t) { t.classList.remove('active'); });
             target.classList.add('active');
-            var tab = target.dataset.tab;
+            var tab = read(target, SOCIAL.TAB);
             var allPosts = SocialUI._profileAllCheckins || [];
             var filtered;
             if (tab === 'workouts') filtered = allPosts.filter(function(c) { return !!c.workout_summary; });
@@ -1981,7 +1982,7 @@ export const App = {
         // Follow/unfollow
         if (target.closest('#btn-follow')) {
             var btn = target.closest('#btn-follow');
-            var userId = btn.dataset.user;
+            var userId = read(btn, SOCIAL.USER);
             if (!userId) return true;
             btn.disabled = true;
             if (btn.classList.contains('following')) {
@@ -2004,7 +2005,7 @@ export const App = {
 
         // Follow (small btn in discover)
         if (target.classList.contains('btn-follow-sm')) {
-            var userId = target.dataset.user;
+            var userId = read(target, SOCIAL.USER);
             if (!userId) return true;
             target.disabled = true;
             Social.follow(userId).then(function(ok) {
@@ -2053,7 +2054,7 @@ export const App = {
         if (discoverUser && !target.classList.contains('btn-follow-sm')) {
             var userId = discoverUser.querySelector('.btn-follow-sm');
             if (userId) {
-                var uid = userId.dataset.user;
+                var uid = read(userId, SOCIAL.USER);
                 var username = discoverUser.querySelector('.discover-user-username');
                 if (username) {
                     location.hash = '#/u/' + username.textContent.replace('@', '');
@@ -2091,7 +2092,7 @@ export const App = {
         // Conversation item click
         var convItem = target.closest('.conversation-item');
         if (convItem) {
-            var userId = convItem.dataset.user;
+            var userId = read(convItem, SOCIAL.USER);
             if (userId) location.hash = '#/messages/' + userId;
             return true;
         }
@@ -2116,7 +2117,7 @@ export const App = {
         // DM button on other user's profile
         if (target.closest('#btn-dm')) {
             var btn = target.closest('#btn-dm');
-            var userId = btn.dataset.user;
+            var userId = read(btn, SOCIAL.USER);
             if (userId) location.hash = '#/messages/' + userId;
             return true;
         }
@@ -2130,7 +2131,7 @@ export const App = {
         // Like button (feed cards and detail)
         var likeBtn = target.closest('.like-btn');
         if (likeBtn) {
-            var checkinId = likeBtn.dataset.checkin;
+            var checkinId = read(likeBtn, SOCIAL.CHECKIN);
             if (!checkinId) return true;
             // Optimistic UI
             var wasActive = likeBtn.classList.contains('active');
@@ -2150,7 +2151,7 @@ export const App = {
         // Comment icon button → scroll to or navigate to comments
         var commentBtnIcon = target.closest('.comment-btn-icon');
         if (commentBtnIcon) {
-            var checkinId = commentBtnIcon.dataset.checkin;
+            var checkinId = read(commentBtnIcon, SOCIAL.CHECKIN);
             var commentInput = document.getElementById('comment-input');
             if (commentInput) {
                 commentInput.focus();
@@ -2163,7 +2164,7 @@ export const App = {
         // Comment author profile link
         var profileLink = target.closest('.comment-profile-link');
         if (profileLink && !target.closest('.comment-reply-btn') && !target.closest('.comment-like-btn')) {
-            var username = profileLink.dataset.username;
+            var username = read(profileLink, SOCIAL.USERNAME);
             if (username) location.hash = '#/u/' + username;
             return true;
         }
@@ -2171,8 +2172,8 @@ export const App = {
         // Reply to comment
         var replyBtn = target.closest('.comment-reply-btn');
         if (replyBtn) {
-            var username = replyBtn.dataset.username;
-            var commentId = replyBtn.dataset.commentid;
+            var username = read(replyBtn, SOCIAL.USERNAME);
+            var commentId = read(replyBtn, SOCIAL.COMMENT_ID);
             var input = document.getElementById('comment-input');
             if (input && username) {
                 App._replyToCommentId = commentId || null;
@@ -2202,7 +2203,7 @@ export const App = {
         // Comment like
         var commentLikeBtn = target.closest('.comment-like-btn');
         if (commentLikeBtn) {
-            var commentId = commentLikeBtn.dataset.comment;
+            var commentId = read(commentLikeBtn, SOCIAL.COMMENT);
             if (!commentId) return true;
             var wasActive = commentLikeBtn.classList.contains('active');
             commentLikeBtn.classList.toggle('active');
@@ -2228,7 +2229,7 @@ export const App = {
                 if (container) {
                     var tag = document.createElement('span');
                     tag.className = 'tagged-user-chip';
-                    tag.dataset.uid = user.user_id;
+                    tag.setAttribute(SOCIAL.UID, user.user_id);
                     tag.innerHTML = '@' + esc(user.username) + ' <button class="tagged-user-remove">&times;</button>';
                     container.appendChild(tag);
                 }
@@ -2241,7 +2242,7 @@ export const App = {
         if (removeTag) {
             var chip = removeTag.closest('.tagged-user-chip');
             if (chip && ProfileManager.checkinTaggedUsers) {
-                ProfileManager.checkinTaggedUsers = ProfileManager.checkinTaggedUsers.filter(function(u) { return u.user_id !== chip.dataset.uid; });
+                ProfileManager.checkinTaggedUsers = ProfileManager.checkinTaggedUsers.filter(function(u) { return u.user_id !== read(chip, SOCIAL.UID); });
                 chip.remove();
             }
             return true;
@@ -2250,7 +2251,7 @@ export const App = {
         // Checkin card click → detail (with double-tap detection)
         var checkinCard = target.closest('.checkin-card');
         if (checkinCard && !checkinCard.classList.contains('checkin-full') && !target.closest('.like-btn') && !target.closest('.comment-btn-icon')) {
-            var checkinId = checkinCard.dataset.checkin;
+            var checkinId = read(checkinCard, SOCIAL.CHECKIN);
             if (!checkinId) return true;
 
             // Double-tap detection
@@ -2297,7 +2298,7 @@ export const App = {
         // Delete checkin
         if (target.closest('#btn-delete-checkin')) {
             var delBtn = target.closest('#btn-delete-checkin');
-            var cid = delBtn.dataset.checkin;
+            var cid = read(delBtn, SOCIAL.CHECKIN);
             if (cid && confirm('Удалить этот чекин?')) {
                 Social.deleteCheckin(cid).then(function() {
                     location.hash = '#/profile';
@@ -2325,7 +2326,7 @@ export const App = {
         // Send comment
         if (target.closest('#btn-send-comment')) {
             var btn = target.closest('#btn-send-comment');
-            var checkinId = btn.dataset.checkin;
+            var checkinId = read(btn, SOCIAL.CHECKIN);
             var input = document.getElementById('comment-input');
             var text = input ? input.value.trim() : '';
             if (!text || !checkinId) return true;
@@ -2341,12 +2342,12 @@ export const App = {
         // Delete comment
         var deleteCommentBtn = target.closest('.comment-delete');
         if (deleteCommentBtn) {
-            var commentId = deleteCommentBtn.dataset.comment;
+            var commentId = read(deleteCommentBtn, SOCIAL.COMMENT);
             if (commentId && confirm('Удалить комментарий?')) {
                 Social.deleteComment(commentId).then(function() {
                     // Find parent checkin and refresh
                     var sendBtn = document.getElementById('btn-send-comment');
-                    if (sendBtn) SocialUI.renderCheckinDetail(sendBtn.dataset.checkin);
+                    if (sendBtn) SocialUI.renderCheckinDetail(read(sendBtn, SOCIAL.CHECKIN));
                 });
             }
             return true;
@@ -2375,7 +2376,7 @@ export const App = {
         // Load more (profile)
         if (target.closest('#btn-load-more-profile')) {
             var btn = target.closest('#btn-load-more-profile');
-            var userId = btn.dataset.user;
+            var userId = read(btn, SOCIAL.USER);
             btn.disabled = true;
             btn.textContent = 'Загрузка...';
             Social.getUserCheckins(userId, SocialUI._profileCheckinsCursor).then(function(more) {
@@ -2392,9 +2393,9 @@ export const App = {
         }
 
         // Checkin author click → profile
-        var checkinAuthor = target.closest('.checkin-author[data-username]');
+        var checkinAuthor = target.closest('.checkin-author[' + SOCIAL.USERNAME + ']');
         if (checkinAuthor) {
-            var username = checkinAuthor.dataset.username;
+            var username = read(checkinAuthor, SOCIAL.USERNAME);
             if (username) location.hash = '#/u/' + username;
             return true;
         }
@@ -2407,34 +2408,34 @@ export const App = {
 
         // Weight input
         if (target.matches('.weight-input')) {
-            const exId = target.dataset.exercise;
-            const setIdx = parseInt(target.dataset.set);
+            const exId = read(target, WORKOUT.EXERCISE);
+            const setIdx = readInt(target, WORKOUT.SET);
             this._saveDebounced(this._currentWeek, this._currentDay, exId, setIdx, 'weight', target.value);
             return;
         }
 
         // Reps input
         if (target.matches('.reps-input')) {
-            const exId = target.dataset.exercise;
-            const setIdx = parseInt(target.dataset.set);
+            const exId = read(target, WORKOUT.EXERCISE);
+            const setIdx = readInt(target, WORKOUT.SET);
             this._saveDebounced(this._currentWeek, this._currentDay, exId, setIdx, 'reps', target.value);
             return;
         }
 
         // Extra segment reps (seg > 0)
-        if (target.matches('.seg-reps-input') && parseInt(target.dataset.seg) > 0) {
-            const exId = target.dataset.exercise;
-            const setIdx = parseInt(target.dataset.set);
-            const segIdx = parseInt(target.dataset.seg);
+        if (target.matches('.seg-reps-input') && readInt(target, WORKOUT.SEG) > 0) {
+            const exId = read(target, WORKOUT.EXERCISE);
+            const setIdx = readInt(target, WORKOUT.SET);
+            const segIdx = readInt(target, WORKOUT.SEG);
             Storage.saveSegReps(this._currentWeek, this._currentDay, exId, setIdx, segIdx, target.value);
             return;
         }
 
         // Extra segment weight (seg > 0)
-        if (target.matches('.seg-weight-input') && parseInt(target.dataset.seg) > 0) {
-            const exId = target.dataset.exercise;
-            const setIdx = parseInt(target.dataset.set);
-            const segIdx = parseInt(target.dataset.seg);
+        if (target.matches('.seg-weight-input') && readInt(target, WORKOUT.SEG) > 0) {
+            const exId = read(target, WORKOUT.EXERCISE);
+            const setIdx = readInt(target, WORKOUT.SET);
+            const segIdx = readInt(target, WORKOUT.SEG);
             Storage.saveSegWeight(this._currentWeek, this._currentDay, exId, setIdx, segIdx, target.value);
             return;
         }

@@ -1,4 +1,5 @@
 /* ===== Scroll Lock Utilities ===== */
+import { WORKOUT } from './data-attrs.js';
 
 export function lockBodyScroll() {
     if (document.body.classList.contains('modal-open')) return;
@@ -27,8 +28,8 @@ export function blockOverlayScroll(overlay, scrollableSelector) {
 
 export function _restoreFocus(info) {
     if (!info) return;
-    var sel = info.cls + '[data-exercise="' + info.ex + '"][data-set="' + info.set + '"]';
-    if (info.seg != null) sel += '[data-seg="' + info.seg + '"]';
+    var sel = info.cls + '[' + WORKOUT.EXERCISE + '="' + info.ex + '"][' + WORKOUT.SET + '="' + info.set + '"]';
+    if (info.seg != null) sel += '[' + WORKOUT.SEG + '="' + info.seg + '"]';
     var el = document.querySelector(sel);
     if (el) {
         el.focus({ preventScroll: true });
