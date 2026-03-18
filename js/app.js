@@ -318,9 +318,9 @@ export const App = {
     },
 
     login(loginStr, passwordStr) {
-        // 1. Try hardcoded ACCOUNTS → redirect to migration
+        // 1. Try hardcoded ACCOUNTS by login only (passwords removed from code)
         var account = ACCOUNTS.find(function(a) {
-            return a.login === loginStr && a.password === passwordStr;
+            return a.login === loginStr;
         });
         if (account) {
             // Check if already migrated
@@ -885,7 +885,10 @@ export const App = {
             var passInput = document.getElementById('password-input');
             var loginVal = loginInput ? loginInput.value.trim() : '';
             var passVal = passInput ? passInput.value.trim() : '';
-            if (!loginVal || !passVal) return true;
+            if (!loginVal) return true;
+            // Legacy ACCOUNTS: password not required (removed from code), match by login only
+            var isLegacyAccount = ACCOUNTS && ACCOUNTS.some(function(a) { return a.login === loginVal; });
+            if (!isLegacyAccount && !passVal) return true;
             var loginResult = App.login(loginVal, passVal);
             if (loginResult === 'migrated') {
                 var migratedAcct = ACCOUNTS ? ACCOUNTS.find(function(a) { return a.login === loginVal; }) : null;
