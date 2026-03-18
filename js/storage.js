@@ -3,7 +3,7 @@ import { ACCOUNTS } from './users.js';
 import { SupaSync } from './supabase-sync.js';
 import { Social } from './social.js';
 import { Migrations } from './migrations.js';
-import { getAllProgramExercises } from './utils.js';
+import { parseWeight, parseReps, getAllProgramExercises } from './utils.js';
 
 // Dynamic storage key per user
 export function _storageKey() {
@@ -876,7 +876,7 @@ export const Storage = {
     },
 
     saveSegReps(week, day, exerciseId, setIdx, segIdx, value) {
-        var v = parseInt(value) || 0;
+        var v = parseReps(value);
         if (segIdx === 0) { this.updateSetValue(week, day, exerciseId, setIdx, 'reps', v); return; }
         var r = this._ensureSegEntry(week, day, exerciseId, setIdx, segIdx);
         r.entry.segs[r.si].reps = v;
@@ -885,7 +885,7 @@ export const Storage = {
     },
 
     saveSegWeight(week, day, exerciseId, setIdx, segIdx, value) {
-        var v = parseFloat(String(value).replace(',', '.')) || 0;
+        var v = parseWeight(value);
         if (segIdx === 0) { this.updateSetValue(week, day, exerciseId, setIdx, 'weight', v); return; }
         var r = this._ensureSegEntry(week, day, exerciseId, setIdx, segIdx);
         r.entry.segs[r.si].weight = v;

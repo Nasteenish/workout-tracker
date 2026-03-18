@@ -18,7 +18,7 @@ import { Migrations } from './migrations.js';
 import { ACCOUNTS, BUILTIN_PROGRAMS } from './users.js';
 import { DEFAULT_PROGRAM } from './data.js';
 import { lockBodyScroll, unlockBodyScroll } from './scroll-lock.js';
-import { debounce, getTotalDays, formatDateISO, validateProgram, getProgressWeek, getTotalWeeks, esc, getCompletedSets, findExerciseInProgram } from './utils.js';
+import { debounce, getTotalDays, formatDateISO, validateProgram, getProgressWeek, getTotalWeeks, esc, getCompletedSets, findExerciseInProgram, parseWeight, parseReps } from './utils.js';
 import { WORKOUT, BUILDER, EQ, SOCIAL, SETTINGS, ONBOARDING, read, readInt } from './data-attrs.js';
 
 export const App = {
@@ -75,7 +75,7 @@ export const App = {
         }
 
         this._saveDebounced = debounce((week, day, exId, setIdx, field, value) => {
-            Storage.updateSetValue(week, day, exId, setIdx, field, parseFloat(String(value).replace(',', '.')) || 0);
+            Storage.updateSetValue(week, day, exId, setIdx, field, field === 'reps' ? parseReps(value) : parseWeight(value));
         }, 300);
 
         // Route handling
@@ -1187,8 +1187,8 @@ export const App = {
             const row = btn.closest('.set-row');
             const weightInput = row.querySelector('.weight-input');
             const repsInput = row.querySelector('.reps-input');
-            const weight = parseFloat(String(weightInput.value).replace(',', '.')) || parseFloat(String(weightInput.placeholder).replace(',', '.')) || 0;
-            const reps = parseInt(repsInput.value) || parseInt(repsInput.placeholder) || 0;
+            const weight = parseWeight(weightInput.value) || parseWeight(weightInput.placeholder);
+            const reps = parseReps(repsInput.value) || parseReps(repsInput.placeholder);
 
             const existing = Storage.getSetLog(App._currentWeek, App._currentDay, exId, setIdx);
             if (existing && existing.completed) {

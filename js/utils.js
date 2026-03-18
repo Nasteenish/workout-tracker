@@ -424,3 +424,17 @@ export function formatRest(rest) {
     }
     return rest;
 }
+
+// Parse and clamp weight input: comma→dot, [0, 999], 2 decimal places
+export function parseWeight(value) {
+    var n = parseFloat(String(value).replace(',', '.'));
+    if (isNaN(n) || n <= 0) return 0;
+    return Math.min(Math.round(n * 100) / 100, 999);
+}
+
+// Parse and clamp reps input: integer, [0, 999]
+export function parseReps(value) {
+    var n = parseInt(value);
+    if (isNaN(n) || n <= 0) return 0;
+    return Math.min(n, 999);
+}

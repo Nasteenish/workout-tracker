@@ -1,5 +1,6 @@
 /* ===== Profile Save & Checkin Form ===== */
 import { Social } from './social.js';
+import { parseWeight } from './utils.js';
 
 export const ProfileManager = {
     croppedAvatarBlob: null,
@@ -58,7 +59,7 @@ export const ProfileManager = {
         }
 
         var weightEl = document.getElementById('checkin-weight');
-        var weight = weightEl ? (parseFloat(weightEl.value) || null) : null;
+        var weight = weightEl ? (parseWeight(weightEl.value) || null) : null;
         var note = (document.getElementById('checkin-note').value || '').trim();
         var measurements = {};
 
