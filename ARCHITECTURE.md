@@ -1,464 +1,335 @@
-# ARCHITECTURE.md — Трекер Тренировок
+# ARCHITECTURE.md — Трекер Тренировок (post-refactor)
 
 ## Стек технологий
 
 | Категория | Технология |
 |-----------|-----------|
-| Фреймворк | Vanilla JS (без фреймворков). SPA с ручным роутингом через `location.hash` |
-| Стейт-менеджмент | Глобальный объект `Storage` — обёртка над `localStorage` с in-memory кешем (`_data`) |
-| Роутинг | Hash-based (`#/week/1`, `#/feed`, `#/profile`). Парсинг регулярками в `App.route()` |
-| БД/Хранилище | `localStorage` (локально) + Supabase (облачная синхронизация и соцсеть) |
-| Стили | Один CSS файл `css/styles.css` (~5300 строк), CSS-переменные, тёмная тема |
-| PWA | Service Worker (`sw.js`) + `manifest.json`. Оффлайн через cache-first стратегию |
-| UI-рендеринг | Ручная генерация HTML строками (innerHTML). Нет Virtual DOM, шаблонизатора |
-| Язык интерфейса | Русский (с поддержкой EN для названий упражнений через `exName()`) |
+| Фреймворк | Vanilla JS (ES modules). SPA с hash-роутингом |
+| Модульная система | ES modules (`import/export`). Entry point: `main.js` → `App.init()` |
+| Стейт-менеджмент | `Storage` синглтон → `localStorage` с in-memory кешем (`_data`) |
+| Роутинг | Hash-based (`#/week/1`, `#/feed`). `App.route()` с regex-парсингом |
+| БД/Хранилище | `localStorage` (offline-first) + Supabase (cloud sync + соцсеть) |
+| Стили | 14 CSS файлов через `@import` в `styles.css`. CSS-переменные, тёмная тема |
+| PWA | Service Worker (`sw.js`) + `manifest.json`. Cache-first |
+| UI-рендеринг | innerHTML (HTML-строки). `esc()` для экранирования пользовательских данных |
+| Внешние зависимости | Только Supabase JS v2 (CDN). Нет npm, бандлера, транспиляции |
 
 ---
 
-## Структура папок
+## Структура файлов
 
 ```
 workout-tracker/
-├── index.html              # Единственная HTML-точка входа. Загружает все JS в нужном порядке
-├── v2.html                 # Старая/тестовая точка входа (урезанный набор скриптов)
-├── manifest.json           # PWA-манифест
-├── sw.js                   # Service Worker: кеширование + таймер-нотификации в фоне
+├── index.html              # SPA точка входа. Supabase CDN + <script type="module" src="main.js">
+├── manifest.json           # PWA
+├── sw.js                   # Service Worker (v543): кеш всех файлов + фоновые нотификации таймера
 ├── css/
-│   └── styles.css          # Все стили приложения (~5300 строк)
-├── icons/
-│   ├── icon-192.png        # PWA-иконка
-│   └── icon-512.png        # PWA-иконка
+│   ├── styles.css          # Entry: @import всех CSS
+│   ├── variables.css       # CSS custom properties
+│   ├── base.css            # Сброс, типографика, layout
+│   ├── auth.css            # Логин, регистрация, онбординг
+│   ├── week-view.css       # Карточки дней недели
+│   ├── day-view.css        # Экран тренировки (подходы, упражнения)
+│   ├── settings.css        # Настройки, меню
+│   ├── components.css      # Модалки, кнопки, общие компоненты
+│   ├── timer.css           # Таймер отдыха (inline bar)
+│   ├── builder.css         # Визард, редактор дня, picker
+│   ├── celebration.css     # Анимация завершения тренировки
+│   ├── social.css          # Лента, профиль, чекины, discover
+│   ├── chat.css            # Сообщения (DM)
+│   └── animations.css      # Свайпы, переходы
 ├── js/
-│   ├── utils.js            # (344) Утилиты: даты, форматирование, работа с программой тренировок
-│   ├── data.js             # (2611) DEFAULT_PROGRAM (Анастасия): шаблоны дней + еженедельные оверрайды
-│   ├── mikhail_data.js     # (9064) MIKHAIL_PROGRAM: предсоревновательная программа Дмитрия
-│   ├── mikhail2_data.js    # (7846) MIKHAIL2_PROGRAM: off-season программа Михаила
-│   ├── users.js            # (31) ACCOUNTS (хардкод логинов) + BUILTIN_PROGRAMS (реестр программ)
-│   ├── exercises_db.js     # (463) EXERCISE_DB: 429 упражнений из Hevy (nameRu, name, category)
-│   ├── supabase-sync.js    # (233) SupaSync: авторизация Supabase, push/pull данных, deep merge логов
-│   ├── storage.js          # (1150) Storage: единая обёртка localStorage, CRUD для всех данных
-│   ├── social.js           # (865) Social: Supabase API для профилей, чекинов, подписок, реакций, DM
-│   ├── ui.js               # (2059) UI: рендер экранов (логин, неделя, день, настройки, модалки)
-│   ├── cropper.js          # (313) AvatarCropper: кроп аватарки для профиля
-│   ├── social-ui.js        # (1274) SocialUI: рендер ленты, профиля, чекинов, сообщений
-│   ├── builder.js          # (1623) Builder: регистрация, визард программы, редактор дня, упражнения
-│   ├── timer.js            # (494) RestTimer: таймер отдыха с нотификациями и звуком
-│   └── app.js              # (4034) App: инициализация, роутинг, ВСЕ click/input обработчики, свайпы
-├── tools/                  # Утилиты для разработки (не часть приложения)
-│   ├── build_sql.py, gen_exercises_db.py, export-logs.py
-│   ├── fetch_gym80_images.py, fetch_precor_images.py
-│   ├── *.sql               # SQL для вставки оборудования в Supabase
-│   └── *.json              # Сырые данные упражнений
-├── admin.html              # Админ-панель (отдельная страница, ~53KB)
-└── catalog.html            # Каталог оборудования (отдельная страница, ~27KB)
-```
-
-### Порядок загрузки скриптов (критичен!)
-
-Скрипты загружаются синхронно через `<script>` теги. Каждый следующий зависит от предыдущих. Нет ES-модулей (`import/export`). Изменение порядка ломает приложение.
-
-```
- 1. supabase CDN      → window.supabase
- 2. utils.js          → exName(), resolveWorkout(), getCompletedSets(), parseLocalDate()
- 3. data.js           → SET_TYPES, TECHNIQUE_TYPES, DEFAULT_PROGRAM, PROGRAM (let)
- 4. mikhail_data.js   → MIKHAIL_PROGRAM
- 5. mikhail2_data.js  → MIKHAIL2_PROGRAM
- 6. users.js          → BUILTIN_PROGRAMS, ACCOUNTS
- 7. exercises_db.js   → EXERCISE_CATEGORIES, EXERCISE_DB
- 8. supabase-sync.js  → supa (Supabase client), SupaSync  [зависит от: window.supabase]
- 9. storage.js        → Storage  [зависит от: PROGRAM, EXERCISE_DB, SupaSync]
-10. social.js         → Social   [зависит от: supa, Storage]
-11. ui.js             → UI       [зависит от: Storage, PROGRAM, utils]
-12. cropper.js        → AvatarCropper
-13. social-ui.js      → SocialUI [зависит от: Social, UI]
-14. builder.js        → Builder  [зависит от: Storage, EXERCISE_DB, Social]
-15. timer.js          → RestTimer [зависит от: Storage]
-16. app.js            → App      [зависит от: ВСЁ выше]
+│   ├── main.js             # (5) Entry point: import App → App.init()
+│   ├── app.js              # (2515) Роутинг, handleClick, init, login/logout
+│   ├── ui.js               # (2047) Рендер: login, week, day, history, settings, menu, модалки
+│   ├── builder.js          # (1646) Визард, редактор дня, picker, онбординг, регистрация
+│   ├── social-ui.js        # (1333) Рендер соцсети: feed, profile, checkin, discover, messages
+│   ├── social.js           # (900) Supabase API: профили, follows, чекины, реакции, DM, залы
+│   ├── storage.js          # (1001) localStorage CRUD + sibling cache + миграции данных
+│   ├── timer.js            # (495) Таймер отдыха: звук, нотификации, фоновый режим
+│   ├── utils.js            # (440) resolveWorkout(), esc(), даты, имена, миниатюры
+│   ├── data.js             # (2604) DEFAULT_PROGRAM + SET_TYPES, TECHNIQUE_TYPES
+│   ├── mikhail_data.js     # (9064) MIKHAIL_PROGRAM
+│   ├── mikhail2_data.js    # (7846) MIKHAIL2_PROGRAM
+│   ├── users.js            # (34) ACCOUNTS + BUILTIN_PROGRAMS
+│   ├── exercises_db.js     # (463) EXERCISE_DB (429 упражнений)
+│   ├── supabase-sync.js    # (238) Auth + cloud sync (push/pull/merge)
+│   ├── data-attrs.js       # (121) Реестр data-атрибутов (WORKOUT, BUILDER, EQ, SOCIAL...)
+│   ├── equipment-manager.js# (444) Привязка оборудования, залы, каталог
+│   ├── swipe-nav.js        # (311) Свайп-навигация (carousel, back-swipe, tabs)
+│   ├── migrations.js       # (300) Одноразовые data-fix миграции
+│   ├── cropper.js          # (314) Canvas-кроппер аватарок
+│   ├── celebration.js      # (203) Конфетти + статистика при завершении тренировки
+│   ├── pull-refresh.js     # (166) Pull-to-refresh
+│   ├── workout-timer.js    # (114) Таймер длительности тренировки (elapsed)
+│   ├── profile-manager.js  # (100) Сохранение профиля, обработка формы
+│   ├── message-notifications.js # (83) Realtime DM уведомления + polling
+│   └── scroll-lock.js      # (40) lockBodyScroll, unlockBodyScroll для модалок
+├── tools/                  # Утилиты разработки (не runtime)
+├── admin.html              # Админ-панель
+└── catalog.html            # Каталог оборудования
 ```
 
 ---
 
-## Глобальные переменные
+## Граф импортов (ES modules)
 
-| Переменная | Где определена | Тип | Описание |
-|---|---|---|---|
-| `PROGRAM` | `data.js` (let), загружается в `app.js` | Mutable | Текущая программа тренировок |
-| `DEFAULT_PROGRAM` | `data.js` | Const | Программа Анастасии |
-| `MIKHAIL_PROGRAM` | `mikhail_data.js` | Const | Программа Дмитрия |
-| `MIKHAIL2_PROGRAM` | `mikhail2_data.js` | Const | Программа Михаила |
-| `SET_TYPES` | `data.js` | Const | Типы подходов (S, SH, H) |
-| `TECHNIQUE_TYPES` | `data.js` | Const | Техники (DROP, REST_PAUSE, MP) |
-| `EXERCISE_DB` | `exercises_db.js` | Const | 429 упражнений |
-| `ACCOUNTS` | `users.js` | Const | Захардкоженные аккаунты (легаси) |
-| `BUILTIN_PROGRAMS` | `users.js` | Const | Реестр встроенных программ |
-| `supa` | `supabase-sync.js` | Const | Supabase client |
-| `Storage._data` | `storage.js` | Mutable cache | In-memory кэш данных пользователя |
-| `App._currentWeek` | `app.js` | Mutable | Текущая выбранная неделя |
-| `App._currentDay` | `app.js` | Mutable | Текущий выбранный день |
-| `Storage._gymCache` | `storage.js` | Mutable | Список залов из Supabase |
+```
+main.js
+ └→ app.js (entry hub — импортирует все модули)
+     ├→ storage.js ↔ supabase-sync.js ↔ app.js  [circular]
+     ├→ ui.js ↔ app.js  [circular]
+     ├→ social.js → storage.js, supabase-sync.js
+     ├→ social-ui.js → social.js, storage.js, profile-manager.js
+     ├→ builder.js ↔ app.js  [circular]
+     ├→ timer.js → storage.js
+     ├→ celebration.js ↔ app.js  [circular]
+     ├→ swipe-nav.js ↔ app.js  [circular]
+     ├→ equipment-manager.js ↔ app.js, ui.js  [circular]
+     ├→ pull-refresh.js (no circular)
+     ├→ workout-timer.js (no circular)
+     ├→ message-notifications.js → social.js, social-ui.js
+     ├→ profile-manager.js → social.js
+     ├→ migrations.js ↔ storage.js  [circular]
+     ├→ scroll-lock.js → data-attrs.js
+     ├→ data-attrs.js (leaf — no imports)
+     ├→ utils.js ↔ storage.js  [circular]
+     ├→ users.js → data.js, mikhail_data.js, mikhail2_data.js
+     └→ exercises_db.js (leaf)
+```
+
+**11 циклических пар** — работают пока все кросс-обращения внутри функций (не на верхнем уровне модуля).
 
 ---
 
-## Карта компонентов (модулей)
+## Карта компонентов
 
-### Дерево рендеринга (кто кого вызывает)
-
-```
-App.init()
- ├── App.route() ─────────────────── центральный роутер
- │   ├── UI.renderLogin()            # экран логина
- │   ├── UI.renderSetup()            # настройка программы (старт дата, цикл)
- │   ├── UI.renderWeek(weekNum)      # карточки дней недели
- │   │   └── UI._weekCardsHTML()     # генерация карточек (swipe companion)
- │   │   └── UI._weekViewHTML()      # полный HTML недели (swipe companion)
- │   ├── UI.renderDay(week, day)     # экран тренировки (упражнения, подходы)
- │   │   ├── UI._dayViewHTML()       # полный HTML дня (swipe companion)
- │   │   ├── UI._renderExercise()    # одно упражнение с подходами
- │   │   ├── UI._renderSetRow()      # строка подхода (вес/повторы/чекбокс)
- │   │   ├── UI._renderSuperset()    # суперсет (группа упражнений)
- │   │   └── UI._renderChooseOne()   # выбор упражнения из вариантов
- │   ├── UI.renderHistory(exId)      # история упражнения (графики)
- │   ├── UI.renderMenu()             # главное меню
- │   │   └── UI._menuHTML()          # HTML меню (swipe companion)
- │   ├── UI.renderSettings()         # настройки
- │   ├── UI.renderGuide()            # гайд по типам подходов
- │   ├── UI.renderCalculator()       # калькулятор весов
- │   ├── Builder.renderRegister()    # регистрация нового пользователя
- │   ├── Builder.renderMigration()   # миграция хардкод → Supabase
- │   ├── Builder.renderWizardStep1() # создание программы: шаг 1
- │   ├── Builder.renderWizardStep2() # создание программы: шаг 2
- │   ├── Builder.renderDayEditor()   # редактор дня (drag&drop упражнений)
- │   ├── Builder.renderOnboarding*() # онбординг (пол, роль, цели)
- │   ├── SocialUI.renderFeed()       # лента чекинов подписок
- │   ├── SocialUI.renderProfile()    # профиль пользователя
- │   ├── SocialUI.renderProfileEdit()# редактирование профиля
- │   ├── SocialUI.renderCheckinForm()# форма нового чекина
- │   ├── SocialUI.renderCheckinDetail() # детальный чекин
- │   ├── SocialUI.renderDiscover()   # поиск пользователей
- │   ├── SocialUI.renderNotifications() # уведомления
- │   ├── SocialUI.renderMessages()   # список бесед
- │   ├── SocialUI.renderConversation() # переписка
- │   └── SocialUI.renderFollowList() # подписчики/подписки
- │
- ├── App.handleClick(e) ──────────── ВСЕ клики (event delegation на #app)
- │   (2000+ строк if/else цепочка)
- │
- ├── App.handleInput(e) ──────────── ввод в поля (вес, повторы, поиск)
- ├── App.handleFocus(e) ──────────── фокус на инпутах
- │
- ├── RestTimer ────────────────────── таймер отдыха
- │   ├── .init()                     # создание DOM-элемента бара
- │   ├── .start(row)                 # запуск после выполнения подхода
- │   └── .stop()                     # остановка
- │
- └── Celebration ──────────────────── анимация завершения тренировки
-     └── .show(elapsed, week, day)   # конфетти + статистика
-```
-
-### Модалки (рендерятся поверх текущего экрана)
+### Дерево рендеринга
 
 ```
-UI.showEquipmentModal()        # выбор оборудования для упражнения
-UI.showGymModal()              # выбор зала
-UI.showChoiceModal()           # выбор варианта упражнения (choose_one)
-UI.showSubstitutionModal()     # замена упражнения
-Builder.showExercisePicker()   # каталог упражнений (429 шт)
-Builder.showExerciseConfig()   # настройка упражнения (подходы, повторы)
-AvatarCropper.open()           # кроп фото для аватарки
+App.init() → App.route()
+ ├── UI.renderLogin()
+ ├── UI.renderSetup()
+ ├── UI.renderWeek(weekNum)
+ │   ├── UI._weekCardsHTML()     (swipe companion)
+ │   └── UI._weekViewHTML()      (swipe companion)
+ ├── UI.renderDay(week, day)
+ │   ├── UI._dayViewHTML()       (swipe companion)
+ │   ├── UI._renderExercise()
+ │   ├── UI._renderSetRow()
+ │   ├── UI._renderSuperset()
+ │   └── UI._renderChooseOne()
+ ├── UI.renderHistory(exId)
+ ├── UI.renderMenu()
+ │   └── UI._menuHTML()          (swipe companion)
+ ├── UI.renderSettings()
+ ├── UI.renderGuide()
+ ├── UI.renderCalculator()
+ ├── Builder.renderRegister()
+ ├── Builder.renderMigration()
+ ├── Builder.renderOnboarding*()
+ ├── Builder.renderWizardStep1/2()
+ ├── Builder.renderDayEditor()
+ ├── SocialUI.renderFeed()
+ ├── SocialUI.renderProfile()
+ ├── SocialUI.renderProfileEdit()
+ ├── SocialUI.renderCheckinForm()
+ ├── SocialUI.renderCheckinDetail()
+ ├── SocialUI.renderDiscover()
+ ├── SocialUI.renderNotifications()
+ ├── SocialUI.renderMessages()
+ ├── SocialUI.renderConversation()
+ └── SocialUI.renderFollowList()
+
+Модалки (поверх текущего экрана):
+  UI.showEquipmentModal()    — EquipmentManager обрабатывает клики
+  UI.showGymModal()
+  UI.showChoiceModal()
+  UI.showSubstitutionModal()
+  Builder.showExercisePicker()
+  Builder.showExerciseConfig()
+  AvatarCropper.open()
 ```
+
+### Ответственность модулей
+
+| Модуль | Файл | Что делает |
+|--------|------|------------|
+| `App` | app.js | Init, роутинг, handleClick (1530 строк), login/logout |
+| `UI` | ui.js | Рендер тренировочных экранов + модалки |
+| `SocialUI` | social-ui.js | Рендер соцсети |
+| `Builder` | builder.js | Визард, редактор, picker, онбординг |
+| `Storage` | storage.js | localStorage CRUD, sibling cache |
+| `Social` | social.js | Supabase API для всех social-таблиц |
+| `SupaSync` | supabase-sync.js | Auth + data sync (push/pull/merge) |
+| `RestTimer` | timer.js | Таймер отдыха между подходами |
+| `EquipmentManager` | equipment-manager.js | Привязка оборудования + залы |
+| `SwipeNav` | swipe-nav.js | Свайп-навигация |
+| `PullRefresh` | pull-refresh.js | Pull-to-refresh |
+| `Celebration` | celebration.js | Конфетти при завершении тренировки |
+| `WorkoutTimer` | workout-timer.js | Elapsed time тренировки |
+| `Migrations` | migrations.js | One-time data fixes |
+| `MessageNotifications` | message-notifications.js | DM realtime + polling |
+| `ProfileManager` | profile-manager.js | Сохранение профиля |
+| `data-attrs` | data-attrs.js | Реестр всех data-атрибутов |
 
 ---
 
 ## Поток данных
 
-### Полная схема `Storage._data` (wt_data_{userId})
+### Полная схема `Storage._data`
 
 ```javascript
 Storage._data = {
   settings: {
-    cycleType: 7,              // дней в цикле (7 = неделя)
-    startDate: "2025-01-06",   // дата старта программы
-    weightUnit: "kg",          // "kg" | "lb"
-    timerDuration: 120,        // секунды отдыха по умолчанию
-    exerciseLang: "ru"         // "ru" | "en"
+    cycleType: 7,              // дней в цикле
+    startDate: "2025-01-06",
+    weightUnit: "kg",
+    timerDuration: 120,
+    exerciseLang: "ru"
   },
-  program: { ... } | null,     // кастомная программа (null → используется BUILTIN)
-  log: {                        // === ОСНОВНОЙ ЛОГ ТРЕНИРОВОК ===
+  program: { ... } | null,     // кастомная программа (null → BUILTIN)
+  log: {
     "1": {                     // week (string)
       "1": {                   // day (string)
         "_gym": "uuid-...",    // metadata: ID зала
         "D1E2": {              // exerciseId
           "0": {               // setIdx (string)
-            weight: 40,
-            reps: 12,
-            completed: true,
+            weight: 40, reps: 12, completed: true,
             timestamp: 1710000000000,
-            unit: "kg",
-            equipmentId: "eq_123",
-            segs: {            // drop-set / rest-pause сегменты
-              "1": { weight: 30, reps: 8 },
-              "2": { weight: 20, reps: 6 }
-            }
+            unit: "kg", equipmentId: "eq_123",
+            segs: { "1": { weight: 30, reps: 8 } }
           }
         }
       }
     }
   },
-  exerciseChoices: {            // выбор в choose_one группах
-    "D1_deadlift": "D1E1_opt3"
-  },
-  exerciseEquipment: {          // текущая привязка упражнение → тренажёр
-    "D1E2": "eq_123"           // null = явно удалено (tombstone для sync)
-  },
-  exerciseEquipmentOptions: {   // все когда-либо привязанные тренажёры
-    "D1E2": ["eq_123", "eq_456"]
-  },
-  exerciseUnits: {              // единицы веса per-exercise
-    "D3E5": "lb"
-  },
-  exerciseSubstitutions: {      // замена названия упражнения
-    "D1E4": "Выпады с гантелями"
-  },
-  equipment: [                  // список тренажёров пользователя
-    { id: "eq_123", name: "Cybex Eagle NX", type: "machine", imageUrl: "..." }
-  ],
-  myGymIds: ["uuid-1"],        // ID избранных залов (Supabase shared_gyms)
+  exerciseChoices: { "D1_deadlift": "D1E1_opt3" },
+  exerciseEquipment: { "D1E2": "eq_123" },     // null = tombstone
+  exerciseEquipmentOptions: { "D1E2": ["eq_123", "eq_456"] },
+  exerciseUnits: { "D3E5": "lb" },
+  exerciseSubstitutions: { "D1E4": "Выпады с гантелями" },
+  equipment: [{ id: "eq_123", name: "Cybex Eagle NX", type: "machine", imageUrl: "..." }],
+  myGymIds: ["uuid-1"],
   gymLastUsed: { "uuid-1": 1710000000 },
-  gymEquipmentMap: {            // привязка тренажёров per-gym
-    "uuid-1": { "D1E2": "eq_123" }
-  },
-  weekSlots: [                  // порядок дней в неделе (кастомный)
-    { type: "day", dayNum: 1 },
-    { type: "rest" },
-    { type: "day", dayNum: 2 },
-    ...
-  ]
+  gymEquipmentMap: { "uuid-1": { "D1E2": "eq_123" } },
+  weekSlots: [{ type: "day", dayNum: 1 }, { type: "rest" }, ...]
 }
 ```
 
-### localStorage ключи
+### Путь записи
 
 ```
-wt_users           → [{id, name, programId, login?, password?}]
-wt_current         → "supa_abc123" (ID текущего пользователя)
-wt_data_{userId}   → Storage._data (JSON-блоб выше)
-wt_supa_{localId}  → Supabase UUID (связь локальный ID ↔ Supabase auth)
-wt_email_{supaId}  → email (для логина по username)
-_wt_eq_snapshot    → снимок equipment для rollback если нет completed sets
+User tap "✓" → App.handleClick()
+  → read(btn, WORKOUT.EXERCISE)  // data-attrs.js
+  → Storage.saveSetLog(w, d, exId, setIdx, weight, reps, eqId)
+    → _data.log[w][d][exId][setIdx] = { ... }
+    → _save() → localStorage + SupaSync.onLocalSave() → debounced push (3s)
+  → App.invalidatePageCache()  // fix stale cache
 ```
 
-### Путь записи данных
+### Путь чтения
 
 ```
-User tap "✓" (complete set)
-  → App.handleClick()
-    → парсит data-exercise, data-set из DOM
-    → Storage.saveSetLog(week, day, exId, setIdx, weight, reps, eqId)
-      → Storage._data.log[w][d][exId][setIdx] = { weight, reps, completed, timestamp, ... }
-      → Storage._save()
-        → localStorage.setItem('wt_data_{userId}', JSON.stringify(_data))
-        → SupaSync.onLocalSave()
-          → SupaSync.schedulePush()  [debounced 3 секунды]
-            → supa.from('user_data').upsert(data)
+App.route() → UI.renderDay(3, 1)
+  → resolveWorkout(3, 1)  // utils.js — uses Storage.getProgram()
+  → Storage.getSetLog() per set
+  → UI._renderSetRow() → HTML с data-attrs из WORKOUT.*
+  → innerHTML
 ```
 
-### Путь чтения данных
+### Cloud Sync
 
 ```
-App.route() → hash=#/week/3/day/1
-  → UI.renderDay(3, 1)
-    → resolveWorkout(3, 1)
-      → deepClone(PROGRAM.dayTemplates[1])
-      → merge PROGRAM.weeklyOverrides[3][1]
-    → for each exercise:
-      → Storage.getSetLog(3, 1, exId, setIdx)
-        → Storage._load() → возвращает кешированный _data
-      → UI._renderSetRow() → HTML строкой
-    → document.getElementById('app').innerHTML = html
-```
+Login: SupaSync.syncOnLogin()
+  → pullData() → _deepMergeLogs(local, remote) [per-set, latest timestamp wins]
+  → merge exerciseChoices, exerciseEquipment (respect null tombstones)
+  → pushData()
 
-### Авторизация: два пути
-
-```
-A) Legacy (hardcoded ACCOUNTS):
-   ACCOUNTS[] → Storage.loginSelfRegistered() → localStorage('wt_current')
-
-B) Supabase Auth (новые пользователи):
-   SupaSync.signIn(email, password)
-     → supa.auth.signInWithPassword()
-     → localStorage('wt_supa_' + localId) = supaUserId
-     → SupaSync.syncOnLogin() → deep merge logs
-     → Social._getSupaUserId() для всех social-запросов
-```
-
-### Cloud Sync Flow
-
-```
-Login / Pull-to-refresh:
-  SupaSync.syncOnLogin(supaUserId, storageKey)
-    → pullData()           ← Supabase user_data table
-    → _deepMergeLogs(local.log, remote.log)
-        per-set: latest timestamp wins
-    → merge exerciseChoices   (keep both sides)
-    → merge exerciseEquipment (respect null tombstones)
-    → pushData()           → Supabase
-
-Continuous (после каждого Storage._save):
-  → SupaSync.onLocalSave()
-  → schedulePush()  [debounced 3s]
-  → pushData() → Supabase
+Continuous: Storage._save() → SupaSync.schedulePush() [debounced 3s]
 ```
 
 ---
 
-## Ключевые сущности (структуры данных)
+## Ключевые сущности
 
-### Program (программа тренировок)
+### Program — `Storage.getProgram()` (больше нет глобального `let PROGRAM`)
 
 ```javascript
-PROGRAM = {
-  version: 2,
-  title: "12-Week Training Program",
-  coach: "Francisco Espin",
-  athlete: "Anastasiia Dobrosol",
-  totalWeeks: 12,
-  dayTemplates: {
-    1: { title: "Hamstrings & Gluteus", titleRu: "...", exerciseGroups: [...] },
-  },
-  weeklyOverrides: {
-    3: { 1: { "D1E2": { sets: { 0: { rpe: "10", techniques: ["DROP"] } } } } }
-  }
+{ version, title, coach, athlete, totalWeeks,
+  dayTemplates: { 1: { title, titleRu, exerciseGroups: [...] } },
+  weeklyOverrides: { 3: { 1: { "D1E2": { sets: { 0: { rpe: "10" } } } } } }
 }
 ```
 
 ### ExerciseGroup (4 типа)
 
 ```javascript
-{ type: "single",     sectionTitle: "GLUTEUS", exercise: { id, name, nameRu, reps, rest, sets } }
-{ type: "superset",   exercises: [{ id, name, nameRu, reps, rest, sets }, ...] }
-{ type: "choose_one", choiceKey: "D1_deadlift", options: [{ id, name, nameRu, reps, rest, sets }, ...] }
-{ type: "warmup",     exercise: { id, name, nameRu, reps, rest, sets } }
+{ type: "single",     exercise: { id, name, nameRu, reps, rest, sets } }
+{ type: "superset",   exercises: [...] }
+{ type: "choose_one", choiceKey: "D1_deadlift", options: [...] }
+{ type: "warmup",     exercise: { ... } }
 ```
 
-### Exercise (упражнение)
+### Set Log — `log[week][day][exId][setIdx]`
 
 ```javascript
-{
-  id: "D1E2",
-  name: "Seated Leg Curl (Machine)",
-  nameRu: "Сгибание ног сидя (в тренажёре)",
-  reps: "12-15",
-  rest: 120,
-  sets: [
-    { type: "SH", rpe: "9-10", techniques: [] },
-    { type: "H",  rpe: "9-10", techniques: ["DROP"] },
-    { type: "H",  rpe: "9-10", techniques: ["REST_PAUSE"] }
-  ]
-}
-```
-
-### Set Log (запись подхода)
-
-```javascript
-// Storage._data.log[week][day][exerciseId][setIdx]
-{
-  weight: 45,
-  reps: 12,
-  completed: true,
-  timestamp: 1710000000000,    // для merge при синхронизации
-  unit: "kg",                  // или "lb"
-  equipmentId: "eq_17735905", // привязка к конкретному тренажёру
-  segs: {                      // сегменты для дроп-сетов / rest-pause
-    "1": { weight: 35, reps: 8 },
-    "2": { weight: 25, reps: 6 }
-  }
-}
-```
-
-### Equipment (оборудование)
-
-```javascript
-{ id: "eq_1773590540310", name: "Cybex Eagle NX Seated Leg Curl", type: "other", imageUrl: "..." }
-// Привязки: exerciseEquipment[exId] = eqId, gymEquipmentMap[gymId][exId] = eqId
+{ weight: 45, reps: 12, completed: true, timestamp: 1710000000000,
+  unit: "kg", equipmentId: "eq_123",
+  segs: { "1": { weight: 35, reps: 8 } } }
 ```
 
 ---
 
 ## Роутинг
 
-### Основные экраны
+Все маршруты в `App.route()`. Свайпы в `SwipeNav`.
 
-| Hash | Рендер | Описание |
-|------|--------|----------|
-| `#/setup` | `UI.renderSetup()` | Настройка программы |
-| `#/week/{n}` | `UI.renderWeek(n)` | Обзор недели |
-| `#/week/{n}/day/{n}` | `UI.renderDay(w,d)` | Экран тренировки |
-| `#/history/{exId}` | `UI.renderHistory(exId)` | История упражнения |
-| `#/menu` | `UI.renderMenu()` | Главное меню |
-| `#/settings` | `UI.renderSettings()` | Настройки |
-| `#/guide` | `UI.renderGuide()` | Гайд по подходам |
-| `#/calculator` | `UI.renderCalculator()` | Калькулятор весов |
-
+### Тренировки: `#/setup`, `#/week/{n}`, `#/week/{n}/day/{d}`, `#/history/{exId}`, `#/menu`, `#/settings`, `#/guide`, `#/calculator`
 ### Авторизация: `#/login`, `#/register`, `#/migrate`, `#/onboarding/{1-5}`
 ### Построитель: `#/builder/step1`, `#/builder/step2`, `#/edit/day/{n}`
 ### Соцсеть: `#/feed`, `#/profile`, `#/profile/edit`, `#/checkin`, `#/checkin/{id}`, `#/discover`, `#/notifications`, `#/messages`, `#/messages/{id}`, `#/u/{username}`, `#/followers/{id}`, `#/following/{id}`
 
-### Навигация и свайпы
+### Навигация
 
 ```
-Авторизация и онбординг:
-  login → register (или) → login
-  login → onboarding/1 (пол) → 2 (роль) → 3 (casual: цель)
-                                          → 3a (athlete: про/любитель) → 4 (категория) → 5 (фаза)
-                                          → 3t (trainer: кол-во клиентов)
-                                          → profile complete
-
-Основной flow:
-  setup → builder/step1 → step2 → setup (дата старта)
-  week/{n} → day (tap card) → Celebration (100% complete) → week
-  week/{n} → menu → settings / guide / calculator
-  week ↔ feed ↔ profile (tab bar)
+login → onboarding/1 (пол) → 2 (роль) → 3/3a/3t → setup
+setup → builder/step1 → step2 → week/{n}
+week/{n} ↔ day (tap) → Celebration (100%) → week
+week ↔ feed ↔ profile (tab bar)
 ```
 
-Свайпы конфигурируются в `App._getSwipeConfig()`:
-- **Влево/вправо** на Week — carousel недель
-- **Вправо** на Day — back-swipe (companion = `UI._weekViewHTML()`)
-- **Влево/вправо** между Feed ↔ Profile (tab carousel)
-- **Вниз** — pull-to-refresh
+Свайпы (`SwipeNav._getSwipeConfig()`): carousel недель, back-swipe, feed↔profile tabs, pull-to-refresh.
 
 ---
 
-## Внешние зависимости
+## Supabase — таблицы и хранилища
 
-**Единственная библиотека**: Supabase JS v2 (CDN). Нет npm, бандлера, транспиляции.
-
-### Supabase — таблицы и хранилища
-
-| Таблица | Используется в | Что хранит |
-|---------|---------------|------------|
-| `user_data` | `SupaSync` | JSONB-блоб всех данных пользователя (зеркало localStorage) |
-| `profiles` | `Social` | username, display_name, avatar_url, gender, bio, is_athlete, category, phase |
-| `checkins` | `Social` | Посты: текст, фото (массив URL), workout_summary, muscle_groups |
-| `photo_tags` | `Social` | Теги пользователей на фото чекинов |
-| `follows` | `Social` | follower_id → following_id |
-| `reactions` | `Social` | Лайки/реакции на чекины (user_id, checkin_id, type) |
-| `comments` | `Social` | Комментарии к чекинам (user_id, checkin_id, text) |
-| `comment_likes` | `Social` | Лайки на комментарии |
-| `conversations` | `Social` | DM-диалоги (participant_ids, last_message_at) |
-| `messages` | `Social` | Сообщения в диалогах (conversation_id, sender_id, text, read) |
-| `notifications` | `Social` | type (follow/like/comment), actor_id, target_id, checkin_id |
-| `shared_gyms` | `Social` | Общая база залов (name, city) — crowdsourced |
-| `shared_equipment` | `Social` | Общая база оборудования (name, muscle_group) |
-| `shared_exercises` | `Social` | Общая база упражнений |
-| `gym_equipment` | `Social` | Привязка оборудование ↔ зал ↔ упражнение (crowdsourced) |
-| `equipment_catalog` | `Social` | Каталог брендового оборудования (Cybex, Precor, gym80 и т.д.) |
+| Таблица | Модуль | Что хранит |
+|---------|--------|------------|
+| `user_data` | SupaSync | JSONB-блоб данных (зеркало localStorage) |
+| `profiles` | Social | username, display_name, avatar_url, gender, bio |
+| `checkins` | Social | Посты: текст, фото, workout_summary |
+| `photo_tags` | Social | Теги пользователей на фото |
+| `follows` | Social | follower_id → following_id |
+| `reactions` | Social | Лайки/реакции на чекины |
+| `comments` | Social | Комментарии к чекинам |
+| `comment_likes` | Social | Лайки на комментарии |
+| `conversations` | Social | DM-диалоги |
+| `messages` | Social | Сообщения в диалогах |
+| `notifications` | Social | Уведомления (follow, like, comment) |
+| `shared_gyms` | Social | Общая база залов (crowdsourced) |
+| `shared_equipment` | Social | Общая база оборудования |
+| `shared_exercises` | Social | Общая база упражнений |
+| `gym_equipment` | Social | Оборудование ↔ зал (crowdsourced) |
+| `equipment_catalog` | Social | Каталог брендов (Cybex, Precor, gym80) |
 
 | Storage bucket | Что хранит |
 |---------------|------------|
-| `avatars` | Аватарки пользователей (`{userId}/avatar.jpg`) |
+| `avatars` | Аватарки (`{userId}/avatar.jpg`) |
 | `checkin-photos` | Фото чекинов |
-| `equipment-images` | Изображения оборудования + миниатюры упражнений (`exercise-thumbs/`) |
+| `equipment-images` | Изображения оборудования + `exercise-thumbs/` |
 
 | Realtime | Что слушает |
 |----------|-------------|
-| `messages` | Новые DM-сообщения (подписка в `Social.subscribeMessages()`) |
+| `messages` | Новые DM (подписка в `Social.subscribeMessages()`) |
