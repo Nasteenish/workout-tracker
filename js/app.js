@@ -1038,7 +1038,7 @@ const App = {
     // ===== Delegated auth click handlers =====
     _handleAuthClick(target) {
         // Login form submit
-        if (target.id === 'login-submit' || target.closest('#login-submit')) {
+        if (target.closest('#login-submit')) {
             var loginInput = document.getElementById('login-input');
             var passInput = document.getElementById('password-input');
             var loginVal = loginInput ? loginInput.value.trim() : '';
@@ -1089,33 +1089,33 @@ const App = {
         }
 
         // Migration: submit
-        if (target.id === 'migrate-submit' || target.closest('#migrate-submit')) {
+        if (target.closest('#migrate-submit')) {
             App._handleMigration();
             return true;
         }
 
         // Go to registration
-        if (target.id === 'btn-register' || target.closest('#btn-register')) {
+        if (target.closest('#btn-register')) {
             history.replaceState(null, '', '#/register');
             App.route();
             return true;
         }
 
         // Registration: submit
-        if (target.id === 'reg-submit' || target.closest('#reg-submit')) {
+        if (target.closest('#reg-submit')) {
             Builder.handleRegister();
             return true;
         }
 
         // Registration: go back to login
-        if (target.id === 'btn-go-login' || target.closest('#btn-go-login')) {
+        if (target.closest('#btn-go-login')) {
             history.replaceState(null, '', '#/login');
             App.route();
             return true;
         }
 
         // Logout
-        if (target.id === 'btn-logout' || target.closest('#btn-logout')) {
+        if (target.closest('#btn-logout')) {
             App.logout();
             return true;
         }
@@ -1161,7 +1161,7 @@ const App = {
         }
 
         // Add equipment
-        if (target.id === 'settings-eq-add' || target.closest('#settings-eq-add')) {
+        if (target.closest('#settings-eq-add')) {
             const input = document.getElementById('settings-eq-name');
             const name = input ? input.value.trim() : '';
             if (!name) return true;
@@ -1171,8 +1171,8 @@ const App = {
         }
 
         // Edit equipment name (inline)
-        if (target.matches('.eq-edit-btn') || target.closest('.eq-edit-btn')) {
-            const btn = target.matches('.eq-edit-btn') ? target : target.closest('.eq-edit-btn');
+        if (target.closest('.eq-edit-btn')) {
+            const btn = target.closest('.eq-edit-btn');
             const eqId = btn.dataset.eqId;
             if (!eqId) return true;
             var item = btn.closest('.settings-eq-item');
@@ -1196,8 +1196,8 @@ const App = {
         }
 
         // Remove equipment
-        if (target.matches('.eq-remove-btn') || target.closest('.eq-remove-btn')) {
-            const btn = target.matches('.eq-remove-btn') ? target : target.closest('.eq-remove-btn');
+        if (target.closest('.eq-remove-btn')) {
+            const btn = target.closest('.eq-remove-btn');
             if (btn.disabled) return true;
             const eqId = btn.dataset.eqId;
             if (eqId) {
@@ -1208,8 +1208,8 @@ const App = {
         }
 
         // Remove gym
-        if (target.matches('.gym-remove-btn') || target.closest('.gym-remove-btn')) {
-            var btn = target.matches('.gym-remove-btn') ? target : target.closest('.gym-remove-btn');
+        if (target.closest('.gym-remove-btn')) {
+            var btn = target.closest('.gym-remove-btn');
             if (btn.disabled) return true;
             var gymId = btn.dataset.gymId;
             if (gymId && confirm('Убрать зал из списка?')) {
@@ -1291,32 +1291,32 @@ const App = {
         }
 
         // Add set button
-        if (target.matches('.add-set-btn') || target.closest('.add-set-btn')) {
-            const btn = target.matches('.add-set-btn') ? target : target.closest('.add-set-btn');
+        if (target.closest('.add-set-btn')) {
+            const btn = target.closest('.add-set-btn');
             const exId = btn.dataset.exercise;
             App._addSet(exId);
             return true;
         }
 
         // Remove set button
-        if (target.matches('.remove-set-btn') || target.closest('.remove-set-btn')) {
-            const btn = target.matches('.remove-set-btn') ? target : target.closest('.remove-set-btn');
+        if (target.closest('.remove-set-btn')) {
+            const btn = target.closest('.remove-set-btn');
             const exId = btn.dataset.exercise;
             App._removeSet(exId);
             return true;
         }
 
         // Equipment button
-        if (target.matches('.equipment-btn') || target.closest('.equipment-btn')) {
-            const btn = target.matches('.equipment-btn') ? target : target.closest('.equipment-btn');
+        if (target.closest('.equipment-btn')) {
+            const btn = target.closest('.equipment-btn');
             const exId = btn.dataset.exercise;
             UI.showEquipmentModal(exId, btn.dataset.exname || '', btn.dataset.exnameRu || '');
             return true;
         }
 
         // Complete button
-        if (target.matches('.complete-btn') || target.closest('.complete-btn')) {
-            const btn = target.matches('.complete-btn') ? target : target.closest('.complete-btn');
+        if (target.closest('.complete-btn')) {
+            const btn = target.closest('.complete-btn');
             const exId = btn.dataset.exercise;
             const setIdx = parseInt(btn.dataset.set);
             const eqId = Storage.getExerciseEquipment(exId);
@@ -1374,8 +1374,8 @@ const App = {
         }
 
         // Choose one: tap exercise name to open selector
-        if (target.matches('.exercise-name-chooser') || target.closest('.exercise-name-chooser')) {
-            const el = target.matches('.exercise-name-chooser') ? target : target.closest('.exercise-name-chooser');
+        if (target.closest('.exercise-name-chooser')) {
+            const el = target.closest('.exercise-name-chooser');
             UI.showChoiceModal(el.dataset.choiceKey);
             return true;
         }
@@ -1387,8 +1387,8 @@ const App = {
         }
 
         // History button
-        if (target.matches('.history-btn') || target.closest('.history-btn')) {
-            const btn = target.matches('.history-btn') ? target : target.closest('.history-btn');
+        if (target.closest('.history-btn')) {
+            const btn = target.closest('.history-btn');
             const exId = btn.dataset.exercise;
             location.hash = `#/history/${encodeURIComponent(exId)}`;
             return true;
@@ -1452,31 +1452,31 @@ const App = {
 
     // ===== Delegated navigation click handlers =====
     _handleNavigationClick(target) {
-        if (target.id === 'btn-back' || target.closest('#btn-back')) {
+        if (target.closest('#btn-back')) {
             this._navigateBack(`#/week/${this._currentWeek}`);
             return true;
         }
-        if (target.id === 'btn-back-history' || target.closest('#btn-back-history')) {
+        if (target.closest('#btn-back-history')) {
             this._navigateBack(`#/week/${this._currentWeek}/day/${this._currentDay}`);
             return true;
         }
-        if (target.id === 'btn-settings' || target.closest('#btn-settings')) {
+        if (target.closest('#btn-settings')) {
             location.hash = '#/menu';
             return true;
         }
-        if (target.id === 'btn-back-menu' || target.closest('#btn-back-menu')) {
+        if (target.closest('#btn-back-menu')) {
             this._navigateBack(`#/week/${this._currentWeek}`);
             return true;
         }
-        if (target.id === 'btn-back-settings' || target.closest('#btn-back-settings')) {
+        if (target.closest('#btn-back-settings')) {
             this._navigateBack('#/menu');
             return true;
         }
-        if (target.id === 'btn-back-calc' || target.closest('#btn-back-calc')) {
+        if (target.closest('#btn-back-calc')) {
             this._navigateBack('#/menu');
             return true;
         }
-        if (target.id === 'btn-back-guide' || target.closest('#btn-back-guide')) {
+        if (target.closest('#btn-back-guide')) {
             this._navigateBack('#/menu');
             return true;
         }
@@ -1551,7 +1551,7 @@ const App = {
         }
 
         // Setup: import program from file
-        if (target.id === 'setup-import-program' || target.closest('#setup-import-program')) {
+        if (target.closest('#setup-import-program')) {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.json';
@@ -1570,7 +1570,7 @@ const App = {
         }
 
         // Setup: create program (builder)
-        if (target.id === 'setup-create-program' || target.closest('#setup-create-program')) {
+        if (target.closest('#setup-create-program')) {
             location.hash = '#/builder/step1';
             return true;
         }
@@ -1584,20 +1584,20 @@ const App = {
         }
 
         // Builder wizard: step1 → step2
-        if (target.id === 'builder-next' || target.closest('#builder-next')) {
+        if (target.closest('#builder-next')) {
             Builder.saveStep1();
             location.hash = '#/builder/step2';
             return true;
         }
 
         // Builder wizard: back from step1 → setup
-        if (target.id === 'builder-back-setup' || target.closest('#builder-back-setup')) {
+        if (target.closest('#builder-back-setup')) {
             location.hash = '#/setup';
             return true;
         }
 
         // Builder wizard: back from step2 → step1
-        if (target.id === 'builder-back-step1' || target.closest('#builder-back-step1')) {
+        if (target.closest('#builder-back-step1')) {
             // Save day names to config
             if (Builder._config) {
                 var dayInputs = document.querySelectorAll('.builder-day-name');
@@ -1610,14 +1610,14 @@ const App = {
         }
 
         // Builder wizard: create program
-        if (target.id === 'builder-create' || target.closest('#builder-create')) {
+        if (target.closest('#builder-create')) {
             Builder.createProgram();
             location.hash = '#/setup';
             return true;
         }
 
         // Setup summary: back to initial setup
-        if (target.id === 'setup-back-builder' || target.closest('#setup-back-builder')) {
+        if (target.closest('#setup-back-builder')) {
             if (Builder._config) {
                 location.hash = '#/builder/step2';
             } else {
@@ -1640,14 +1640,14 @@ const App = {
         }
 
         // Day editor: add exercise
-        if (target.id === 'editor-add-exercise' || target.closest('#editor-add-exercise')) {
+        if (target.closest('#editor-add-exercise')) {
             Builder.showExercisePicker();
             return true;
         }
 
         // Day editor: delete exercise
-        if (target.classList.contains('editor-delete') || target.closest('.editor-delete')) {
-            var btn = target.classList.contains('editor-delete') ? target : target.closest('.editor-delete');
+        if (target.closest('.editor-delete')) {
+            var btn = target.closest('.editor-delete');
             Builder.deleteExercise(parseInt(btn.dataset.idx));
             return true;
         }
@@ -1656,21 +1656,21 @@ const App = {
         // btn-back-editor handled by direct listener in Builder.renderDayEditor
 
         // Empty day: add exercise → open editor + picker directly
-        if (target.id === 'btn-add-exercise-empty' || target.closest('#btn-add-exercise-empty')) {
+        if (target.closest('#btn-add-exercise-empty')) {
             Builder.renderDayEditor(App._currentDay);
             Builder.showExercisePicker();
             return true;
         }
 
         // Edit day (pencil on training day view)
-        if (target.id === 'btn-edit-day' || target.closest('#btn-edit-day')) {
+        if (target.closest('#btn-edit-day')) {
             App._editorNavigating = true;
             location.hash = '#/edit/day/' + App._currentDay;
             return true;
         }
 
         // Setup: use default program
-        if (target.id === 'setup-use-default' || target.closest('#setup-use-default')) {
+        if (target.closest('#setup-use-default')) {
             if (typeof DEFAULT_PROGRAM !== 'undefined') {
                 Storage.saveProgram(DEFAULT_PROGRAM, false);
                 Storage.setProgram(DEFAULT_PROGRAM);
@@ -1694,30 +1694,30 @@ const App = {
         }
 
         // Week navigation
-        if (target.id === 'prev-week' || target.closest('#prev-week')) {
+        if (target.closest('#prev-week')) {
             location.hash = `#/week/${App._currentWeek === 1 ? getTotalWeeks() : App._currentWeek - 1}`;
             return true;
         }
-        if (target.id === 'next-week' || target.closest('#next-week')) {
+        if (target.closest('#next-week')) {
             location.hash = `#/week/${App._currentWeek === getTotalWeeks() ? 1 : App._currentWeek + 1}`;
             return true;
         }
         // Add/remove day for custom programs
-        if (target.id === 'btn-add-day' || target.closest('#btn-add-day')) {
+        if (target.closest('#btn-add-day')) {
             App._addDayToCustomProgram();
             return true;
         }
-        if (target.id === 'btn-remove-day' || target.closest('#btn-remove-day')) {
+        if (target.closest('#btn-remove-day')) {
             App._removeDayFromCustomProgram();
             return true;
         }
         // Add week button for custom programs
-        if (target.id === 'btn-add-week' || target.closest('#btn-add-week')) {
+        if (target.closest('#btn-add-week')) {
             App._addWeekToCustomProgram();
             return true;
         }
         // Remove week button for custom programs
-        if (target.id === 'btn-remove-week' || target.closest('#btn-remove-week')) {
+        if (target.closest('#btn-remove-week')) {
             App._removeWeekFromCustomProgram();
             return true;
         }
@@ -1737,8 +1737,8 @@ const App = {
 
     _handleModalClick(target) {
         // Substitution modal — select exercise from list (must be before eq-option handler)
-        if (target.matches('.sub-option') || target.closest('.sub-option')) {
-            const opt = target.matches('.sub-option') ? target : target.closest('.sub-option');
+        if (target.closest('.sub-option')) {
+            const opt = target.closest('.sub-option');
             const exId = opt.dataset.targetExercise;
             const subName = opt.dataset.subName;
             Storage.setSubstitution(exId, subName);
@@ -1748,7 +1748,7 @@ const App = {
         }
 
         // Substitution modal — add custom name
-        if (target.id === 'sub-add-custom-btn' || target.closest('#sub-add-custom-btn')) {
+        if (target.closest('#sub-add-custom-btn')) {
             const input = document.getElementById('sub-custom-name');
             const name = input ? input.value.trim() : '';
             if (!name) return true;
@@ -1763,8 +1763,8 @@ const App = {
         }
 
         // Substitution modal — revert to original
-        if (target.matches('.sub-revert-btn') || target.closest('.sub-revert-btn')) {
-            const btn = target.matches('.sub-revert-btn') ? target : target.closest('.sub-revert-btn');
+        if (target.closest('.sub-revert-btn')) {
+            const btn = target.closest('.sub-revert-btn');
             const exId = btn.dataset.exercise;
             Storage.removeSubstitution(exId);
             UI.hideSubstitutionModal();
@@ -1773,14 +1773,14 @@ const App = {
         }
 
         // Substitution modal — close button or overlay
-        if (target.id === 'sub-close-btn' || target.closest('#sub-close-btn') || target.id === 'substitution-modal') {
+        if (target.closest('#sub-close-btn') || target.id === 'substitution-modal') {
             UI.hideSubstitutionModal();
             return true;
         }
 
         // Gym modal — select gym
-        if ((target.matches('.eq-option[data-gym-id]') || target.closest('.eq-option[data-gym-id]')) && target.closest('#gym-modal')) {
-            var opt = target.matches('.eq-option[data-gym-id]') ? target : target.closest('.eq-option[data-gym-id]');
+        if ((target.closest('.eq-option[data-gym-id]')) && target.closest('#gym-modal')) {
+            var opt = target.closest('.eq-option[data-gym-id]');
             var gymId = opt.dataset.gymId || null;
             var modal = document.getElementById('gym-modal');
             var onSelect = modal ? modal._onSelect : null;
@@ -1804,7 +1804,7 @@ const App = {
         }
 
         // Gym modal — add new gym
-        if (target.id === 'gym-add-btn' || target.closest('#gym-add-btn')) {
+        if (target.closest('#gym-add-btn')) {
             var input = document.getElementById('gym-new-name');
             var name = input ? input.value.trim() : '';
             if (!name) return true;
@@ -1819,7 +1819,7 @@ const App = {
         }
 
         // Gym modal — confirm city and save (creates in Supabase shared_gyms)
-        if (target.id === 'gym-city-ok' || target.closest('#gym-city-ok')) {
+        if (target.closest('#gym-city-ok')) {
             var input = document.getElementById('gym-new-name');
             var cityInput = document.getElementById('gym-new-city');
             var name = input ? input.value.trim() : '';
@@ -1888,8 +1888,8 @@ const App = {
         }
 
         // Choice modal: select option (must be before eq-option handler)
-        if (target.matches('.eq-option[data-choice-key]') || target.closest('.eq-option[data-choice-key]')) {
-            const opt = target.matches('.eq-option[data-choice-key]') ? target : target.closest('.eq-option[data-choice-key]');
+        if (target.closest('.eq-option[data-choice-key]')) {
+            const opt = target.closest('.eq-option[data-choice-key]');
             const choiceKey = opt.dataset.choiceKey;
             const exerciseId = opt.dataset.exerciseId;
             Storage.saveChoice(choiceKey, exerciseId);
@@ -1904,8 +1904,8 @@ const App = {
         }
 
         // Equipment modal — select option
-        if (target.matches('.eq-option') || target.closest('.eq-option')) {
-            const opt = target.matches('.eq-option') ? target : target.closest('.eq-option');
+        if (target.closest('.eq-option')) {
+            const opt = target.closest('.eq-option');
             const eqId = opt.dataset.eqId;
             const exId = opt.dataset.exercise;
             this._bindEquipment(exId, eqId || null, eqId ? Storage.getEquipmentById(eqId) : null);
@@ -1913,7 +1913,7 @@ const App = {
         }
 
         // Equipment modal — add new custom
-        if (target.id === 'eq-add-btn' || target.closest('#eq-add-btn')) {
+        if (target.closest('#eq-add-btn')) {
             const input = document.getElementById('eq-new-name');
             const name = input ? input.value.trim() : '';
             if (!name) return true;
@@ -1980,7 +1980,7 @@ const App = {
         }
 
         // Equipment modal — back to brands
-        if (target.id === 'eq-brand-back' || target.closest('#eq-brand-back')) {
+        if (target.closest('#eq-brand-back')) {
             this._eqBackToBrands();
             return true;
         }
@@ -2006,7 +2006,7 @@ const App = {
         }
 
         // Equipment modal — remove current equipment
-        if (target.id === 'eq-remove-btn' || target.closest('#eq-remove-btn')) {
+        if (target.closest('#eq-remove-btn')) {
             var modal = document.getElementById('equipment-modal');
             var exId = modal ? modal._exerciseId : null;
             if (exId) {
@@ -2020,7 +2020,7 @@ const App = {
         }
 
         // Equipment modal — close on overlay or X button
-        if (target.id === 'eq-close' || target.closest('#eq-close')) {
+        if (target.closest('#eq-close')) {
             UI.hideEquipmentModal();
             return true;
         }
@@ -2038,13 +2038,13 @@ const App = {
     // ===== Delegated social click handlers =====
     _handleSocialClick(target) {
         // Profile edit button
-        if (target.id === 'btn-profile-edit' || target.closest('#btn-profile-edit')) {
+        if (target.closest('#btn-profile-edit')) {
             location.hash = '#/profile/edit';
             return true;
         }
 
         // New checkin button
-        if (target.id === 'btn-new-checkin' || target.closest('#btn-new-checkin')) {
+        if (target.closest('#btn-new-checkin')) {
             location.hash = '#/checkin';
             return true;
         }
@@ -2078,19 +2078,19 @@ const App = {
         }
 
         // Profile save
-        if (target.id === 'btn-profile-save' || target.closest('#btn-profile-save')) {
+        if (target.closest('#btn-profile-save')) {
             this._saveProfile();
             return true;
         }
 
         // Profile back
-        if (target.id === 'btn-profile-back' || target.closest('#btn-profile-back')) {
+        if (target.closest('#btn-profile-back')) {
             location.hash = '#/profile';
             return true;
         }
 
         // Avatar file input
-        if (target.id === 'avatar-file-input' || target.closest('#avatar-file-input')) {
+        if (target.closest('#avatar-file-input')) {
             // handled by change event below
             return false;
         }
@@ -2103,8 +2103,8 @@ const App = {
         }
 
         // Follow/unfollow
-        if (target.id === 'btn-follow' || target.closest('#btn-follow')) {
-            var btn = target.id === 'btn-follow' ? target : target.closest('#btn-follow');
+        if (target.closest('#btn-follow')) {
+            var btn = target.closest('#btn-follow');
             var userId = btn.dataset.user;
             if (!userId) return true;
             btn.disabled = true;
@@ -2143,25 +2143,25 @@ const App = {
         }
 
         // Discover navigation
-        if (target.id === 'btn-discover' || target.closest('#btn-discover') || target.id === 'btn-discover-empty' || target.closest('#btn-discover-empty')) {
+        if (target.closest('#btn-discover') || target.closest('#btn-discover-empty')) {
             location.hash = '#/discover';
             return true;
         }
 
         // Discover back
-        if (target.id === 'btn-discover-back' || target.closest('#btn-discover-back')) {
+        if (target.closest('#btn-discover-back')) {
             location.hash = '#/feed';
             return true;
         }
 
         // Follow list back
-        if (target.id === 'btn-followlist-back' || target.closest('#btn-followlist-back')) {
+        if (target.closest('#btn-followlist-back')) {
             history.back();
             return true;
         }
 
         // Discover search
-        if (target.id === 'btn-discover-search' || target.closest('#btn-discover-search')) {
+        if (target.closest('#btn-discover-search')) {
             var query = (document.getElementById('discover-search-input').value || '').trim();
             if (!query) return true;
             var resultsEl = document.getElementById('discover-results');
@@ -2187,25 +2187,25 @@ const App = {
         }
 
         // Notifications button
-        if (target.id === 'btn-notifications' || target.closest('#btn-notifications')) {
+        if (target.closest('#btn-notifications')) {
             location.hash = '#/notifications';
             return true;
         }
 
         // Messages button (feed header)
-        if (target.id === 'btn-messages' || target.closest('#btn-messages')) {
+        if (target.closest('#btn-messages')) {
             location.hash = '#/messages';
             return true;
         }
 
         // Messages back
-        if (target.id === 'btn-messages-back' || target.closest('#btn-messages-back')) {
+        if (target.closest('#btn-messages-back')) {
             history.back();
             return true;
         }
 
         // Chat back
-        if (target.id === 'btn-chat-back' || target.closest('#btn-chat-back')) {
+        if (target.closest('#btn-chat-back')) {
             Social.unsubscribeMessages();
             if (SocialUI._chatViewportCleanup) { SocialUI._chatViewportCleanup(); SocialUI._chatViewportCleanup = null; }
             history.back();
@@ -2221,7 +2221,7 @@ const App = {
         }
 
         // Send message
-        if (target.id === 'btn-send-message' || target.closest('#btn-send-message')) {
+        if (target.closest('#btn-send-message')) {
             var inp = document.getElementById('chat-input');
             var text = inp ? inp.value.trim() : '';
             if (!text || !SocialUI._chatConvId) return true;
@@ -2238,15 +2238,15 @@ const App = {
         }
 
         // DM button on other user's profile
-        if (target.id === 'btn-dm' || target.closest('#btn-dm')) {
-            var btn = target.id === 'btn-dm' ? target : target.closest('#btn-dm');
+        if (target.closest('#btn-dm')) {
+            var btn = target.closest('#btn-dm');
             var userId = btn.dataset.user;
             if (userId) location.hash = '#/messages/' + userId;
             return true;
         }
 
         // Notification back
-        if (target.id === 'btn-notif-back' || target.closest('#btn-notif-back')) {
+        if (target.closest('#btn-notif-back')) {
             history.back();
             return true;
         }
@@ -2314,7 +2314,7 @@ const App = {
         }
 
         // Cancel reply
-        if (target.id === 'btn-reply-cancel' || target.closest('#btn-reply-cancel')) {
+        if (target.closest('#btn-reply-cancel')) {
             App._replyToCommentId = null;
             var indicator = document.getElementById('reply-indicator');
             if (indicator) indicator.style.display = 'none';
@@ -2341,7 +2341,7 @@ const App = {
         }
 
         // Tag user button in checkin form
-        if (target.id === 'btn-tag-user' || target.closest('#btn-tag-user')) {
+        if (target.closest('#btn-tag-user')) {
             if (!App._checkinTaggedUsers) App._checkinTaggedUsers = [];
             SocialUI.renderTagSearch(function(user) {
                 // Check if already tagged
@@ -2407,20 +2407,20 @@ const App = {
         }
 
         // Checkin back
-        if (target.id === 'btn-checkin-back' || target.closest('#btn-checkin-back')) {
+        if (target.closest('#btn-checkin-back')) {
             location.hash = '#/profile';
             return true;
         }
 
         // Checkin detail back
-        if (target.id === 'btn-checkin-detail-back' || target.closest('#btn-checkin-detail-back')) {
+        if (target.closest('#btn-checkin-detail-back')) {
             history.back();
             return true;
         }
 
         // Delete checkin
-        if (target.id === 'btn-delete-checkin' || target.closest('#btn-delete-checkin')) {
-            var delBtn = target.closest('#btn-delete-checkin') || target;
+        if (target.closest('#btn-delete-checkin')) {
+            var delBtn = target.closest('#btn-delete-checkin');
             var cid = delBtn.dataset.checkin;
             if (cid && confirm('Удалить этот чекин?')) {
                 Social.deleteCheckin(cid).then(function() {
@@ -2433,7 +2433,7 @@ const App = {
         }
 
         // Checkin submit
-        if (target.id === 'btn-checkin-submit' || target.closest('#btn-checkin-submit')) {
+        if (target.closest('#btn-checkin-submit')) {
             this._submitCheckin();
             return true;
         }
@@ -2447,8 +2447,8 @@ const App = {
         // Legacy reaction button (removed, now using like-btn)
 
         // Send comment
-        if (target.id === 'btn-send-comment' || target.closest('#btn-send-comment')) {
-            var btn = target.id === 'btn-send-comment' ? target : target.closest('#btn-send-comment');
+        if (target.closest('#btn-send-comment')) {
+            var btn = target.closest('#btn-send-comment');
             var checkinId = btn.dataset.checkin;
             var input = document.getElementById('comment-input');
             var text = input ? input.value.trim() : '';
@@ -2477,7 +2477,7 @@ const App = {
         }
 
         // Load more (feed)
-        if (target.id === 'btn-load-more-feed' || target.closest('#btn-load-more-feed')) {
+        if (target.closest('#btn-load-more-feed')) {
             target.disabled = true;
             target.textContent = 'Загрузка...';
             Social.getFeed(SocialUI._feedCursor).then(function(more) {
@@ -2497,8 +2497,8 @@ const App = {
         }
 
         // Load more (profile)
-        if (target.id === 'btn-load-more-profile' || target.closest('#btn-load-more-profile')) {
-            var btn = target.id === 'btn-load-more-profile' ? target : target.closest('#btn-load-more-profile');
+        if (target.closest('#btn-load-more-profile')) {
+            var btn = target.closest('#btn-load-more-profile');
             var userId = btn.dataset.user;
             btn.disabled = true;
             btn.textContent = 'Загрузка...';

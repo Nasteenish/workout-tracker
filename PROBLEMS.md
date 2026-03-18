@@ -151,17 +151,13 @@
 
 ---
 
-### 16. Дублирование `target.id === 'X' || target.closest('#X')` (~100 раз)
+### ~~16. Дублирование `target.id === 'X' || target.closest('#X')` (~100 раз)~~ ✅ РЕШЕНО
 
-**Где:** `js/app.js`, повсеместно в handleClick
-
-**Проблема:** Каждый click handler проверяет и `target.id` и `target.closest()`, т.к. клик может прийти на иконку внутри кнопки:
-```javascript
-if (target.id === 'btn-follow' || target.closest('#btn-follow')) { ... }
-```
-Повторяется ~100+ раз, загромождает и без того огромный handleClick.
-
-**Решение:** Утилита `function closest(e, sel) { return e.target.id === sel.slice(1) ? e.target : e.target.closest(sel); }`.
+**Что сделано:** `Element.closest()` по спецификации проверяет сам элемент, поэтому `target.id === 'X' || target.closest('#X')` избыточно — достаточно `target.closest('#X')`. Удалены ~106 дублирующих проверок в `app.js` и `builder.js`:
+- 52 паттерна `target.id === 'X' || target.closest('#X')` → `target.closest('#X')`
+- 30 паттернов `target.matches('.X') || target.closest('.X')` → `target.closest('.X')`
+- 16 тернарных `target.matches('.X') ? target : target.closest('.X')` → `target.closest('.X')`
+- Специальные случаи: multi-ID, reversed ternary, classList.contains+closest
 
 ---
 
@@ -211,7 +207,7 @@ if (target.id === 'btn-follow' || target.closest('#btn-follow')) { ... }
 | 7 | ~~PROGRAM encapsulation~~ ✅ | **Низкая** | Среднее | 🟢 P2 |
 | 11 | Логика + UI в одном | Высокая | Среднее | 🟢 P2 |
 | 12 | Пароли (легаси) | Низкая | Среднее | 🟢 P2 |
-| 16 | Дублирование closest-паттерна | Низкая | Низкое | 🟢 P2 |
+| 16 | ~~Дублирование closest-паттерна~~ ✅ | **Низкая** | Низкое | 🟢 P2 |
 | 17 | Хрупкая _migrateExerciseNames | Средняя | Среднее | 🟢 P2 |
 | 13 | Монолитный CSS | Средняя | Низкое | 🟢 P3 |
 | 14 | Нет ES-модулей | Высокая | Низкое (пока) | 🟢 P3 |

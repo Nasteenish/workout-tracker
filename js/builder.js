@@ -629,8 +629,8 @@ const Builder = {
                 }
 
                 // Delete sub-exercise from group
-                if (target.matches('.editor-del-sub') || target.closest('.editor-del-sub')) {
-                    var btn = target.matches('.editor-del-sub') ? target : target.closest('.editor-del-sub');
+                if (target.closest('.editor-del-sub')) {
+                    var btn = target.closest('.editor-del-sub');
                     self._deleteSubExercise(parseInt(btn.dataset.delSubItem), parseInt(btn.dataset.delSub));
                     return;
                 }
@@ -1266,7 +1266,7 @@ const Builder = {
         var target = e.target;
 
         // Close
-        if (target.id === 'picker-close' || target.closest('#picker-close')) {
+        if (target.closest('#picker-close')) {
             this._closeExercisePicker();
             return;
         }
@@ -1300,7 +1300,7 @@ const Builder = {
         }
 
         // Add custom
-        if (target.id === 'picker-add-custom' || target.closest('#picker-add-custom')) {
+        if (target.closest('#picker-add-custom')) {
             var input = document.getElementById('picker-custom-name');
             var customName = input ? input.value.trim() : '';
             if (!customName) return;
@@ -1393,13 +1393,13 @@ const Builder = {
         }
 
         // Confirm
-        if (target.id === 'cfg-confirm' || target.closest('#cfg-confirm')) {
+        if (target.closest('#cfg-confirm')) {
             this.confirmExercise();
             return;
         }
 
         // Cancel / backdrop
-        if (target.id === 'cfg-cancel' || target.closest('#cfg-cancel') || target.classList.contains('modal-overlay')) {
+        if (target.closest('#cfg-cancel') || target.classList.contains('modal-overlay')) {
             this._closeExerciseConfig();
             return;
         }
