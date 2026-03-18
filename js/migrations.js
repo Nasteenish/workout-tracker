@@ -1,5 +1,119 @@
 /* ===== Data Migrations ===== */
 import { Storage } from './storage.js';
+import { EXERCISE_DB } from './exercises_db.js';
+import { getAllProgramExercises } from './utils.js';
+
+// Consolidated name migration map: oldName → [newName, newNameRu]
+// Merged from MAP (English old names) + RU_MAP (Russian old names)
+var _NAME_MAP = {
+    // English old names → Hevy DB standard
+    'Stiff legged deadlift': ['Straight Leg Deadlift', 'Становая тяга на прямых ногах (со штангой)'],
+    'Dumbell stiff legged deadlift': ['Straight Leg Deadlift (Dumbbell)', 'Становая тяга на прямых ногах (с гантелями)'],
+    'Smith deadlift': ['Deadlift (Smith Machine)', 'Становая тяга (в Смите)'],
+    'Romanian deadlift machine': ['Romanian Deadlift (Machine)', 'Румынская тяга (в тренажёре)'],
+    'Seated leg curl': ['Seated Leg Curl (Machine)', 'Сгибание ног сидя (в тренажёре)'],
+    'Lying leg curl': ['Lying Leg Curl (Machine)', 'Сгибание ног лёжа (в тренажёре)'],
+    'Glute split squat': ['Bulgarian Split Squat', 'Болгарские выпады'],
+    'Glute kickback machine': ['Glute Kickback (Machine)', 'Отведение ноги назад (в тренажёре)'],
+    'Calf raises machine': ['Standing Calf Raise (Machine)', 'Подъём на носки стоя (в тренажёре)'],
+    'Supported row': ['Chest Supported Incline Row (Dumbbell)', 'Тяга гантелей на наклонной скамье с опорой'],
+    'T-bar supported row': ['T Bar Row', 'Тяга Т-грифа'],
+    'Incline dumbbell rows': ['Chest Supported Incline Row (Dumbbell)', 'Тяга гантелей на наклонной скамье с опорой'],
+    'Incline dumbell rows': ['Chest Supported Incline Row (Dumbbell)', 'Тяга гантелей на наклонной скамье с опорой'],
+    'Close grip pulldown': ['Lat Pulldown - Close Grip (Cable)', 'Тяга верхнего блока узким хватом (блок)'],
+    'Dorian row': ['Bent Over Row (Barbell)', 'Тяга штанги в наклоне'],
+    'Single arm cable row': ['Single Arm Cable Row', 'Тяга нижнего блока одной рукой'],
+    'Hammer single arm low row': ['Iso-Lateral Low Row', 'Тяга рычажная нижняя'],
+    'Single arm hammer high row': ['Iso-Lateral High Row (Machine)', 'Тяга рычажная верхняя (в тренажёре)'],
+    'Single arm pulldown': ['Single Arm Lat Pulldown', 'Тяга верхнего блока одной рукой'],
+    'Unilateral pulldown machine': ['Lat Pulldown (Machine)', 'Тяга верхнего блока (в тренажёре)'],
+    'Hammer high row': ['Iso-Lateral High Row (Machine)', 'Тяга рычажная верхняя (в тренажёре)'],
+    'Hammer low row': ['Iso-Lateral Low Row', 'Тяга рычажная нижняя'],
+    'Inclined bench dumbell swings': ['Rear Delt Reverse Fly (Dumbbell)', 'Обратные разведения (с гантелями)'],
+    'Fly machine / Cable rear delt fly': ['Rear Delt Reverse Fly (Cable)', 'Обратные разведения (блок)'],
+    'Fly machine / cable rear delt fly': ['Rear Delt Reverse Fly (Cable)', 'Обратные разведения (блок)'],
+    'Fly machine / standing cable rear delt fly': ['Rear Delt Reverse Fly (Cable)', 'Обратные разведения (блок)'],
+    'Abductor machine': ['Hip Abduction (Machine)', 'Разведение ног (в тренажёре)'],
+    'Abductor machine - WARMUP': ['Hip Abduction (Machine)', 'Разведение ног (в тренажёре)'],
+    'Abductor machine (warm-up)': ['Hip Abduction (Machine)', 'Разведение ног (в тренажёре)'],
+    'Adductor machine': ['Hip Adduction (Machine)', 'Сведение ног (в тренажёре)'],
+    'Adductor machine (warm-up)': ['Hip Adduction (Machine)', 'Сведение ног (в тренажёре)'],
+    'Hip thrust machine': ['Hip Thrust (Machine)', 'Ягодичный мост (в тренажёре)'],
+    'Unilateral hip thrust machine': ['Hip Thrust (Machine)', 'Ягодичный мост (в тренажёре)'],
+    'Barbell hip thrust': ['Hip Thrust (Barbell)', 'Ягодичный мост (со штангой)'],
+    'Single leg press': ['Single Leg Press (Machine)', 'Жим ногой (в тренажёре)'],
+    'Leg extension': ['Leg Extension (Machine)', 'Разгибание ног (в тренажёре)'],
+    'Unilateral leg extension': ['Leg Extension (Machine)', 'Разгибание ног (в тренажёре)'],
+    'Machine shoulder press': ['Shoulder Press (Machine Plates)', 'Жим плечами (в тренажёре, диски)'],
+    'Lateral raise machine': ['Lateral Raise (Machine)', 'Подъём в стороны (в тренажёре)'],
+    'Seated dumbell lateral raises': ['Seated Lateral Raise (Dumbbell)', 'Подъём гантелей в стороны сидя'],
+    'Standing lateral dumbell raises': ['Lateral Raise (Dumbbell)', 'Подъём гантелей в стороны'],
+    'Machine chest press': ['Chest Press (Machine)', 'Жим от груди (в тренажёре)'],
+    'Convergence chest press': ['Iso-Lateral Chest Press (Machine)', 'Жим от груди изолатеральный (в тренажёре)'],
+    'Incline dumbell press': ['Incline Bench Press (Dumbbell)', 'Жим лёжа на наклонной (с гантелями)'],
+    'Incline bench press (Smith)': ['Incline Bench Press (Smith Machine)', 'Жим лёжа на наклонной (в Смите)'],
+    'Low cable crossover': ['Low Cable Fly Crossovers', 'Сведение рук в кроссовере снизу'],
+    'Dip machine for chest': ['Chest Dip', 'Отжимания на брусьях (грудь)'],
+    'Machine fly': ['Chest Fly (Machine)', 'Сведение рук (в тренажёре)'],
+    'Unilateral machine fly': ['Chest Fly (Machine)', 'Сведение рук (в тренажёре)'],
+    'Seated pec flys': ['Seated Chest Flys (Cable)', 'Сведение рук сидя (блок)'],
+    'Overhead triceps extension': ['Overhead Triceps Extension (Cable)', 'Разгибание рук над головой (блок)'],
+    'Dual rope cable extension': ['Triceps Extension (Cable)', 'Разгибание на трицепс (блок)'],
+    'Incline skull crushers': ['Skullcrusher (Dumbbell)', 'Французский жим (с гантелями)'],
+    'Dumbell single arm preacher curl': ['Preacher Curl (Dumbbell)', 'Сгибание на скамье Скотта (с гантелями)'],
+    'Seated dumbell curl': ['Seated Incline Curl (Dumbbell)', 'Сгибание рук сидя на наклонной (с гантелями)'],
+    'Preacher curls': ['Preacher Curl (Dumbbell)', 'Сгибание на скамье Скотта (с гантелями)'],
+    'Glute cable kickbacks': ['Standing Cable Glute Kickbacks', 'Отведение ноги назад (блок) стоя'],
+    'High cable glute kickbacks': ['Standing Cable Glute Kickbacks', 'Отведение ноги назад (блок) стоя'],
+    'Unilateral seated leg curl': ['Seated Leg Curl (Machine)', 'Сгибание ног сидя (в тренажёре)'],
+    'Pendulum squat': ['Pendulum Squat (Machine)', 'Маятниковый присед (в тренажёре)'],
+    'Reverse banded hack squat': ['Hack Squat (Machine)', 'Гакк-присед (в тренажёре)'],
+    'Smith squat': ['Squat (Smith Machine)', 'Присед (в Смите)'],
+    '45° leg press': ['Leg Press (Machine)', 'Жим ногами (в тренажёре)'],
+    'Push-ups': ['Push Up', 'Отжимания'],
+    'Single leg curl': ['Lying Leg Curl (Machine)', 'Сгибание ног лёжа (в тренажёре)'],
+    'Single leg step up': ['Step Up', 'Зашагивания'],
+    // Russian old names (nameRu field or name field with Cyrillic)
+    'Мёртвая тяга со штангой': ['Straight Leg Deadlift', 'Становая тяга на прямых ногах (со штангой)'],
+    'Мёртвая тяга с гантелями': ['Straight Leg Deadlift (Dumbbell)', 'Становая тяга на прямых ногах (с гантелями)'],
+    'Мёртвая тяга в Смите': ['Deadlift (Smith Machine)', 'Становая тяга (в Смите)'],
+    'Румынская тяга в тренажёре': ['Romanian Deadlift (Machine)', 'Румынская тяга (в тренажёре)'],
+    'Становая тяга на прямых ногах': ['Straight Leg Deadlift', 'Становая тяга на прямых ногах (со штангой)'],
+    'Подъём передней части стопы': ['Tibial Raises', 'Подъём передней части голени'],
+    'Тяга штанги с опорой': ['Supported Bar Rows', 'Тяга штанги с опорой на грудь'],
+    'Средняя ягодичная на нижнем блоке': ['Medium Gluteus on Low Pulley', 'Средняя ягодичная (нижний блок)'],
+    'Сгибание ног сидя': ['Seated Leg Curl (Machine)', 'Сгибание ног сидя (в тренажёре)'],
+    'Сгибание ног лёжа': ['Lying Leg Curl (Machine)', 'Сгибание ног лёжа (в тренажёре)'],
+    'Сплит-присед на ягодицы': ['Bulgarian Split Squat', 'Болгарские выпады'],
+    'Подъём на носки (тренажёр)': ['Standing Calf Raise (Machine)', 'Подъём на носки стоя (в тренажёре)'],
+    'Жим плечами (тренажёр)': ['Shoulder Press (Machine Plates)', 'Жим плечами (в тренажёре, диски)'],
+    'Махи гантелями на наклонной скамье': ['Rear Delt Reverse Fly (Dumbbell)', 'Обратные разведения (с гантелями)'],
+    'Разведение ног (тренажёр)': ['Hip Abduction (Machine)', 'Разведение ног (в тренажёре)']
+};
+
+// Fix specific exercises by ID (for cases where name-based matching is ambiguous)
+var _ID_MAP = {
+    'D1E1_opt1': ['Straight Leg Deadlift', 'Становая тяга на прямых ногах (со штангой)'],
+    'D1E1_opt2': ['Straight Leg Deadlift (Dumbbell)', 'Становая тяга на прямых ногах (с гантелями)'],
+    'D1E1_opt4': ['Romanian Deadlift (Machine)', 'Румынская тяга (в тренажёре)'],
+    'D1E4_opt1': ['Straight Leg Deadlift', 'Становая тяга на прямых ногах (со штангой)'],
+    'D1E4_opt2': ['Straight Leg Deadlift (Dumbbell)', 'Становая тяга на прямых ногах (с гантелями)']
+};
+
+// Reverse map from EXERCISE_DB: Russian nameRu → [English name, Russian nameRu]
+// Built once lazily for resolving Cyrillic names stuck in the `name` field
+var _DB_RU = null;
+function _getDbRuMap() {
+    if (_DB_RU) return _DB_RU;
+    _DB_RU = {};
+    if (EXERCISE_DB) {
+        for (var i = 0; i < EXERCISE_DB.length; i++) {
+            var ex = EXERCISE_DB[i];
+            if (ex.name && ex.nameRu) _DB_RU[ex.nameRu.toLowerCase()] = [ex.name, ex.nameRu];
+        }
+    }
+    return _DB_RU;
+}
 
 export const Migrations = {
     /**
@@ -51,6 +165,45 @@ export const Migrations = {
         } catch (e) {
             console.error('Log cleanup error:', e);
         }
+    },
+
+    /**
+     * Migrate exercise names in a stored program to Hevy DB standard.
+     * Idempotent: only renames exercises that match old names.
+     * Can be called on any data object (Storage._data or sync merge result).
+     * @param {Object} data - the user data object containing .program
+     * @returns {number} count of renamed exercises
+     */
+    migrateExerciseNames(data) {
+        if (!data || !data.program) return 0;
+        var count = 0;
+        var allExercises = getAllProgramExercises(data.program).map(function(entry) { return entry.exercise; });
+        var dbRu = _getDbRuMap();
+
+        allExercises.forEach(function(ex) {
+            if (!ex) return;
+            // 1. Check by exercise ID (highest priority — unambiguous)
+            var idm = _ID_MAP[ex.id];
+            if (idm) { ex.name = idm[0]; ex.nameRu = idm[1]; count++; return; }
+            // 2. Check by English name in consolidated map
+            var m = _NAME_MAP[ex.name];
+            if (m) { ex.name = m[0]; ex.nameRu = m[1]; count++; return; }
+            // 3. Check by Russian nameRu in consolidated map
+            if (ex.nameRu) {
+                var mr = _NAME_MAP[ex.nameRu];
+                if (mr) { ex.name = mr[0]; ex.nameRu = mr[1]; count++; return; }
+            }
+            // 4. Check if name field has Cyrillic — resolve via EXERCISE_DB
+            if (ex.name && /[а-яА-ЯёЁ]/.test(ex.name)) {
+                var dbm = dbRu[ex.name.toLowerCase()];
+                if (dbm) { ex.name = dbm[0]; ex.nameRu = dbm[1]; count++; return; }
+                var mr2 = _NAME_MAP[ex.name];
+                if (mr2) { ex.name = mr2[0]; ex.nameRu = mr2[1]; count++; return; }
+            }
+        });
+
+        if (count > 0) console.log('Migrated ' + count + ' exercise names to Hevy DB standard');
+        return count;
     },
 
     _migrations: [

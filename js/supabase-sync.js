@@ -1,6 +1,7 @@
 // supabase-sync.js — Supabase Auth + Cloud Sync
 import { Storage } from './storage.js';
 import { App } from './app.js';
+import { Migrations } from './migrations.js';
 
 export const SUPABASE_URL = 'https://mqyfdbfdeuwojgexhwpy.supabase.co';
 export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeWZkYmZkZXV3b2pnZXhod3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NzE1OTYsImV4cCI6MjA4NzQ0NzU5Nn0.5okpQM-UffmYatsVjbzjafsHhY3taCqhDYkiyEjiSvg';
@@ -190,6 +191,8 @@ export const SupaSync = {
                         }
                     }
                 }
+                // Fix exercise names that remote may have reverted to old values
+                Migrations.migrateExerciseNames(base);
                 base._lastModified = Date.now();
                 // Save merged result locally and push to cloud
                 localStorage.setItem(localStorageKey, JSON.stringify(base));

@@ -177,11 +177,9 @@ Keyframes остаются при своих компонентах, в `animati
 
 ---
 
-### 17. `Storage._migrateExerciseNames()` — хрупкая rename-карта
+### ~~17. `Storage._migrateExerciseNames()` — хрупкая rename-карта~~ ✅ РЕШЕНО
 
-**Где:** `js/storage.js`, строки 187–356
-
-**Проблема:** Переименование упражнений при загрузке — MAP из 50+ записей + RU_MAP + DB_RU lookup + ID_MAP. Запускается на каждую загрузку данных если `_exerciseNamesMigrated < 3`. Перезаписывает имена в stored program. Конфликтует с cloud sync (sync может перезаписать мигрированные имена обратно на старые).
+**Что сделано:** Миграция вынесена из `storage.js` в `Migrations.migrateExerciseNames(data)` в `js/migrations.js`. 4 отдельные карты (MAP, RU_MAP, DB_RU, ID_MAP) объединены в 2 модульных lookup-а (`_NAME_MAP`, `_ID_MAP`) + lazy `_getDbRuMap()`. Функция принимает data-объект параметром (не зависит от `this._data`), идемпотентна. Sync-конфликт решён: `syncOnLogin()` вызывает `Migrations.migrateExerciseNames(base)` после merge — старые имена из remote автоматически исправляются до сохранения.
 
 ---
 
@@ -220,7 +218,7 @@ Keyframes остаются при своих компонентах, в `animati
 | 11 | ~~Логика + UI в одном~~ ✅ | **Средняя** | Среднее | 🟢 P2 |
 | 12 | ~~Пароли (легаси)~~ ✅ частично | Низкая | Среднее | 🟢 P2 |
 | 16 | ~~Дублирование closest-паттерна~~ ✅ | **Низкая** | Низкое | 🟢 P2 |
-| 17 | Хрупкая _migrateExerciseNames | Средняя | Среднее | 🟢 P2 |
+| 17 | ~~Хрупкая _migrateExerciseNames~~ ✅ | **Средняя** | Среднее | 🟢 P2 |
 | 13 | Монолитный CSS | Средняя | Низкое | 🟢 P3 |
 | 14 | ~~Нет ES-модулей~~ ✅ | **Высокая** | Низкое (пока) | 🟢 P3 |
 | 15 | Prop drilling | Средняя | Низкое | 🟢 P3 |
@@ -251,4 +249,5 @@ Keyframes остаются при своих компонентах, в `animati
 - ~~Инвалидация `_pageCache` при мутациях данных (#18)~~ ✅ → `invalidatePageCache()` + cache-first companions (#6)
 - ~~Выделить view-model слой (#11)~~ ✅ → `_buildXxxVM()` / `_loadXxxData()` в ui.js, social-ui.js, builder.js
 - ~~Убрать plain text пароли из `users.js` (#12)~~ ✅ → пароли удалены, login по username only → миграция на Supabase Auth. Осталось: удалить `users.js` после миграции всех юзеров
+- ~~Вынести `_migrateExerciseNames` из storage.js в Migrations (#17)~~ ✅ → карты объединены, идемпотентная функция, sync-конфликт решён через вызов после merge
 - ~~Рассмотреть миграцию на ES-модули (#14)~~ ✅
