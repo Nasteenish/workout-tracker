@@ -294,7 +294,17 @@ export const App = {
             // No longer auto-update from built-in — program is user's own
         } else {
             // No stored program — load from built-in template
-            var builtin = BUILTIN_PROGRAMS[user.programId];
+            var programId = user.programId;
+            // Fallback: if user has no programId, check if they were migrated from a hardcoded account
+            if (!programId && typeof ACCOUNTS !== 'undefined') {
+                for (var i = 0; i < ACCOUNTS.length; i++) {
+                    if (localStorage.getItem('wt_migrated_' + ACCOUNTS[i].id) === user.id) {
+                        programId = ACCOUNTS[i].programId;
+                        break;
+                    }
+                }
+            }
+            var builtin = BUILTIN_PROGRAMS[programId];
             if (builtin) {
                 var prog = JSON.parse(JSON.stringify(builtin.getProgram()));
                 prog.isCustom = true;
@@ -528,8 +538,8 @@ export const App = {
                 localStorage.setItem('wt_data_' + newLocalId, oldData);
             }
 
-            // 2. Create new user profile
-            Storage.createSelfRegisteredUser(account.name, account.login, '', email, newLocalId);
+            // 2. Create new user profile (preserve programId for built-in program loading)
+            Storage.createSelfRegisteredUser(account.name, account.login, '', email, newLocalId, account.programId);
 
             // 3. Store Supabase mapping
             localStorage.setItem('wt_supa_' + newLocalId, supaUserId);
