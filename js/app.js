@@ -12,101 +12,8 @@ const App = {
     _pageCache: {},
 
     init() {
-        // One-time: fix exerciseChoices for Anastasia (D1_deadlift, D2_support)
-        if (!localStorage.getItem('_fix_choices_v1')) {
-            try {
-                var keys = Object.keys(localStorage);
-                for (var ki = 0; ki < keys.length; ki++) {
-                    if (keys[ki].indexOf('wt_data_') !== 0) continue;
-                    var dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}');
-                    if (!dd.exerciseChoices) continue;
-                    var changed = false;
-                    if (dd.exerciseChoices.D1_deadlift === 'D1E1_opt1') {
-                        dd.exerciseChoices.D1_deadlift = 'D1E1_opt3';
-                        changed = true;
-                    }
-                    if (dd.exerciseChoices.D2_support === 'D2E1_opt4') {
-                        dd.exerciseChoices.D2_support = 'D2E1';
-                        changed = true;
-                    }
-                    if (changed) localStorage.setItem(keys[ki], JSON.stringify(dd));
-                }
-            } catch(e) {}
-            localStorage.setItem('_fix_choices_v1', '1');
-        }
-
-        // One-time: remove gym80 Abdominal from D2E1 (wrong binding)
-        if (!localStorage.getItem('_fix_d2e1_eq')) {
-            try {
-                var keys2 = Object.keys(localStorage);
-                for (var ki2 = 0; ki2 < keys2.length; ki2++) {
-                    if (keys2[ki2].indexOf('wt_data_') !== 0) continue;
-                    var dd2 = JSON.parse(localStorage.getItem(keys2[ki2]) || '{}');
-                    if (dd2.exerciseEquipment && dd2.exerciseEquipment.D2E1 === 'eq_1773590540310') {
-                        delete dd2.exerciseEquipment.D2E1;
-                        localStorage.setItem(keys2[ki2], JSON.stringify(dd2));
-                    }
-                }
-            } catch(e) {}
-            localStorage.setItem('_fix_d2e1_eq', '1');
-        }
-
-        // One-time: remove Precor Seated Leg Curl from D1E2 (test data)
-        if (!localStorage.getItem('_fix_precor_d1e2')) {
-            var allUsers = Storage.getUsers ? Storage.getUsers() : [];
-            for (var i = 0; i < allUsers.length; i++) {
-                var key = 'wt_data_' + allUsers[i].id;
-                try {
-                    var d = JSON.parse(localStorage.getItem(key) || '{}');
-                    if (d.exerciseEquipment && d.exerciseEquipment.D1E2) {
-                        var eq = d.equipment || [];
-                        var eqObj = eq.find(function(e) { return e.id === d.exerciseEquipment.D1E2; });
-                        if (eqObj && eqObj.name && eqObj.name.toLowerCase().indexOf('precor') !== -1) {
-                            delete d.exerciseEquipment.D1E2;
-                            localStorage.setItem(key, JSON.stringify(d));
-                        }
-                    }
-                } catch(e) {}
-            }
-            localStorage.setItem('_fix_precor_d1e2', '1');
-        }
-
-        // One-time: fix corrupted _gym + empty entries in log
-        if (!localStorage.getItem('_fix_orphan_log_v2')) {
-            var allUsers3 = Storage.getUsers ? Storage.getUsers() : [];
-            for (var ui3 = 0; ui3 < allUsers3.length; ui3++) {
-                var key3 = 'wt_data_' + allUsers3[ui3].id;
-                try {
-                    var d3 = JSON.parse(localStorage.getItem(key3) || '{}');
-                    if (!d3.log) continue;
-                    var changed3 = false;
-                    for (var w3 in d3.log) {
-                        for (var dd3 in d3.log[w3]) {
-                            var dayLog3 = d3.log[w3][dd3];
-                            // Fix corrupted _gym (object instead of string)
-                            if (dayLog3._gym && typeof dayLog3._gym === 'object') {
-                                var chars3 = [];
-                                for (var ci3 = 0; ci3 < Object.keys(dayLog3._gym).length; ci3++) {
-                                    chars3.push(dayLog3._gym[String(ci3)] || '');
-                                }
-                                dayLog3._gym = chars3.join('');
-                                changed3 = true;
-                            }
-                            // Remove empty exercise entries
-                            for (var ek3 in dayLog3) {
-                                if (ek3.charAt(0) === '_') continue;
-                                if (typeof dayLog3[ek3] === 'object' && dayLog3[ek3] !== null && Object.keys(dayLog3[ek3]).length === 0) {
-                                    delete dayLog3[ek3];
-                                    changed3 = true;
-                                }
-                            }
-                        }
-                    }
-                    if (changed3) localStorage.setItem(key3, JSON.stringify(d3));
-                } catch(e) {}
-            }
-            localStorage.setItem('_fix_orphan_log_v2', '1');
-        }
+        // Run one-time data migrations (see js/migrations.js)
+        Migrations.run();
 
         // Multi-user migration (once)
         Storage.migrateToMultiUser();
@@ -263,7 +170,7 @@ const App = {
                 }
             } catch(e) {}
             // Clean orphaned log entries after sync (choose_one phantoms + corrupted _gym)
-            self._cleanOrphanedLogEntries();
+            Migrations.cleanOrphanedLogEntries();
             // Load shared gyms cache + migrate local gyms
             self._initGymCache();
             self.route();
@@ -272,40 +179,6 @@ const App = {
         });
     },
 
-    // Fix corrupted _gym and empty entries in log after sync
-    _cleanOrphanedLogEntries() {
-        try {
-            Storage._invalidateCache();
-            var d = Storage._load();
-            if (!d || !d.log) return;
-            var changed = false;
-            for (var w in d.log) {
-                for (var dd in d.log[w]) {
-                    var dayLog = d.log[w][dd];
-                    // Fix corrupted _gym (object instead of string)
-                    if (dayLog._gym && typeof dayLog._gym === 'object') {
-                        var chars = [];
-                        for (var ci = 0; ci < Object.keys(dayLog._gym).length; ci++) {
-                            chars.push(dayLog._gym[String(ci)] || '');
-                        }
-                        dayLog._gym = chars.join('');
-                        changed = true;
-                    }
-                    // Remove empty exercise entries
-                    for (var exKey in dayLog) {
-                        if (exKey.charAt(0) === '_') continue;
-                        if (typeof dayLog[exKey] === 'object' && dayLog[exKey] !== null && Object.keys(dayLog[exKey]).length === 0) {
-                            delete dayLog[exKey];
-                            changed = true;
-                        }
-                    }
-                }
-            }
-            if (changed) Storage._save();
-        } catch (e) {
-            console.error('Log cleanup error:', e);
-        }
-    },
 
     _initGymCache() {
         if (typeof Social === 'undefined') return;
@@ -1034,7 +907,7 @@ const App = {
             SupaSync.syncOnLogin(supaUserId, 'wt_data_' + localId).then(function() {
                 // Reload data after sync
                 Storage._invalidateCache();
-                self._cleanOrphanedLogEntries();
+                Migrations.cleanOrphanedLogEntries();
                 var user = Storage.getCurrentUser();
                 if (user) self._loadProgramForUser(user);
                 self.route();
