@@ -53,15 +53,17 @@
 
 ---
 
-### ~~5. `App.js` делает слишком много (4034 строки)~~ ✅ ЧАСТИЧНО РЕШЕНО
+### ~~5. `App.js` делает слишком много (4034 строки)~~ ✅ РЕШЕНО
 
-**Что сделано:** Вынесены 3 модуля из `app.js` (3853 → 3204 строк, -649):
+**Что сделано:** Вынесены 8 модулей из `app.js` (4034 → 2473 строк, -1561):
 - `js/celebration.js` (198 строк) — объект Celebration (конфетти, оверлей завершения тренировки)
 - `js/swipe-nav.js` (294 строки) — `SwipeNav.getConfig()` + `SwipeNav.init(app)` (свайп-навигация)
 - `js/pull-refresh.js` (166 строк) — `PullRefresh.init(onRefresh)` (pull-to-refresh)
-- Ранее: `js/migrations.js` (миграции из `App.init()`)
-
-**Осталось:** workout timer (~107 строк), checkin form, profile save — тесно связаны с App state.
+- `js/migrations.js` — миграции из `App.init()`
+- `js/workout-timer.js` (114 строк) — `WorkoutTimer` (start/pause/resume/cancel/stop, sessionStorage)
+- `js/equipment-manager.js` (436 строк) — `EquipmentManager` (модалки оборудования, каталог, geo-suggest, привязка к залам)
+- `js/message-notifications.js` (79 строк) — `MessageNotifications` (realtime+polling, badge, toast)
+- `js/profile-manager.js` (97 строк) — `ProfileManager` (сохранение профиля, чекин с фото/тегами)
 
 ---
 
@@ -193,7 +195,7 @@
 | 10 | ~~`_getSiblingIds()` O(N²)~~ ✅ | **Низкая** | Среднее (perf) | 🟡 P1 |
 | 8 | ~~5× дублирование привязки оборудования~~ ✅ | **Низкая** | Среднее | 🟡 P1 |
 | 4 | ~~Миграции в init()~~ ✅ | Низкая | Среднее | 🟡 P1 |
-| 5 | ~~App.js слишком большой~~ ✅ частично | **Средняя** | Высокое | 🟡 P1 |
+| 5 | ~~App.js слишком большой~~ ✅ | **Средняя** | Высокое | 🟡 P1 |
 | 6 | ~~Свайпы связаны с рендерингом~~ ✅ | **Средняя** | Среднее | 🟡 P1 |
 | 3 | ~~innerHTML / XSS~~ ✅ частично (esc() добавлен) | **Средняя** | Среднее (остаток — потеря состояния) | 🟡 P1 |
 | 7 | ~~PROGRAM encapsulation~~ ✅ | **Низкая** | Среднее | 🟢 P2 |
@@ -222,7 +224,7 @@
 - ~~Создать `ProgramUtils` для поиска упражнений (#2)~~ ✅
 - ~~Инкапсулировать `PROGRAM` в Storage (#7)~~ ✅
 - ~~Разделить `handleClick` на подметоды по экранам (#1)~~ ✅
-- ~~Вынести свайпы, pull-to-refresh, celebration в отдельные модули (#5)~~ ✅
+- ~~Вынести свайпы, pull-to-refresh, celebration, workout-timer, equipment-manager, message-notifications, profile-manager в отдельные модули (#5)~~ ✅
 - **Тестировать каждый экран после каждого шага**
 
 **Шаг 3 — Безопасность и рендер (долгосрочно):**

@@ -5,10 +5,8 @@ const App = {
     _currentDay: 1,
     _saveDebounced: null,
     _swipeDir: null,
-    _workoutTimerInterval: null,
     _pendingMigration: null,
     _pendingCheckinWorkout: null,
-    _croppedAvatarBlob: null,
     _pageCache: {},
 
     invalidatePageCache(hashOrPrefix) {
@@ -45,7 +43,7 @@ const App = {
             } else {
                 this._loadProgramForUser(currentUser);
                 this._initSupaSync(currentUser.id);
-                this._initGlobalMessageSub();
+                MessageNotifications.init();
             }
         } else {
             // Legacy fallback: try loading stored program directly
@@ -94,7 +92,7 @@ const App = {
                 e.target.value = '';
                 AvatarCropper.open(avatarFile).then(function(blob) {
                     if (!blob) return;
-                    App._croppedAvatarBlob = blob;
+                    ProfileManager.croppedAvatarBlob = blob;
                     var preview = document.getElementById('edit-avatar-preview');
                     if (preview) {
                         var url = URL.createObjectURL(blob);
@@ -108,9 +106,9 @@ const App = {
             }
             if (e.target.id === 'checkin-photo-input' && e.target.files) {
                 var files = Array.from(e.target.files);
-                var total = this._checkinPhotos.length + files.length;
+                var total = ProfileManager.checkinPhotos.length + files.length;
                 if (total > 3) { alert('Максимум 3 фото/видео'); return; }
-                this._checkinPhotos = this._checkinPhotos.concat(files);
+                ProfileManager.checkinPhotos = ProfileManager.checkinPhotos.concat(files);
                 var grid = document.getElementById('checkin-photos-grid');
                 if (grid) {
                     files.forEach(function(f) {
@@ -180,7 +178,7 @@ const App = {
             // Clean orphaned log entries after sync (choose_one phantoms + corrupted _gym)
             Migrations.cleanOrphanedLogEntries();
             // Load shared gyms cache + migrate local gyms
-            self._initGymCache();
+            EquipmentManager.initGymCache();
             self.route();
         }).catch(function(e) {
             console.error('Init sync error:', e);
@@ -188,101 +186,7 @@ const App = {
     },
 
 
-    _initGymCache() {
-        if (typeof Social === 'undefined') return;
-        var self = this;
-        Social.getAllSharedGyms().then(function(gyms) {
-            self._sharedGymsCache = gyms || [];
-            Storage.setGymCache(gyms || []);
-            // Migrate local gyms to Supabase if needed
-            Storage.migrateLocalGyms().then(function() {
-                // Re-render if on settings page
-                if (location.hash === '#/settings') UI.renderSettings();
-            }).catch(function(e) { console.error('Gym migration error:', e); });
-        }).catch(function(e) { console.error('Gym cache load error:', e); });
-    },
 
-    // Global message notifications: realtime + polling fallback
-    _msgPollTimer: null,
-    _lastKnownMsgCount: 0,
-
-    _initGlobalMessageSub() {
-        if (typeof Social === 'undefined') return;
-        var self = this;
-        // Request notification permission
-        if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission();
-        }
-        // Try Realtime subscription (instant, but may not connect)
-        Social.subscribeToGlobalMessages(function(msg) {
-            if (SocialUI._chatConvId === msg.conversation_id) return;
-            self._onNewMessage(msg.text);
-        });
-        // Polling fallback — every 15s check unread count
-        Social.getUnreadMessageCount().then(function(c) { self._lastKnownMsgCount = c || 0; });
-        this._msgPollTimer = setInterval(function() {
-            Social.getUnreadMessageCount().then(function(count) {
-                count = count || 0;
-                if (count > self._lastKnownMsgCount) {
-                    self._onNewMessage(null);
-                }
-                self._lastKnownMsgCount = count;
-                SocialUI._tabBarMsgCount = count;
-                if (count > 0) {
-                    document.querySelectorAll('.msg-badge').forEach(function(el) { el.textContent = count; });
-                    if (!document.querySelector('.msg-badge')) {
-                        document.querySelectorAll('#btn-messages').forEach(function(btn) {
-                            var span = document.createElement('span');
-                            span.className = 'msg-badge';
-                            span.textContent = count;
-                            btn.appendChild(span);
-                        });
-                    }
-                } else {
-                    document.querySelectorAll('.msg-badge').forEach(function(el) { el.remove(); });
-                }
-            }).catch(function() {});
-        }, 15000);
-        // Listen for SW notification click
-        if (navigator.serviceWorker) {
-            navigator.serviceWorker.addEventListener('message', function(e) {
-                if (e.data && e.data.type === 'OPEN_MESSAGES') {
-                    location.hash = '#/messages';
-                }
-            });
-        }
-    },
-
-    _onNewMessage(text) {
-        SocialUI._tabBarMsgCount = (SocialUI._tabBarMsgCount || 0) + 1;
-        var count = SocialUI._tabBarMsgCount;
-        this._lastKnownMsgCount = count;
-        document.querySelectorAll('.msg-badge').forEach(function(el) { el.textContent = count; });
-        if (!document.querySelector('.msg-badge')) {
-            document.querySelectorAll('#btn-messages').forEach(function(btn) {
-                var span = document.createElement('span');
-                span.className = 'msg-badge';
-                span.textContent = count;
-                btn.appendChild(span);
-            });
-        }
-        var preview = text ? text.substring(0, 100) : 'Вам написали';
-        if (document.visibilityState === 'visible') {
-            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-            var toast = document.createElement('div');
-            toast.className = 'msg-toast';
-            toast.innerHTML = '<b>Новое сообщение</b><br>' + esc(preview);
-            toast.onclick = function() { toast.remove(); location.hash = '#/messages'; };
-            document.body.appendChild(toast);
-            setTimeout(function() { toast.remove(); }, 4000);
-        } else if (navigator.serviceWorker) {
-            navigator.serviceWorker.ready.then(function(reg) {
-                if (reg.active) {
-                    reg.active.postMessage({ type: 'SHOW_MSG_NOTIFICATION', title: 'Новое сообщение', body: preview });
-                }
-            });
-        }
-    },
 
     // Swipe config delegated to SwipeNav.getConfig() in js/swipe-nav.js
     _getSwipeConfig(hash) {
@@ -642,101 +546,6 @@ const App = {
 
     // ===== SOCIAL METHODS =====
 
-    _saveProfile() {
-        var btn = document.getElementById('btn-profile-save');
-        if (btn) { btn.disabled = true; btn.textContent = 'Сохранение...'; }
-
-        var data = {
-            display_name: (document.getElementById('edit-display-name').value || '').trim(),
-            username: (document.getElementById('edit-username').value || '').trim().toLowerCase(),
-            bio: (document.getElementById('edit-bio').value || '').trim(),
-            gender: document.getElementById('edit-gender') ? document.getElementById('edit-gender').value : '',
-            is_athlete: document.getElementById('edit-is-athlete').checked,
-            is_pro: document.getElementById('edit-is-pro') ? document.getElementById('edit-is-pro').checked : false,
-            category: document.getElementById('edit-category') ? document.getElementById('edit-category').value : '',
-            coach: document.getElementById('edit-coach') ? document.getElementById('edit-coach').value.trim() : '',
-            phase: document.getElementById('edit-phase') ? document.getElementById('edit-phase').value : ''
-        };
-
-        if (!data.username || data.username.length < 2) {
-            alert('Username минимум 2 символа');
-            if (btn) { btn.disabled = false; btn.textContent = 'Сохранить'; }
-            return;
-        }
-
-        // Upload avatar if cropped
-        var avatarPromise = App._croppedAvatarBlob
-            ? Social.uploadAvatar(App._croppedAvatarBlob)
-            : Promise.resolve(null);
-
-        avatarPromise.then(function(avatarUrl) {
-            if (avatarUrl) data.avatar_url = avatarUrl;
-            App._croppedAvatarBlob = null;
-            return Social.upsertProfile(data);
-        }).then(function() {
-            location.hash = '#/profile';
-        }).catch(function(err) {
-            alert(err.message || 'Ошибка сохранения');
-            if (btn) { btn.disabled = false; btn.textContent = 'Сохранить'; }
-        });
-    },
-
-    _checkinPhotos: [],
-
-    _submitCheckin() {
-        var btn = document.getElementById('btn-checkin-submit');
-        var errEl = document.getElementById('checkin-error');
-        if (btn) { btn.disabled = true; btn.textContent = 'ПУБЛИКАЦИЯ...'; }
-        if (errEl) errEl.style.display = 'none';
-
-        // Photo required
-        if (!this._checkinPhotos || this._checkinPhotos.length === 0) {
-            if (errEl) { errEl.textContent = 'Добавьте хотя бы одно фото или видео'; errEl.style.display = 'block'; }
-            if (btn) { btn.disabled = false; btn.textContent = 'ОПУБЛИКОВАТЬ'; }
-            return;
-        }
-
-        var weightEl = document.getElementById('checkin-weight');
-        var weight = weightEl ? (parseFloat(weightEl.value) || null) : null;
-        var note = (document.getElementById('checkin-note').value || '').trim();
-        var measurements = {};
-
-        var workoutDataEl = document.getElementById('checkin-workout-data');
-        var workoutSummary = null;
-        if (workoutDataEl) {
-            try { workoutSummary = JSON.parse(workoutDataEl.value); } catch (e) {}
-        }
-
-        // Upload photos first
-        var photoPromises = this._checkinPhotos.map(function(file) {
-            return Social.uploadCheckinPhoto(file);
-        });
-
-        var self = this;
-        Promise.all(photoPromises).then(function(photoUrls) {
-            var data = {
-                weight: weight,
-                note: note,
-                measurements: Object.keys(measurements).length > 0 ? measurements : {},
-                photos: photoUrls.filter(Boolean),
-                workout_summary: workoutSummary
-            };
-            return Social.createCheckin(data);
-        }).then(function(checkin) {
-            // Tag users if any
-            var taggedUsers = self._checkinTaggedUsers || [];
-            if (taggedUsers.length && checkin && checkin.id) {
-                var tagIds = taggedUsers.map(function(u) { return u.user_id; });
-                Social.tagUsers(checkin.id, tagIds).catch(function() {});
-            }
-            self._checkinPhotos = [];
-            self._checkinTaggedUsers = [];
-            location.hash = '#/profile';
-        }).catch(function(err) {
-            if (errEl) { errEl.textContent = err.message || 'Ошибка публикации'; errEl.style.display = 'block'; }
-            if (btn) { btn.disabled = false; btn.textContent = 'ОПУБЛИКОВАТЬ'; }
-        });
-    },
 
     _showNotificationPrompt() {
         if (!('Notification' in window)) return;
@@ -1276,10 +1085,10 @@ const App = {
                     } else {
                         Storage.initGymFromCurrentEquipment(gymId);
                     }
-                    App.startWorkoutTimer();
+                    WorkoutTimer.start(App._currentWeek, App._currentDay);
                     UI.renderDay(App._currentWeek, App._currentDay);
                 } else {
-                    App.startWorkoutTimer();
+                    WorkoutTimer.start(App._currentWeek, App._currentDay);
                     UI.renderDay(App._currentWeek, App._currentDay);
                 }
             });
@@ -1287,19 +1096,19 @@ const App = {
         }
 
         if (target.id === 'btn-pause-workout') {
-            App.pauseWorkoutTimer();
+            WorkoutTimer.pause(App._currentWeek, App._currentDay);
             UI.renderDay(App._currentWeek, App._currentDay);
             return true;
         }
 
         if (target.id === 'btn-resume-workout') {
-            App.unpauseWorkoutTimer();
+            WorkoutTimer.unpause(App._currentWeek, App._currentDay);
             UI.renderDay(App._currentWeek, App._currentDay);
             return true;
         }
 
         if (target.id === 'btn-cancel-workout') {
-            App.cancelWorkoutTimer();
+            WorkoutTimer.cancel(App._currentWeek, App._currentDay);
             UI.renderDay(App._currentWeek, App._currentDay);
             return true;
         }
@@ -1355,10 +1164,10 @@ const App = {
                     repsInput.value = reps;
                 }
                 Storage.saveSetLog(App._currentWeek, App._currentDay, exId, setIdx, weight, reps, eqId);
-                var activeGym = App._getActiveGymId();
+                var activeGym = EquipmentManager.getActiveGymId(App._currentWeek, App._currentDay);
                 if (activeGym && eqId) {
                     Storage.setGymExerciseEquipment(activeGym, exId, eqId);
-                    App._shareToGymEquipment(exId, Storage.getEquipmentById(eqId));
+                    EquipmentManager.shareToGymEquipment(exId, Storage.getEquipmentById(eqId), App._currentWeek, App._currentDay);
                 }
 
                 row.querySelectorAll('.seg-weight-input[data-seg]').forEach(inp => {
@@ -1745,9 +1554,9 @@ const App = {
     // ===== Delegated modal click handlers (substitution, gym, choice, equipment) =====
     _bindEquipment(exId, eqId, shareInfo) {
         Storage.setExerciseEquipment(exId, eqId);
-        var activeGym = this._getActiveGymId();
+        var activeGym = EquipmentManager.getActiveGymId(this._currentWeek, this._currentDay);
         if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, eqId);
-        if (shareInfo) this._shareToGymEquipment(exId, shareInfo);
+        if (shareInfo) EquipmentManager.shareToGymEquipment(exId, shareInfo, this._currentWeek, this._currentDay);
         UI.hideEquipmentModal();
         // Invalidate day cache (equipment changed)
         this.invalidatePageCache('#/week/' + this._currentWeek + '/day/' + this._currentDay);
@@ -1893,7 +1702,7 @@ const App = {
             var gymId = target.dataset.gymId;
             Storage.initGymFromCurrentEquipment(gymId);
             UI.hideGymModal();
-            this.startWorkoutTimer();
+            WorkoutTimer.start(this._currentWeek, this._currentDay);
             UI.renderDay(this._currentWeek, this._currentDay);
             return true;
         }
@@ -1902,7 +1711,7 @@ const App = {
         if (target.id === 'gym-link-no') {
             var gymId = target.dataset.gymId;
             UI.hideGymModal();
-            this.startWorkoutTimer();
+            WorkoutTimer.start(this._currentWeek, this._currentDay);
             UI.renderDay(this._currentWeek, this._currentDay);
             return true;
         }
@@ -1996,13 +1805,13 @@ const App = {
             var brandItem = target.closest('.eq-brand-item');
             var brand = brandItem.dataset.brand;
             var extype = brandItem.dataset.extype || null;
-            if (brand) this._loadBrandEquipment(brand, extype);
+            if (brand) EquipmentManager.loadBrandEquipment(brand, extype);
             return true;
         }
 
         // Equipment modal — back to brands
         if (target.closest('#eq-brand-back')) {
-            this._eqBackToBrands();
+            EquipmentManager.backToBrands();
             return true;
         }
 
@@ -2100,7 +1909,7 @@ const App = {
 
         // Profile save
         if (target.closest('#btn-profile-save')) {
-            this._saveProfile();
+            ProfileManager.saveProfile();
             return true;
         }
 
@@ -2363,12 +2172,12 @@ const App = {
 
         // Tag user button in checkin form
         if (target.closest('#btn-tag-user')) {
-            if (!App._checkinTaggedUsers) App._checkinTaggedUsers = [];
+            if (!ProfileManager.checkinTaggedUsers) ProfileManager.checkinTaggedUsers = [];
             SocialUI.renderTagSearch(function(user) {
                 // Check if already tagged
-                var already = App._checkinTaggedUsers.some(function(u) { return u.user_id === user.user_id; });
+                var already = ProfileManager.checkinTaggedUsers.some(function(u) { return u.user_id === user.user_id; });
                 if (already) return;
-                App._checkinTaggedUsers.push(user);
+                ProfileManager.checkinTaggedUsers.push(user);
                 var container = document.getElementById('checkin-tagged-users');
                 if (container) {
                     var tag = document.createElement('span');
@@ -2385,8 +2194,8 @@ const App = {
         var removeTag = target.closest('.tagged-user-remove');
         if (removeTag) {
             var chip = removeTag.closest('.tagged-user-chip');
-            if (chip && App._checkinTaggedUsers) {
-                App._checkinTaggedUsers = App._checkinTaggedUsers.filter(function(u) { return u.user_id !== chip.dataset.uid; });
+            if (chip && ProfileManager.checkinTaggedUsers) {
+                ProfileManager.checkinTaggedUsers = ProfileManager.checkinTaggedUsers.filter(function(u) { return u.user_id !== chip.dataset.uid; });
                 chip.remove();
             }
             return true;
@@ -2455,7 +2264,7 @@ const App = {
 
         // Checkin submit
         if (target.closest('#btn-checkin-submit')) {
-            this._submitCheckin();
+            ProfileManager.submitCheckin();
             return true;
         }
 
@@ -2587,14 +2396,14 @@ const App = {
         // Equipment search
         if (target.id === 'eq-search') {
             var query = target.value.trim();
-            this._searchEquipment(query);
+            EquipmentManager.searchEquipment(query);
             return;
         }
 
         // Gym modal — filter shared gyms as user types in search
         if (target.id === 'gym-search-input') {
             var query = target.value.trim().toLowerCase();
-            this._renderSharedGyms(query);
+            EquipmentManager.renderSharedGyms(query);
             return;
         }
 
@@ -2648,575 +2457,12 @@ const App = {
         var self = this;
         btn.addEventListener('click', function() {
             btn.remove();
-            var elapsed = self._stopWorkoutTimer();
+            var elapsed = WorkoutTimer.stop(self._currentWeek, self._currentDay);
             Celebration.show(elapsed, self._currentWeek, self._currentDay);
         });
     },
 
-    // Workout session timer
-    _getTimerKey() {
-        return 'wt_timer_' + this._currentWeek + '_' + this._currentDay;
-    },
 
-    _getPauseKey() {
-        return this._getTimerKey() + '_paused';
-    },
-
-    startWorkoutTimer() {
-        var key = this._getTimerKey();
-        if (sessionStorage.getItem(key)) return; // already running
-        sessionStorage.setItem(key, String(Date.now()));
-        sessionStorage.removeItem(this._getPauseKey());
-        this._startTimerDisplay();
-    },
-
-    pauseWorkoutTimer() {
-        var pauseKey = this._getPauseKey();
-        if (sessionStorage.getItem(pauseKey)) return; // already paused
-        sessionStorage.setItem(pauseKey, String(Date.now()));
-        if (this._workoutTimerInterval) {
-            clearInterval(this._workoutTimerInterval);
-            this._workoutTimerInterval = null;
-        }
-    },
-
-    unpauseWorkoutTimer() {
-        var key = this._getTimerKey();
-        var pauseKey = this._getPauseKey();
-        var pausedAt = parseInt(sessionStorage.getItem(pauseKey));
-        if (!pausedAt) return;
-        var startTime = parseInt(sessionStorage.getItem(key));
-        if (startTime) {
-            // Shift start forward by pause duration so elapsed stays correct
-            var pauseDuration = Date.now() - pausedAt;
-            sessionStorage.setItem(key, String(startTime + pauseDuration));
-        }
-        sessionStorage.removeItem(pauseKey);
-        this._startTimerDisplay();
-    },
-
-    cancelWorkoutTimer() {
-        if (this._workoutTimerInterval) {
-            clearInterval(this._workoutTimerInterval);
-            this._workoutTimerInterval = null;
-        }
-        sessionStorage.removeItem(this._getTimerKey());
-        sessionStorage.removeItem(this._getPauseKey());
-        Storage.saveWorkoutGym(this._currentWeek, this._currentDay, null);
-    },
-
-    _startTimerDisplay() {
-        var self = this;
-        if (this._workoutTimerInterval) clearInterval(this._workoutTimerInterval);
-        var key = this._getTimerKey();
-        var startTime = parseInt(sessionStorage.getItem(key));
-        if (!startTime) return;
-        this._updateTimerUI(startTime);
-        this._workoutTimerInterval = setInterval(function() {
-            self._updateTimerUI(startTime);
-        }, 1000);
-    },
-
-    _updateTimerUI(startTime) {
-        var el = document.getElementById('workout-timer');
-        if (!el) return;
-        var elapsed = Math.floor((Date.now() - startTime) / 1000);
-        var h = Math.floor(elapsed / 3600);
-        var m = Math.floor((elapsed % 3600) / 60);
-        var s = elapsed % 60;
-        el.textContent = (h > 0 ? h + ':' : '') + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-    },
-
-    _stopWorkoutTimer() {
-        var key = this._getTimerKey();
-        var pauseKey = this._getPauseKey();
-        var startTime = parseInt(sessionStorage.getItem(key));
-        if (this._workoutTimerInterval) {
-            clearInterval(this._workoutTimerInterval);
-            this._workoutTimerInterval = null;
-        }
-        // Account for pause time
-        var pausedAt = parseInt(sessionStorage.getItem(pauseKey));
-        sessionStorage.removeItem(key);
-        sessionStorage.removeItem(pauseKey);
-        // Don't remove gym key here — needed for Celebration._pendingShare
-        if (!startTime) return null;
-        var end = pausedAt || Date.now();
-        return Math.floor((end - startTime) / 1000);
-    },
-
-    isWorkoutTimerRunning() {
-        return !!sessionStorage.getItem(this._getTimerKey());
-    },
-
-    isWorkoutTimerPaused() {
-        return this.isWorkoutTimerRunning() && !!sessionStorage.getItem(this._getPauseKey());
-    },
-
-    _getTimerElapsed() {
-        var startTime = parseInt(sessionStorage.getItem(this._getTimerKey()));
-        if (!startTime) return 0;
-        var pausedAt = parseInt(sessionStorage.getItem(this._getPauseKey()));
-        var end = pausedAt || Date.now();
-        return Math.floor((end - startTime) / 1000);
-    },
-
-    resumeWorkoutTimer() {
-        if (this.isWorkoutTimerRunning() && !this.isWorkoutTimerPaused()) {
-            this._startTimerDisplay();
-        }
-    },
-
-    // ===== Gym helpers =====
-
-    _lastGeoPos: null,
-
-    _showGymLinkPrompt(gymId, gymName) {
-        var prompt = document.getElementById('gym-link-prompt');
-        if (!prompt) {
-            // Modal already closed, just start
-            this.startWorkoutTimer();
-            UI.renderDay(this._currentWeek, this._currentDay);
-            return;
-        }
-        prompt.style.display = 'block';
-        prompt.innerHTML = '<div class="gym-geo-card">'
-            + '<span>Привязать оборудование к <b>' + gymName + '</b>?</span>'
-            + '<div class="gym-geo-btns">'
-            + '<button class="gym-geo-yes" id="gym-link-yes" data-gym-id="' + gymId + '">Да</button>'
-            + '<button class="gym-geo-no" id="gym-link-no" data-gym-id="' + gymId + '">Нет</button>'
-            + '</div></div>';
-    },
-
-    _sharedGymsCache: null,
-    _sharedEquipmentCache: null,
-
-    _loadSharedGyms() {
-        if (typeof Social === 'undefined') return;
-        var self = this;
-        Social.getAllSharedGyms().then(function(gyms) {
-            self._sharedGymsCache = gyms || [];
-            // Populate Storage gym cache for getGyms()/getGymById()
-            Storage.setGymCache(gyms || []);
-            self._renderSharedGyms('');
-        }).catch(function() {});
-    },
-
-    _renderSharedGyms(query) {
-        var resultsDiv = document.getElementById('gym-shared-results');
-        if (!resultsDiv) return;
-        var gyms = this._sharedGymsCache || [];
-        var myGyms = Storage.getGyms();
-        var myIds = {};
-        for (var i = 0; i < myGyms.length; i++) myIds[myGyms[i].id] = true;
-        var filtered = gyms.filter(function(g) { return !myIds[g.id]; });
-        if (query) {
-            var q = query.toLowerCase();
-            filtered = filtered.filter(function(g) {
-                return (g.name && g.name.toLowerCase().indexOf(q) !== -1) || (g.city && g.city.toLowerCase().indexOf(q) !== -1);
-            });
-        }
-        if (!filtered.length) { resultsDiv.innerHTML = ''; return; }
-        var html = '<div class="gym-shared-label">Залы из базы:</div>';
-        for (var i = 0; i < filtered.length; i++) {
-            html += '<div class="gym-shared-item" data-id="' + filtered[i].id + '">'
-                + '<span class="gym-shared-name">' + esc(filtered[i].name) + '</span>'
-                + '<span class="gym-shared-city">' + esc(filtered[i].city || '') + '</span>'
-                + '</div>';
-        }
-        resultsDiv.innerHTML = html;
-    },
-
-    _loadEquipmentBrands(exerciseId) {
-        if (typeof Social === 'undefined') return;
-        var modal = document.getElementById('equipment-modal');
-        if (!modal) return;
-        var exName = modal._exerciseName || '';
-        var exNameRu = modal._exerciseNameRu || '';
-        var exType = exName ? this._getExerciseType(exName) : null;
-        var isFreeWeight = this._isFreeWeightExercise(exName, exNameRu);
-        modal._exerciseType = exType;
-        modal._isFreeWeight = isFreeWeight;
-
-        // Load gym equipment for this exercise (from gym_equipment table)
-        var activeGymId = this._getActiveGymId();
-        var gym = activeGymId ? Storage.getGymById(activeGymId) : null;
-        var gymPromise = (gym && gym.city && exName)
-            ? Social.getGymEquipmentForExercise(gym.name, gym.city, exName)
-            : Promise.resolve([]);
-
-        // Skip machine catalog for free weight exercises (barbell, dumbbell, etc.)
-        var brandsPromise = isFreeWeight ? Promise.resolve([]) : Social.getCatalogBrands(exType);
-
-        Promise.all([gymPromise, brandsPromise]).then(function(results) {
-            var gymItems = results[0] || [];
-            var brands = results[1] || [];
-            if (!document.getElementById('equipment-modal')) return;
-
-            // Render gym section
-            var gymSection = document.getElementById('eq-gym-section');
-            if (gymSection && gymItems.length > 0) {
-                var gymHtml = '<div class="eq-section-label">В этом зале:</div>';
-                for (var i = 0; i < gymItems.length; i++) {
-                    gymHtml += '<div class="eq-gym-item" data-name="' + esc(gymItems[i]) + '">'
-                        + '<span class="eq-shared-name">' + esc(gymItems[i]) + '</span>'
-                        + '</div>';
-                }
-                gymSection.innerHTML = gymHtml;
-            }
-
-            // Render brands
-            var brandsSection = document.getElementById('eq-brands-section');
-            if (brandsSection) {
-                if (brands.length > 0) {
-                    var bHtml = '<div class="eq-section-label">Каталог:</div>';
-                    var et = exType || '';
-                    for (var i = 0; i < brands.length; i++) {
-                        bHtml += '<div class="eq-brand-item" data-brand="' + esc(brands[i]) + '" data-extype="' + et + '">'
-                            + '<span class="eq-brand-name">' + esc(brands[i]) + '</span>'
-                            + '<span class="eq-brand-arrow">\u203A</span>'
-                            + '</div>';
-                    }
-                    brandsSection.innerHTML = bHtml;
-                } else {
-                    brandsSection.innerHTML = '';
-                }
-            }
-        }).catch(function() {});
-    },
-
-    _loadBrandEquipment(brand, exerciseType) {
-        var modal = document.getElementById('equipment-modal');
-        if (!modal) return;
-        var exType = exerciseType || modal._exerciseType || null;
-
-        // Show brand content, hide main
-        var mainContent = document.getElementById('eq-main-content');
-        var brandContent = document.getElementById('eq-brand-content');
-        var addRow = document.getElementById('eq-add-row');
-        var searchRow = modal.querySelector('.eq-search-row');
-        if (mainContent) mainContent.style.display = 'none';
-        if (brandContent) brandContent.style.display = '';
-        if (addRow) addRow.style.display = 'none';
-        if (searchRow) searchRow.style.display = 'none';
-
-        // Fix: break flex constraint so all items visible, modal scrolls
-        var eqModal = modal.querySelector('.equipment-modal');
-        if (eqModal) {
-            eqModal.style.maxHeight = '90vh';
-            eqModal.style.minHeight = '0';
-        }
-        if (brandContent) {
-            brandContent.style.flex = 'none';
-            brandContent.style.height = 'auto';
-        }
-
-        var brandList = document.getElementById('eq-brand-list');
-        if (brandList) brandList.innerHTML = '<div class="eq-section-label">Загрузка...</div>';
-
-        // Update header
-        var header = modal.querySelector('.eq-modal-header h3');
-        if (header) header.textContent = brand;
-
-        Social.getCatalogByBrandAndType(brand, exType).then(function(items) {
-            if (!document.getElementById('equipment-modal')) return;
-            var div = document.getElementById('eq-brand-list');
-            if (!div) return;
-            if (!items || !items.length) {
-                div.innerHTML = '<div class="eq-section-label">Нет тренажёров для этого упражнения</div>';
-                return;
-            }
-            var html = '';
-            for (var i = 0; i < items.length; i++) {
-                var c = items[i];
-                var fullName = brand + ' ' + c.name;
-                var eqImgHtml = c.image_url ? '<img class="ex-thumb" src="' + esc(c.image_url) + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
-                html += '<div class="eq-catalog-item" data-name="' + esc(fullName) + '" data-catalog-id="' + c.id + '"' + (c.image_url ? ' data-image="' + esc(c.image_url) + '"' : '') + '>'
-                    + eqImgHtml
-                    + '<span class="eq-shared-name">' + esc(c.name) + '</span>'
-                    + (c.model ? '<span class="eq-catalog-model">' + esc(c.model) + '</span>' : '')
-                    + '</div>';
-            }
-            div.innerHTML = html;
-        }).catch(function() {
-            var div = document.getElementById('eq-brand-list');
-            if (div) div.innerHTML = '<div class="eq-section-label">Ошибка загрузки</div>';
-        });
-    },
-
-    _eqBackToBrands() {
-        var modal = document.getElementById('equipment-modal');
-        if (!modal) return;
-        var mainContent = document.getElementById('eq-main-content');
-        var brandContent = document.getElementById('eq-brand-content');
-        var addRow = document.getElementById('eq-add-row');
-        var searchRow = modal.querySelector('.eq-search-row');
-        if (mainContent) mainContent.style.display = '';
-        if (brandContent) brandContent.style.display = 'none';
-        if (addRow) addRow.style.display = '';
-        if (searchRow) searchRow.style.display = '';
-        // Restore modal size and flex
-        var eqModal = modal.querySelector('.equipment-modal');
-        if (eqModal) {
-            eqModal.style.maxHeight = '';
-            eqModal.style.minHeight = '';
-        }
-        if (brandContent) {
-            brandContent.style.flex = '';
-            brandContent.style.height = '';
-        }
-        var header = modal.querySelector('.eq-modal-header h3');
-        if (header) header.textContent = 'Оборудование';
-    },
-
-    // Exercise name → equipment exercise_type in catalog
-    _exerciseTypeMap: {
-        // Chest
-        'chest press': 'chest_press', 'iso-lateral chest press': 'chest_press',
-        'incline chest press': 'incline_press',
-        'decline bench press': 'decline_press',
-        'bench press': 'bench', 'incline bench press': 'incline_press',
-        'floor press': 'bench', 'hex press': 'bench',
-        'chest fly': 'chest_fly', 'butterfly': 'chest_fly', 'chest dip': 'chest_dip',
-        'cable crossover': 'chest_fly', 'single arm cable crossover': 'chest_fly',
-        'pullover': 'pullover',
-        // Back
-        'lat pulldown': 'lat_pulldown', 'pull up': 'lat_pulldown', 'chin up': 'lat_pulldown',
-        'seated row': 'seated_row', 'seated cable row': 'seated_row',
-        'iso-lateral row': 'seated_row', 'iso-lateral high row': 'seated_row',
-        'iso-lateral low row': 'seated_row', 'low row': 'seated_row',
-        'cable row': 'seated_row', 'single arm cable row': 'seated_row',
-        'bent over row': 'seated_row', 't bar row': 'seated_row',
-        'supported bar rows': 'seated_row', 'chest supported incline row': 'seated_row',
-        'back extension': 'back_extension', 'hyperextension': 'back_extension',
-        'deadlift': 'deadlift', 'romanian deadlift': 'deadlift', 'straight leg deadlift': 'deadlift',
-        // Legs
-        'leg press': 'leg_press', 'leg press horizontal': 'leg_press', 'single leg press': 'leg_press',
-        'leg extension': 'leg_extension', 'single leg extensions': 'leg_extension',
-        'leg curl': 'leg_curl', 'lying leg curl': 'lying_leg_curl', 'seated leg curl': 'seated_leg_curl',
-        'hip abduction': 'hip_abduction',
-        'hip adduction': 'hip_adduction',
-        'glute kickback': 'glute_kickback', 'rear kick': 'glute_kickback',
-        'hip thrust': 'hip_thrust', 'glute bridge': 'hip_thrust',
-        'hack squat': 'squat', 'squat': 'squat', 'belt squat': 'squat',
-        'pendulum squat': 'squat', 'bulgarian split squat': 'squat',
-        'calf raise': 'calf', 'calf extension': 'calf', 'calf press': 'calf',
-        'standing calf raise': 'calf', 'seated calf raise': 'calf',
-        'tibial raises': 'calf', 'tibial raise': 'calf',
-        'medium gluteus on low pulley': 'hip_abduction', 'cable hip abduction': 'hip_abduction',
-        // Shoulders
-        'shoulder press': 'shoulder_press', 'overhead press': 'shoulder_press',
-        'lateral raise': 'lateral_raise',
-        'rear delt': 'rear_delt', 'rear delt reverse fly': 'rear_delt', 'face pull': 'rear_delt',
-        // Arms
-        'bicep curl': 'bicep_curl', 'hammer curl': 'bicep_curl', 'concentration curl': 'bicep_curl',
-        'preacher curl': 'preacher_curl',
-        'triceps extension': 'tricep_extension', 'triceps pushdown': 'tricep_extension',
-        'skull crusher': 'tricep_extension',
-        'triceps dip': 'tricep_dip', 'seated dip machine': 'chest_dip',
-        // Core
-        'crunch': 'crunch', 'sit up': 'crunch',
-        'torso rotation': 'torso_rotation',
-        'hanging knee raise': 'crunch', 'leg raise': 'crunch',
-    },
-
-    // Returns equipment modifier from parenthetical: barbell, dumbbell, machine, cable, etc.
-    _getEquipmentModifier(exerciseName) {
-        var m = exerciseName.match(/\(([^)]+)\)/);
-        if (!m) return null;
-        return m[1].toLowerCase().trim();
-    },
-
-    // Returns true if exercise uses free weights / bodyweight (no machine catalog needed)
-    _isFreeWeightExercise(exerciseEnName, exerciseRuName) {
-        // Check English name
-        var mod = this._getEquipmentModifier(exerciseEnName || '');
-        if (mod) {
-            var freeTypes = ['barbell', 'dumbbell', 'bodyweight', 'band', 'resistance band', 'kettlebell', 'plate', 'ez bar', 'trap bar'];
-            for (var i = 0; i < freeTypes.length; i++) {
-                if (mod === freeTypes[i]) return true;
-            }
-        }
-        // Check Russian name
-        var modRu = this._getEquipmentModifier(exerciseRuName || '');
-        if (modRu) {
-            var freeRu = ['со штангой', 'с гантелями', 'с гантелью', 'с гирей', 'с резиной', 'с диском', 'с собственным весом', 'штанга', 'гантели'];
-            for (var i = 0; i < freeRu.length; i++) {
-                if (modRu === freeRu[i]) return true;
-            }
-        }
-        return false;
-    },
-
-    _getExerciseType(exerciseName) {
-        var nameLower = exerciseName.toLowerCase();
-        // Equipment type from parenthetical: (Smith Machine), (Machine), (Cable) etc.
-        if (nameLower.indexOf('(smith machine)') !== -1) return 'smith_machine';
-        var core = exerciseName.replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
-        // Try exact match first, then progressively shorter
-        if (this._exerciseTypeMap[core]) return this._exerciseTypeMap[core];
-        // Try without modifiers
-        var mods = ['iso-lateral ', 'single leg ', 'single arm ', 'one arm ', 'standing ', 'seated ', 'lying ', 'prone ', 'kneeling ', 'close grip ', 'wide grip ', 'feet up '];
-        var stripped = core;
-        for (var i = 0; i < mods.length; i++) stripped = stripped.replace(mods[i], '');
-        stripped = stripped.replace(/\s+/g, ' ').trim();
-        if (this._exerciseTypeMap[stripped]) return this._exerciseTypeMap[stripped];
-        // Try last resort: check if any key is contained in the core
-        for (var key in this._exerciseTypeMap) {
-            if (core.indexOf(key) !== -1) return this._exerciseTypeMap[key];
-        }
-        return null;
-    },
-
-    _eqSearchTimer: null,
-
-    _searchEquipment(query) {
-        var resultsDiv = document.getElementById('eq-search-results');
-        if (!resultsDiv) return;
-        if (!query || query.length < 2) { resultsDiv.innerHTML = ''; return; }
-        var ql = query.toLowerCase();
-
-        // Instant: show local equipment matches
-        var html = '';
-        var seen = {};
-        var myEq = Storage.getEquipmentList();
-        for (var i = 0; i < myEq.length; i++) {
-            if (myEq[i].name.toLowerCase().indexOf(ql) !== -1) {
-                var k = myEq[i].name.toLowerCase().trim();
-                if (seen[k]) continue;
-                seen[k] = true;
-                html += '<div class="eq-search-item" data-name="' + esc(myEq[i].name) + '">'
-                    + '<span class="eq-shared-name">' + esc(myEq[i].name) + '</span></div>';
-            }
-        }
-        resultsDiv.innerHTML = html || '<div class="eq-search-empty">Поиск...</div>';
-
-        // Debounced: live query catalog + shared
-        clearTimeout(this._eqSearchTimer);
-        var modal = document.getElementById('equipment-modal');
-        var muscleGroup = modal ? modal._muscleGroup : 'all';
-        var self = this;
-
-        var isFreeWeight = modal ? modal._isFreeWeight : false;
-        this._eqSearchTimer = setTimeout(function() {
-            if (typeof Social === 'undefined') return;
-            var promises = [
-                isFreeWeight ? Promise.resolve([]) : Social.searchCatalog(query, muscleGroup !== 'all' ? muscleGroup : null),
-                Social.searchSharedEquipment(query, muscleGroup !== 'all' ? muscleGroup : null)
-            ];
-            Promise.all(promises).then(function(results) {
-                var catalog = results[0] || [];
-                var shared = results[1] || [];
-                // Check if search query is still the same
-                var input = document.getElementById('eq-search');
-                if (!input || input.value.trim() !== query) return;
-                var div = document.getElementById('eq-search-results');
-                if (!div) return;
-
-                var html2 = '';
-                var seen2 = {};
-                // Re-add local matches (deduplicated)
-                for (var i = 0; i < myEq.length; i++) {
-                    if (myEq[i].name.toLowerCase().indexOf(ql) !== -1) {
-                        var lk = myEq[i].name.toLowerCase().trim();
-                        if (seen2[lk]) continue;
-                        seen2[lk] = true;
-                        html2 += '<div class="eq-search-item" data-name="' + esc(myEq[i].name) + '">'
-                            + '<span class="eq-shared-name">' + esc(myEq[i].name) + '</span></div>';
-                    }
-                }
-                // Catalog results
-                for (var i = 0; i < catalog.length; i++) {
-                    var c = catalog[i];
-                    var cName = (c.brand ? c.brand + ' ' : '') + c.name;
-                    var k = cName.toLowerCase();
-                    if (seen2[k]) continue;
-                    seen2[k] = true;
-                    var sImgHtml = c.image_url ? '<img class="ex-thumb" src="' + esc(c.image_url) + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
-                    html2 += '<div class="eq-search-item" data-name="' + esc(cName) + '" data-catalog-id="' + c.id + '"' + (c.image_url ? ' data-image="' + esc(c.image_url) + '"' : '') + '>'
-                        + sImgHtml
-                        + '<span class="eq-shared-name">' + esc(cName) + '</span>'
-                        + (c.model ? '<span class="eq-catalog-model">' + esc(c.model) + '</span>' : '')
-                        + '</div>';
-                }
-                // Shared results
-                for (var i = 0; i < shared.length; i++) {
-                    var k = shared[i].name.toLowerCase();
-                    if (seen2[k]) continue;
-                    seen2[k] = true;
-                    html2 += '<div class="eq-search-item" data-name="' + esc(shared[i].name) + '">'
-                        + '<span class="eq-shared-name">' + esc(shared[i].name) + '</span></div>';
-                }
-                if (!html2) html2 = '<div class="eq-search-empty">Ничего не найдено</div>';
-                div.innerHTML = html2;
-            }).catch(function() {});
-        }, 300);
-    },
-
-    _shareToGymEquipment(exerciseId, equipment) {
-        if (typeof Social === 'undefined' || !equipment || !equipment.name) return;
-        var activeGymId = this._getActiveGymId();
-        if (!activeGymId) return;
-        var gym = Storage.getGymById(activeGymId);
-        if (!gym || !gym.city) return;
-        // Get exercise name from modal or from program data
-        var exerciseName = '';
-        var modal = document.getElementById('equipment-modal');
-        if (modal && modal._exerciseName) {
-            exerciseName = modal._exerciseName;
-        } else {
-            var exInfo = findExerciseInProgram(Storage.getProgram(), exerciseId);
-            if (exInfo) exerciseName = exInfo.name || exInfo.nameEn || '';
-        }
-        if (!exerciseName) return;
-        Social.addGymEquipment(gym.name, gym.city, exerciseName, equipment.name, equipment.catalogId || null).catch(function() {});
-    },
-
-    _suggestNearbyGym() {
-        if (!navigator.geolocation) return;
-        var gyms = Storage.getGyms().filter(function(g) { return g.lat && g.lng; });
-        if (!gyms.length) return;
-
-        navigator.geolocation.getCurrentPosition(
-            function(pos) {
-                App._lastGeoPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                var nearest = null, minDist = Infinity;
-                for (var i = 0; i < gyms.length; i++) {
-                    var d = App._haversineDistance(pos.coords.latitude, pos.coords.longitude, gyms[i].lat, gyms[i].lng);
-                    if (d < minDist) { minDist = d; nearest = gyms[i]; }
-                }
-                if (nearest && minDist < 500) {
-                    var suggestion = document.getElementById('gym-geo-suggestion');
-                    if (suggestion) {
-                        suggestion.style.display = 'block';
-                        suggestion.innerHTML = '<div class="gym-geo-card">'
-                            + '<span>Ты в <b>' + nearest.name + '</b>?</span>'
-                            + '<div class="gym-geo-btns">'
-                            + '<button class="gym-geo-yes" id="gym-geo-yes" data-gym-id="' + nearest.id + '">Да</button>'
-                            + '<button class="gym-geo-no" id="gym-geo-no">Нет</button>'
-                            + '</div></div>';
-                    }
-                }
-            },
-            function() {},
-            { timeout: 5000, maximumAge: 60000 }
-        );
-    },
-
-    _haversineDistance(lat1, lon1, lat2, lon2) {
-        var R = 6371000;
-        var dLat = (lat2 - lat1) * Math.PI / 180;
-        var dLon = (lon2 - lon1) * Math.PI / 180;
-        var a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
-            + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180)
-            * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    },
-
-    _getActiveGymId() {
-        if (!this._currentWeek || !this._currentDay) return null;
-        return Storage.getWorkoutGym(this._currentWeek, this._currentDay) || null;
-    }
 };
 
 // Celebration moved to js/celebration.js

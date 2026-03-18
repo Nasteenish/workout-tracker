@@ -317,8 +317,8 @@ const SocialUI = {
             html += '<div id="checkin-error" class="login-error" style="display:none"></div>';
             html += '</div>';
             document.getElementById('app').innerHTML = html;
-            App._checkinPhotos = [];
-            App._checkinTaggedUsers = [];
+            ProfileManager.checkinPhotos = [];
+            ProfileManager.checkinTaggedUsers = [];
             var noteEl = document.getElementById('checkin-note');
             if (noteEl) this._initMentionInput(noteEl);
             return;

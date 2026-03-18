@@ -1,4 +1,4 @@
-const CACHE_NAME = 'workout-tracker-v526';
+const CACHE_NAME = 'workout-tracker-v527';
 const ASSETS = [
     './',
     './index.html',
@@ -19,6 +19,10 @@ const ASSETS = [
     './js/social.js',
     './js/social-ui.js',
     './js/swipe-nav.js',
+    './js/workout-timer.js',
+    './js/equipment-manager.js',
+    './js/message-notifications.js',
+    './js/profile-manager.js',
     './js/ui.js',
     './js/timer.js',
     './js/utils.js',

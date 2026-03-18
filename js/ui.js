@@ -515,12 +515,12 @@ const UI = {
             // Match timer/button state from renderDay
             const isEmpty = workout.exerciseGroups.length === 0;
             if (!isEmpty) {
-                const timerRunning = App.isWorkoutTimerRunning();
-                const timerPaused = App.isWorkoutTimerPaused();
+                const timerRunning = WorkoutTimer.isRunning(App._currentWeek, App._currentDay);
+                const timerPaused = WorkoutTimer.isPaused(App._currentWeek, App._currentDay);
                 const { completed: doneCount, total: totalCount } = getCompletedSets(weekNum, dayNum);
                 const allDone = totalCount > 0 && doneCount >= totalCount;
                 if (timerPaused) {
-                    const elapsed = App._getTimerElapsed();
+                    const elapsed = WorkoutTimer.getElapsed(App._currentWeek, App._currentDay);
                     const h = Math.floor(elapsed / 3600);
                     const m = Math.floor((elapsed % 3600) / 60);
                     const s = elapsed % 60;
@@ -603,13 +603,13 @@ const UI = {
             `;
         }
 
-        const timerRunning = App.isWorkoutTimerRunning();
-        const timerPaused = App.isWorkoutTimerPaused();
+        const timerRunning = WorkoutTimer.isRunning(App._currentWeek, App._currentDay);
+        const timerPaused = WorkoutTimer.isPaused(App._currentWeek, App._currentDay);
         const { completed: doneCount, total: totalCount } = getCompletedSets(weekNum, dayNum);
         const allDone = totalCount > 0 && doneCount >= totalCount;
         let timerHtml = '';
         if (timerPaused) {
-            const elapsed = App._getTimerElapsed();
+            const elapsed = WorkoutTimer.getElapsed(App._currentWeek, App._currentDay);
             const h = Math.floor(elapsed / 3600);
             const m = Math.floor((elapsed % 3600) / 60);
             const s = elapsed % 60;
@@ -672,7 +672,7 @@ const UI = {
                 while (appEl.firstChild) appEl.removeChild(appEl.firstChild);
                 while (offscreen.firstChild) appEl.appendChild(offscreen.firstChild);
                 offscreen.remove();
-                if (timerRunning) App.resumeWorkoutTimer();
+                if (timerRunning) WorkoutTimer.resume(App._currentWeek, App._currentDay);
                 markCachedThumbs();
             };
 
@@ -684,7 +684,7 @@ const UI = {
             }
         } else {
             appEl.innerHTML = newHTML;
-            if (timerRunning) App.resumeWorkoutTimer();
+            if (timerRunning) WorkoutTimer.resume(App._currentWeek, App._currentDay);
             markCachedThumbs();
         }
     },
@@ -1263,7 +1263,7 @@ const UI = {
                 // If in brand view, go back first
                 var brandContent = document.getElementById('eq-brand-content');
                 if (brandContent && brandContent.style.display !== 'none') {
-                    App._eqBackToBrands();
+                    EquipmentManager.backToBrands();
                 } else {
                     UI.hideEquipmentModal();
                 }
@@ -1284,7 +1284,7 @@ const UI = {
             if (dx > 80 && dy < 100) {
                 var brandContent = document.getElementById('eq-brand-content');
                 if (brandContent && brandContent.style.display !== 'none') {
-                    App._eqBackToBrands();
+                    EquipmentManager.backToBrands();
                 } else {
                     UI.hideEquipmentModal();
                 }
@@ -1298,10 +1298,10 @@ const UI = {
         }
 
         searchInput.addEventListener('input', function() {
-            App._searchEquipment(searchInput.value.trim());
+            EquipmentManager.searchEquipment(searchInput.value.trim());
         });
 
-        App._loadEquipmentBrands(exerciseId);
+        EquipmentManager.loadEquipmentBrands(exerciseId);
     },
 
     hideEquipmentModal() {
@@ -1359,8 +1359,8 @@ const UI = {
         overlay.addEventListener('click', function(e) { App.handleClick(e); });
         overlay.addEventListener('input', function(e) { App.handleInput(e); });
 
-        App._suggestNearbyGym();
-        App._loadSharedGyms();
+        EquipmentManager.suggestNearbyGym();
+        EquipmentManager.loadSharedGyms();
     },
 
     hideGymModal() {
