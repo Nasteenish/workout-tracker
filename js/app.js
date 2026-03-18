@@ -303,6 +303,15 @@ export const App = {
                         break;
                     }
                 }
+                // Fallback 2: match by username (for devices missing wt_migrated_ flag)
+                if (!programId && user.login) {
+                    for (var j = 0; j < ACCOUNTS.length; j++) {
+                        if (ACCOUNTS[j].login === user.login) {
+                            programId = ACCOUNTS[j].programId;
+                            break;
+                        }
+                    }
+                }
             }
             var builtin = BUILTIN_PROGRAMS[programId];
             if (builtin) {
