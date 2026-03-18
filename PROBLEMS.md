@@ -17,19 +17,14 @@
 
 ---
 
-### 2. Дублирование поиска упражнений (4-6 реализаций)
+### ~~2. Дублирование поиска упражнений (4-6 реализаций)~~ ✅ РЕШЕНО
 
-**Где:** Минимум 4 реализации одного и того же обхода exerciseGroups:
-- `utils.js: findExerciseInTemplate()` — ищет в шаблоне дня
-- `utils.js: getGroupExercises()` — извлекает все упражнения из группы
-- `app.js: _findExerciseInProgram()` — ищет по всем дням
-- `storage.js: _getSiblingIds()` — ищет по имени через все дни
-- `ui.js: _getExerciseInfo()` — ищет для рендера истории
-- `ui.js: _findSiblingExercises()` — ищет siblings по имени
+**Что сделано:** Все обходы `exerciseGroups` унифицированы через канонические функции в `utils.js`:
+- `getGroupExercises(group)` — извлекает упражнения из группы любого типа
+- `findExerciseInTemplate(template, id)` → `findExerciseInProgram(program, id)` — поиск по ID
+- `getAllProgramExercises(program)` — все упражнения с номерами дней
 
-**Следствие:** Каждая обходит `exerciseGroups` немного по-своему. Если добавить новый `group.type` — нужно обновить 4-6 мест.
-
-**Решение:** Единый `ProgramUtils.findExercise(id)`, `ProgramUtils.getAllExercises()`, `ProgramUtils.getSiblings(id)`.
+`UI._findSiblingExercises()` удалён — заменён на `Storage.getSiblingExercises(id)`, использующий lazy-кеш `_siblingCache` с `{id, day}` парами (O(1) после первого вызова). `UI._getExerciseInfo()` использует `findExerciseInProgram()`. Добавление нового `group.type` требует изменения только в `getGroupExercises()`.
 
 ---
 
@@ -205,7 +200,7 @@ if (target.id === 'btn-follow' || target.closest('#btn-follow')) { ... }
 | # | Проблема | Сложность | Влияние | Приоритет |
 |---|----------|-----------|---------|-----------|
 | 1 | God Object handleClick | Высокая | Критическое | 🔴 P0 |
-| 2 | Дублирование поиска упражнений | Средняя | Высокое | 🔴 P0 |
+| 2 | ~~Дублирование поиска упражнений~~ ✅ | **Средняя** | Высокое | 🔴 P0 |
 | 9 | ~~Дублирование навигации назад~~ ✅ | **Низкая** | Среднее | 🟡 P1 |
 | 10 | ~~`_getSiblingIds()` O(N²)~~ ✅ | **Низкая** | Среднее (perf) | 🟡 P1 |
 | 8 | ~~5× дублирование привязки оборудования~~ ✅ | **Низкая** | Среднее | 🟡 P1 |

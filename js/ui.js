@@ -755,30 +755,13 @@ const UI = {
         `;
     },
 
-    _findSiblingExercises(ex, currentDayNum) {
-        var _pg = Storage.getProgram();
-        if (!_pg) return null;
-        var name = exName(ex);
-        if (!name) return null;
-        var all = getAllProgramExercises(_pg);
-        var siblings = [];
-        for (var i = 0; i < all.length; i++) {
-            var e = all[i].exercise;
-            if ((e.nameRu === name || e.name === name) &&
-                (e.id !== ex.id || all[i].day !== currentDayNum)) {
-                siblings.push({ id: e.id, day: all[i].day });
-            }
-        }
-        return siblings.length > 0 ? siblings : null;
-    },
-
     _renderSetRow(ex, setIdx, weekNum, dayNum) {
         const set = ex.sets[setIdx];
         const log = Storage.getSetLog(weekNum, dayNum, ex.id, setIdx);
         const eqId = Storage.getExerciseEquipment(ex.id);
-        // Find sibling exercises (same name in other days)
-        const siblings = this._findSiblingExercises(ex, dayNum);
-        const prev = Storage.getPreviousLog(weekNum, dayNum, ex.id, setIdx, eqId, siblings);
+        // Find sibling exercises (same name in other days) — cached in Storage
+        const siblings = Storage.getSiblingExercises(ex.id);
+        const prev = Storage.getPreviousLog(weekNum, dayNum, ex.id, setIdx, eqId, siblings.length > 0 ? siblings : null);
         const isCompleted = log && log.completed;
         const weightVal = log ? log.weight : '';
         const repsVal = log ? log.reps : '';

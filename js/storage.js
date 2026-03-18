@@ -31,19 +31,19 @@ const Storage = {
     _buildSiblingCache() {
         this._siblingCache = {};
         if (!this._program) return;
-        var nameToIds = {};
+        var nameToEntries = {};
         var all = getAllProgramExercises(this._program);
         for (var i = 0; i < all.length; i++) {
             var ex = all[i].exercise;
             var n = ex.nameRu || ex.name;
-            if (n) { if (!nameToIds[n]) nameToIds[n] = []; nameToIds[n].push(ex.id); }
+            if (n) { if (!nameToEntries[n]) nameToEntries[n] = []; nameToEntries[n].push({ id: ex.id, day: all[i].day }); }
         }
         var cache = this._siblingCache;
-        for (var name in nameToIds) {
-            var ids = nameToIds[name];
-            if (ids.length < 2) { cache[ids[0]] = []; continue; }
-            for (var i = 0; i < ids.length; i++) {
-                cache[ids[i]] = ids.filter(function(id) { return id !== ids[i]; });
+        for (var name in nameToEntries) {
+            var entries = nameToEntries[name];
+            if (entries.length < 2) { cache[entries[0].id] = []; continue; }
+            for (var i = 0; i < entries.length; i++) {
+                cache[entries[i].id] = entries.filter(function(e) { return e.id !== entries[i].id; });
             }
         }
     },
@@ -499,6 +499,12 @@ const Storage = {
 
     // Find all exercise IDs with the same name across all days (cached)
     _getSiblingIds(exerciseId) {
+        var entries = this.getSiblingExercises(exerciseId);
+        return entries.map(function(e) { return e.id; });
+    },
+
+    // Find sibling exercises with day info: [{id, day}] (cached)
+    getSiblingExercises(exerciseId) {
         if (!this._program || !this._program.dayTemplates) return [];
         if (!this._siblingCache) this._buildSiblingCache();
         return this._siblingCache[exerciseId] || [];
