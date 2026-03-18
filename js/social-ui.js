@@ -1,6 +1,10 @@
 // social-ui.js — UI rendering for social features: profile, feed, check-in, discover
+import { Social } from './social.js';
+import { Storage } from './storage.js';
+import { ProfileManager } from './profile-manager.js';
+import { esc } from './utils.js';
 
-const SocialUI = {
+export const SocialUI = {
     _feedCursor: null,
     _profileCheckinsCursor: null,
 

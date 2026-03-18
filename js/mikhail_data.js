@@ -1,5 +1,5 @@
 // Mikhail Timoshin training program
-const MIKHAIL_PROGRAM = {
+export const MIKHAIL_PROGRAM = {
   "title": "12-Week Pre-Competition Program",
   "coach": "Francisco Espin",
   "athlete": "Mikhail Timoshin",

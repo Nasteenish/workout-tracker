@@ -2,20 +2,20 @@
 // Architecture: template + weekly overrides pattern
 // Program is stored in Storage._program, accessed via Storage.getProgram()/setProgram()
 
-const SET_TYPES = {
+export const SET_TYPES = {
   S: { label: "Straight", labelRu: "Прямой", color: "#4CAF50" },
   SH: { label: "Straight-Hard", labelRu: "Прямой-Тяжёлый", color: "#FF9800" },
   H: { label: "Hard", labelRu: "Тяжёлый", color: "#f44336" }
 };
 
-const TECHNIQUE_TYPES = {
+export const TECHNIQUE_TYPES = {
   DROP: { label: "Drop set", labelRu: "Дроп-сет", abbr: "DROP" },
   REST_PAUSE: { label: "Rest-pause", labelRu: "Отдых-пауза", abbr: "REST" },
   MP: { label: "Myoreps / partial", labelRu: "Миорепы / частичные", abbr: "MP" },
   DROP_OR_REST: { label: "Drop set or Rest-pause", labelRu: "Дроп-сет или Отдых-пауза", abbr: "DROP/REST" }
 };
 
-const DEFAULT_PROGRAM = {
+export const DEFAULT_PROGRAM = {
   version: 2,
   title: "12-Week Training Program",
   coach: "Francisco Espin",
@@ -2602,7 +2602,3 @@ const DEFAULT_PROGRAM = {
   }
 };
 
-// Make available for ES module or global scope
-if (typeof module !== "undefined" && module.exports) {
-  module.exports = { DEFAULT_PROGRAM, SET_TYPES, TECHNIQUE_TYPES };
-}

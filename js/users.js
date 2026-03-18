@@ -1,7 +1,10 @@
 // users.js - User accounts and program registry
+import { DEFAULT_PROGRAM } from './data.js';
+import { MIKHAIL_PROGRAM } from './mikhail_data.js';
+import { MIKHAIL2_PROGRAM } from './mikhail2_data.js';
 
 // Built-in programs
-const BUILTIN_PROGRAMS = {
+export const BUILTIN_PROGRAMS = {
     'anastasia_default': {
         name: 'Анастасия Добросол',
         description: '12-недельная программа',
@@ -24,7 +27,7 @@ const BUILTIN_PROGRAMS = {
 
 // User accounts (login/password)
 // To add a new user: add an entry here + optionally add their program
-const ACCOUNTS = [
+export const ACCOUNTS = [
     { id: 'anastasia', login: 'nastya', password: '1234', name: 'nasteenish', programId: 'anastasia_default', premium: true },
     { id: 'mikhail',   login: 'misha',  password: '1234', name: 'Дима',       programId: 'mikhail_default', premium: true },
     { id: 'mikhail2',  login: 'thegealaks', password: '2026', name: 'Михаил', programId: 'mikhail2_default', premium: true }

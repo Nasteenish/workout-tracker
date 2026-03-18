@@ -1,9 +1,17 @@
 // builder.js — Program Builder: registration, wizard, day editor, exercise picker
+import { Storage } from './storage.js';
+import { Social } from './social.js';
+import { App } from './app.js';
+import { SupaSync } from './supabase-sync.js';
+import { ACCOUNTS } from './users.js';
+import { EXERCISE_DB, EXERCISE_CATEGORIES } from './exercises_db.js';
+import { lockBodyScroll, unlockBodyScroll, blockOverlayScroll } from './scroll-lock.js';
+import { esc, exName, getGroupExercises, exThumbHtml } from './utils.js';
 
 // Webhook URL for registration notifications (Google Apps Script)
-const REGISTRATION_WEBHOOK = '';  // Set after creating Apps Script
+export const REGISTRATION_WEBHOOK = '';  // Set after creating Apps Script
 
-const Builder = {
+export const Builder = {
     _config: null,      // wizard temp: {title, totalWeeks, numDays}
     _editingDay: null,  // editor temp: {dayNum, items: [{type, exercise|exercises|options}]}
 
@@ -1115,7 +1123,7 @@ const Builder = {
 
         // Load shared exercises
         this._sharedExercisesCache = [];
-        if (typeof Social !== 'undefined') {
+        if (Social) {
             Social.searchSharedExercises('').then(function(exs) {
                 Builder._sharedExercisesCache = exs || [];
                 var activeCat = document.querySelector('.picker-cat.active');
@@ -1326,7 +1334,7 @@ const Builder = {
                 return;
             }
             // Save to shared DB with current category
-            if (typeof Social !== 'undefined') {
+            if (Social) {
                 Social.addSharedExercise(customName, currentCat).catch(function() {});
             }
             this._closeExercisePicker();
