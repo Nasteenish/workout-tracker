@@ -155,10 +155,10 @@ export const Storage = {
     },
 
     // Self-registration: create new user with login/password/email stored in wt_users
-    createSelfRegisteredUser(name, login, password, email, customId, programId) {
+    createSelfRegisteredUser(name, login, password, email, customId) {
         var users = this.getUsers();
         var id = customId || ('user_' + Date.now());
-        users.push({ id: id, name: name, login: login, password: password, email: email || '', programId: programId || null, selfRegistered: true, createdAt: Date.now() });
+        users.push({ id: id, name: name, login: login, password: password, email: email || '', programId: null, selfRegistered: true, createdAt: Date.now() });
         this._saveUsers(users);
         return id;
     },
