@@ -1,10 +1,17 @@
 // social.js — Supabase API for social features: profiles, check-ins, follows, reactions, comments
 import { Storage } from './storage.js';
 import { supa } from './supabase-sync.js';
+import { showErrorToast } from './utils.js';
 
 export const Social = {
 
     // ===== HELPERS =====
+
+    _logError(method, error) {
+        var msg = (error && error.message) ? error.message : String(error);
+        console.warn('[Social.' + method + ']', msg);
+        showErrorToast('Ошибка загрузки');
+    },
 
     _getSupaUserId() {
         var localId = Storage.getCurrentUserId();
@@ -21,14 +28,14 @@ export const Social = {
     async getProfile(userId) {
         if (!supa) return null;
         var result = await supa.from('profiles').select('*').eq('user_id', userId).single();
-        if (result.error) return null;
+        if (result.error) { this._logError('getProfile', result.error); return null; }
         return result.data;
     },
 
     async getProfileByUsername(username) {
         if (!supa) return null;
         var result = await supa.from('profiles').select('*').eq('username', username).single();
-        if (result.error) return null;
+        if (result.error) { this._logError('getProfileByUsername', result.error); return null; }
         return result.data;
     },
 
@@ -95,7 +102,8 @@ export const Social = {
         var userId = this._getSupaUserId();
         if (!userId) return [];
         var result = await supa.from('follows').select('following_id').eq('follower_id', userId);
-        if (result.error || !result.data) return [];
+        if (result.error) { this._logError('getMyFollowingIds', result.error); return []; }
+        if (!result.data) return [];
         return result.data.map(function(r) { return r.following_id; });
     },
 
@@ -109,14 +117,14 @@ export const Social = {
     async getFollowers(userId) {
         if (!supa) return [];
         var result = await supa.from('follows').select('follower_id, profiles!follows_follower_id_fkey(user_id, username, display_name, avatar_url)').eq('following_id', userId);
-        if (result.error) return [];
+        if (result.error) { this._logError('getFollowers', result.error); return []; }
         return result.data.map(function(r) { return r.profiles; });
     },
 
     async getFollowing(userId) {
         if (!supa) return [];
         var result = await supa.from('follows').select('following_id, profiles!follows_following_id_fkey(user_id, username, display_name, avatar_url)').eq('follower_id', userId);
-        if (result.error) return [];
+        if (result.error) { this._logError('getFollowing', result.error); return []; }
         return result.data.map(function(r) { return r.profiles; });
     },
 
@@ -188,7 +196,7 @@ export const Social = {
         var result = await supa.from('checkins')
             .select('*, profiles(username, display_name, avatar_url, is_pro)')
             .eq('id', id).single();
-        if (result.error) return null;
+        if (result.error) { this._logError('getCheckin', result.error); return null; }
         return result.data;
     },
 
@@ -201,7 +209,7 @@ export const Social = {
             .limit(20);
         if (cursor) query = query.lt('created_at', cursor);
         var result = await query;
-        if (result.error) return [];
+        if (result.error) { this._logError('getUserCheckins', result.error); return []; }
         return result.data;
     },
 
@@ -220,7 +228,8 @@ export const Social = {
         if (!userId) return [];
         // Get who I follow
         var followResult = await supa.from('follows').select('following_id').eq('follower_id', userId);
-        if (followResult.error || !followResult.data.length) return [];
+        if (followResult.error) { this._logError('getFeed', followResult.error); return []; }
+        if (!followResult.data.length) return [];
         var followIds = followResult.data.map(function(f) { return f.following_id; });
         // Include own posts
         followIds.push(userId);
@@ -231,7 +240,7 @@ export const Social = {
             .limit(20);
         if (cursor) query = query.lt('created_at', cursor);
         var result = await query;
-        if (result.error) return [];
+        if (result.error) { this._logError('getFeed', result.error); return []; }
         return result.data;
     },
 
@@ -261,7 +270,8 @@ export const Social = {
         if (!supa || !checkinIds.length) return { counts: {}, myLikes: new Set() };
         var userId = this._getSupaUserId();
         var result = await supa.from('reactions').select('checkin_id, user_id').in('checkin_id', checkinIds);
-        if (result.error || !result.data) return { counts: {}, myLikes: new Set() };
+        if (result.error) { this._logError('getLikesForCheckins', result.error); return { counts: {}, myLikes: new Set() }; }
+        if (!result.data) return { counts: {}, myLikes: new Set() };
         var counts = {};
         var myLikes = new Set();
         result.data.forEach(function(r) {
@@ -295,7 +305,7 @@ export const Social = {
         var result = await supa.from('reactions')
             .select('*, profiles(username, display_name, avatar_url, is_pro)')
             .eq('checkin_id', checkinId);
-        if (result.error) return [];
+        if (result.error) { this._logError('getReactions', result.error); return []; }
         return result.data;
     },
 
@@ -323,7 +333,7 @@ export const Social = {
         var result = await supa.from('photo_tags')
             .select('*, profiles:tagged_user_id(user_id, username, display_name, avatar_url)')
             .eq('checkin_id', checkinId);
-        if (result.error) return [];
+        if (result.error) { this._logError('getTagsForCheckin', result.error); return []; }
         return result.data;
     },
 
@@ -332,7 +342,8 @@ export const Social = {
         var result = await supa.from('photo_tags')
             .select('checkin_id, tagged_user_id, profiles:tagged_user_id(username, display_name)')
             .in('checkin_id', checkinIds);
-        if (result.error || !result.data) return {};
+        if (result.error) { this._logError('getTagsForCheckins', result.error); return {}; }
+        if (!result.data) return {};
         var tags = {};
         result.data.forEach(function(t) {
             if (!tags[t.checkin_id]) tags[t.checkin_id] = [];
@@ -355,7 +366,7 @@ export const Social = {
             comment_id: commentId || null
         };
         var result = await supa.from('notifications').insert(data);
-        // Silently ignore errors
+        if (result.error) console.warn('[Social.createNotification]', result.error.message);
         return result.data;
     },
 
@@ -369,7 +380,8 @@ export const Social = {
             .eq('user_id', userId)
             .order('created_at', { ascending: false })
             .limit(limit || 50);
-        if (result.error || !result.data || !result.data.length) return [];
+        if (result.error) { this._logError('getNotifications', result.error); return []; }
+        if (!result.data || !result.data.length) return [];
         // Fetch profiles for from_user_ids separately
         var fromIds = [];
         result.data.forEach(function(n) {
@@ -403,7 +415,8 @@ export const Social = {
         if (!supa) return;
         var userId = this._getSupaUserId();
         if (!userId) return;
-        await supa.from('notifications').update({ read: true }).eq('user_id', userId).eq('read', false);
+        var r = await supa.from('notifications').update({ read: true }).eq('user_id', userId).eq('read', false);
+        if (r.error) console.warn('[Social.markNotificationsRead]', r.error.message);
     },
 
     // ===== COMMENTS =====
@@ -447,7 +460,7 @@ export const Social = {
             .select('*, profiles(username, display_name, avatar_url, is_pro)')
             .eq('checkin_id', checkinId)
             .order('created_at', { ascending: true });
-        if (result.error) return [];
+        if (result.error) { this._logError('getComments', result.error); return []; }
         return result.data;
     },
 
@@ -476,7 +489,8 @@ export const Social = {
         if (!supa || !commentIds.length) return { counts: {}, myLikes: new Set() };
         var userId = this._getSupaUserId();
         var result = await supa.from('comment_likes').select('comment_id, user_id').in('comment_id', commentIds);
-        if (result.error || !result.data) return { counts: {}, myLikes: new Set() };
+        if (result.error) { this._logError('getCommentLikes', result.error); return { counts: {}, myLikes: new Set() }; }
+        if (!result.data) return { counts: {}, myLikes: new Set() };
         var counts = {};
         var myLikes = new Set();
         result.data.forEach(function(r) {
@@ -489,7 +503,8 @@ export const Social = {
     async getCommentCountsForCheckins(checkinIds) {
         if (!supa || !checkinIds.length) return {};
         var result = await supa.from('comments').select('checkin_id').in('checkin_id', checkinIds);
-        if (result.error || !result.data) return {};
+        if (result.error) { this._logError('getCommentCountsForCheckins', result.error); return {}; }
+        if (!result.data) return {};
         var counts = {};
         result.data.forEach(function(r) {
             counts[r.checkin_id] = (counts[r.checkin_id] || 0) + 1;
@@ -505,7 +520,7 @@ export const Social = {
             .select('*')
             .or('username.ilike.%' + query + '%,display_name.ilike.%' + query + '%')
             .limit(20);
-        if (result.error) return [];
+        if (result.error) { this._logError('searchUsers', result.error); return []; }
         return result.data;
     },
 
@@ -515,7 +530,7 @@ export const Social = {
             .select('*')
             .order('created_at', { ascending: false })
             .limit(20);
-        if (result.error) return [];
+        if (result.error) { this._logError('getRecentUsers', result.error); return []; }
         return result.data;
     },
 
@@ -549,7 +564,7 @@ export const Social = {
             .select('*')
             .or('user1_id.eq.' + myId + ',user2_id.eq.' + myId)
             .order('last_message_at', { ascending: false });
-        if (r.error) return [];
+        if (r.error) { this._logError('getConversations', r.error); return []; }
         var convs = r.data || [];
         // Fetch profiles for other users
         var otherIds = convs.map(function(c) { return c.user1_id === myId ? c.user2_id : c.user1_id; });
@@ -589,7 +604,7 @@ export const Social = {
             .limit(30);
         if (before) q = q.lt('created_at', before);
         var r = await q;
-        if (r.error) return [];
+        if (r.error) { this._logError('getMessages', r.error); return []; }
         return (r.data || []).reverse();
     },
 
@@ -612,11 +627,12 @@ export const Social = {
         if (!supa) return;
         var myId = this._getSupaUserId();
         if (!myId) return;
-        await supa.from('messages')
+        var r = await supa.from('messages')
             .update({ read: true })
             .eq('conversation_id', conversationId)
             .neq('sender_id', myId)
             .eq('read', false);
+        if (r.error) console.warn('[Social.markMessagesRead]', r.error.message);
     },
 
     async getUnreadMessageCount() {
@@ -683,6 +699,7 @@ export const Social = {
         var q = supa.from('shared_gyms').select('*').order('name').limit(50);
         if (query) q = q.ilike('name', '%' + query + '%');
         var r = await q;
+        if (r.error) { this._logError('searchSharedGyms', r.error); return []; }
         return r.data || [];
     },
 
@@ -691,18 +708,21 @@ export const Social = {
         var r = await supa.from('shared_gyms').select('*')
             .ilike('city', city)
             .order('name');
+        if (r.error) { this._logError('getSharedGymsByCity', r.error); return []; }
         return r.data || [];
     },
 
     async getAllSharedGyms() {
         if (!supa) return [];
         var r = await supa.from('shared_gyms').select('*').order('name');
+        if (r.error) { this._logError('getAllSharedGyms', r.error); return []; }
         return r.data || [];
     },
 
     async getSharedGymsByIds(ids) {
         if (!supa || !ids || !ids.length) return [];
         var r = await supa.from('shared_gyms').select('*').in('id', ids);
+        if (r.error) { this._logError('getSharedGymsByIds', r.error); return []; }
         return r.data || [];
     },
 
@@ -713,6 +733,7 @@ export const Social = {
         var r = await supa.from('shared_gyms')
             .upsert({ name: name, city: city, created_by: myId }, { onConflict: 'name,city' })
             .select().single();
+        if (r.error) { this._logError('addSharedGym', r.error); return null; }
         return r.data;
     },
 
@@ -724,6 +745,7 @@ export const Social = {
         if (query) q = q.ilike('name', '%' + query + '%');
         if (category && category !== 'all') q = q.eq('category', category);
         var r = await q;
+        if (r.error) { this._logError('searchSharedExercises', r.error); return []; }
         return r.data || [];
     },
 
@@ -734,6 +756,7 @@ export const Social = {
         var r = await supa.from('shared_exercises')
             .upsert({ name: name, category: category, created_by: myId }, { onConflict: 'name' })
             .select().single();
+        if (r.error) { this._logError('addSharedExercise', r.error); return null; }
         return r.data;
     },
 
@@ -745,6 +768,7 @@ export const Social = {
         if (query) q = q.ilike('name', '%' + query + '%');
         if (muscleGroup && muscleGroup !== 'all') q = q.eq('muscle_group', muscleGroup);
         var r = await q;
+        if (r.error) { this._logError('searchSharedEquipment', r.error); return []; }
         return r.data || [];
     },
 
@@ -755,6 +779,7 @@ export const Social = {
         var r = await supa.from('shared_equipment')
             .upsert({ name: name, muscle_group: muscleGroup, created_by: myId }, { onConflict: 'name,muscle_group' })
             .select().single();
+        if (r.error) { this._logError('addSharedEquipment', r.error); return null; }
         return r.data;
     },
 
@@ -768,6 +793,7 @@ export const Social = {
             .eq('gym_city', gymCity);
         if (exerciseName) q = q.eq('exercise_name', exerciseName);
         var r = await q;
+        if (r.error) { this._logError('getGymEquipment', r.error); return []; }
         return r.data || [];
     },
 
@@ -783,6 +809,7 @@ export const Social = {
                 catalog_id: catalogId || null,
                 created_by: myId || null
             }, { onConflict: 'gym_name,gym_city,exercise_name,equipment_name' });
+        if (r.error) { this._logError('addGymEquipment', r.error); return null; }
         return r.data;
     },
 
@@ -795,6 +822,7 @@ export const Social = {
             .ilike('exercise_type', '%' + exerciseType + '%')
             .order('brand');
         var r = await q;
+        if (r.error) { this._logError('getCatalogByExerciseType', r.error); return []; }
         return r.data || [];
     },
 
@@ -805,6 +833,7 @@ export const Social = {
             .order('brand');
         if (muscleGroup) q = q.eq('muscle_group', muscleGroup);
         var r = await q;
+        if (r.error) { this._logError('getCatalogByGroup', r.error); return []; }
         return r.data || [];
     },
 
@@ -823,6 +852,7 @@ export const Social = {
         }
         if (muscleGroup && muscleGroup !== 'all') q = q.eq('muscle_group', muscleGroup);
         var r = await q;
+        if (r.error) { this._logError('searchCatalog', r.error); return []; }
         return r.data || [];
     },
 
@@ -833,6 +863,7 @@ export const Social = {
             .order('brand');
         if (exerciseType) q = q.ilike('exercise_type', '%' + exerciseType + '%');
         var r = await q;
+        if (r.error) { this._logError('getCatalogBrands', r.error); return []; }
         if (!r.data) return [];
         var seen = {};
         var brands = [];
@@ -851,6 +882,7 @@ export const Social = {
             .order('name');
         if (exerciseType) q = q.ilike('exercise_type', '%' + exerciseType + '%');
         var r = await q;
+        if (r.error) { this._logError('getCatalogByBrandAndType', r.error); return []; }
         return r.data || [];
     },
 
@@ -862,6 +894,7 @@ export const Social = {
             .eq('gym_city', gymCity)
             .eq('exercise_name', exerciseName);
         var r = await q;
+        if (r.error) { this._logError('getGymEquipmentForExercise', r.error); return []; }
         return (r.data || []).map(function(row) { return row.equipment_name; });
     }
 };

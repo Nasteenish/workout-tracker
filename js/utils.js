@@ -8,6 +8,19 @@ export function esc(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
+// Non-intrusive error toast — debounced to max 1 per 10s
+var _errorToastTimer = 0;
+export function showErrorToast(msg) {
+    var now = Date.now();
+    if (now - _errorToastTimer < 10000) return;
+    _errorToastTimer = now;
+    var el = document.createElement('div');
+    el.className = 'error-toast';
+    el.textContent = msg || 'Ошибка сети';
+    document.body.appendChild(el);
+    setTimeout(function() { el.remove(); }, 4000);
+}
+
 // Exercise display name based on language setting
 export function exName(ex) {
     if (!ex) return '';

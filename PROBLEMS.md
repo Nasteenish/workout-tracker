@@ -207,9 +207,13 @@ Keyframes остаются при своих компонентах, в `animati
 
 ---
 
-### 20. Тихие ошибки Supabase
+### ~~20. Тихие ошибки Supabase~~ ✅ РЕШЕНО
 
-**Где:** `js/social.js` — паттерн `if (result.error) return null;` → ошибки проглатываются, пользователь не видит что запрос провалился.
+**Что сделано:** Добавлен `_logError(method, error)` в `Social` — логирует `console.warn` с именем метода и показывает ненавязчивый error toast (дедуплицируется — max 1 за 10 секунд). `showErrorToast()` вынесен в `utils.js` как переиспользуемая функция. Обновлены все ~35 методов:
+- **Read-методы** (getProfile, getFeed, getComments, etc.) — `_logError()` + toast при `result.error`
+- **Fire-and-forget** (createNotification, markNotificationsRead, markMessagesRead) — только `console.warn`
+- **Write-методы** (upsert, insert, delete) — уже бросали `throw new Error`, не изменены
+- Guards `!supa`/`!userId` не логируются — это ожидаемое состояние (пользователь не авторизован)
 
 ---
 
@@ -236,7 +240,7 @@ Keyframes остаются при своих компонентах, в `animati
 | 15 | ~~Prop drilling~~ ✅ | **Средняя** | Низкое | 🟢 P3 |
 | 18 | ~~Stale _pageCache~~ ✅ | **Низкая** | Низкое | 🟢 P3 |
 | 19 | Нет валидации ввода | Низкая | Низкое | 🟢 P3 |
-| 20 | Тихие ошибки Supabase | Средняя | Среднее | 🟢 P3 |
+| 20 | ~~Тихие ошибки Supabase~~ ✅ | **Средняя** | Среднее | 🟢 P3 |
 
 ---
 
