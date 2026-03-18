@@ -1,0 +1,229 @@
+/* ===== Menu Cards ===== */
+.menu-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg) var(--spacing-md);
+    background: var(--bg-secondary);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow);
+    margin-bottom: var(--spacing-md);
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.menu-card:active {
+    background: var(--bg-card);
+    transform: scale(0.98);
+}
+
+.menu-card-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(157, 141, 245, 0.15);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-primary);
+    flex-shrink: 0;
+}
+
+.menu-card-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.menu-card-title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    margin-bottom: 2px;
+}
+
+.menu-card-desc {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.menu-card-arrow {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+/* ===== Guide Page ===== */
+.guide-card {
+    background: var(--bg-secondary);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.guide-card-label {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: var(--spacing-md);
+}
+
+.guide-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) 0;
+    border-top: 1px solid var(--border-color);
+}
+
+.guide-item:first-of-type {
+    border-top: none;
+    padding-top: 0;
+}
+
+.guide-item .set-type-badge,
+.guide-item .rpe-badge,
+.guide-item .tech-badge {
+    flex-shrink: 0;
+    margin-top: 2px;
+    min-width: 52px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.guide-item-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.guide-item-title {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.guide-item-desc {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.guide-item-desc strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* ===== Calculator Page ===== */
+.calc-card {
+    background: var(--bg-secondary);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow);
+    padding: var(--spacing-lg);
+}
+
+.calc-row {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--spacing-md);
+}
+
+.calc-field {
+    flex: 1;
+    min-width: 0;
+}
+
+.calc-label {
+    display: block;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--spacing-sm);
+}
+
+.calc-input {
+    width: 100%;
+    height: 56px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: -0.5px;
+    font-variant-numeric: tabular-nums;
+    -webkit-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+}
+
+.calc-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(157, 141, 245, 0.25);
+}
+
+.calc-input::placeholder {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.calc-arrow {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    padding-bottom: 16px;
+}
+
+.calc-hint {
+    text-align: center;
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    margin-top: var(--spacing-md);
+}
+
+/* ===== Pull-to-refresh indicator ===== */
+#pull-indicator {
+    position: fixed;
+    top: calc(env(safe-area-inset-top) + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 50%;
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#pull-indicator.spinning {
+    animation: ptr-spin 0.6s linear infinite;
+    color: var(--accent-primary);
+}
+
+@keyframes ptr-spin {
+    to { transform: translateX(-50%) rotate(360deg); }
+}

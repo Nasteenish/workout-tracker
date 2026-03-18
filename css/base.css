@@ -1,0 +1,185 @@
+/* ===== Reset & Base ===== */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    background-color: #08080F;
+    overscroll-behavior: none;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg-primary);
+    background-image:
+        radial-gradient(ellipse at 20% 10%, rgba(157, 141, 245, 0.18) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 90%, rgba(45, 212, 191, 0.10) 0%, transparent 45%),
+        radial-gradient(ellipse at 60% 40%, rgba(255, 45, 85, 0.06) 0%, transparent 40%);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    line-height: 1.4;
+    min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Safe area for notch/dynamic island */
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    /* Hide scrollbar on iOS */
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbar */
+body::-webkit-scrollbar { display: none; }
+body { scrollbar-width: none; }
+
+input, button, select {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+/* ===== App Container ===== */
+#app {
+    max-width: 500px;
+    margin: 0 auto;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* ===== Header ===== */
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10, 10, 20, 0.55);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+    border-bottom: var(--glass-border);
+    padding: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.app-header .back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--touch-min);
+    height: var(--touch-min);
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: var(--font-size-xl);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+}
+
+.app-header .back-btn:active {
+    opacity: 0.6;
+}
+
+.app-header .header-title {
+    flex: 1;
+    min-width: 0;
+}
+
+.app-header .header-title h1 {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.2px;
+}
+
+.app-header .header-title .header-subtitle {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+/* ===== Content Area ===== */
+.app-content {
+    padding: var(--spacing-md);
+    padding-bottom: calc(var(--spacing-xl) * 3);
+}
+
+.slide-container {
+    position: relative;
+    animation: none;
+}
+
+.week-slide,
+.day-slide {
+    will-change: transform;
+    animation: none;
+    position: relative;
+    z-index: 1;
+}
+
+/* Companion panel sits inside .slide-container — auto-aligns vertically */
+.nav-companion {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 0;
+    pointer-events: none;
+    will-change: transform;
+}
+
+/* Full-page companion for iOS back navigation from day view */
+.back-companion {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    pointer-events: none;
+    will-change: transform;
+    overflow: hidden;
+    background-color: var(--bg-primary);
+    background-image:
+        radial-gradient(ellipse at 20% 10%, rgba(157, 141, 245, 0.18) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 90%, rgba(45, 212, 191, 0.10) 0%, transparent 45%),
+        radial-gradient(ellipse at 60% 40%, rgba(255, 45, 85, 0.06) 0%, transparent 40%);
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.back-companion > * {
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.back-companion .app-content > *,
+#app.no-animate .app-content > * {
+    animation: none !important;
+}
+
+#app.swiping-back {
+    z-index: 100;
+    overflow-x: visible !important;
+    background: var(--bg-primary);
+    will-change: transform;
+    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== Scrollbar — hidden for clean iOS look ===== */
+::-webkit-scrollbar {
+    display: none;
+}
+
+* {
+    scrollbar-width: none;
+}

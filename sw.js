@@ -1,8 +1,21 @@
-const CACHE_NAME = 'workout-tracker-v530';
+const CACHE_NAME = 'workout-tracker-v531';
 const ASSETS = [
     './',
     './index.html',
     './css/styles.css',
+    './css/variables.css',
+    './css/base.css',
+    './css/auth.css',
+    './css/week-view.css',
+    './css/day-view.css',
+    './css/settings.css',
+    './css/components.css',
+    './css/timer.css',
+    './css/builder.css',
+    './css/celebration.css',
+    './css/social.css',
+    './css/chat.css',
+    './css/animations.css',
     './js/main.js',
     './js/app.js',
     './js/data.js',

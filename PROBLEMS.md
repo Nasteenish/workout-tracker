@@ -136,11 +136,24 @@
 
 ---
 
-### 13. CSS: 5329 строк в одном файле
+### ~~13. CSS: 5329 строк в одном файле~~ ✅ РЕШЕНО
 
-Нет структуры, нет разделения по компонентам. Сложно найти стили конкретного экрана.
+**Что сделано:** `css/styles.css` разбит на 13 компонентных файлов, подключаемых через `@import`:
+- `variables.css` — CSS custom properties (:root)
+- `base.css` — reset, body, #app, header, content area
+- `auth.css` — setup, login, onboarding, notification prompt
+- `week-view.css` — week nav, day cards
+- `day-view.css` — exercise cards, set rows, weight modal, history, finish btn
+- `settings.css` — equipment modal, settings cards, substitution modal
+- `components.css` — menu cards, guide, calculator, pull-to-refresh
+- `timer.css` — rest timer, workout timer, gym indicator, equipment chips/search
+- `builder.css` — day editor, exercise picker, set controls, groups, cropper
+- `celebration.css` — workout complete overlay, fireworks, timer row
+- `social.css` — tab bar, profiles, checkins, likes, notifications, discover
+- `chat.css` — messaging, chat bubbles, input bar, toast
+- `animations.css` — shared keyframes (fadeIn, slide-up-modal)
 
-**Решение:** Разбить на файлы (`timer.css`, `social.css`, `builder.css`), подключать через `@import`.
+Keyframes остаются при своих компонентах, в `animations.css` только общие. `styles.css` — 15-строчная точка входа. SW ASSETS и CACHE_NAME обновлены.
 
 ---
 
