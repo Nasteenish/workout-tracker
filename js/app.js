@@ -1597,18 +1597,39 @@ const App = {
     handleClick(e) {
         const target = e.target;
 
+        // Auth (login, register, migrate, logout)
+        if (this._handleAuthClick(target)) return;
 
+        // Onboarding + Builder + Program management
+        if (this._handleBuilderClick(target)) return;
+
+        // Social (profiles, feed, checkins, chat, notifications)
+        if (this._handleSocialClick(target)) return;
+
+        // Navigation (back buttons with animation)
+        if (this._handleNavigationClick(target)) return;
+
+        // Settings
+        if (this._handleSettingsClick(target)) return;
+
+        // Modals (substitution, gym, choice, equipment) — order matters internally
+        if (this._handleModalClick(target)) return;
+
+        // Workout day (unit cycle, timer, sets, complete, history, export)
+        if (this._handleWorkoutClick(target)) return;
+    },
+
+    // ===== Delegated auth click handlers =====
+    _handleAuthClick(target) {
         // Login form submit
         if (target.id === 'login-submit' || target.closest('#login-submit')) {
             var loginInput = document.getElementById('login-input');
             var passInput = document.getElementById('password-input');
             var loginVal = loginInput ? loginInput.value.trim() : '';
             var passVal = passInput ? passInput.value.trim() : '';
-            if (!loginVal || !passVal) return;
-            // Try local login first (hardcoded + local self-registered)
-            var loginResult = this.login(loginVal, passVal);
+            if (!loginVal || !passVal) return true;
+            var loginResult = App.login(loginVal, passVal);
             if (loginResult === 'migrated') {
-                // Find the migrated account's email hint
                 var migratedAcct = typeof ACCOUNTS !== 'undefined' ? ACCOUNTS.find(function(a) { return a.login === loginVal; }) : null;
                 var migratedTo = migratedAcct ? localStorage.getItem('wt_migrated_' + migratedAcct.id) : null;
                 var emailHint = migratedTo ? localStorage.getItem('wt_email_' + migratedTo) : null;
@@ -1619,25 +1640,23 @@ const App = {
                         : 'Аккаунт обновлён. Войдите через email и пароль.';
                     err.style.display = 'block';
                 }
-                return;
+                return true;
             }
-            if (loginResult === true) return;
-            // Try Supabase login — by email directly, or look up email by username
+            if (loginResult === true) return true;
             if (typeof SupaSync !== 'undefined') {
                 if (loginVal.includes('@')) {
-                    this.loginSupabase(loginVal, passVal);
+                    App.loginSupabase(loginVal, passVal);
                 } else {
-                    // Try to find email by username in profiles table
-                    this._loginByUsername(loginVal, passVal);
+                    App._loginByUsername(loginVal, passVal);
                 }
-                return;
+                return true;
             }
             var err = document.getElementById('login-error');
             if (err) {
                 err.textContent = 'Неверный логин или пароль';
                 err.style.display = 'block';
             }
-            return;
+            return true;
         }
 
         // Password visibility toggle
@@ -1650,42 +1669,411 @@ const App = {
                 togBtn.querySelector('.eye-icon').style.display = show ? 'none' : '';
                 togBtn.querySelector('.eye-off-icon').style.display = show ? '' : 'none';
             }
-            return;
+            return true;
         }
 
         // Migration: submit
         if (target.id === 'migrate-submit' || target.closest('#migrate-submit')) {
-            this._handleMigration();
-            return;
+            App._handleMigration();
+            return true;
         }
 
-        // Go to registration (replace login in history)
+        // Go to registration
         if (target.id === 'btn-register' || target.closest('#btn-register')) {
             history.replaceState(null, '', '#/register');
-            this.route();
-            return;
+            App.route();
+            return true;
         }
 
         // Registration: submit
         if (target.id === 'reg-submit' || target.closest('#reg-submit')) {
             Builder.handleRegister();
-            return;
+            return true;
         }
 
-        // Registration: go back to login (replace, don't push)
+        // Registration: go back to login
         if (target.id === 'btn-go-login' || target.closest('#btn-go-login')) {
             history.replaceState(null, '', '#/login');
-            this.route();
-            return;
+            App.route();
+            return true;
         }
 
+        // Logout
+        if (target.id === 'btn-logout' || target.closest('#btn-logout')) {
+            App.logout();
+            return true;
+        }
+
+        return false;
+    },
+
+    // ===== Delegated settings click handlers =====
+    _handleSettingsClick(target) {
+        // Timer min/sec steppers
+        if (['td-min-minus','td-min-plus','td-sec-minus','td-sec-plus'].includes(target.id)) {
+            const minEl = document.getElementById('td-min-val');
+            const secEl = document.getElementById('td-sec-val');
+            if (!minEl || !secEl) return true;
+            let mins = parseInt(minEl.textContent) || 0;
+            let secs = parseInt(secEl.textContent) || 0;
+            if (target.id === 'td-min-minus') mins = Math.max(0, mins - 1);
+            if (target.id === 'td-min-plus') mins = Math.min(99, mins + 1);
+            if (target.id === 'td-sec-minus') secs = secs === 0 ? 55 : secs - 5;
+            if (target.id === 'td-sec-plus') secs = secs >= 55 ? 0 : secs + 5;
+            if (mins === 0 && secs === 0) { secs = 5; }
+            minEl.textContent = mins;
+            secEl.textContent = String(secs).padStart(2, '0');
+            return true;
+        }
+
+        // Save settings
+        if (target.id === 'settings-save') {
+            const cycleBtn = document.querySelector('.cycle-toggle button.active[data-cycle]');
+            const cycleType = cycleBtn ? parseInt(cycleBtn.dataset.cycle) : 7;
+            const startDate = document.getElementById('settings-start-date').value;
+            const unitBtn = document.querySelector('.cycle-toggle button.active[data-unit]');
+            const weightUnit = unitBtn ? unitBtn.dataset.unit : 'kg';
+            const mins = parseInt(document.getElementById('td-min-val')?.textContent) || 0;
+            const secs = parseInt(document.getElementById('td-sec-val')?.textContent) || 0;
+            const timerDuration = Math.max(30, mins * 60 + secs);
+            const langBtn = document.querySelector('.cycle-toggle button.active[data-lang]');
+            const exerciseLang = langBtn ? langBtn.dataset.lang : 'ru';
+            Storage.saveSettings({ cycleType, startDate, weightUnit, timerDuration, exerciseLang });
+            RestTimer.setDefaultDuration(timerDuration);
+            location.hash = `#/week/${App._currentWeek}`;
+            return true;
+        }
+
+        // Add equipment
+        if (target.id === 'settings-eq-add' || target.closest('#settings-eq-add')) {
+            const input = document.getElementById('settings-eq-name');
+            const name = input ? input.value.trim() : '';
+            if (!name) return true;
+            Storage.addEquipment(name);
+            UI.renderSettings();
+            return true;
+        }
+
+        // Edit equipment name (inline)
+        if (target.matches('.eq-edit-btn') || target.closest('.eq-edit-btn')) {
+            const btn = target.matches('.eq-edit-btn') ? target : target.closest('.eq-edit-btn');
+            const eqId = btn.dataset.eqId;
+            if (!eqId) return true;
+            var item = btn.closest('.settings-eq-item');
+            var span = item ? item.querySelector('span') : null;
+            if (!span || span.querySelector('input')) return true;
+            var oldName = span.textContent.trim();
+            document.querySelectorAll('.eq-remove-btn, .gym-remove-btn').forEach(function(b) { b.disabled = true; b.style.opacity = '0.3'; });
+            span.innerHTML = '<input type="text" class="eq-inline-edit" value="' + oldName.replace(/"/g, '&quot;') + '">';
+            var inp = span.querySelector('input');
+            inp.focus(); inp.select();
+            var saved = false;
+            var save = function() {
+                if (saved) return; saved = true;
+                var v = inp.value.trim();
+                if (v && v !== oldName) { Storage.renameEquipment(eqId, v); }
+                UI.renderSettings();
+            };
+            inp.addEventListener('blur', function() { setTimeout(save, 100); });
+            inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); save(); } });
+            return true;
+        }
+
+        // Remove equipment
+        if (target.matches('.eq-remove-btn') || target.closest('.eq-remove-btn')) {
+            const btn = target.matches('.eq-remove-btn') ? target : target.closest('.eq-remove-btn');
+            if (btn.disabled) return true;
+            const eqId = btn.dataset.eqId;
+            if (eqId) {
+                Storage.removeEquipment(eqId);
+                UI.renderSettings();
+            }
+            return true;
+        }
+
+        // Remove gym
+        if (target.matches('.gym-remove-btn') || target.closest('.gym-remove-btn')) {
+            var btn = target.matches('.gym-remove-btn') ? target : target.closest('.gym-remove-btn');
+            if (btn.disabled) return true;
+            var gymId = btn.dataset.gymId;
+            if (gymId && confirm('Убрать зал из списка?')) {
+                Storage.removeGym(gymId);
+                UI.renderSettings();
+            }
+            return true;
+        }
+
+        // Reset data
+        if (target.id === 'btn-reset') {
+            if (confirm('Вы уверены? Все данные будут удалены.')) {
+                Storage.clearAll();
+                location.hash = '#/setup';
+            }
+            return true;
+        }
+
+        return false;
+    },
+
+    // ===== Delegated workout click handlers =====
+    _handleWorkoutClick(target) {
+        // Unit cycle button
+        if (target.matches('.unit-cycle-btn')) {
+            const exId = target.dataset.exercise;
+            const units = ['kg', 'lbs', 'plates'];
+            const labels = { kg: 'кг', lbs: 'lbs', plates: 'пл' };
+            const current = Storage.getExerciseUnit(exId) || Storage.getWeightUnit();
+            const next = units[(units.indexOf(current) + 1) % units.length];
+            Storage.setExerciseUnit(exId, next);
+            const nextLabel = labels[next];
+            document.querySelectorAll(`.unit-cycle-btn[data-exercise="${exId}"]`).forEach(b => {
+                b.textContent = nextLabel;
+            });
+            document.querySelectorAll(`.set-prev-unit[data-exercise="${exId}"]`).forEach(s => {
+                s.textContent = nextLabel;
+            });
+            return true;
+        }
+
+        // Start workout timer
+        if (target.id === 'btn-start-workout') {
+            UI.showGymModal(function(gymId) {
+                Storage.saveWorkoutGym(App._currentWeek, App._currentDay, gymId || null);
+                if (gymId) {
+                    Storage.touchGym(gymId);
+                    if (Storage.gymHasEquipmentMap(gymId)) {
+                        Storage.applyGymEquipment(gymId);
+                    } else {
+                        Storage.initGymFromCurrentEquipment(gymId);
+                    }
+                    App.startWorkoutTimer();
+                    UI.renderDay(App._currentWeek, App._currentDay);
+                } else {
+                    App.startWorkoutTimer();
+                    UI.renderDay(App._currentWeek, App._currentDay);
+                }
+            });
+            return true;
+        }
+
+        if (target.id === 'btn-pause-workout') {
+            App.pauseWorkoutTimer();
+            UI.renderDay(App._currentWeek, App._currentDay);
+            return true;
+        }
+
+        if (target.id === 'btn-resume-workout') {
+            App.unpauseWorkoutTimer();
+            UI.renderDay(App._currentWeek, App._currentDay);
+            return true;
+        }
+
+        if (target.id === 'btn-cancel-workout') {
+            App.cancelWorkoutTimer();
+            UI.renderDay(App._currentWeek, App._currentDay);
+            return true;
+        }
+
+        // Add set button
+        if (target.matches('.add-set-btn') || target.closest('.add-set-btn')) {
+            const btn = target.matches('.add-set-btn') ? target : target.closest('.add-set-btn');
+            const exId = btn.dataset.exercise;
+            App._addSet(exId);
+            return true;
+        }
+
+        // Remove set button
+        if (target.matches('.remove-set-btn') || target.closest('.remove-set-btn')) {
+            const btn = target.matches('.remove-set-btn') ? target : target.closest('.remove-set-btn');
+            const exId = btn.dataset.exercise;
+            App._removeSet(exId);
+            return true;
+        }
+
+        // Equipment button
+        if (target.matches('.equipment-btn') || target.closest('.equipment-btn')) {
+            const btn = target.matches('.equipment-btn') ? target : target.closest('.equipment-btn');
+            const exId = btn.dataset.exercise;
+            UI.showEquipmentModal(exId, btn.dataset.exname || '', btn.dataset.exnameRu || '');
+            return true;
+        }
+
+        // Complete button
+        if (target.matches('.complete-btn') || target.closest('.complete-btn')) {
+            const btn = target.matches('.complete-btn') ? target : target.closest('.complete-btn');
+            const exId = btn.dataset.exercise;
+            const setIdx = parseInt(btn.dataset.set);
+            const eqId = Storage.getExerciseEquipment(exId);
+
+            const row = btn.closest('.set-row');
+            const weightInput = row.querySelector('.weight-input');
+            const repsInput = row.querySelector('.reps-input');
+            const weight = parseFloat(String(weightInput.value).replace(',', '.')) || parseFloat(String(weightInput.placeholder).replace(',', '.')) || 0;
+            const reps = parseInt(repsInput.value) || parseInt(repsInput.placeholder) || 0;
+
+            const existing = Storage.getSetLog(App._currentWeek, App._currentDay, exId, setIdx);
+            if (existing && existing.completed) {
+                Storage.toggleSetComplete(App._currentWeek, App._currentDay, exId, setIdx, eqId);
+                btn.classList.remove('completed');
+                row.classList.remove('done');
+                btn.innerHTML = '<svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18.5" stroke="rgba(157,141,245,0.4)" stroke-width="1.5"/></svg>';
+            } else {
+                if (weight > 0) {
+                    weightInput.value = weight;
+                }
+                if (reps > 0) {
+                    repsInput.value = reps;
+                }
+                Storage.saveSetLog(App._currentWeek, App._currentDay, exId, setIdx, weight, reps, eqId);
+                var activeGym = App._getActiveGymId();
+                if (activeGym && eqId) {
+                    Storage.setGymExerciseEquipment(activeGym, exId, eqId);
+                    App._shareToGymEquipment(exId, Storage.getEquipmentById(eqId));
+                }
+
+                row.querySelectorAll('.seg-weight-input[data-seg]').forEach(inp => {
+                    var si = parseInt(inp.dataset.seg);
+                    if (si > 0 && inp.value) Storage.saveSegWeight(App._currentWeek, App._currentDay, exId, setIdx, si, inp.value);
+                });
+                row.querySelectorAll('.seg-reps-input[data-seg]').forEach(inp => {
+                    var si = parseInt(inp.dataset.seg);
+                    if (si > 0 && inp.value) Storage.saveSegReps(App._currentWeek, App._currentDay, exId, setIdx, si, inp.value);
+                });
+
+                btn.classList.add('completed');
+                const gid = `cg-${exId}-${setIdx}`;
+                btn.innerHTML = `<svg width="40" height="40" viewBox="0 0 40 40"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#C3FF3C"/><stop offset="1" stop-color="#5AA00A"/></linearGradient></defs><circle cx="20" cy="20" r="20" fill="url(#${gid})"/><g transform="translate(11,11)"><path d="M4 9l3.5 3.5L14 5.5" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`;
+                btn.classList.add('pop');
+                btn.addEventListener('animationend', () => btn.classList.remove('pop'), { once: true });
+                row.classList.add('done');
+
+                var progress = getCompletedSets(App._currentWeek, App._currentDay);
+                if (progress.total > 0 && progress.completed >= progress.total) {
+                    App._showFinishButton();
+                } else {
+                    RestTimer.start(row);
+                }
+            }
+            return true;
+        }
+
+        // Choose one: tap exercise name to open selector
+        if (target.matches('.exercise-name-chooser') || target.closest('.exercise-name-chooser')) {
+            const el = target.matches('.exercise-name-chooser') ? target : target.closest('.exercise-name-chooser');
+            UI.showChoiceModal(el.dataset.choiceKey);
+            return true;
+        }
+
+        // Choice modal: close on overlay
+        if (target.id === 'choice-modal') {
+            UI.hideChoiceModal();
+            return true;
+        }
+
+        // History button
+        if (target.matches('.history-btn') || target.closest('.history-btn')) {
+            const btn = target.matches('.history-btn') ? target : target.closest('.history-btn');
+            const exId = btn.dataset.exercise;
+            location.hash = `#/history/${encodeURIComponent(exId)}`;
+            return true;
+        }
+
+        // Export
+        if (target.id === 'btn-export') {
+            const data = Storage.exportData();
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `workout-data-${formatDateISO(new Date())}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            return true;
+        }
+
+        // Import
+        if (target.id === 'btn-import') {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (ev) => {
+                const file = ev.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (Storage.importData(e.target.result)) {
+                        alert('Данные импортированы!');
+                        App.route();
+                    } else {
+                        alert('Ошибка импорта файла');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+            return true;
+        }
+
+        return false;
+    },
+
+    // ===== Animated back-navigation helper =====
+    _navigateBack(hash) {
+        const app = document.getElementById('app');
+        app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
+        app.style.transform = 'translateX(40px)';
+        app.style.opacity = '0';
+        setTimeout(() => {
+            app.style.transition = 'none';
+            app.style.transform = '';
+            app.style.opacity = '';
+            window.scrollTo(0, 0);
+            location.hash = hash;
+        }, 190);
+    },
+
+    // ===== Delegated navigation click handlers =====
+    _handleNavigationClick(target) {
+        if (target.id === 'btn-back' || target.closest('#btn-back')) {
+            this._navigateBack(`#/week/${this._currentWeek}`);
+            return true;
+        }
+        if (target.id === 'btn-back-history' || target.closest('#btn-back-history')) {
+            this._navigateBack(`#/week/${this._currentWeek}/day/${this._currentDay}`);
+            return true;
+        }
+        if (target.id === 'btn-settings' || target.closest('#btn-settings')) {
+            location.hash = '#/menu';
+            return true;
+        }
+        if (target.id === 'btn-back-menu' || target.closest('#btn-back-menu')) {
+            this._navigateBack(`#/week/${this._currentWeek}`);
+            return true;
+        }
+        if (target.id === 'btn-back-settings' || target.closest('#btn-back-settings')) {
+            this._navigateBack('#/menu');
+            return true;
+        }
+        if (target.id === 'btn-back-calc' || target.closest('#btn-back-calc')) {
+            this._navigateBack('#/menu');
+            return true;
+        }
+        if (target.id === 'btn-back-guide' || target.closest('#btn-back-guide')) {
+            this._navigateBack('#/menu');
+            return true;
+        }
+        return false;
+    },
+
+    // ===== Delegated builder/onboarding/setup click handlers =====
+    _handleBuilderClick(target) {
         // Onboarding: gender
         var genderBtn = target.closest('.onboard-gender-btn');
         if (genderBtn) {
             if (!Builder._onboardingData) Builder._onboardingData = {};
             Builder._onboardingData.gender = genderBtn.dataset.gender;
             location.hash = '#/onboarding/2';
-            return;
+            return true;
         }
 
         // Onboarding: role selection
@@ -1696,7 +2084,7 @@ const App = {
             if (roleBtn.dataset.role === 'casual') location.hash = '#/onboarding/3';
             else if (roleBtn.dataset.role === 'athlete') location.hash = '#/onboarding/3a';
             else if (roleBtn.dataset.role === 'trainer') location.hash = '#/onboarding/3t';
-            return;
+            return true;
         }
 
         // Onboarding: goal (casual)
@@ -1705,7 +2093,7 @@ const App = {
             if (!Builder._onboardingData) Builder._onboardingData = {};
             Builder._onboardingData.goal = goalBtn.dataset.goal;
             Builder._finishOnboarding();
-            return;
+            return true;
         }
 
         // Onboarding: pro/amateur (athlete)
@@ -1714,7 +2102,7 @@ const App = {
             if (!Builder._onboardingData) Builder._onboardingData = {};
             Builder._onboardingData.is_pro = proBtn.dataset.pro === 'true';
             location.hash = '#/onboarding/4';
-            return;
+            return true;
         }
 
         // Onboarding: category (athlete)
@@ -1723,7 +2111,7 @@ const App = {
             if (!Builder._onboardingData) Builder._onboardingData = {};
             Builder._onboardingData.category = catBtn.dataset.category;
             location.hash = '#/onboarding/5';
-            return;
+            return true;
         }
 
         // Onboarding: phase (athlete)
@@ -1732,7 +2120,7 @@ const App = {
             if (!Builder._onboardingData) Builder._onboardingData = {};
             Builder._onboardingData.phase = phaseBtn.dataset.phase;
             Builder._finishOnboarding();
-            return;
+            return true;
         }
 
         // Onboarding: client count (trainer)
@@ -1741,27 +2129,512 @@ const App = {
             if (!Builder._onboardingData) Builder._onboardingData = {};
             Builder._onboardingData.client_count = clientsBtn.dataset.clients;
             Builder._finishOnboarding();
-            return;
+            return true;
         }
 
-        // Logout
-        if (target.id === 'btn-logout' || target.closest('#btn-logout')) {
-            this.logout();
-            return;
+        // Setup: import program from file
+        if (target.id === 'setup-import-program' || target.closest('#setup-import-program')) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (ev) => {
+                const file = ev.target.files[0];
+                if (!file) return;
+                App.importProgram(file).then(() => {
+                    UI.renderSetup();
+                }).catch(err => {
+                    const status = document.getElementById('program-status');
+                    if (status) status.innerHTML = `<span style="color:#FF2D55">${err}</span>`;
+                });
+            };
+            input.click();
+            return true;
         }
 
-        // ===== SOCIAL CLICK HANDLERS =====
+        // Setup: create program (builder)
+        if (target.id === 'setup-create-program' || target.closest('#setup-create-program')) {
+            location.hash = '#/builder/step1';
+            return true;
+        }
 
+        // Builder wizard: toggle buttons (weeks/days)
+        if (target.matches('.builder-toggle button')) {
+            var btns = target.parentElement.querySelectorAll('button');
+            btns.forEach(function(b) { b.classList.remove('active'); });
+            target.classList.add('active');
+            return true;
+        }
+
+        // Builder wizard: step1 → step2
+        if (target.id === 'builder-next' || target.closest('#builder-next')) {
+            Builder.saveStep1();
+            location.hash = '#/builder/step2';
+            return true;
+        }
+
+        // Builder wizard: back from step1 → setup
+        if (target.id === 'builder-back-setup' || target.closest('#builder-back-setup')) {
+            location.hash = '#/setup';
+            return true;
+        }
+
+        // Builder wizard: back from step2 → step1
+        if (target.id === 'builder-back-step1' || target.closest('#builder-back-step1')) {
+            // Save day names to config
+            if (Builder._config) {
+                var dayInputs = document.querySelectorAll('.builder-day-name');
+                var names = [];
+                dayInputs.forEach(function(inp) { names.push(inp.value.trim()); });
+                Builder._config.dayNames = names;
+            }
+            location.hash = '#/builder/step1';
+            return true;
+        }
+
+        // Builder wizard: create program
+        if (target.id === 'builder-create' || target.closest('#builder-create')) {
+            Builder.createProgram();
+            location.hash = '#/setup';
+            return true;
+        }
+
+        // Setup summary: back to initial setup
+        if (target.id === 'setup-back-builder' || target.closest('#setup-back-builder')) {
+            if (Builder._config) {
+                location.hash = '#/builder/step2';
+            } else {
+                var numDays = getTotalDays();
+                var dayNames = [];
+                for (var d = 1; d <= numDays; d++) {
+                    var tmpl = PROGRAM && PROGRAM.dayTemplates[d];
+                    dayNames.push(tmpl ? (tmpl.titleRu || tmpl.title || '') : '');
+                }
+                Builder._config = {
+                    title: PROGRAM ? (PROGRAM.title || '') : '',
+                    totalWeeks: PROGRAM ? (PROGRAM.totalWeeks || 4) : 4,
+                    numDays: numDays,
+                    dayNames: dayNames
+                };
+                location.hash = '#/builder/step2';
+            }
+            return true;
+        }
+
+        // Day editor: add exercise
+        if (target.id === 'editor-add-exercise' || target.closest('#editor-add-exercise')) {
+            Builder.showExercisePicker();
+            return true;
+        }
+
+        // Day editor: delete exercise
+        if (target.classList.contains('editor-delete') || target.closest('.editor-delete')) {
+            var btn = target.classList.contains('editor-delete') ? target : target.closest('.editor-delete');
+            Builder.deleteExercise(parseInt(btn.dataset.idx));
+            return true;
+        }
+
+        // Day editor: back
+        // btn-back-editor handled by direct listener in Builder.renderDayEditor
+
+        // Empty day: add exercise → open editor + picker directly
+        if (target.id === 'btn-add-exercise-empty' || target.closest('#btn-add-exercise-empty')) {
+            Builder.renderDayEditor(App._currentDay);
+            Builder.showExercisePicker();
+            return true;
+        }
+
+        // Edit day (pencil on training day view)
+        if (target.id === 'btn-edit-day' || target.closest('#btn-edit-day')) {
+            App._editorNavigating = true;
+            location.hash = '#/edit/day/' + App._currentDay;
+            return true;
+        }
+
+        // Setup: use default program
+        if (target.id === 'setup-use-default' || target.closest('#setup-use-default')) {
+            if (typeof DEFAULT_PROGRAM !== 'undefined') {
+                Storage.saveProgram(DEFAULT_PROGRAM, false);
+                PROGRAM = DEFAULT_PROGRAM;
+                UI.renderSetup();
+            }
+            return true;
+        }
+
+        // Setup: cycle toggle
+        if (target.matches('.cycle-toggle button')) {
+            const buttons = target.parentElement.querySelectorAll('button');
+            buttons.forEach(b => b.classList.remove('active'));
+            target.classList.add('active');
+            return true;
+        }
+
+        // Setup: start button
+        if (target.id === 'setup-start') {
+            App.startSetup();
+            return true;
+        }
+
+        // Week navigation
+        if (target.id === 'prev-week' || target.closest('#prev-week')) {
+            location.hash = `#/week/${App._currentWeek === 1 ? getTotalWeeks() : App._currentWeek - 1}`;
+            return true;
+        }
+        if (target.id === 'next-week' || target.closest('#next-week')) {
+            location.hash = `#/week/${App._currentWeek === getTotalWeeks() ? 1 : App._currentWeek + 1}`;
+            return true;
+        }
+        // Add/remove day for custom programs
+        if (target.id === 'btn-add-day' || target.closest('#btn-add-day')) {
+            App._addDayToCustomProgram();
+            return true;
+        }
+        if (target.id === 'btn-remove-day' || target.closest('#btn-remove-day')) {
+            App._removeDayFromCustomProgram();
+            return true;
+        }
+        // Add week button for custom programs
+        if (target.id === 'btn-add-week' || target.closest('#btn-add-week')) {
+            App._addWeekToCustomProgram();
+            return true;
+        }
+        // Remove week button for custom programs
+        if (target.id === 'btn-remove-week' || target.closest('#btn-remove-week')) {
+            App._removeWeekFromCustomProgram();
+            return true;
+        }
+
+        return false;
+    },
+
+    // ===== Delegated modal click handlers (substitution, gym, choice, equipment) =====
+    _handleModalClick(target) {
+        // Substitution modal — select exercise from list (must be before eq-option handler)
+        if (target.matches('.sub-option') || target.closest('.sub-option')) {
+            const opt = target.matches('.sub-option') ? target : target.closest('.sub-option');
+            const exId = opt.dataset.targetExercise;
+            const subName = opt.dataset.subName;
+            Storage.setSubstitution(exId, subName);
+            UI.hideSubstitutionModal();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return true;
+        }
+
+        // Substitution modal — add custom name
+        if (target.id === 'sub-add-custom-btn' || target.closest('#sub-add-custom-btn')) {
+            const input = document.getElementById('sub-custom-name');
+            const name = input ? input.value.trim() : '';
+            if (!name) return true;
+            const modal = document.getElementById('substitution-modal');
+            const exId = modal ? modal._exerciseId : null;
+            if (exId) {
+                Storage.setSubstitution(exId, name);
+                UI.hideSubstitutionModal();
+                UI.renderDay(this._currentWeek, this._currentDay);
+            }
+            return true;
+        }
+
+        // Substitution modal — revert to original
+        if (target.matches('.sub-revert-btn') || target.closest('.sub-revert-btn')) {
+            const btn = target.matches('.sub-revert-btn') ? target : target.closest('.sub-revert-btn');
+            const exId = btn.dataset.exercise;
+            Storage.removeSubstitution(exId);
+            UI.hideSubstitutionModal();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return true;
+        }
+
+        // Substitution modal — close button or overlay
+        if (target.id === 'sub-close-btn' || target.closest('#sub-close-btn') || target.id === 'substitution-modal') {
+            UI.hideSubstitutionModal();
+            return true;
+        }
+
+        // Gym modal — select gym
+        if ((target.matches('.eq-option[data-gym-id]') || target.closest('.eq-option[data-gym-id]')) && target.closest('#gym-modal')) {
+            var opt = target.matches('.eq-option[data-gym-id]') ? target : target.closest('.eq-option[data-gym-id]');
+            var gymId = opt.dataset.gymId || null;
+            var modal = document.getElementById('gym-modal');
+            var onSelect = modal ? modal._onSelect : null;
+            UI.hideGymModal();
+            if (onSelect) onSelect(gymId);
+            return true;
+        }
+
+        // Gym modal — select shared gym from search results
+        if (target.closest('.gym-shared-item')) {
+            var item = target.closest('.gym-shared-item');
+            var sharedId = item.dataset.id;
+            if (sharedId) {
+                Storage.addMyGym(sharedId);
+                var modal = document.getElementById('gym-modal');
+                var onSelect = modal ? modal._onSelect : null;
+                UI.hideGymModal();
+                if (onSelect) onSelect(sharedId);
+            }
+            return true;
+        }
+
+        // Gym modal — add new gym
+        if (target.id === 'gym-add-btn' || target.closest('#gym-add-btn')) {
+            var input = document.getElementById('gym-new-name');
+            var name = input ? input.value.trim() : '';
+            if (!name) return true;
+            // Show city prompt
+            var prompt = document.getElementById('gym-city-prompt');
+            if (prompt) {
+                prompt.style.display = 'flex';
+                var cityInput = document.getElementById('gym-new-city');
+                if (cityInput) { cityInput.value = ''; cityInput.focus(); }
+            }
+            return true;
+        }
+
+        // Gym modal — confirm city and save (creates in Supabase shared_gyms)
+        if (target.id === 'gym-city-ok' || target.closest('#gym-city-ok')) {
+            var input = document.getElementById('gym-new-name');
+            var cityInput = document.getElementById('gym-new-city');
+            var name = input ? input.value.trim() : '';
+            var city = cityInput ? cityInput.value.trim() : '';
+            if (!name) return true;
+            var modal = document.getElementById('gym-modal');
+            var onSelect = modal ? modal._onSelect : null;
+            // Create gym in Supabase, then add locally
+            if (typeof Social !== 'undefined') {
+                Social.addSharedGym(name, city).then(function(shared) {
+                    if (shared && shared.id) {
+                        // Add to gym cache
+                        Storage._gymCache.push(shared);
+                        Storage.addMyGym(shared.id);
+                        UI.hideGymModal();
+                        if (onSelect) onSelect(shared.id);
+                    }
+                }).catch(function(e) {
+                    console.error('Failed to create gym:', e);
+                    alert('Не удалось создать зал. Проверь интернет.');
+                });
+            }
+            return true;
+        }
+
+        // Gym modal — close on overlay
+        if (target.id === 'gym-modal') {
+            UI.hideGymModal();
+            return true;
+        }
+
+        // Gym geo suggestion — Yes
+        if (target.id === 'gym-geo-yes') {
+            var gymId = target.dataset.gymId;
+            var modal = document.getElementById('gym-modal');
+            var onSelect = modal ? modal._onSelect : null;
+            UI.hideGymModal();
+            if (onSelect) onSelect(gymId);
+            return true;
+        }
+
+        // Gym geo suggestion — No
+        if (target.id === 'gym-geo-no') {
+            var el = document.getElementById('gym-geo-suggestion');
+            if (el) el.style.display = 'none';
+            return true;
+        }
+
+        // Gym link prompt — Yes (link current equipment to gym)
+        if (target.id === 'gym-link-yes') {
+            var gymId = target.dataset.gymId;
+            Storage.initGymFromCurrentEquipment(gymId);
+            UI.hideGymModal();
+            this.startWorkoutTimer();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return true;
+        }
+
+        // Gym link prompt — No (skip linking)
+        if (target.id === 'gym-link-no') {
+            var gymId = target.dataset.gymId;
+            UI.hideGymModal();
+            this.startWorkoutTimer();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return true;
+        }
+
+        // Choice modal: select option (must be before eq-option handler)
+        if (target.matches('.eq-option[data-choice-key]') || target.closest('.eq-option[data-choice-key]')) {
+            const opt = target.matches('.eq-option[data-choice-key]') ? target : target.closest('.eq-option[data-choice-key]');
+            const choiceKey = opt.dataset.choiceKey;
+            const exerciseId = opt.dataset.exerciseId;
+            Storage.saveChoice(choiceKey, exerciseId);
+            UI.hideChoiceModal();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return true;
+        }
+
+        // Equipment modal — ignore clicks on inputs
+        if (target.closest('#equipment-modal') && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+            return true;
+        }
+
+        // Equipment modal — select option
+        if (target.matches('.eq-option') || target.closest('.eq-option')) {
+            const opt = target.matches('.eq-option') ? target : target.closest('.eq-option');
+            const eqId = opt.dataset.eqId;
+            const exId = opt.dataset.exercise;
+            Storage.setExerciseEquipment(exId, eqId || null);
+            var activeGym = this._getActiveGymId();
+            if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, eqId || null);
+            // Share to gym_equipment
+            if (eqId) this._shareToGymEquipment(exId, Storage.getEquipmentById(eqId));
+            UI.hideEquipmentModal();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return true;
+        }
+
+        // Equipment modal — add new custom
+        if (target.id === 'eq-add-btn' || target.closest('#eq-add-btn')) {
+            const input = document.getElementById('eq-new-name');
+            const name = input ? input.value.trim() : '';
+            if (!name) return true;
+            const modal = document.getElementById('equipment-modal');
+            const exId = modal ? modal._exerciseId : null;
+            const muscleGroup = modal ? modal._muscleGroup : null;
+            const newId = Storage.addEquipment(name);
+            if (typeof Social !== 'undefined' && muscleGroup && muscleGroup !== 'all') {
+                Social.addSharedEquipment(name, muscleGroup).catch(function() {});
+            }
+            if (exId) {
+                Storage.setExerciseEquipment(exId, newId);
+                var activeGym = this._getActiveGymId();
+                if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, newId);
+                this._shareToGymEquipment(exId, { name: name });
+                UI.hideEquipmentModal();
+                UI.renderDay(this._currentWeek, this._currentDay);
+            }
+            return true;
+        }
+
+        // Equipment modal — click search result (catalog or shared)
+        if (target.closest('.eq-search-item')) {
+            var item = target.closest('.eq-search-item');
+            var eqName = item.dataset.name;
+            var catalogId = item.dataset.catalogId ? parseInt(item.dataset.catalogId) : null;
+            if (!eqName) return true;
+            var modal = document.getElementById('equipment-modal');
+            var exId = modal ? modal._exerciseId : null;
+            var muscleGroup = modal ? modal._muscleGroup : null;
+            var eqImageUrl2 = item.dataset.image || null;
+            var newId = Storage.addEquipment(eqName, undefined, eqImageUrl2);
+            if (typeof Social !== 'undefined' && muscleGroup && muscleGroup !== 'all') {
+                Social.addSharedEquipment(eqName, muscleGroup).catch(function() {});
+            }
+            if (exId) {
+                Storage.setExerciseEquipment(exId, newId);
+                var activeGym = this._getActiveGymId();
+                if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, newId);
+                this._shareToGymEquipment(exId, { name: eqName, catalogId: catalogId });
+            }
+            UI.hideEquipmentModal();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return true;
+        }
+
+        // Equipment modal — click gym equipment item
+        if (target.closest('.eq-gym-item')) {
+            var item = target.closest('.eq-gym-item');
+            var eqName = item.dataset.name;
+            if (!eqName) return true;
+            var modal = document.getElementById('equipment-modal');
+            var exId = modal ? modal._exerciseId : null;
+            var newId = Storage.addEquipment(eqName);
+            if (exId) {
+                Storage.setExerciseEquipment(exId, newId);
+                var activeGym = this._getActiveGymId();
+                if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, newId);
+            }
+            UI.hideEquipmentModal();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return true;
+        }
+
+        // Equipment modal — brand click → show brand equipment
+        if (target.closest('.eq-brand-item')) {
+            var brandItem = target.closest('.eq-brand-item');
+            var brand = brandItem.dataset.brand;
+            var extype = brandItem.dataset.extype || null;
+            if (brand) this._loadBrandEquipment(brand, extype);
+            return true;
+        }
+
+        // Equipment modal — back to brands
+        if (target.id === 'eq-brand-back' || target.closest('#eq-brand-back')) {
+            this._eqBackToBrands();
+            return true;
+        }
+
+        // Equipment modal — select from catalog
+        if (target.closest('.eq-catalog-item')) {
+            var catItem = target.closest('.eq-catalog-item');
+            var eqName = catItem.dataset.name;
+            var catalogId = catItem.dataset.catalogId ? parseInt(catItem.dataset.catalogId) : null;
+            if (!eqName) return true;
+            var modal = document.getElementById('equipment-modal');
+            var exId = modal ? modal._exerciseId : null;
+            var eqImageUrl = catItem.dataset.image || null;
+            var newId = Storage.addEquipment(eqName, undefined, eqImageUrl);
+            if (exId) {
+                Storage.setExerciseEquipment(exId, newId);
+                Storage.linkEquipmentToExercise(exId, newId);
+                var activeGym = this._getActiveGymId();
+                if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, newId);
+                this._shareToGymEquipment(exId, { name: eqName, catalogId: catalogId });
+            }
+            UI.hideEquipmentModal();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return true;
+        }
+
+        // Equipment modal — remove current equipment
+        if (target.id === 'eq-remove-btn' || target.closest('#eq-remove-btn')) {
+            var modal = document.getElementById('equipment-modal');
+            var exId = modal ? modal._exerciseId : null;
+            if (exId) {
+                Storage.removeExerciseEquipment(exId);
+                var row = document.getElementById('eq-current-row');
+                if (row) row.remove();
+            }
+            UI.hideEquipmentModal();
+            UI.renderDay(this._currentWeek, this._currentDay);
+            return true;
+        }
+
+        // Equipment modal — close on overlay or X button
+        if (target.id === 'eq-close' || target.closest('#eq-close')) {
+            UI.hideEquipmentModal();
+            return true;
+        }
+        if (target.id === 'equipment-modal') {
+            // Ignore phantom overlay clicks from iOS input focus (within 600ms)
+            var modal = document.getElementById('equipment-modal');
+            if (modal && modal._inputFocusedAt && (Date.now() - modal._inputFocusedAt < 600)) return true;
+            UI.hideEquipmentModal();
+            return true;
+        }
+
+        return false;
+    },
+
+    // ===== Delegated social click handlers =====
+    _handleSocialClick(target) {
         // Profile edit button
         if (target.id === 'btn-profile-edit' || target.closest('#btn-profile-edit')) {
             location.hash = '#/profile/edit';
-            return;
+            return true;
         }
 
         // New checkin button
         if (target.id === 'btn-new-checkin' || target.closest('#btn-new-checkin')) {
             location.hash = '#/checkin';
-            return;
+            return true;
         }
 
         // Profile grid item click → detail
@@ -1769,7 +2642,7 @@ const App = {
         if (gridItem) {
             var cid = gridItem.dataset.checkin;
             if (cid) location.hash = '#/checkin/' + cid;
-            return;
+            return true;
         }
 
         // Profile post-type tab filter
@@ -1789,38 +2662,39 @@ const App = {
                 gridEl.innerHTML = filtered.length ? SocialUI._renderProfileFeed(filtered) : '<div class="social-empty">Нет публикаций</div>';
                 if (loadBtn) gridEl.appendChild(loadBtn);
             }
-            return;
+            return true;
         }
 
         // Profile save
         if (target.id === 'btn-profile-save' || target.closest('#btn-profile-save')) {
             this._saveProfile();
-            return;
+            return true;
         }
 
         // Profile back
         if (target.id === 'btn-profile-back' || target.closest('#btn-profile-back')) {
             location.hash = '#/profile';
-            return;
+            return true;
         }
 
         // Avatar file input
         if (target.id === 'avatar-file-input' || target.closest('#avatar-file-input')) {
             // handled by change event below
+            return false;
         }
 
         // Athlete toggle
         if (target.id === 'edit-is-athlete') {
             var fields = document.getElementById('edit-athlete-fields');
             if (fields) fields.style.display = target.checked ? '' : 'none';
-            return;
+            return true;
         }
 
         // Follow/unfollow
         if (target.id === 'btn-follow' || target.closest('#btn-follow')) {
             var btn = target.id === 'btn-follow' ? target : target.closest('#btn-follow');
             var userId = btn.dataset.user;
-            if (!userId) return;
+            if (!userId) return true;
             btn.disabled = true;
             if (btn.classList.contains('following')) {
                 Social.unfollow(userId).then(function() {
@@ -1837,13 +2711,13 @@ const App = {
                     btn.disabled = false;
                 }).catch(function(e) { btn.disabled = false; alert('Ошибка: ' + e.message); });
             }
-            return;
+            return true;
         }
 
         // Follow (small btn in discover)
         if (target.classList.contains('btn-follow-sm')) {
             var userId = target.dataset.user;
-            if (!userId) return;
+            if (!userId) return true;
             target.disabled = true;
             Social.follow(userId).then(function(ok) {
                 if (ok) {
@@ -1853,37 +2727,37 @@ const App = {
                     target.disabled = false;
                 }
             }).catch(function(e) { target.disabled = false; alert('Ошибка: ' + e.message); });
-            return;
+            return true;
         }
 
         // Discover navigation
         if (target.id === 'btn-discover' || target.closest('#btn-discover') || target.id === 'btn-discover-empty' || target.closest('#btn-discover-empty')) {
             location.hash = '#/discover';
-            return;
+            return true;
         }
 
         // Discover back
         if (target.id === 'btn-discover-back' || target.closest('#btn-discover-back')) {
             location.hash = '#/feed';
-            return;
+            return true;
         }
 
         // Follow list back
         if (target.id === 'btn-followlist-back' || target.closest('#btn-followlist-back')) {
             history.back();
-            return;
+            return true;
         }
 
         // Discover search
         if (target.id === 'btn-discover-search' || target.closest('#btn-discover-search')) {
             var query = (document.getElementById('discover-search-input').value || '').trim();
-            if (!query) return;
+            if (!query) return true;
             var resultsEl = document.getElementById('discover-results');
             if (resultsEl) resultsEl.innerHTML = '<div class="social-loading">Поиск...</div>';
             Promise.all([Social.searchUsers(query), Social.getMyFollowingIds()]).then(function(r) {
                 if (resultsEl) resultsEl.innerHTML = SocialUI._renderUserList(r[0], Social._getSupaUserId(), r[1]);
             });
-            return;
+            return true;
         }
 
         // Discover user click → profile
@@ -1897,25 +2771,25 @@ const App = {
                     location.hash = '#/u/' + username.textContent.replace('@', '');
                 }
             }
-            return;
+            return true;
         }
 
         // Notifications button
         if (target.id === 'btn-notifications' || target.closest('#btn-notifications')) {
             location.hash = '#/notifications';
-            return;
+            return true;
         }
 
         // Messages button (feed header)
         if (target.id === 'btn-messages' || target.closest('#btn-messages')) {
             location.hash = '#/messages';
-            return;
+            return true;
         }
 
         // Messages back
         if (target.id === 'btn-messages-back' || target.closest('#btn-messages-back')) {
             history.back();
-            return;
+            return true;
         }
 
         // Chat back
@@ -1923,7 +2797,7 @@ const App = {
             Social.unsubscribeMessages();
             if (SocialUI._chatViewportCleanup) { SocialUI._chatViewportCleanup(); SocialUI._chatViewportCleanup = null; }
             history.back();
-            return;
+            return true;
         }
 
         // Conversation item click
@@ -1931,14 +2805,14 @@ const App = {
         if (convItem) {
             var userId = convItem.dataset.user;
             if (userId) location.hash = '#/messages/' + userId;
-            return;
+            return true;
         }
 
         // Send message
         if (target.id === 'btn-send-message' || target.closest('#btn-send-message')) {
             var inp = document.getElementById('chat-input');
             var text = inp ? inp.value.trim() : '';
-            if (!text || !SocialUI._chatConvId) return;
+            if (!text || !SocialUI._chatConvId) return true;
             inp.value = '';
             // Optimistic render
             var chatEl = document.getElementById('chat-messages');
@@ -1948,7 +2822,7 @@ const App = {
                 chatEl.scrollTop = chatEl.scrollHeight;
             }
             Social.sendMessage(SocialUI._chatConvId, text).catch(function() {});
-            return;
+            return true;
         }
 
         // DM button on other user's profile
@@ -1956,20 +2830,20 @@ const App = {
             var btn = target.id === 'btn-dm' ? target : target.closest('#btn-dm');
             var userId = btn.dataset.user;
             if (userId) location.hash = '#/messages/' + userId;
-            return;
+            return true;
         }
 
         // Notification back
         if (target.id === 'btn-notif-back' || target.closest('#btn-notif-back')) {
             history.back();
-            return;
+            return true;
         }
 
         // Like button (feed cards and detail)
         var likeBtn = target.closest('.like-btn');
         if (likeBtn) {
             var checkinId = likeBtn.dataset.checkin;
-            if (!checkinId) return;
+            if (!checkinId) return true;
             // Optimistic UI
             var wasActive = likeBtn.classList.contains('active');
             likeBtn.classList.toggle('active');
@@ -1982,7 +2856,7 @@ const App = {
                 likeBtn.classList.toggle('active');
                 countEl.textContent = currentCount > 0 ? currentCount : '';
             });
-            return;
+            return true;
         }
 
         // Comment icon button → scroll to or navigate to comments
@@ -1995,7 +2869,7 @@ const App = {
             } else if (checkinId) {
                 location.hash = '#/checkin/' + checkinId;
             }
-            return;
+            return true;
         }
 
         // Comment author profile link
@@ -2003,7 +2877,7 @@ const App = {
         if (profileLink && !target.closest('.comment-reply-btn') && !target.closest('.comment-like-btn')) {
             var username = profileLink.dataset.username;
             if (username) location.hash = '#/u/' + username;
-            return;
+            return true;
         }
 
         // Reply to comment
@@ -2024,7 +2898,7 @@ const App = {
                     indicator.style.display = 'flex';
                 }
             }
-            return;
+            return true;
         }
 
         // Cancel reply
@@ -2034,14 +2908,14 @@ const App = {
             if (indicator) indicator.style.display = 'none';
             var input = document.getElementById('comment-input');
             if (input) { input.value = ''; input.focus(); }
-            return;
+            return true;
         }
 
         // Comment like
         var commentLikeBtn = target.closest('.comment-like-btn');
         if (commentLikeBtn) {
             var commentId = commentLikeBtn.dataset.comment;
-            if (!commentId) return;
+            if (!commentId) return true;
             var wasActive = commentLikeBtn.classList.contains('active');
             commentLikeBtn.classList.toggle('active');
             var countEl = commentLikeBtn.querySelector('.comment-like-count');
@@ -2051,7 +2925,7 @@ const App = {
                 commentLikeBtn.classList.toggle('active');
                 countEl.textContent = cur > 0 ? cur : '';
             });
-            return;
+            return true;
         }
 
         // Tag user button in checkin form
@@ -2071,7 +2945,7 @@ const App = {
                     container.appendChild(tag);
                 }
             });
-            return;
+            return true;
         }
 
         // Remove tagged user chip
@@ -2082,14 +2956,14 @@ const App = {
                 App._checkinTaggedUsers = App._checkinTaggedUsers.filter(function(u) { return u.user_id !== chip.dataset.uid; });
                 chip.remove();
             }
-            return;
+            return true;
         }
 
         // Checkin card click → detail (with double-tap detection)
         var checkinCard = target.closest('.checkin-card');
         if (checkinCard && !checkinCard.classList.contains('checkin-full') && !target.closest('.like-btn') && !target.closest('.comment-btn-icon')) {
             var checkinId = checkinCard.dataset.checkin;
-            if (!checkinId) return;
+            if (!checkinId) return true;
 
             // Double-tap detection
             var now = Date.now();
@@ -2110,26 +2984,26 @@ const App = {
                 checkinCard.style.position = 'relative';
                 checkinCard.appendChild(anim);
                 setTimeout(function() { anim.remove(); }, 900);
-                return;
+                return true;
             }
 
             // Single tap → navigate after delay
             checkinCard._tapTimer = setTimeout(function() {
                 location.hash = '#/checkin/' + checkinId;
             }, 300);
-            return;
+            return true;
         }
 
         // Checkin back
         if (target.id === 'btn-checkin-back' || target.closest('#btn-checkin-back')) {
             location.hash = '#/profile';
-            return;
+            return true;
         }
 
         // Checkin detail back
         if (target.id === 'btn-checkin-detail-back' || target.closest('#btn-checkin-detail-back')) {
             history.back();
-            return;
+            return true;
         }
 
         // Delete checkin
@@ -2143,18 +3017,19 @@ const App = {
                     alert('Ошибка: ' + err.message);
                 });
             }
-            return;
+            return true;
         }
 
         // Checkin submit
         if (target.id === 'btn-checkin-submit' || target.closest('#btn-checkin-submit')) {
             this._submitCheckin();
-            return;
+            return true;
         }
 
         // Checkin photo input trigger
         if (target.closest('.checkin-add-photo')) {
             // Let label handle file input click
+            return false;
         }
 
         // Legacy reaction button (removed, now using like-btn)
@@ -2165,14 +3040,14 @@ const App = {
             var checkinId = btn.dataset.checkin;
             var input = document.getElementById('comment-input');
             var text = input ? input.value.trim() : '';
-            if (!text || !checkinId) return;
+            if (!text || !checkinId) return true;
             btn.disabled = true;
             var parentId = App._replyToCommentId || null;
             App._replyToCommentId = null;
             Social.addComment(checkinId, text, parentId).then(function() {
                 SocialUI.renderCheckinDetail(checkinId);
             }).catch(function() { btn.disabled = false; });
-            return;
+            return true;
         }
 
         // Delete comment
@@ -2186,7 +3061,7 @@ const App = {
                     if (sendBtn) SocialUI.renderCheckinDetail(sendBtn.dataset.checkin);
                 });
             }
-            return;
+            return true;
         }
 
         // Load more (feed)
@@ -2206,7 +3081,7 @@ const App = {
                     else { btn.disabled = false; btn.textContent = 'Загрузить ещё'; }
                 }
             });
-            return;
+            return true;
         }
 
         // Load more (profile)
@@ -2225,7 +3100,7 @@ const App = {
                 if (!SocialUI._profileCheckinsCursor) btn.remove();
                 else { btn.disabled = false; btn.textContent = 'Загрузить ещё'; }
             });
-            return;
+            return true;
         }
 
         // Checkin author click → profile
@@ -2233,910 +3108,10 @@ const App = {
         if (checkinAuthor) {
             var username = checkinAuthor.dataset.username;
             if (username) location.hash = '#/u/' + username;
-            return;
+            return true;
         }
 
-        // ===== END SOCIAL HANDLERS =====
-
-        // Setup: import program from file
-        if (target.id === 'setup-import-program' || target.closest('#setup-import-program')) {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = (ev) => {
-                const file = ev.target.files[0];
-                if (!file) return;
-                this.importProgram(file).then(() => {
-                    UI.renderSetup();
-                }).catch(err => {
-                    const status = document.getElementById('program-status');
-                    if (status) status.innerHTML = `<span style="color:#FF2D55">${err}</span>`;
-                });
-            };
-            input.click();
-            return;
-        }
-
-        // Setup: create program (builder)
-        if (target.id === 'setup-create-program' || target.closest('#setup-create-program')) {
-            location.hash = '#/builder/step1';
-            return;
-        }
-
-        // Builder wizard: toggle buttons (weeks/days)
-        if (target.matches('.builder-toggle button')) {
-            var btns = target.parentElement.querySelectorAll('button');
-            btns.forEach(function(b) { b.classList.remove('active'); });
-            target.classList.add('active');
-            return;
-        }
-
-        // Builder wizard: step1 → step2
-        if (target.id === 'builder-next' || target.closest('#builder-next')) {
-            Builder.saveStep1();
-            location.hash = '#/builder/step2';
-            return;
-        }
-
-        // Builder wizard: back from step1 → setup
-        if (target.id === 'builder-back-setup' || target.closest('#builder-back-setup')) {
-            location.hash = '#/setup';
-            return;
-        }
-
-        // Builder wizard: back from step2 → step1
-        if (target.id === 'builder-back-step1' || target.closest('#builder-back-step1')) {
-            // Save day names to config
-            if (Builder._config) {
-                var dayInputs = document.querySelectorAll('.builder-day-name');
-                var names = [];
-                dayInputs.forEach(function(inp) { names.push(inp.value.trim()); });
-                Builder._config.dayNames = names;
-            }
-            location.hash = '#/builder/step1';
-            return;
-        }
-
-        // Builder wizard: create program
-        if (target.id === 'builder-create' || target.closest('#builder-create')) {
-            Builder.createProgram();
-            location.hash = '#/setup';
-            return;
-        }
-
-        // Setup summary: back to initial setup
-        if (target.id === 'setup-back-builder' || target.closest('#setup-back-builder')) {
-            // Go back to builder step2 (day names), preserving the program config
-            if (Builder._config) {
-                location.hash = '#/builder/step2';
-            } else {
-                // Reconstruct config from existing program
-                var numDays = getTotalDays();
-                var dayNames = [];
-                for (var d = 1; d <= numDays; d++) {
-                    var tmpl = PROGRAM && PROGRAM.dayTemplates[d];
-                    dayNames.push(tmpl ? (tmpl.titleRu || tmpl.title || '') : '');
-                }
-                Builder._config = {
-                    title: PROGRAM ? (PROGRAM.title || '') : '',
-                    totalWeeks: PROGRAM ? (PROGRAM.totalWeeks || 4) : 4,
-                    numDays: numDays,
-                    dayNames: dayNames
-                };
-                location.hash = '#/builder/step2';
-            }
-            return;
-        }
-
-        // Day editor: add exercise
-        if (target.id === 'editor-add-exercise' || target.closest('#editor-add-exercise')) {
-            Builder.showExercisePicker();
-            return;
-        }
-
-        // Day editor: delete exercise
-        if (target.classList.contains('editor-delete') || target.closest('.editor-delete')) {
-            var btn = target.classList.contains('editor-delete') ? target : target.closest('.editor-delete');
-            Builder.deleteExercise(parseInt(btn.dataset.idx));
-            return;
-        }
-
-        // Day editor: back
-        // btn-back-editor handled by direct listener in Builder.renderDayEditor
-
-        // Empty day: add exercise → open editor + picker directly
-        if (target.id === 'btn-add-exercise-empty' || target.closest('#btn-add-exercise-empty')) {
-            Builder.renderDayEditor(this._currentDay);
-            Builder.showExercisePicker();
-            return;
-        }
-
-        // Edit day (pencil on training day view)
-        if (target.id === 'btn-edit-day' || target.closest('#btn-edit-day')) {
-            this._editorNavigating = true;
-            location.hash = '#/edit/day/' + this._currentDay;
-            return;
-        }
-
-        // Setup: use default program
-        if (target.id === 'setup-use-default' || target.closest('#setup-use-default')) {
-            if (typeof DEFAULT_PROGRAM !== 'undefined') {
-                Storage.saveProgram(DEFAULT_PROGRAM, false);
-                PROGRAM = DEFAULT_PROGRAM;
-                UI.renderSetup();
-            }
-            return;
-        }
-
-        // Setup: cycle toggle
-        if (target.matches('.cycle-toggle button')) {
-            const buttons = target.parentElement.querySelectorAll('button');
-            buttons.forEach(b => b.classList.remove('active'));
-            target.classList.add('active');
-            return;
-        }
-
-        // Setup: start button
-        if (target.id === 'setup-start') {
-            this.startSetup();
-            return;
-        }
-
-        // Week navigation
-        if (target.id === 'prev-week' || target.closest('#prev-week')) {
-            location.hash = `#/week/${this._currentWeek === 1 ? getTotalWeeks() : this._currentWeek - 1}`;
-            return;
-        }
-        if (target.id === 'next-week' || target.closest('#next-week')) {
-            location.hash = `#/week/${this._currentWeek === getTotalWeeks() ? 1 : this._currentWeek + 1}`;
-            return;
-        }
-        // Add/remove day for custom programs
-        if (target.id === 'btn-add-day' || target.closest('#btn-add-day')) {
-            this._addDayToCustomProgram();
-            return;
-        }
-        if (target.id === 'btn-remove-day' || target.closest('#btn-remove-day')) {
-            this._removeDayFromCustomProgram();
-            return;
-        }
-        // Add week button for custom programs
-        if (target.id === 'btn-add-week' || target.closest('#btn-add-week')) {
-            this._addWeekToCustomProgram();
-            return;
-        }
-        // Remove week button for custom programs
-        if (target.id === 'btn-remove-week' || target.closest('#btn-remove-week')) {
-            this._removeWeekFromCustomProgram();
-            return;
-        }
-
-        // Back button — smooth exit animation
-        if (target.id === 'btn-back' || target.closest('#btn-back')) {
-            const app = document.getElementById('app');
-            app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
-            app.style.transform = 'translateX(40px)';
-            app.style.opacity = '0';
-            setTimeout(() => {
-                app.style.transition = 'none';
-                app.style.transform = '';
-                app.style.opacity = '';
-                window.scrollTo(0, 0);
-                location.hash = `#/week/${this._currentWeek}`;
-            }, 190);
-            return;
-        }
-
-        // Back from history — smooth exit
-        if (target.id === 'btn-back-history' || target.closest('#btn-back-history')) {
-            const app = document.getElementById('app');
-            app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
-            app.style.transform = 'translateX(40px)';
-            app.style.opacity = '0';
-            setTimeout(() => {
-                app.style.transition = 'none';
-                app.style.transform = '';
-                app.style.opacity = '';
-                window.scrollTo(0, 0);
-                location.hash = `#/week/${this._currentWeek}/day/${this._currentDay}`;
-            }, 190);
-            return;
-        }
-
-        // Menu (was Settings)
-        if (target.id === 'btn-settings' || target.closest('#btn-settings')) {
-            location.hash = '#/menu';
-            return;
-        }
-
-        // Back from menu — smooth exit to week view
-        if (target.id === 'btn-back-menu' || target.closest('#btn-back-menu')) {
-            const app = document.getElementById('app');
-            app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
-            app.style.transform = 'translateX(40px)';
-            app.style.opacity = '0';
-            setTimeout(() => {
-                app.style.transition = 'none';
-                app.style.transform = '';
-                app.style.opacity = '';
-                window.scrollTo(0, 0);
-                location.hash = `#/week/${this._currentWeek}`;
-            }, 190);
-            return;
-        }
-
-        // Back from settings — smooth exit to menu
-        if (target.id === 'btn-back-settings' || target.closest('#btn-back-settings')) {
-            const app = document.getElementById('app');
-            app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
-            app.style.transform = 'translateX(40px)';
-            app.style.opacity = '0';
-            setTimeout(() => {
-                app.style.transition = 'none';
-                app.style.transform = '';
-                app.style.opacity = '';
-                window.scrollTo(0, 0);
-                location.hash = '#/menu';
-            }, 190);
-            return;
-        }
-
-        // Back from calculator — smooth exit to menu
-        if (target.id === 'btn-back-calc' || target.closest('#btn-back-calc')) {
-            const app = document.getElementById('app');
-            app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
-            app.style.transform = 'translateX(40px)';
-            app.style.opacity = '0';
-            setTimeout(() => {
-                app.style.transition = 'none';
-                app.style.transform = '';
-                app.style.opacity = '';
-                window.scrollTo(0, 0);
-                location.hash = '#/menu';
-            }, 190);
-            return;
-        }
-
-        // Back from guide — smooth exit to menu
-        if (target.id === 'btn-back-guide' || target.closest('#btn-back-guide')) {
-            const app = document.getElementById('app');
-            app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
-            app.style.transform = 'translateX(40px)';
-            app.style.opacity = '0';
-            setTimeout(() => {
-                app.style.transition = 'none';
-                app.style.transform = '';
-                app.style.opacity = '';
-                window.scrollTo(0, 0);
-                location.hash = '#/menu';
-            }, 190);
-            return;
-        }
-
-        // Settings: timer min/sec steppers
-        if (['td-min-minus','td-min-plus','td-sec-minus','td-sec-plus'].includes(target.id)) {
-            const minEl = document.getElementById('td-min-val');
-            const secEl = document.getElementById('td-sec-val');
-            if (!minEl || !secEl) return;
-            let mins = parseInt(minEl.textContent) || 0;
-            let secs = parseInt(secEl.textContent) || 0;
-            if (target.id === 'td-min-minus') mins = Math.max(0, mins - 1);
-            if (target.id === 'td-min-plus') mins = Math.min(99, mins + 1);
-            if (target.id === 'td-sec-minus') secs = secs === 0 ? 55 : secs - 5;
-            if (target.id === 'td-sec-plus') secs = secs >= 55 ? 0 : secs + 5;
-            if (mins === 0 && secs === 0) { secs = 5; }
-            minEl.textContent = mins;
-            secEl.textContent = String(secs).padStart(2, '0');
-            return;
-        }
-
-        // Save settings
-        if (target.id === 'settings-save') {
-            const cycleBtn = document.querySelector('.cycle-toggle button.active[data-cycle]');
-            const cycleType = cycleBtn ? parseInt(cycleBtn.dataset.cycle) : 7;
-            const startDate = document.getElementById('settings-start-date').value;
-            const unitBtn = document.querySelector('.cycle-toggle button.active[data-unit]');
-            const weightUnit = unitBtn ? unitBtn.dataset.unit : 'kg';
-            const mins = parseInt(document.getElementById('td-min-val')?.textContent) || 0;
-            const secs = parseInt(document.getElementById('td-sec-val')?.textContent) || 0;
-            const timerDuration = Math.max(30, mins * 60 + secs);
-            const langBtn = document.querySelector('.cycle-toggle button.active[data-lang]');
-            const exerciseLang = langBtn ? langBtn.dataset.lang : 'ru';
-            Storage.saveSettings({ cycleType, startDate, weightUnit, timerDuration, exerciseLang });
-            RestTimer.setDefaultDuration(timerDuration);
-            location.hash = `#/week/${this._currentWeek}`;
-            return;
-        }
-
-        // Settings: add equipment
-        if (target.id === 'settings-eq-add' || target.closest('#settings-eq-add')) {
-            const input = document.getElementById('settings-eq-name');
-            const name = input ? input.value.trim() : '';
-            if (!name) return;
-            Storage.addEquipment(name);
-            UI.renderSettings();
-            return;
-        }
-
-        // Settings: edit equipment name (inline)
-        if (target.matches('.eq-edit-btn') || target.closest('.eq-edit-btn')) {
-            const btn = target.matches('.eq-edit-btn') ? target : target.closest('.eq-edit-btn');
-            const eqId = btn.dataset.eqId;
-            if (!eqId) return;
-            var item = btn.closest('.settings-eq-item');
-            var span = item ? item.querySelector('span') : null;
-            if (!span || span.querySelector('input')) return;
-            var oldName = span.textContent.trim();
-            // Disable all remove buttons while editing
-            document.querySelectorAll('.eq-remove-btn, .gym-remove-btn').forEach(function(b) { b.disabled = true; b.style.opacity = '0.3'; });
-            span.innerHTML = '<input type="text" class="eq-inline-edit" value="' + oldName.replace(/"/g, '&quot;') + '">';
-            var inp = span.querySelector('input');
-            inp.focus(); inp.select();
-            var saved = false;
-            var save = function() {
-                if (saved) return; saved = true;
-                var v = inp.value.trim();
-                if (v && v !== oldName) { Storage.renameEquipment(eqId, v); }
-                UI.renderSettings();
-            };
-            inp.addEventListener('blur', function() { setTimeout(save, 100); });
-            inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); save(); } });
-            return;
-        }
-
-        // Settings: remove equipment
-        if (target.matches('.eq-remove-btn') || target.closest('.eq-remove-btn')) {
-            const btn = target.matches('.eq-remove-btn') ? target : target.closest('.eq-remove-btn');
-            if (btn.disabled) return;
-            const eqId = btn.dataset.eqId;
-            if (eqId) {
-                Storage.removeEquipment(eqId);
-                UI.renderSettings();
-            }
-            return;
-        }
-
-        // Settings: remove gym (from my list, not from shared DB)
-        if (target.matches('.gym-remove-btn') || target.closest('.gym-remove-btn')) {
-            var btn = target.matches('.gym-remove-btn') ? target : target.closest('.gym-remove-btn');
-            if (btn.disabled) return;
-            var gymId = btn.dataset.gymId;
-            if (gymId && confirm('Убрать зал из списка?')) {
-                Storage.removeGym(gymId);
-                UI.renderSettings();
-            }
-            return;
-        }
-
-        // Reset data
-        if (target.id === 'btn-reset') {
-            if (confirm('Вы уверены? Все данные будут удалены.')) {
-                Storage.clearAll();
-                location.hash = '#/setup';
-            }
-            return;
-        }
-
-        // Unit cycle button — cycle kg → lbs → plates per exercise
-        if (target.matches('.unit-cycle-btn')) {
-            const exId = target.dataset.exercise;
-            const units = ['kg', 'lbs', 'plates'];
-            const labels = { kg: 'кг', lbs: 'lbs', plates: 'пл' };
-            const current = Storage.getExerciseUnit(exId) || Storage.getWeightUnit();
-            const next = units[(units.indexOf(current) + 1) % units.length];
-            Storage.setExerciseUnit(exId, next);
-            const nextLabel = labels[next];
-            document.querySelectorAll(`.unit-cycle-btn[data-exercise="${exId}"]`).forEach(b => {
-                b.textContent = nextLabel;
-            });
-            document.querySelectorAll(`.set-prev-unit[data-exercise="${exId}"]`).forEach(s => {
-                s.textContent = nextLabel;
-            });
-            return;
-        }
-
-        // Start workout timer — show gym modal first
-        if (target.id === 'btn-start-workout') {
-            var self = this;
-            UI.showGymModal(function(gymId) {
-                Storage.saveWorkoutGym(self._currentWeek, self._currentDay, gymId || null);
-                if (gymId) {
-                    Storage.touchGym(gymId);
-                    if (Storage.gymHasEquipmentMap(gymId)) {
-                        Storage.applyGymEquipment(gymId);
-                    } else {
-                        // First time at this gym — auto-save current equipment
-                        Storage.initGymFromCurrentEquipment(gymId);
-                    }
-                    self.startWorkoutTimer();
-                    UI.renderDay(self._currentWeek, self._currentDay);
-                } else {
-                    self.startWorkoutTimer();
-                    UI.renderDay(self._currentWeek, self._currentDay);
-                }
-            });
-            return;
-        }
-
-        if (target.id === 'btn-pause-workout') {
-            this.pauseWorkoutTimer();
-            UI.renderDay(this._currentWeek, this._currentDay);
-            return;
-        }
-
-        if (target.id === 'btn-resume-workout') {
-            this.unpauseWorkoutTimer();
-            UI.renderDay(this._currentWeek, this._currentDay);
-            return;
-        }
-
-        if (target.id === 'btn-cancel-workout') {
-            this.cancelWorkoutTimer();
-            UI.renderDay(this._currentWeek, this._currentDay);
-            return;
-        }
-
-        // Add set button
-        if (target.matches('.add-set-btn') || target.closest('.add-set-btn')) {
-            const btn = target.matches('.add-set-btn') ? target : target.closest('.add-set-btn');
-            const exId = btn.dataset.exercise;
-            this._addSet(exId);
-            return;
-        }
-
-        // Remove set button
-        if (target.matches('.remove-set-btn') || target.closest('.remove-set-btn')) {
-            const btn = target.matches('.remove-set-btn') ? target : target.closest('.remove-set-btn');
-            const exId = btn.dataset.exercise;
-            this._removeSet(exId);
-            return;
-        }
-
-        // Exercise name tap — no-op (names are standardized from Hevy DB)
-
-        // Equipment button — show equipment picker
-        if (target.matches('.equipment-btn') || target.closest('.equipment-btn')) {
-            const btn = target.matches('.equipment-btn') ? target : target.closest('.equipment-btn');
-            const exId = btn.dataset.exercise;
-            UI.showEquipmentModal(exId, btn.dataset.exname || '', btn.dataset.exnameRu || '');
-            return;
-        }
-
-
-        // Substitution modal — select exercise from list (must be before eq-option handler)
-        if (target.matches('.sub-option') || target.closest('.sub-option')) {
-            const opt = target.matches('.sub-option') ? target : target.closest('.sub-option');
-            const exId = opt.dataset.targetExercise;
-            const subName = opt.dataset.subName;
-            Storage.setSubstitution(exId, subName);
-            UI.hideSubstitutionModal();
-            UI.renderDay(this._currentWeek, this._currentDay);
-            return;
-        }
-
-        // Substitution modal — add custom name
-        if (target.id === 'sub-add-custom-btn' || target.closest('#sub-add-custom-btn')) {
-            const input = document.getElementById('sub-custom-name');
-            const name = input ? input.value.trim() : '';
-            if (!name) return;
-            const modal = document.getElementById('substitution-modal');
-            const exId = modal ? modal._exerciseId : null;
-            if (exId) {
-                Storage.setSubstitution(exId, name);
-                UI.hideSubstitutionModal();
-                UI.renderDay(this._currentWeek, this._currentDay);
-            }
-            return;
-        }
-
-        // Substitution modal — revert to original
-        if (target.matches('.sub-revert-btn') || target.closest('.sub-revert-btn')) {
-            const btn = target.matches('.sub-revert-btn') ? target : target.closest('.sub-revert-btn');
-            const exId = btn.dataset.exercise;
-            Storage.removeSubstitution(exId);
-            UI.hideSubstitutionModal();
-            UI.renderDay(this._currentWeek, this._currentDay);
-            return;
-        }
-
-        // Substitution modal — close button or overlay
-        if (target.id === 'sub-close-btn' || target.closest('#sub-close-btn') || target.id === 'substitution-modal') {
-            UI.hideSubstitutionModal();
-            return;
-        }
-
-        // Gym modal — select gym
-        if ((target.matches('.eq-option[data-gym-id]') || target.closest('.eq-option[data-gym-id]')) && target.closest('#gym-modal')) {
-            var opt = target.matches('.eq-option[data-gym-id]') ? target : target.closest('.eq-option[data-gym-id]');
-            var gymId = opt.dataset.gymId || null;
-            var modal = document.getElementById('gym-modal');
-            var onSelect = modal ? modal._onSelect : null;
-            UI.hideGymModal();
-            if (onSelect) onSelect(gymId);
-            return;
-        }
-
-        // Gym modal — select shared gym from search results
-        if (target.closest('.gym-shared-item')) {
-            var item = target.closest('.gym-shared-item');
-            var sharedId = item.dataset.id;
-            if (sharedId) {
-                Storage.addMyGym(sharedId);
-                var modal = document.getElementById('gym-modal');
-                var onSelect = modal ? modal._onSelect : null;
-                UI.hideGymModal();
-                if (onSelect) onSelect(sharedId);
-            }
-            return;
-        }
-
-        // Gym modal — add new gym
-        if (target.id === 'gym-add-btn' || target.closest('#gym-add-btn')) {
-            var input = document.getElementById('gym-new-name');
-            var name = input ? input.value.trim() : '';
-            if (!name) return;
-            // Show city prompt
-            var prompt = document.getElementById('gym-city-prompt');
-            if (prompt) {
-                prompt.style.display = 'flex';
-                var cityInput = document.getElementById('gym-new-city');
-                if (cityInput) { cityInput.value = ''; cityInput.focus(); }
-            }
-            return;
-        }
-
-        // Gym modal — confirm city and save (creates in Supabase shared_gyms)
-        if (target.id === 'gym-city-ok' || target.closest('#gym-city-ok')) {
-            var input = document.getElementById('gym-new-name');
-            var cityInput = document.getElementById('gym-new-city');
-            var name = input ? input.value.trim() : '';
-            var city = cityInput ? cityInput.value.trim() : '';
-            if (!name) return;
-            var modal = document.getElementById('gym-modal');
-            var onSelect = modal ? modal._onSelect : null;
-            // Create gym in Supabase, then add locally
-            if (typeof Social !== 'undefined') {
-                Social.addSharedGym(name, city).then(function(shared) {
-                    if (shared && shared.id) {
-                        // Add to gym cache
-                        Storage._gymCache.push(shared);
-                        Storage.addMyGym(shared.id);
-                        UI.hideGymModal();
-                        if (onSelect) onSelect(shared.id);
-                    }
-                }).catch(function(e) {
-                    console.error('Failed to create gym:', e);
-                    alert('Не удалось создать зал. Проверь интернет.');
-                });
-            }
-            return;
-        }
-
-        // Gym modal — close on overlay
-        if (target.id === 'gym-modal') {
-            UI.hideGymModal();
-            return;
-        }
-
-        // Gym geo suggestion — Yes
-        if (target.id === 'gym-geo-yes') {
-            var gymId = target.dataset.gymId;
-            var modal = document.getElementById('gym-modal');
-            var onSelect = modal ? modal._onSelect : null;
-            UI.hideGymModal();
-            if (onSelect) onSelect(gymId);
-            return;
-        }
-
-        // Gym geo suggestion — No
-        if (target.id === 'gym-geo-no') {
-            var el = document.getElementById('gym-geo-suggestion');
-            if (el) el.style.display = 'none';
-            return;
-        }
-
-        // Gym link prompt — Yes (link current equipment to gym)
-        if (target.id === 'gym-link-yes') {
-            var gymId = target.dataset.gymId;
-            Storage.initGymFromCurrentEquipment(gymId);
-            UI.hideGymModal();
-            this.startWorkoutTimer();
-            UI.renderDay(this._currentWeek, this._currentDay);
-            return;
-        }
-
-        // Gym link prompt — No (skip linking)
-        if (target.id === 'gym-link-no') {
-            var gymId = target.dataset.gymId;
-            UI.hideGymModal();
-            this.startWorkoutTimer();
-            UI.renderDay(this._currentWeek, this._currentDay);
-            return;
-        }
-
-        // Choice modal: select option (must be before eq-option handler)
-        if (target.matches('.eq-option[data-choice-key]') || target.closest('.eq-option[data-choice-key]')) {
-            const opt = target.matches('.eq-option[data-choice-key]') ? target : target.closest('.eq-option[data-choice-key]');
-            const choiceKey = opt.dataset.choiceKey;
-            const exerciseId = opt.dataset.exerciseId;
-            Storage.saveChoice(choiceKey, exerciseId);
-            UI.hideChoiceModal();
-            UI.renderDay(this._currentWeek, this._currentDay);
-            return;
-        }
-
-        // Equipment modal — ignore clicks on inputs
-        if (target.closest('#equipment-modal') && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
-            return;
-        }
-
-        // Equipment modal — select option
-        if (target.matches('.eq-option') || target.closest('.eq-option')) {
-            const opt = target.matches('.eq-option') ? target : target.closest('.eq-option');
-            const eqId = opt.dataset.eqId;
-            const exId = opt.dataset.exercise;
-            Storage.setExerciseEquipment(exId, eqId || null);
-            var activeGym = this._getActiveGymId();
-            if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, eqId || null);
-            // Share to gym_equipment
-            if (eqId) this._shareToGymEquipment(exId, Storage.getEquipmentById(eqId));
-            UI.hideEquipmentModal();
-            UI.renderDay(this._currentWeek, this._currentDay);
-            return;
-        }
-
-        // Equipment modal — add new custom
-        if (target.id === 'eq-add-btn' || target.closest('#eq-add-btn')) {
-            const input = document.getElementById('eq-new-name');
-            const name = input ? input.value.trim() : '';
-            if (!name) return;
-            const modal = document.getElementById('equipment-modal');
-            const exId = modal ? modal._exerciseId : null;
-            const muscleGroup = modal ? modal._muscleGroup : null;
-            const newId = Storage.addEquipment(name);
-            if (typeof Social !== 'undefined' && muscleGroup && muscleGroup !== 'all') {
-                Social.addSharedEquipment(name, muscleGroup).catch(function() {});
-            }
-            if (exId) {
-                Storage.setExerciseEquipment(exId, newId);
-                var activeGym = this._getActiveGymId();
-                if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, newId);
-                this._shareToGymEquipment(exId, { name: name });
-                UI.hideEquipmentModal();
-                UI.renderDay(this._currentWeek, this._currentDay);
-            }
-            return;
-        }
-
-        // Equipment modal — click search result (catalog or shared)
-        if (target.closest('.eq-search-item')) {
-            var item = target.closest('.eq-search-item');
-            var eqName = item.dataset.name;
-            var catalogId = item.dataset.catalogId ? parseInt(item.dataset.catalogId) : null;
-            if (!eqName) return;
-            var modal = document.getElementById('equipment-modal');
-            var exId = modal ? modal._exerciseId : null;
-            var muscleGroup = modal ? modal._muscleGroup : null;
-            var eqImageUrl2 = item.dataset.image || null;
-            var newId = Storage.addEquipment(eqName, undefined, eqImageUrl2);
-            if (typeof Social !== 'undefined' && muscleGroup && muscleGroup !== 'all') {
-                Social.addSharedEquipment(eqName, muscleGroup).catch(function() {});
-            }
-            if (exId) {
-                Storage.setExerciseEquipment(exId, newId);
-                var activeGym = this._getActiveGymId();
-                if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, newId);
-                this._shareToGymEquipment(exId, { name: eqName, catalogId: catalogId });
-            }
-            UI.hideEquipmentModal();
-            UI.renderDay(this._currentWeek, this._currentDay);
-            return;
-        }
-
-        // Equipment modal — click gym equipment item
-        if (target.closest('.eq-gym-item')) {
-            var item = target.closest('.eq-gym-item');
-            var eqName = item.dataset.name;
-            if (!eqName) return;
-            var modal = document.getElementById('equipment-modal');
-            var exId = modal ? modal._exerciseId : null;
-            var newId = Storage.addEquipment(eqName);
-            if (exId) {
-                Storage.setExerciseEquipment(exId, newId);
-                var activeGym = this._getActiveGymId();
-                if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, newId);
-            }
-            UI.hideEquipmentModal();
-            UI.renderDay(this._currentWeek, this._currentDay);
-            return;
-        }
-
-        // Equipment modal — brand click → show brand equipment
-        if (target.closest('.eq-brand-item')) {
-            var brandItem = target.closest('.eq-brand-item');
-            var brand = brandItem.dataset.brand;
-            var extype = brandItem.dataset.extype || null;
-            if (brand) this._loadBrandEquipment(brand, extype);
-            return;
-        }
-
-        // Equipment modal — back to brands
-        if (target.id === 'eq-brand-back' || target.closest('#eq-brand-back')) {
-            this._eqBackToBrands();
-            return;
-        }
-
-        // Equipment modal — select from catalog
-        if (target.closest('.eq-catalog-item')) {
-            var catItem = target.closest('.eq-catalog-item');
-            var eqName = catItem.dataset.name;
-            var catalogId = catItem.dataset.catalogId ? parseInt(catItem.dataset.catalogId) : null;
-            if (!eqName) return;
-            var modal = document.getElementById('equipment-modal');
-            var exId = modal ? modal._exerciseId : null;
-            var eqImageUrl = catItem.dataset.image || null;
-            var newId = Storage.addEquipment(eqName, undefined, eqImageUrl);
-            if (exId) {
-                Storage.setExerciseEquipment(exId, newId);
-                Storage.linkEquipmentToExercise(exId, newId);
-                var activeGym = this._getActiveGymId();
-                if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, newId);
-                this._shareToGymEquipment(exId, { name: eqName, catalogId: catalogId });
-            }
-            UI.hideEquipmentModal();
-            UI.renderDay(this._currentWeek, this._currentDay);
-            return;
-        }
-
-        // Equipment modal — remove current equipment
-        if (target.id === 'eq-remove-btn' || target.closest('#eq-remove-btn')) {
-            var modal = document.getElementById('equipment-modal');
-            var exId = modal ? modal._exerciseId : null;
-            if (exId) {
-                Storage.removeExerciseEquipment(exId);
-                var row = document.getElementById('eq-current-row');
-                if (row) row.remove();
-            }
-            UI.hideEquipmentModal();
-            UI.renderDay(this._currentWeek, this._currentDay);
-            return;
-        }
-
-        // Equipment modal — close on overlay or X button
-        if (target.id === 'eq-close' || target.closest('#eq-close')) {
-            UI.hideEquipmentModal();
-            return;
-        }
-        if (target.id === 'equipment-modal') {
-            // Ignore phantom overlay clicks from iOS input focus (within 600ms)
-            var modal = document.getElementById('equipment-modal');
-            if (modal && modal._inputFocusedAt && (Date.now() - modal._inputFocusedAt < 600)) return;
-            UI.hideEquipmentModal();
-            return;
-        }
-
-        // Complete button
-        if (target.matches('.complete-btn') || target.closest('.complete-btn')) {
-            const btn = target.matches('.complete-btn') ? target : target.closest('.complete-btn');
-            const exId = btn.dataset.exercise;
-            const setIdx = parseInt(btn.dataset.set);
-            const eqId = Storage.getExerciseEquipment(exId);
-
-            // Get current input values
-            const row = btn.closest('.set-row');
-            const weightInput = row.querySelector('.weight-input');
-            const repsInput = row.querySelector('.reps-input');
-            const weight = parseFloat(String(weightInput.value).replace(',', '.')) || parseFloat(String(weightInput.placeholder).replace(',', '.')) || 0;
-            const reps = parseInt(repsInput.value) || parseInt(repsInput.placeholder) || 0;
-
-            const existing = Storage.getSetLog(this._currentWeek, this._currentDay, exId, setIdx);
-            if (existing && existing.completed) {
-                // Uncomplete
-                Storage.toggleSetComplete(this._currentWeek, this._currentDay, exId, setIdx, eqId);
-                btn.classList.remove('completed');
-                row.classList.remove('done');
-                btn.innerHTML = '<svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18.5" stroke="rgba(157,141,245,0.4)" stroke-width="1.5"/></svg>';
-            } else {
-                // Complete with values
-                if (weight > 0) {
-                    weightInput.value = weight;
-                }
-                if (reps > 0) {
-                    repsInput.value = reps;
-                }
-                Storage.saveSetLog(this._currentWeek, this._currentDay, exId, setIdx, weight, reps, eqId);
-                // Passive gym-equipment learning
-                var activeGym = this._getActiveGymId();
-                if (activeGym && eqId) {
-                    Storage.setGymExerciseEquipment(activeGym, exId, eqId);
-                    this._shareToGymEquipment(exId, Storage.getEquipmentById(eqId));
-                }
-
-                // Explicitly save all drop set / segment values from DOM
-                row.querySelectorAll('.seg-weight-input[data-seg]').forEach(inp => {
-                    var si = parseInt(inp.dataset.seg);
-                    if (si > 0 && inp.value) Storage.saveSegWeight(this._currentWeek, this._currentDay, exId, setIdx, si, inp.value);
-                });
-                row.querySelectorAll('.seg-reps-input[data-seg]').forEach(inp => {
-                    var si = parseInt(inp.dataset.seg);
-                    if (si > 0 && inp.value) Storage.saveSegReps(this._currentWeek, this._currentDay, exId, setIdx, si, inp.value);
-                });
-
-                btn.classList.add('completed');
-                const gid = `cg-${exId}-${setIdx}`;
-                btn.innerHTML = `<svg width="40" height="40" viewBox="0 0 40 40"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#C3FF3C"/><stop offset="1" stop-color="#5AA00A"/></linearGradient></defs><circle cx="20" cy="20" r="20" fill="url(#${gid})"/><g transform="translate(11,11)"><path d="M4 9l3.5 3.5L14 5.5" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`;
-                btn.classList.add('pop');
-                btn.addEventListener('animationend', () => btn.classList.remove('pop'), { once: true });
-                row.classList.add('done');
-
-                // Check if workout is 100% complete — show finish button
-                var progress = getCompletedSets(this._currentWeek, this._currentDay);
-                if (progress.total > 0 && progress.completed >= progress.total) {
-                    this._showFinishButton();
-                } else {
-                    RestTimer.start(row);
-                }
-            }
-            return;
-        }
-
-        // Choose one: tap exercise name to open selector
-        if (target.matches('.exercise-name-chooser') || target.closest('.exercise-name-chooser')) {
-            const el = target.matches('.exercise-name-chooser') ? target : target.closest('.exercise-name-chooser');
-            UI.showChoiceModal(el.dataset.choiceKey);
-            return;
-        }
-
-        // Choice modal: close on overlay
-        if (target.id === 'choice-modal') {
-            UI.hideChoiceModal();
-            return;
-        }
-
-        // History button
-        if (target.matches('.history-btn') || target.closest('.history-btn')) {
-            const btn = target.matches('.history-btn') ? target : target.closest('.history-btn');
-            const exId = btn.dataset.exercise;
-            location.hash = `#/history/${encodeURIComponent(exId)}`;
-            return;
-        }
-
-        // Export
-        if (target.id === 'btn-export') {
-            const data = Storage.exportData();
-            const blob = new Blob([data], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `workout-data-${formatDateISO(new Date())}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            return;
-        }
-
-        // Import
-        if (target.id === 'btn-import') {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = (ev) => {
-                const file = ev.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    if (Storage.importData(e.target.result)) {
-                        alert('Данные импортированы!');
-                        this.route();
-                    } else {
-                        alert('Ошибка импорта файла');
-                    }
-                };
-                reader.readAsText(file);
-            };
-            input.click();
-            return;
-        }
-
+        return false;
     },
 
     handleInput(e) {
