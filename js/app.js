@@ -756,18 +756,7 @@ const App = {
     },
 
     _handleEditorBack() {
-        var app = document.getElementById('app');
-        app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
-        app.style.transform = 'translateX(40px)';
-        app.style.opacity = '0';
-        setTimeout(function() {
-            app.style.transition = 'none';
-            app.style.transform = '';
-            app.style.opacity = '';
-            window.scrollTo(0, 0);
-            Builder._editingDay = null;
-            history.back();
-        }, 190);
+        this._navigateBack(null, () => { Builder._editingDay = null; });
     },
 
     _addDayToCustomProgram() {
@@ -1891,7 +1880,7 @@ const App = {
     },
 
     // ===== Animated back-navigation helper =====
-    _navigateBack(hash) {
+    _navigateBack(hash, beforeNav) {
         const app = document.getElementById('app');
         app.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
         app.style.transform = 'translateX(40px)';
@@ -1901,7 +1890,9 @@ const App = {
             app.style.transform = '';
             app.style.opacity = '';
             window.scrollTo(0, 0);
-            location.hash = hash;
+            if (beforeNav) beforeNav();
+            if (hash === null) history.back();
+            else location.hash = hash;
         }, 190);
     },
 
