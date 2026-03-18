@@ -439,7 +439,7 @@ export const SocialUI = {
         html += '</button>';
         html += '<button class="social-notif-btn" id="btn-messages" style="position:relative">';
         html += '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
-        if (msgUnread > 0) html += '<span class="msg-badge">' + msgUnread + '</span>';
+        if (this._tabBarMsgCount > 0) html += '<span class="msg-badge">' + this._tabBarMsgCount + '</span>';
         html += '</button>';
         html += '<button class="social-discover-btn" id="btn-discover"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button></div>';
 
