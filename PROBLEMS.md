@@ -60,13 +60,15 @@
 
 ---
 
-### 5. `App.js` делает слишком много (4034 строки)
+### ~~5. `App.js` делает слишком много (4034 строки)~~ ✅ ЧАСТИЧНО РЕШЕНО
 
-**Где:** `js/app.js`
+**Что сделано:** Вынесены 3 модуля из `app.js` (3853 → 3204 строк, -649):
+- `js/celebration.js` (198 строк) — объект Celebration (конфетти, оверлей завершения тренировки)
+- `js/swipe-nav.js` (294 строки) — `SwipeNav.getConfig()` + `SwipeNav.init(app)` (свайп-навигация)
+- `js/pull-refresh.js` (166 строк) — `PullRefresh.init(onRefresh)` (pull-to-refresh)
+- Ранее: `js/migrations.js` (миграции из `App.init()`)
 
-**Содержит:** Инициализацию, роутинг, ВСЕ click/input/focus обработчики, свайпы (200+ строк touch), pull-to-refresh (80+ строк), Supabase sync init, notifications, workout timer, checkin form, profile save, Celebration анимацию.
-
-**Решение:** Разнести: `swipe.js`, `pull-refresh.js`, `migrations.js`. Click-обработчики — в соответствующие модули.
+**Осталось:** workout timer (~107 строк), checkin form, profile save — тесно связаны с App state.
 
 ---
 
@@ -210,7 +212,7 @@ if (target.id === 'btn-follow' || target.closest('#btn-follow')) { ... }
 | 10 | ~~`_getSiblingIds()` O(N²)~~ ✅ | **Низкая** | Среднее (perf) | 🟡 P1 |
 | 8 | ~~5× дублирование привязки оборудования~~ ✅ | **Низкая** | Среднее | 🟡 P1 |
 | 4 | ~~Миграции в init()~~ ✅ | Низкая | Среднее | 🟡 P1 |
-| 5 | App.js слишком большой | Высокая | Высокое | 🟡 P1 |
+| 5 | ~~App.js слишком большой~~ ✅ частично | **Средняя** | Высокое | 🟡 P1 |
 | 6 | Свайпы связаны с рендерингом | Средняя | Среднее | 🟡 P1 |
 | 3 | innerHTML / XSS | Высокая | Критическое (но постепенно) | 🟡 P1 |
 | 7 | ~~PROGRAM encapsulation~~ ✅ | **Низкая** | Среднее | 🟢 P2 |
@@ -233,13 +235,13 @@ if (target.id === 'btn-follow' || target.closest('#btn-follow')) { ... }
 - ~~Вынести навигацию назад в `_navigateBack()` (#9)~~ ✅
 - ~~Вынести `_bindEquipment()` (#8)~~ ✅
 - ~~Построить sibling lookup cache (#10)~~ ✅
-- Вынести миграции из `App.init()` (#4) — **1 час**
+- ~~Вынести миграции из `App.init()` (#4)~~ ✅
 
 **Шаг 2 — Структурные рефакторинги (средний риск):**
-- Создать `ProgramUtils` для поиска упражнений (#2) — **2 часа**
+- ~~Создать `ProgramUtils` для поиска упражнений (#2)~~ ✅
 - ~~Инкапсулировать `PROGRAM` в Storage (#7)~~ ✅
-- Разделить `handleClick` на подметоды по экранам (#1) — постепенно: сначала social, потом equipment/gym, потом builder
-- Вынести свайпы в `swipe.js` (#5, #6)
+- ~~Разделить `handleClick` на подметоды по экранам (#1)~~ ✅
+- ~~Вынести свайпы, pull-to-refresh, celebration в отдельные модули (#5)~~ ✅
 - **Тестировать каждый экран после каждого шага**
 
 **Шаг 3 — Безопасность и рендер (долгосрочно):**
