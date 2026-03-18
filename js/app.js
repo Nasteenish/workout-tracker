@@ -959,8 +959,8 @@ export const App = {
             return true;
         }
 
-        // Logout
-        if (target.closest('#btn-logout')) {
+        // Logout (menu + setup screen)
+        if (target.closest('#btn-logout') || target.closest('#setup-logout')) {
             App.logout();
             return true;
         }
@@ -1514,6 +1514,13 @@ export const App = {
         if (target.closest('#btn-edit-day')) {
             App._editorNavigating = true;
             location.hash = '#/edit/day/' + App._currentDay;
+            return true;
+        }
+
+        // Setup: back to onboarding
+        if (target.closest('#setup-back-onboarding')) {
+            Builder._onboardingData = {};
+            location.hash = '#/onboarding/1';
             return true;
         }
 
