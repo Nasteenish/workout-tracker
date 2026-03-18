@@ -326,18 +326,18 @@ export const App = {
             // Check if already migrated
             var migratedTo = localStorage.getItem('wt_migrated_' + account.id);
             if (migratedTo) {
-                return 'migrated'; // Tell caller to show "use email" message
+                // Already migrated — fall through to Supabase login below
+            } else {
+                // Not migrated — redirect to migration screen
+                var users = Storage.getUsers();
+                var existing = users.find(function(u) { return u.id === account.id; });
+                if (!existing) {
+                    Storage.createUser(account.id, account.name, account.programId);
+                }
+                this._pendingMigration = account;
+                location.hash = '#/migrate';
+                return true;
             }
-            // Ensure user profile exists (for data copy)
-            var users = Storage.getUsers();
-            var existing = users.find(function(u) { return u.id === account.id; });
-            if (!existing) {
-                Storage.createUser(account.id, account.name, account.programId);
-            }
-            // Redirect to migration screen
-            this._pendingMigration = account;
-            location.hash = '#/migrate';
-            return true;
         }
 
         // 2. Try local self-registered users (by login or email)
@@ -886,23 +886,12 @@ export const App = {
             var loginVal = loginInput ? loginInput.value.trim() : '';
             var passVal = passInput ? passInput.value.trim() : '';
             if (!loginVal) return true;
-            // Legacy ACCOUNTS: password not required (removed from code), match by login only
-            var isLegacyAccount = ACCOUNTS && ACCOUNTS.some(function(a) { return a.login === loginVal; });
-            if (!isLegacyAccount && !passVal) return true;
+            // Legacy ACCOUNTS not yet migrated: password not required (redirect to migration)
+            // Legacy ACCOUNTS already migrated: password required (Supabase login)
+            var legacyAcct = ACCOUNTS && ACCOUNTS.find(function(a) { return a.login === loginVal; });
+            var isUnmigrated = legacyAcct && !localStorage.getItem('wt_migrated_' + legacyAcct.id);
+            if (!isUnmigrated && !passVal) return true;
             var loginResult = App.login(loginVal, passVal);
-            if (loginResult === 'migrated') {
-                var migratedAcct = ACCOUNTS ? ACCOUNTS.find(function(a) { return a.login === loginVal; }) : null;
-                var migratedTo = migratedAcct ? localStorage.getItem('wt_migrated_' + migratedAcct.id) : null;
-                var emailHint = migratedTo ? localStorage.getItem('wt_email_' + migratedTo) : null;
-                var err = document.getElementById('login-error');
-                if (err) {
-                    err.textContent = emailHint
-                        ? 'Войдите через email: ' + emailHint
-                        : 'Аккаунт обновлён. Войдите через email и пароль.';
-                    err.style.display = 'block';
-                }
-                return true;
-            }
             if (loginResult === true) return true;
             if (SupaSync) {
                 if (loginVal.includes('@')) {
