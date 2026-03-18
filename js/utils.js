@@ -159,11 +159,22 @@ function deepClone(obj) {
 }
 
 function debounce(fn, ms) {
-    let timer;
-    return function (...args) {
+    let timer, lastArgs, lastCtx;
+    function debounced(...args) {
+        lastArgs = args;
+        lastCtx = this;
         clearTimeout(timer);
-        timer = setTimeout(() => fn.apply(this, args), ms);
+        timer = setTimeout(() => { lastArgs = null; fn.apply(lastCtx, args); }, ms);
+    }
+    debounced.flush = function () {
+        if (lastArgs) {
+            clearTimeout(timer);
+            const a = lastArgs;
+            lastArgs = null;
+            fn.apply(lastCtx, a);
+        }
     };
+    return debounced;
 }
 
 /**

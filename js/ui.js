@@ -25,6 +25,19 @@ function blockOverlayScroll(overlay, scrollableSelector) {
     }, { passive: false });
 }
 
+function _restoreFocus(info) {
+    if (!info) return;
+    var sel = info.cls + '[data-exercise="' + info.ex + '"][data-set="' + info.set + '"]';
+    if (info.seg != null) sel += '[data-seg="' + info.seg + '"]';
+    var el = document.querySelector(sel);
+    if (el) {
+        el.focus({ preventScroll: true });
+        if (info.pos != null) {
+            try { el.setSelectionRange(info.pos, info.pos); } catch (_) {}
+        }
+    }
+}
+
 const UI = {
     // ===== LOGIN SCREEN =====
     renderLogin() {
@@ -549,6 +562,9 @@ const UI = {
 
     // ===== DAY VIEW =====
     renderDay(weekNum, dayNum) {
+        // Flush pending input saves so Storage is up-to-date before generating HTML
+        if (App._saveDebounced) App._saveDebounced.flush();
+
         const workout = resolveWorkout(weekNum, dayNum);
         if (!workout) {
             document.getElementById('app').innerHTML = '<p>Тренировка не найдена</p>';
@@ -644,6 +660,22 @@ const UI = {
             ${typeof SocialUI !== 'undefined' && Social._hasSupaAuth() ? SocialUI._tabBarHTML('workouts') : ''}
         `;
 
+        // Capture focused input for restoration after re-render
+        const ae = document.activeElement;
+        var focusInfo = null;
+        if (ae && (ae.matches('.weight-input, .reps-input, .seg-weight-input, .seg-reps-input'))) {
+            focusInfo = {
+                cls: ae.classList.contains('weight-input') ? '.weight-input'
+                   : ae.classList.contains('reps-input') ? '.reps-input'
+                   : ae.classList.contains('seg-weight-input') ? '.seg-weight-input'
+                   : '.seg-reps-input',
+                ex: ae.dataset.exercise,
+                set: ae.dataset.set,
+                seg: ae.dataset.seg,
+                pos: ae.selectionStart
+            };
+        }
+
         const appEl = document.getElementById('app');
         const isPTR = appEl.classList.contains('no-animate');
 
@@ -674,6 +706,7 @@ const UI = {
                 offscreen.remove();
                 if (timerRunning) WorkoutTimer.resume(App._currentWeek, App._currentDay);
                 markCachedThumbs();
+                _restoreFocus(focusInfo);
             };
 
             if (decodePromises.length > 0) {
@@ -686,6 +719,7 @@ const UI = {
             appEl.innerHTML = newHTML;
             if (timerRunning) WorkoutTimer.resume(App._currentWeek, App._currentDay);
             markCachedThumbs();
+            _restoreFocus(focusInfo);
         }
     },
 
