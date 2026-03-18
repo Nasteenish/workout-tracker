@@ -1,26 +1,6 @@
 /* ===== Application Entry Point ===== */
-import { Storage } from './storage.js';
-import { SupaSync, supa } from './supabase-sync.js';
-import { Social } from './social.js';
-import { UI } from './ui.js';
-import { SocialUI } from './social-ui.js';
-import { Builder } from './builder.js';
-import { RestTimer } from './timer.js';
-import { Celebration } from './celebration.js';
-import { SwipeNav } from './swipe-nav.js';
-import { PullRefresh } from './pull-refresh.js';
-import { WorkoutTimer } from './workout-timer.js';
-import { EquipmentManager } from './equipment-manager.js';
-import { MessageNotifications } from './message-notifications.js';
-import { ProfileManager } from './profile-manager.js';
-import { AvatarCropper } from './cropper.js';
-import { Migrations } from './migrations.js';
-import { ACCOUNTS, BUILTIN_PROGRAMS } from './users.js';
-import { DEFAULT_PROGRAM } from './data.js';
-import { lockBodyScroll, unlockBodyScroll } from './scroll-lock.js';
-import { debounce, getTotalDays, formatDateISO, validateProgram, getProgressWeek, getTotalWeeks, esc, getCompletedSets, findExerciseInProgram } from './utils.js';
 
-export const App = {
+const App = {
     _currentWeek: 1,
     _currentDay: 1,
     _saveDebounced: null,
@@ -48,7 +28,7 @@ export const App = {
         const currentUser = Storage.getCurrentUser();
         if (currentUser) {
             // Check if hardcoded user needs migration to Supabase Auth
-            var acct = ACCOUNTS ? ACCOUNTS.find(function(a) { return a.id === currentUser.id; }) : null;
+            var acct = typeof ACCOUNTS !== 'undefined' ? ACCOUNTS.find(function(a) { return a.id === currentUser.id; }) : null;
             if (acct) {
                 // Sync name
                 if (acct.name !== currentUser.name) {
@@ -162,7 +142,7 @@ export const App = {
     // Initialize Supabase sync for supa_ users
     _initSupaSync(userId) {
         if (!userId || userId.indexOf('supa_') !== 0) return;
-        if (!SupaSync) return;
+        if (typeof SupaSync === 'undefined') return;
         var supaUserId = localStorage.getItem('wt_supa_' + userId);
         if (!supaUserId) return;
         SupaSync._currentSupaUserId = supaUserId;
@@ -888,7 +868,7 @@ export const App = {
             if (!loginVal || !passVal) return true;
             var loginResult = App.login(loginVal, passVal);
             if (loginResult === 'migrated') {
-                var migratedAcct = ACCOUNTS ? ACCOUNTS.find(function(a) { return a.login === loginVal; }) : null;
+                var migratedAcct = typeof ACCOUNTS !== 'undefined' ? ACCOUNTS.find(function(a) { return a.login === loginVal; }) : null;
                 var migratedTo = migratedAcct ? localStorage.getItem('wt_migrated_' + migratedAcct.id) : null;
                 var emailHint = migratedTo ? localStorage.getItem('wt_email_' + migratedTo) : null;
                 var err = document.getElementById('login-error');
@@ -901,7 +881,7 @@ export const App = {
                 return true;
             }
             if (loginResult === true) return true;
-            if (SupaSync) {
+            if (typeof SupaSync !== 'undefined') {
                 if (loginVal.includes('@')) {
                     App.loginSupabase(loginVal, passVal);
                 } else {
@@ -1516,7 +1496,7 @@ export const App = {
 
         // Setup: use default program
         if (target.closest('#setup-use-default')) {
-            if (DEFAULT_PROGRAM) {
+            if (typeof DEFAULT_PROGRAM !== 'undefined') {
                 Storage.saveProgram(DEFAULT_PROGRAM, false);
                 Storage.setProgram(DEFAULT_PROGRAM);
                 this.invalidatePageCache(); // Program changed
@@ -1677,7 +1657,7 @@ export const App = {
             var modal = document.getElementById('gym-modal');
             var onSelect = modal ? modal._onSelect : null;
             // Create gym in Supabase, then add locally
-            if (Social) {
+            if (typeof Social !== 'undefined') {
                 Social.addSharedGym(name, city).then(function(shared) {
                     if (shared && shared.id) {
                         // Add to gym cache
@@ -1771,7 +1751,7 @@ export const App = {
             const exId = modal ? modal._exerciseId : null;
             const muscleGroup = modal ? modal._muscleGroup : null;
             const newId = Storage.addEquipment(name);
-            if (Social && muscleGroup && muscleGroup !== 'all') {
+            if (typeof Social !== 'undefined' && muscleGroup && muscleGroup !== 'all') {
                 Social.addSharedEquipment(name, muscleGroup).catch(function() {});
             }
             if (exId) {
@@ -1791,7 +1771,7 @@ export const App = {
             var muscleGroup = modal ? modal._muscleGroup : null;
             var eqImageUrl2 = item.dataset.image || null;
             var newId = Storage.addEquipment(eqName, undefined, eqImageUrl2);
-            if (Social && muscleGroup && muscleGroup !== 'all') {
+            if (typeof Social !== 'undefined' && muscleGroup && muscleGroup !== 'all') {
                 Social.addSharedEquipment(eqName, muscleGroup).catch(function() {});
             }
             if (exId) {
@@ -2486,3 +2466,8 @@ export const App = {
 };
 
 // Celebration moved to js/celebration.js
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    App.init();
+});

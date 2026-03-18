@@ -1,8 +1,6 @@
 // social.js — Supabase API for social features: profiles, check-ins, follows, reactions, comments
-import { Storage } from './storage.js';
-import { supa } from './supabase-sync.js';
 
-export const Social = {
+const Social = {
 
     // ===== HELPERS =====
 

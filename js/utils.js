@@ -1,29 +1,27 @@
 /* ===== Utility Functions ===== */
-import { Storage } from './storage.js';
-import { EXERCISE_DB } from './exercises_db.js';
 
 // Escape HTML entities to prevent XSS
-export function esc(s) {
+function esc(s) {
     if (!s && s !== 0) return '';
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 // Exercise display name based on language setting
-export function exName(ex) {
+function exName(ex) {
     if (!ex) return '';
-    var lang = (Storage && Storage._data && Storage._data.settings)
+    var lang = (typeof Storage !== 'undefined' && Storage._data && Storage._data.settings)
         ? Storage._data.settings.exerciseLang : 'ru';
     if (lang === 'en') return ex.name || ex.nameRu || '';
     return ex.nameRu || ex.name || '';
 }
 
 // Exercise thumbnail URL from name (matches Supabase storage path)
-export const EX_THUMB_BASE = 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/exercise-thumbs/';
+var EX_THUMB_BASE = 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/exercise-thumbs/';
 var _exThumbLookup = null;
 function _buildThumbLookup() {
     if (_exThumbLookup) return;
     _exThumbLookup = {};
-    if (EXERCISE_DB) {
+    if (typeof EXERCISE_DB !== 'undefined') {
         for (var i = 0; i < EXERCISE_DB.length; i++) {
             var ex = EXERCISE_DB[i];
             if (ex.name) {
@@ -33,7 +31,7 @@ function _buildThumbLookup() {
         }
     }
 }
-export function exThumbUrl(name, nameRu) {
+function exThumbUrl(name, nameRu) {
     if (!name && !nameRu) return '';
     _buildThumbLookup();
     // Try resolving via EXERCISE_DB: check name first, then nameRu
@@ -45,7 +43,7 @@ export function exThumbUrl(name, nameRu) {
     var canonical = resolved || name || nameRu;
     return EX_THUMB_BASE + canonical.replace(/ /g, '_').replace(/[()\/]/g, '_') + '.jpg';
 }
-export function exThumbHtml(name, sizeOrNameRu, size) {
+function exThumbHtml(name, sizeOrNameRu, size) {
     // Supports: exThumbHtml(name), exThumbHtml(name, size), exThumbHtml(name, nameRu, size)
     var nameRu = null;
     var sz = null;
@@ -56,31 +54,31 @@ export function exThumbHtml(name, sizeOrNameRu, size) {
     return '<img class="ex-thumb" src="' + exThumbUrl(name, nameRu) + '" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'"' + cls + '>';
 }
 // Mark already-cached images as loaded instantly (prevents flicker on re-render)
-export function markCachedThumbs(root) {
+function markCachedThumbs(root) {
     var imgs = (root || document).querySelectorAll('.ex-thumb:not(.loaded)');
     for (var i = 0; i < imgs.length; i++) {
         if (imgs[i].complete && imgs[i].naturalWidth > 0) imgs[i].classList.add('loaded');
     }
 }
 
-export const MONTHS_RU = [
+const MONTHS_RU = [
     'янв', 'фев', 'мар', 'апр', 'май', 'июн',
     'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'
 ];
 
-export const DAYS_RU = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+const DAYS_RU = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 
-export function getTotalWeeks() {
+function getTotalWeeks() {
     var p = Storage.getProgram();
     return p ? p.totalWeeks : 12;
 }
 
-export function getTotalDays() {
+function getTotalDays() {
     var p = Storage.getProgram();
     return p ? Object.keys(p.dayTemplates).length : 5;
 }
 
-export function validateProgram(data) {
+function validateProgram(data) {
     if (!data || typeof data !== 'object') return 'Неверный формат JSON';
     if (!data.title || typeof data.title !== 'string') return 'Отсутствует title';
     if (!data.totalWeeks || typeof data.totalWeeks !== 'number') return 'Отсутствует totalWeeks';
@@ -98,23 +96,23 @@ export function validateProgram(data) {
 }
 
 /** Parse "YYYY-MM-DD" as local date (avoids UTC shift bug) */
-export function parseLocalDate(str) {
+function parseLocalDate(str) {
     if (str instanceof Date) return new Date(str.getFullYear(), str.getMonth(), str.getDate());
     var p = String(str).split('-');
     return new Date(parseInt(p[0]), parseInt(p[1]) - 1, parseInt(p[2]));
 }
 
-export function formatDate(date) {
+function formatDate(date) {
     const d = (date instanceof Date) ? date : parseLocalDate(date);
     return `${d.getDate()} ${MONTHS_RU[d.getMonth()]}`;
 }
 
-export function formatDateFull(date) {
+function formatDateFull(date) {
     const d = (date instanceof Date) ? date : parseLocalDate(date);
     return `${DAYS_RU[d.getDay()]}, ${d.getDate()} ${MONTHS_RU[d.getMonth()]}`;
 }
 
-export function formatDateISO(date) {
+function formatDateISO(date) {
     const d = (date instanceof Date) ? date : parseLocalDate(date);
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -122,7 +120,7 @@ export function formatDateISO(date) {
     return `${y}-${m}-${day}`;
 }
 
-export function getScheduleDates(startDate, cycleType) {
+function getScheduleDates(startDate, cycleType) {
     const dates = [];
     const start = parseLocalDate(startDate);
     for (let week = 0; week < getTotalWeeks(); week++) {
@@ -138,7 +136,7 @@ export function getScheduleDates(startDate, cycleType) {
     return dates;
 }
 
-export function getCurrentPosition(startDate, cycleType) {
+function getCurrentPosition(startDate, cycleType) {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     const start = parseLocalDate(startDate);
@@ -156,11 +154,11 @@ export function getCurrentPosition(startDate, cycleType) {
     };
 }
 
-export function deepClone(obj) {
+function deepClone(obj) {
     return JSON.parse(JSON.stringify(obj));
 }
 
-export function debounce(fn, ms) {
+function debounce(fn, ms) {
     let timer, lastArgs, lastCtx;
     function debounced(...args) {
         lastArgs = args;
@@ -183,7 +181,7 @@ export function debounce(fn, ms) {
  * Resolve a superset exercise item — it may be a normal exercise
  * or a _chooseOne wrapper (Day 4 has choose_one inside supersets).
  */
-export function resolveSupersetItem(item) {
+function resolveSupersetItem(item) {
     if (item._chooseOne) {
         const chosenId = Storage.getChoice(item.choiceKey);
         const options = item.options || [];
@@ -200,7 +198,7 @@ export function resolveSupersetItem(item) {
  * Get all exercises from an exercise group, normalizing the data.js structure.
  * Returns an array of exercise objects (resolving _chooseOne inside supersets).
  */
-export function getGroupExercises(group) {
+function getGroupExercises(group) {
     if (group.type === 'single' || group.type === 'warmup') {
         return group.exercise ? [group.exercise] : [];
     }
@@ -228,7 +226,7 @@ export function getGroupExercises(group) {
 /**
  * Find an exercise by ID across all groups in a template.
  */
-export function findExerciseInTemplate(template, exerciseId) {
+function findExerciseInTemplate(template, exerciseId) {
     for (const group of template.exerciseGroups) {
         const exercises = getGroupExercises(group);
         for (const ex of exercises) {
@@ -242,7 +240,7 @@ export function findExerciseInTemplate(template, exerciseId) {
  * Find an exercise by ID across ALL days in a program.
  * Builds on findExerciseInTemplate() → getGroupExercises().
  */
-export function findExerciseInProgram(program, exerciseId) {
+function findExerciseInProgram(program, exerciseId) {
     if (!program || !program.dayTemplates) return null;
     for (var dNum in program.dayTemplates) {
         var ex = findExerciseInTemplate(program.dayTemplates[dNum], exerciseId);
@@ -255,7 +253,7 @@ export function findExerciseInProgram(program, exerciseId) {
  * Collect ALL exercises from a program with their day numbers.
  * Returns [{ exercise, day }]. Handles all group types via getGroupExercises().
  */
-export function getAllProgramExercises(program) {
+function getAllProgramExercises(program) {
     var result = [];
     if (!program) return result;
     var templates = program.dayTemplates;
@@ -290,7 +288,7 @@ export function getAllProgramExercises(program) {
  * with any weekly overrides.
  * data.js structure: weeklyOverrides[weekNum][dayNum][exerciseId].sets[setIdx]
  */
-export function resolveWorkout(week, day) {
+function resolveWorkout(week, day) {
     const p = Storage.getProgram();
     const template = deepClone(p.dayTemplates[day]);
     if (!template) return null;
@@ -319,7 +317,7 @@ export function resolveWorkout(week, day) {
 /**
  * Calculate total sets for a day's workout.
  */
-export function getTotalSets(workout) {
+function getTotalSets(workout) {
     let total = 0;
     for (const group of workout.exerciseGroups) {
         if (group.type === 'choose_one') {
@@ -344,7 +342,7 @@ export function getTotalSets(workout) {
 /**
  * Count completed sets for a given week/day.
  */
-export function getCompletedSets(week, day) {
+function getCompletedSets(week, day) {
     const workout = resolveWorkout(week, day);
     if (!workout) return { completed: 0, total: 0 };
 
@@ -376,7 +374,7 @@ export function getCompletedSets(week, day) {
 /**
  * Get the chosen exercise from a choose_one group.
  */
-export function getChosenExercise(group) {
+function getChosenExercise(group) {
     const choiceKey = group.choiceKey;
     const chosenId = Storage.getChoice(choiceKey);
     const options = group.options || [];
@@ -390,7 +388,7 @@ export function getChosenExercise(group) {
 /**
  * Find the current progress position — first week/day that is not fully completed.
  */
-export function getProgressWeek() {
+function getProgressWeek() {
     for (var week = 1; week <= getTotalWeeks(); week++) {
         for (var day = 1; day <= getTotalDays(); day++) {
             var result = getCompletedSets(week, day);
@@ -403,7 +401,7 @@ export function getProgressWeek() {
     return { week: 1, day: 1 };
 }
 
-export function formatRest(rest) {
+function formatRest(rest) {
     if (!rest || rest === '-') return '';
     if (typeof rest === 'number') {
         if (rest >= 60) return `>${Math.floor(rest / 60)}'`;

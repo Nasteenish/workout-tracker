@@ -1,19 +1,12 @@
 /* ===== Equipment & Gym Management ===== */
-import { App } from './app.js';
-import { Social } from './social.js';
-import { Storage } from './storage.js';
-import { UI } from './ui.js';
-import { WorkoutTimer } from './workout-timer.js';
-import { esc, findExerciseInProgram } from './utils.js';
-
-export const EquipmentManager = {
+const EquipmentManager = {
     _lastGeoPos: null,
     _sharedGymsCache: null,
     _sharedEquipmentCache: null,
     _eqSearchTimer: null,
 
     initGymCache() {
-        if (!Social) return;
+        if (typeof Social === 'undefined') return;
         var self = this;
         Social.getAllSharedGyms().then(function(gyms) {
             self._sharedGymsCache = gyms || [];
@@ -41,7 +34,7 @@ export const EquipmentManager = {
     },
 
     loadSharedGyms() {
-        if (!Social) return;
+        if (typeof Social === 'undefined') return;
         var self = this;
         Social.getAllSharedGyms().then(function(gyms) {
             self._sharedGymsCache = gyms || [];
@@ -76,7 +69,7 @@ export const EquipmentManager = {
     },
 
     loadEquipmentBrands(exerciseId) {
-        if (!Social) return;
+        if (typeof Social === 'undefined') return;
         var modal = document.getElementById('equipment-modal');
         if (!modal) return;
         var exName = modal._exerciseName || '';
@@ -326,7 +319,7 @@ export const EquipmentManager = {
 
         var isFreeWeight = modal ? modal._isFreeWeight : false;
         this._eqSearchTimer = setTimeout(function() {
-            if (!Social) return;
+            if (typeof Social === 'undefined') return;
             var promises = [
                 isFreeWeight ? Promise.resolve([]) : Social.searchCatalog(query, muscleGroup !== 'all' ? muscleGroup : null),
                 Social.searchSharedEquipment(query, muscleGroup !== 'all' ? muscleGroup : null)
@@ -377,7 +370,7 @@ export const EquipmentManager = {
     },
 
     shareToGymEquipment(exerciseId, equipment, week, day) {
-        if (!Social || !equipment || !equipment.name) return;
+        if (typeof Social === 'undefined' || !equipment || !equipment.name) return;
         var activeGymId = this.getActiveGymId(week, day);
         if (!activeGymId) return;
         var gym = Storage.getGymById(activeGymId);

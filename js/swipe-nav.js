@@ -1,10 +1,5 @@
 /* ===== Swipe Navigation ===== */
-import { App } from './app.js';
-import { Builder } from './builder.js';
-import { UI } from './ui.js';
-import { getTotalWeeks } from './utils.js';
-
-export const SwipeNav = {
+const SwipeNav = {
     // Config-based swipe: add new routes in getConfig only
     getConfig(hash, app) {
         // Week carousel (horizontal left/right)

@@ -1,17 +1,12 @@
 /* ===== Storage Module ===== */
-import { ACCOUNTS } from './users.js';
-import { SupaSync } from './supabase-sync.js';
-import { Social } from './social.js';
-import { EXERCISE_DB } from './exercises_db.js';
-import { getAllProgramExercises } from './utils.js';
 
 // Dynamic storage key per user
-export function _storageKey() {
+function _storageKey() {
     var userId = localStorage.getItem('wt_current');
     return userId ? 'wt_data_' + userId : 'workout_tracker_v1';
 }
 
-export const Storage = {
+const Storage = {
     _data: null,
     _siblingCache: null,
     _program: null,
@@ -95,7 +90,7 @@ export const Storage = {
             if (this._data) this._data._lastModified = Date.now();
             localStorage.setItem(_storageKey(), JSON.stringify(this._data));
             // Trigger cloud sync if available
-            if (SupaSync) SupaSync.onLocalSave();
+            if (typeof SupaSync !== 'undefined') SupaSync.onLocalSave();
         } catch (e) {
             console.error('Storage save error:', e);
         }
@@ -175,7 +170,7 @@ export const Storage = {
     // Check if login is already taken (across hardcoded + self-registered)
     isLoginTaken(login) {
         // Check hardcoded ACCOUNTS
-        if (ACCOUNTS) {
+        if (typeof ACCOUNTS !== 'undefined') {
             if (ACCOUNTS.some(function(a) { return a.login === login; })) return true;
         }
         // Check self-registered
@@ -319,7 +314,7 @@ export const Storage = {
 
         // Also build reverse map: Russian name → English name from EXERCISE_DB
         var DB_RU = {};
-        if (EXERCISE_DB) {
+        if (typeof EXERCISE_DB !== 'undefined') {
             for (var i = 0; i < EXERCISE_DB.length; i++) {
                 var dbEx = EXERCISE_DB[i];
                 if (dbEx.name && dbEx.nameRu) DB_RU[dbEx.nameRu.toLowerCase()] = [dbEx.name, dbEx.nameRu];
@@ -734,7 +729,7 @@ export const Storage = {
     async migrateLocalGyms() {
         var data = this._load();
         if (!data.gyms || !data.gyms.length) return;
-        if (!Social) return;
+        if (typeof Social === 'undefined') return;
         if (!data.myGymIds) data.myGymIds = [];
         if (!data.gymLastUsed) data.gymLastUsed = {};
 

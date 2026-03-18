@@ -1,6 +1,6 @@
 // exercises_db.js — Exercise library (429 exercises from Hevy)
 
-export const EXERCISE_CATEGORIES = [
+const EXERCISE_CATEGORIES = [
     { id: 'chest', nameRu: 'Грудь' },
     { id: 'back', nameRu: 'Спина' },
     { id: 'legs', nameRu: 'Ноги' },
@@ -11,7 +11,7 @@ export const EXERCISE_CATEGORIES = [
     { id: 'cardio', nameRu: 'Кардио' },
 ];
 
-export const EXERCISE_DB = [
+const EXERCISE_DB = [
     // === Грудь (48) ===
     { nameRu: 'Бабочка (пек-дек)', name: 'Butterfly (Pec Deck)', category: 'chest' },
     { nameRu: 'Вокруг света', name: 'Around The World', category: 'chest' },

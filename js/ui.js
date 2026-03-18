@@ -1,15 +1,44 @@
 /* ===== UI Rendering Module ===== */
-import { lockBodyScroll, unlockBodyScroll, blockOverlayScroll, _restoreFocus } from './scroll-lock.js';
-import { Storage } from './storage.js';
-import { Social } from './social.js';
-import { SocialUI } from './social-ui.js';
-import { Builder } from './builder.js';
-import { App } from './app.js';
-import { EquipmentManager } from './equipment-manager.js';
-import { WorkoutTimer } from './workout-timer.js';
-import { getTotalWeeks, getTotalDays, formatDateISO, getProgressWeek, getCompletedSets, resolveWorkout, exName, markCachedThumbs, esc, exThumbHtml, getGroupExercises, findExerciseInProgram } from './utils.js';
 
-export const UI = {
+function lockBodyScroll() {
+    if (document.body.classList.contains('modal-open')) return;
+    document.body.dataset.scrollY = window.scrollY;
+    document.body.style.top = '-' + window.scrollY + 'px';
+    document.body.classList.add('modal-open');
+}
+
+function unlockBodyScroll() {
+    if (!document.body.classList.contains('modal-open')) return;
+    document.body.classList.remove('modal-open');
+    var scrollY = parseInt(document.body.dataset.scrollY || '0');
+    document.body.style.top = '';
+    window.scrollTo(0, scrollY);
+}
+
+function blockOverlayScroll(overlay, scrollableSelector) {
+    var selectors = Array.isArray(scrollableSelector) ? scrollableSelector : [scrollableSelector];
+    overlay.addEventListener('touchmove', function(e) {
+        for (var i = 0; i < selectors.length; i++) {
+            if (e.target.closest(selectors[i])) return;
+        }
+        e.preventDefault();
+    }, { passive: false });
+}
+
+function _restoreFocus(info) {
+    if (!info) return;
+    var sel = info.cls + '[data-exercise="' + info.ex + '"][data-set="' + info.set + '"]';
+    if (info.seg != null) sel += '[data-seg="' + info.seg + '"]';
+    var el = document.querySelector(sel);
+    if (el) {
+        el.focus({ preventScroll: true });
+        if (info.pos != null) {
+            try { el.setSelectionRange(info.pos, info.pos); } catch (_) {}
+        }
+    }
+}
+
+const UI = {
     // ===== LOGIN SCREEN =====
     renderLogin() {
         document.getElementById('app').innerHTML = `
@@ -188,7 +217,7 @@ export const UI = {
             headerName: currentUser ? currentUser.name : 'Трекер Тренировок',
             totalWeeks: getTotalWeeks(),
             totalDays: numDays,
-            hasTabBar: SocialUI && Social._hasSupaAuth(),
+            hasTabBar: typeof SocialUI !== 'undefined' && Social._hasSupaAuth(),
             slots
         };
     },
@@ -566,7 +595,7 @@ export const UI = {
             timerRunning, timerPaused, timerElapsedStr,
             doneCount, totalCount, allDone,
             gymHtml: this._gymIndicatorHTML(weekNum, dayNum),
-            hasTabBar: SocialUI && Social._hasSupaAuth()
+            hasTabBar: typeof SocialUI !== 'undefined' && Social._hasSupaAuth()
         };
     },
 

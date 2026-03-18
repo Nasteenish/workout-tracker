@@ -1,10 +1,5 @@
 /* ===== Workout Complete Celebration ===== */
-import { App } from './app.js';
-import { Social } from './social.js';
-import { Storage } from './storage.js';
-import { resolveWorkout, exName } from './utils.js';
-
-export const Celebration = {
+const Celebration = {
     _colors: ['#9D8DF5', '#B5F22A', '#FF6D28', '#30D4C8', '#FF2D55', '#C3FF3C', '#4A96FF', '#fff'],
     _shapes: ['circle', 'star', 'square', 'diamond'],
     _phrases: [
@@ -36,7 +31,7 @@ export const Celebration = {
 
         // Share button (only for Supabase-authenticated users)
         var shareBtn = '';
-        if (Social && Social._hasSupaAuth()) {
+        if (typeof Social !== 'undefined' && Social._hasSupaAuth()) {
             shareBtn = '<button class="celeb-share-btn" id="celeb-share">ПОДЕЛИТЬСЯ</button>';
         }
 
@@ -54,7 +49,7 @@ export const Celebration = {
         this._launchConfetti();
 
         // Build workout summary for sharing
-        if (weekNum && dayNum && Social && Social._hasSupaAuth()) {
+        if (weekNum && dayNum && typeof Social !== 'undefined' && Social._hasSupaAuth()) {
             var workout = resolveWorkout(weekNum, dayNum);
             var exercises = [];
             var totalSets = 0;

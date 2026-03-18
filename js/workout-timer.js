@@ -1,5 +1,5 @@
 /* ===== Workout Session Timer ===== */
-export const WorkoutTimer = {
+const WorkoutTimer = {
     _interval: null,
 
     _getTimerKey(week, day) {

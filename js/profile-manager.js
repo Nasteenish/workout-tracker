@@ -1,7 +1,5 @@
 /* ===== Profile Save & Checkin Form ===== */
-import { Social } from './social.js';
-
-export const ProfileManager = {
+const ProfileManager = {
     croppedAvatarBlob: null,
     checkinPhotos: [],
     checkinTaggedUsers: [],

@@ -1,7 +1,6 @@
 /* ===== Rest Timer ===== */
-import { Storage } from './storage.js';
 
-export const RestTimer = {
+const RestTimer = {
     _interval: null,
     _remaining: 120,
     _defaultDuration: 120,

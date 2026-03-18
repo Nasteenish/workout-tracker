@@ -29,7 +29,29 @@
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script type="module" src="./js/main.js"></script>
+    <script src="./js/utils.js?v=25"></script>
+    <script src="./js/data.js?v=36"></script>
+    <script src="./js/mikhail_data.js?v=11"></script>
+    <script src="./js/mikhail2_data.js?v=6"></script>
+    <script src="./js/users.js?v=6"></script>
+    <script src="./js/exercises_db.js?v=4"></script>
+    <script src="./js/supabase-sync.js?v=5"></script>
+    <script src="./js/storage.js?v=48"></script>
+    <script src="./js/migrations.js?v=1"></script>
+    <script src="./js/social.js?v=25"></script>
+    <script src="./js/ui.js?v=129"></script>
+    <script src="./js/cropper.js?v=1"></script>
+    <script src="./js/social-ui.js?v=113"></script>
+    <script src="./js/builder.js?v=63"></script>
+    <script src="./js/timer.js?v=73"></script>
+    <script src="./js/celebration.js?v=1"></script>
+    <script src="./js/swipe-nav.js?v=2"></script>
+    <script src="./js/pull-refresh.js?v=1"></script>
+    <script src="./js/workout-timer.js?v=1"></script>
+    <script src="./js/equipment-manager.js?v=1"></script>
+    <script src="./js/message-notifications.js?v=1"></script>
+    <script src="./js/profile-manager.js?v=1"></script>
+    <script src="./js/app.js?v=228"></script>
 
     <script>
         if ('serviceWorker' in navigator) {
@@ -41,11 +63,11 @@
                 location.reload();
             });
             // One-time SW reset to clear corrupted state after rapid updates
-            if (!localStorage.getItem('_swReset530')) {
+            if (!localStorage.getItem('_swReset452')) {
                 navigator.serviceWorker.getRegistrations().then(function(regs) {
                     return Promise.all(regs.map(function(r) { return r.unregister(); }));
                 }).then(function() {
-                    localStorage.setItem('_swReset530', '1');
+                    localStorage.setItem('_swReset452', '1');
                     return navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' });
                 }).then(function(reg) { return reg.update(); });
             } else {

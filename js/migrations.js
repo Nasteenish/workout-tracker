@@ -1,7 +1,6 @@
 /* ===== Data Migrations ===== */
-import { Storage } from './storage.js';
 
-export const Migrations = {
+const Migrations = {
     /**
      * Run all pending one-time migrations.
      * Each migration is guarded by a localStorage flag so it only runs once.
