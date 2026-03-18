@@ -41,6 +41,22 @@ export const App = {
         // Run one-time data migrations (see js/migrations.js)
         Migrations.run();
 
+        // One-time fix: restore programId for migrated hardcoded users (lost during migration)
+        if (!localStorage.getItem('_fix_migrated_programId') && typeof ACCOUNTS !== 'undefined') {
+            ACCOUNTS.forEach(function(acct) {
+                var migratedTo = localStorage.getItem('wt_migrated_' + acct.id);
+                if (migratedTo && acct.programId) {
+                    var users = Storage.getUsers();
+                    var u = users.find(function(x) { return x.id === migratedTo; });
+                    if (u && !u.programId) {
+                        u.programId = acct.programId;
+                        Storage._saveUsers(users);
+                    }
+                }
+            });
+            localStorage.setItem('_fix_migrated_programId', '1');
+        }
+
         // Multi-user migration (once)
         Storage.migrateToMultiUser();
 
@@ -528,8 +544,8 @@ export const App = {
                 localStorage.setItem('wt_data_' + newLocalId, oldData);
             }
 
-            // 2. Create new user profile
-            Storage.createSelfRegisteredUser(account.name, account.login, '', email, newLocalId);
+            // 2. Create new user profile (preserve programId for built-in program loading)
+            Storage.createSelfRegisteredUser(account.name, account.login, '', email, newLocalId, account.programId);
 
             // 3. Store Supabase mapping
             localStorage.setItem('wt_supa_' + newLocalId, supaUserId);
