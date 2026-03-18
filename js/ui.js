@@ -175,82 +175,96 @@ const UI = {
     },
 
     // ===== WEEK VIEW =====
-    // Returns just the week day-cards HTML (used by swipe companion too)
-    _weekCardsHTML(weekNum) {
+    // Data preparation for week view — slots, progress, user info
+    _buildWeekVM(weekNum) {
         const progress = getProgressWeek();
         const settings = Storage.getSettings();
         const cycleType = settings.cycleType || 7;
-
         const numDays = getTotalDays();
-        let slots;
-        const savedSlots = Storage.getWeekSlots();
-        if (savedSlots && savedSlots.length === cycleType) {
-            slots = savedSlots;
-        } else {
-            // Generate default layout: distribute rest days evenly
-            slots = this._generateDefaultSlots(numDays, cycleType);
-        }
+        const program = Storage.getProgram();
 
+        const savedSlots = Storage.getWeekSlots();
+        const rawSlots = (savedSlots && savedSlots.length === cycleType)
+            ? savedSlots
+            : this._generateDefaultSlots(numDays, cycleType);
+
+        const slots = rawSlots.map((slot, si) => {
+            if (slot.type === 'rest') return { type: 'rest', slotIdx: si };
+            const dayNum = slot.dayNum;
+            const { completed, total } = getCompletedSets(weekNum, dayNum);
+            const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+            const template = program.dayTemplates[dayNum];
+            const isDone = total > 0 && completed >= total;
+            const lastTs = Storage.getLastTrainingDate(weekNum, dayNum);
+            let trainedDateHtml = '';
+            if (lastTs) {
+                const dt = new Date(lastTs);
+                const months = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+                trainedDateHtml = `<div class="day-trained-date">${dt.getDate()} ${months[dt.getMonth()]}</div>`;
+            }
+            return {
+                type: 'workout', slotIdx: si, dayNum,
+                dayTitle: template ? template.titleRu : `День ${dayNum}`,
+                completed, total, pct, isDone,
+                isNext: progress.week === weekNum && progress.day === dayNum,
+                trainedDateHtml
+            };
+        });
+
+        const currentUser = Storage.getCurrentUser();
+        return {
+            weekNum,
+            headerName: currentUser ? currentUser.name : 'Трекер Тренировок',
+            totalWeeks: getTotalWeeks(),
+            totalDays: numDays,
+            hasTabBar: typeof SocialUI !== 'undefined' && Social._hasSupaAuth(),
+            slots
+        };
+    },
+
+    // Pure HTML from pre-computed week VM
+    _weekCardsHTML(vm) {
         let cardsHtml = '';
-        for (let si = 0; si < slots.length; si++) {
-            const slot = slots[si];
+        for (const slot of vm.slots) {
             if (slot.type === 'rest') {
-                cardsHtml += `<div class="rest-day-card" data-slot-idx="${si}">
+                cardsHtml += `<div class="rest-day-card" data-slot-idx="${slot.slotIdx}">
                     <svg class="rest-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
                         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                     <span class="rest-label">Отдых</span>
                 </div>`;
             } else {
-                const dayNum = slot.dayNum;
-                const { completed, total } = getCompletedSets(weekNum, dayNum);
-                const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-                const template = Storage.getProgram().dayTemplates[dayNum];
-                const dayTitle = template ? template.titleRu : `День ${dayNum}`;
-                const isDone = total > 0 && completed >= total;
-                const isNext = progress.week === weekNum && progress.day === dayNum;
-
                 let cardClass = 'day-card';
-                if (isNext) cardClass += ' today';
-                if (isDone) cardClass += ' done';
-
-                const lastTs = Storage.getLastTrainingDate(weekNum, dayNum);
-                let trainedDateHtml = '';
-                if (lastTs) {
-                    const dt = new Date(lastTs);
-                    const months = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
-                    trainedDateHtml = `<div class="day-trained-date">${dt.getDate()} ${months[dt.getMonth()]}</div>`;
-                }
+                if (slot.isNext) cardClass += ' today';
+                if (slot.isDone) cardClass += ' done';
 
                 cardsHtml += `
-                    <a class="${cardClass}" href="#/week/${weekNum}/day/${dayNum}" data-slot-idx="${si}">
+                    <a class="${cardClass}" href="#/week/${vm.weekNum}/day/${slot.dayNum}" data-slot-idx="${slot.slotIdx}">
                         <div class="day-header">
-                            <span class="day-number">${isDone ? '<svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="vertical-align:-2px;margin-right:2px"><path d="M2.5 6.5l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}День ${dayNum}</span>
-                            <span class="day-date">${pct}%</span>
+                            <span class="day-number">${slot.isDone ? '<svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="vertical-align:-2px;margin-right:2px"><path d="M2.5 6.5l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}День ${slot.dayNum}</span>
+                            <span class="day-date">${slot.pct}%</span>
                         </div>
-                        <div class="day-title">${dayTitle}</div>
+                        <div class="day-title">${slot.dayTitle}</div>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${pct}%"></div>
+                            <div class="progress-fill" style="width: ${slot.pct}%"></div>
                         </div>
-                        <div class="progress-text">${completed}/${total} подходов</div>
-                        ${trainedDateHtml}
+                        <div class="progress-text">${slot.completed}/${slot.total} подходов</div>
+                        ${slot.trainedDateHtml}
                     </a>
                 `;
             }
         }
-
         return cardsHtml;
     },
 
     // Returns full week view HTML (for back-swipe companion)
     _weekViewHTML(weekNum) {
-        const cardsHtml = this._weekCardsHTML(weekNum);
-        const currentUser = Storage.getCurrentUser();
-        const headerName = currentUser ? currentUser.name : 'Трекер Тренировок';
+        const vm = this._buildWeekVM(weekNum);
+        const cardsHtml = this._weekCardsHTML(vm);
         return `
             <div class="app-header">
                 <div class="header-title">
-                    <h1>${headerName}</h1>
+                    <h1>${vm.headerName}</h1>
                 </div>
                 <div class="settings-btn">
                     <svg width="25" height="25" viewBox="0 0 24 24" fill="none">
@@ -267,7 +281,7 @@ const UI = {
                     </button>
                     <div class="week-label">
                         <div class="week-num">${weekNum}</div>
-                        <div class="week-sublabel">неделя из ${getTotalWeeks()}</div>
+                        <div class="week-sublabel">неделя из ${vm.totalWeeks}</div>
                     </div>
                     <button>
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 15l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -287,14 +301,13 @@ const UI = {
     },
 
     renderWeek(weekNum) {
-        const cardsHtml = this._weekCardsHTML(weekNum);
-        const currentUser = Storage.getCurrentUser();
-        const headerName = currentUser ? currentUser.name : 'Трекер Тренировок';
+        const vm = this._buildWeekVM(weekNum);
+        const cardsHtml = this._weekCardsHTML(vm);
 
         document.getElementById('app').innerHTML = `
             <div class="app-header">
                 <div class="header-title">
-                    <h1>${headerName}</h1>
+                    <h1>${vm.headerName}</h1>
                 </div>
                 <button class="settings-btn" id="btn-settings">
                     <svg width="25" height="25" viewBox="0 0 24 24" fill="none">
@@ -311,7 +324,7 @@ const UI = {
                     </button>
                     <div class="week-label">
                         <div class="week-num">${weekNum}</div>
-                        <div class="week-sublabel">неделя из ${getTotalWeeks()}</div>
+                        <div class="week-sublabel">неделя из ${vm.totalWeeks}</div>
                     </div>
                     <button id="next-week">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 15l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -324,18 +337,18 @@ const UI = {
                 </div>
                 <div class="week-actions-row">
                     <button class="add-week-btn" id="btn-add-day"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> День</button>
-                    ${getTotalDays() > 1 ? `<button class="remove-week-btn" id="btn-remove-day"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg> День</button>` : ''}
+                    ${vm.totalDays > 1 ? `<button class="remove-week-btn" id="btn-remove-day"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg> День</button>` : ''}
                 </div>
-                ${weekNum === getTotalWeeks() ? `<div class="week-actions-row">
+                ${weekNum === vm.totalWeeks ? `<div class="week-actions-row">
                     <button class="add-week-btn" id="btn-add-week"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Неделю</button>
-                    ${getTotalWeeks() > 1 ? `<button class="remove-week-btn" id="btn-remove-week"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg> Неделю</button>` : ''}
+                    ${vm.totalWeeks > 1 ? `<button class="remove-week-btn" id="btn-remove-week"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg> Неделю</button>` : ''}
                 </div>` : ''}
                 <div class="data-actions">
                     <button id="btn-export">Экспорт</button>
                     <button id="btn-import">Импорт</button>
                 </div>
             </div>
-            ${typeof SocialUI !== 'undefined' && Social._hasSupaAuth() ? SocialUI._tabBarHTML('workouts') : ''}
+            ${vm.hasTabBar ? SocialUI._tabBarHTML('workouts') : ''}
         `;
 
         this._initSlotDragDrop(weekNum);
@@ -502,11 +515,14 @@ const UI = {
     },
 
     _dayViewHTML(weekNum, dayNum) {
-        const workout = resolveWorkout(weekNum, dayNum);
-        const dayTitle = workout ? (workout.titleRu || workout.title || 'День ' + dayNum) : 'День ' + dayNum;
+        const vm = this._buildDayVM(weekNum, dayNum);
+        if (!vm) return '<p>Тренировка не найдена</p>';
+
+        const { workout, isEmpty, dayTitle, timerRunning, timerPaused, timerElapsedStr,
+                allDone, gymHtml } = vm;
+
         let exerciseHtml = '';
-        let timerHtml = '';
-        if (workout && workout.exerciseGroups) {
+        if (workout.exerciseGroups) {
             let currentSection = '';
             for (const group of workout.exerciseGroups) {
                 const sectionTitle = group.sectionTitleRu || group.sectionTitle || '';
@@ -525,27 +541,19 @@ const UI = {
                     exerciseHtml += this._renderExercise(group.exercise, weekNum, dayNum);
                 }
             }
-            // Match timer/button state from renderDay
-            const isEmpty = workout.exerciseGroups.length === 0;
-            if (!isEmpty) {
-                const timerRunning = WorkoutTimer.isRunning(App._currentWeek, App._currentDay);
-                const timerPaused = WorkoutTimer.isPaused(App._currentWeek, App._currentDay);
-                const { completed: doneCount, total: totalCount } = getCompletedSets(weekNum, dayNum);
-                const allDone = totalCount > 0 && doneCount >= totalCount;
-                if (timerPaused) {
-                    const elapsed = WorkoutTimer.getElapsed(App._currentWeek, App._currentDay);
-                    const h = Math.floor(elapsed / 3600);
-                    const m = Math.floor((elapsed % 3600) / 60);
-                    const s = elapsed % 60;
-                    const timeStr = (h > 0 ? h + ':' : '') + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-                    timerHtml = '<div class="workout-timer-row paused"><span class="workout-timer-icon">&#9208;</span><span>' + timeStr + '</span></div>';
-                } else if (timerRunning) {
-                    timerHtml = '<div class="workout-timer-row"><span class="workout-timer-icon">&#9201;</span><span>00:00</span></div>';
-                } else if (!allDone) {
-                    timerHtml = '<button class="btn-start-workout">НАЧАТЬ ТРЕНИРОВКУ</button>';
-                }
+        }
+
+        let timerHtml = '';
+        if (!isEmpty) {
+            if (timerPaused) {
+                timerHtml = '<div class="workout-timer-row paused"><span class="workout-timer-icon">&#9208;</span><span>' + timerElapsedStr + '</span></div>';
+            } else if (timerRunning) {
+                timerHtml = '<div class="workout-timer-row"><span class="workout-timer-icon">&#9201;</span><span>00:00</span></div>';
+            } else if (!allDone) {
+                timerHtml = '<button class="btn-start-workout">НАЧАТЬ ТРЕНИРОВКУ</button>';
             }
         }
+
         return `
             <div class="app-header">
                 <button class="back-btn"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -555,27 +563,59 @@ const UI = {
                 </div>
             </div>
             <div class="app-content">
-                <div class="slide-container"><div class="day-slide">${timerHtml}${this._gymIndicatorHTML(weekNum, dayNum)}${exerciseHtml}</div></div>
+                <div class="slide-container"><div class="day-slide">${timerHtml}${gymHtml}${exerciseHtml}</div></div>
             </div>
         `;
     },
 
     // ===== DAY VIEW =====
+    // Data preparation for day view — resolves workout, timer state, progress
+    _buildDayVM(weekNum, dayNum) {
+        const workout = resolveWorkout(weekNum, dayNum);
+        if (!workout) return null;
+
+        const timerRunning = WorkoutTimer.isRunning(App._currentWeek, App._currentDay);
+        const timerPaused = WorkoutTimer.isPaused(App._currentWeek, App._currentDay);
+        const { completed: doneCount, total: totalCount } = getCompletedSets(weekNum, dayNum);
+        const allDone = totalCount > 0 && doneCount >= totalCount;
+        const isEmpty = workout.exerciseGroups.length === 0;
+
+        let timerElapsedStr = '';
+        if (timerPaused) {
+            const elapsed = WorkoutTimer.getElapsed(App._currentWeek, App._currentDay);
+            const h = Math.floor(elapsed / 3600);
+            const m = Math.floor((elapsed % 3600) / 60);
+            const s = elapsed % 60;
+            timerElapsedStr = (h > 0 ? h + ':' : '') + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        }
+
+        return {
+            workout, isEmpty,
+            dayTitle: workout.titleRu || workout.title || `День ${dayNum}`,
+            timerRunning, timerPaused, timerElapsedStr,
+            doneCount, totalCount, allDone,
+            gymHtml: this._gymIndicatorHTML(weekNum, dayNum),
+            hasTabBar: typeof SocialUI !== 'undefined' && Social._hasSupaAuth()
+        };
+    },
+
     renderDay(weekNum, dayNum) {
         // Flush pending input saves so Storage is up-to-date before generating HTML
         if (App._saveDebounced) App._saveDebounced.flush();
 
-        const workout = resolveWorkout(weekNum, dayNum);
-        if (!workout) {
+        const vm = this._buildDayVM(weekNum, dayNum);
+        if (!vm) {
             document.getElementById('app').innerHTML = '<p>Тренировка не найдена</p>';
             return;
         }
+
+        const { workout, isEmpty, dayTitle, timerRunning, timerPaused, timerElapsedStr,
+                allDone, gymHtml, hasTabBar } = vm;
 
         let html = '';
         let currentSection = '';
 
         for (const group of workout.exerciseGroups) {
-            // Section header from group's sectionTitleRu
             const sectionTitle = group.sectionTitleRu || group.sectionTitle || '';
             if (sectionTitle && sectionTitle !== currentSection) {
                 currentSection = sectionTitle;
@@ -583,7 +623,6 @@ const UI = {
             }
 
             if (group.type === 'warmup') {
-                // Warmup exercise
                 const wu = group.exercise;
                 if (wu) {
                     html += `
@@ -604,11 +643,8 @@ const UI = {
             }
         }
 
-        const dayTitle = workout.titleRu || workout.title || `День ${dayNum}`;
         const editBtn = '<button class="edit-mode-btn" id="btn-edit-day"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
 
-        // Empty day state
-        const isEmpty = workout.exerciseGroups.length === 0;
         if (isEmpty) {
             html = `
                 <div class="empty-day">
@@ -619,18 +655,9 @@ const UI = {
             `;
         }
 
-        const timerRunning = WorkoutTimer.isRunning(App._currentWeek, App._currentDay);
-        const timerPaused = WorkoutTimer.isPaused(App._currentWeek, App._currentDay);
-        const { completed: doneCount, total: totalCount } = getCompletedSets(weekNum, dayNum);
-        const allDone = totalCount > 0 && doneCount >= totalCount;
         let timerHtml = '';
         if (timerPaused) {
-            const elapsed = WorkoutTimer.getElapsed(App._currentWeek, App._currentDay);
-            const h = Math.floor(elapsed / 3600);
-            const m = Math.floor((elapsed % 3600) / 60);
-            const s = elapsed % 60;
-            const timeStr = (h > 0 ? h + ':' : '') + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-            timerHtml = '<div class="workout-timer-row paused"><span class="workout-timer-icon">&#9208;</span><span id="workout-timer">' + timeStr + '</span></div>'
+            timerHtml = '<div class="workout-timer-row paused"><span class="workout-timer-icon">&#9208;</span><span id="workout-timer">' + timerElapsedStr + '</span></div>'
                 + '<div class="workout-timer-actions"><button class="btn-timer-resume" id="btn-resume-workout">ПРОДОЛЖИТЬ</button><button class="btn-timer-cancel" id="btn-cancel-workout">ОТМЕНИТЬ</button></div>';
         } else if (timerRunning) {
             timerHtml = '<div class="workout-timer-row"><span class="workout-timer-icon">&#9201;</span><span id="workout-timer">00:00</span></div>'
@@ -652,12 +679,12 @@ const UI = {
                 <div class="slide-container">
                     <div class="day-slide">
                     ${timerHtml}
-                    ${this._gymIndicatorHTML(weekNum, dayNum)}
+                    ${gymHtml}
                     ${html}
                     </div>
                 </div>
             </div>
-            ${typeof SocialUI !== 'undefined' && Social._hasSupaAuth() ? SocialUI._tabBarHTML('workouts') : ''}
+            ${hasTabBar ? SocialUI._tabBarHTML('workouts') : ''}
         `;
 
         // Capture focused input for restoration after re-render
@@ -735,7 +762,7 @@ const UI = {
     _renderExercise(ex, weekNum, dayNum, choiceKey = null) {
         let setsHtml = '';
         for (let i = 0; i < ex.sets.length; i++) {
-            setsHtml += this._renderSetRow(ex, i, weekNum, dayNum);
+            setsHtml += this._renderSetRow(this._buildSetRowVM(ex, i, weekNum, dayNum));
         }
 
         const timerSec = Storage.getSettings().timerDuration || 120;
@@ -789,22 +816,50 @@ const UI = {
         `;
     },
 
-    _renderSetRow(ex, setIdx, weekNum, dayNum) {
+    // Data preparation for set row — all Storage reads and computations
+    _buildSetRowVM(ex, setIdx, weekNum, dayNum) {
         const set = ex.sets[setIdx];
         const log = Storage.getSetLog(weekNum, dayNum, ex.id, setIdx);
         const eqId = Storage.getExerciseEquipment(ex.id);
-        // Find sibling exercises (same name in other days) — cached in Storage
         const siblings = Storage.getSiblingExercises(ex.id);
         const prev = Storage.getPreviousLog(weekNum, dayNum, ex.id, setIdx, eqId, siblings.length > 0 ? siblings : null);
-        const isCompleted = log && log.completed;
-        const weightVal = log ? log.weight : '';
-        const repsVal = log ? log.reps : '';
+
         const unitLabels = { kg: 'кг', lbs: 'lbs', plates: 'пл' };
         const unit = Storage.getExerciseUnit(ex.id) || Storage.getWeightUnit();
         const unitLabel = unitLabels[unit] || 'кг';
-        const prevUnitLabels = { kg: 'кг', lbs: 'lbs', plates: 'пл' };
-        const prevUnitLabel = prev && prev.unit ? (prevUnitLabels[prev.unit] || 'кг') : unitLabel;
-        const prevText = prev ? `пред: ${prev.weight}<span class="set-prev-unit" data-exercise="${ex.id}">${prevUnitLabel}</span> x ${prev.reps}` : '';
+        const prevUnitLabel = prev && prev.unit ? (unitLabels[prev.unit] || 'кг') : unitLabel;
+
+        // Technique segment counts
+        const techs = set.techniques || [];
+        const weightSegCount = 1 + techs.filter(t => ['DROP','DROP_OR_REST'].includes(t)).length;
+        const segCount = 1 + techs.filter(t => ['DROP','REST_PAUSE','MP','DROP_OR_REST'].includes(t)).length;
+
+        // Pre-extract segment data from log
+        const segs = {};
+        for (let i = 1; i < Math.max(weightSegCount, segCount); i++) {
+            const raw = log && log.segs && log.segs[String(i)];
+            if (!raw) { segs[i] = { weight: '', reps: '' }; }
+            else if (typeof raw === 'object') { segs[i] = { weight: raw.weight ?? '', reps: raw.reps ?? '' }; }
+            else { segs[i] = { weight: '', reps: raw }; }
+        }
+
+        return {
+            exId: ex.id, setIdx, set,
+            isCompleted: !!(log && log.completed),
+            weightVal: log ? log.weight : '',
+            repsVal: log ? log.reps : '',
+            unitLabel,
+            prev, prevUnitLabel,
+            weightSegCount, segCount, segs
+        };
+    },
+
+    // Pure HTML rendering from pre-computed view-model
+    _renderSetRow(vm) {
+        const { exId, setIdx, set, isCompleted, weightVal, repsVal,
+                unitLabel, prev, prevUnitLabel, weightSegCount, segCount, segs } = vm;
+
+        const prevText = prev ? `пред: ${prev.weight}<span class="set-prev-unit" data-exercise="${exId}">${prevUnitLabel}</span> x ${prev.reps}` : '';
 
         // Type badge
         const typeClass = `type-${set.type}`;
@@ -836,35 +891,23 @@ const UI = {
         const placeholderW = prev ? prev.weight : '';
         const placeholderR = prev ? prev.reps : '';
 
-        // Drop changes weight+reps; pauses change reps only
-        const techs = set.techniques || [];
-        const weightSegCount = 1 + techs.filter(t => ['DROP','DROP_OR_REST'].includes(t)).length;
-        const segCount = 1 + techs.filter(t => ['DROP','REST_PAUSE','MP','DROP_OR_REST'].includes(t)).length;
-
-        const getSegData = (i) => {
-            const raw = log && log.segs && log.segs[String(i)];
-            if (!raw) return { weight: '', reps: '' };
-            if (typeof raw === 'object') return { weight: raw.weight ?? '', reps: raw.reps ?? '' };
-            return { weight: '', reps: raw }; // legacy plain value
-        };
-
         // Build weight input area (split only for DROP, not for pauses)
         let weightInputHtml;
         if (weightSegCount === 1) {
             weightInputHtml = `<input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
                 class="weight-input"
-                data-exercise="${ex.id}" data-set="${setIdx}"
+                data-exercise="${exId}" data-set="${setIdx}"
                 value="${weightVal}" placeholder="${placeholderW}">`;
         } else {
             let parts = `<input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
                 class="weight-input seg-weight-input split-main"
-                data-exercise="${ex.id}" data-set="${setIdx}" data-seg="0"
+                data-exercise="${exId}" data-set="${setIdx}" data-seg="0"
                 value="${weightVal}" placeholder="${placeholderW}">`;
             for (let i = 1; i < weightSegCount; i++) {
-                const sv = getSegData(i).weight;
+                const sv = segs[i].weight;
                 parts += `<span class="split-sep">+</span><input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
                     class="seg-weight-input split-extra"
-                    data-exercise="${ex.id}" data-set="${setIdx}" data-seg="${i}"
+                    data-exercise="${exId}" data-set="${setIdx}" data-seg="${i}"
                     value="${sv}" placeholder="">`;
             }
             weightInputHtml = `<div class="split-reps">${parts}</div>`;
@@ -875,29 +918,29 @@ const UI = {
         if (segCount === 1) {
             repsInputHtml = `<input type="text" inputmode="numeric" pattern="[0-9]*"
                 class="reps-input"
-                data-exercise="${ex.id}" data-set="${setIdx}"
+                data-exercise="${exId}" data-set="${setIdx}"
                 value="${repsVal}" placeholder="${placeholderR}">`;
         } else {
             let parts = `<input type="text" inputmode="numeric" pattern="[0-9]*"
                 class="reps-input seg-reps-input split-main"
-                data-exercise="${ex.id}" data-set="${setIdx}" data-seg="0"
+                data-exercise="${exId}" data-set="${setIdx}" data-seg="0"
                 value="${repsVal}" placeholder="${placeholderR}">`;
             for (let i = 1; i < segCount; i++) {
-                const sv = getSegData(i).reps;
+                const sv = segs[i].reps;
                 parts += `<span class="split-sep">+</span><input type="text" inputmode="numeric" pattern="[0-9]*"
                     class="seg-reps-input split-extra"
-                    data-exercise="${ex.id}" data-set="${setIdx}" data-seg="${i}"
+                    data-exercise="${exId}" data-set="${setIdx}" data-seg="${i}"
                     value="${sv}" placeholder="">`;
             }
             repsInputHtml = `<div class="split-reps">${parts}</div>`;
         }
 
         const completeSvg = isCompleted
-            ? `<svg width="40" height="40" viewBox="0 0 40 40"><defs><linearGradient id="cg-${ex.id}-${setIdx}" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#C3FF3C"/><stop offset="1" stop-color="#5AA00A"/></linearGradient></defs><circle cx="20" cy="20" r="20" fill="url(#cg-${ex.id}-${setIdx})"/><g transform="translate(11,11)"><path d="M4 9l3.5 3.5L14 5.5" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`
+            ? `<svg width="40" height="40" viewBox="0 0 40 40"><defs><linearGradient id="cg-${exId}-${setIdx}" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#C3FF3C"/><stop offset="1" stop-color="#5AA00A"/></linearGradient></defs><circle cx="20" cy="20" r="20" fill="url(#cg-${exId}-${setIdx})"/><g transform="translate(11,11)"><path d="M4 9l3.5 3.5L14 5.5" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`
             : '<svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18.5" stroke="rgba(157,141,245,0.4)" stroke-width="1.5"/></svg>';
 
         return `
-            <div class="set-row${isCompleted ? ' done' : ''}" data-exercise="${ex.id}" data-set="${setIdx}">
+            <div class="set-row${isCompleted ? ' done' : ''}" data-exercise="${exId}" data-set="${setIdx}">
                 <div class="set-info">
                     <span class="set-number">П.${setIdx + 1}</span>
                     ${(set.type && set.type !== 'H') || (set.rpe && set.rpe !== '8') ? `<span class="set-type-badge ${typeClass}">${typeLabel}</span>
@@ -906,7 +949,7 @@ const UI = {
                 </div>
                 <div class="set-inputs">
                     <div class="input-group">
-                        <button class="unit-cycle-btn" data-exercise="${ex.id}">${unitLabel}</button>
+                        <button class="unit-cycle-btn" data-exercise="${exId}">${unitLabel}</button>
                         ${weightInputHtml}
                     </div>
                     <div class="input-group">
@@ -914,7 +957,7 @@ const UI = {
                         ${repsInputHtml}
                     </div>
                     <div role="button" class="complete-btn ${isCompleted ? 'completed' : ''}"
-                        data-exercise="${ex.id}" data-set="${setIdx}">${completeSvg}</div>
+                        data-exercise="${exId}" data-set="${setIdx}">${completeSvg}</div>
                 </div>
                 ${prevText ? `<div class="set-prev">${prevText}</div>` : ''}
             </div>

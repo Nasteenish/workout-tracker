@@ -105,13 +105,22 @@
 
 ## 🟢 Средние (чинить когда руки дойдут)
 
-### 11. Отсутствие разделения логики и UI
+### ~~11. Отсутствие разделения логики и UI~~ ✅ РЕШЕНО
 
-**Где:** `ui.js`, `social-ui.js`, `builder.js`
+**Что сделано:** Введён view-model слой — бизнес-логика (Storage reads, API calls, вычисления) вынесена из рендер-методов в отдельные функции подготовки данных:
 
-**Проблема:** Рендер-методы содержат бизнес-логику. `UI._renderSetRow()` вычисляет предыдущий лог, формат веса, единицы, siblings — и тут же генерирует HTML. `SocialUI.renderProfile()` делает 6 параллельных API-запросов и сразу рендерит.
+**ui.js:**
+- `_buildSetRowVM(ex, setIdx, weekNum, dayNum)` — 7 Storage reads + segment computation → plain object. `_renderSetRow(vm)` получает готовые данные
+- `_buildDayVM(weekNum, dayNum)` — resolveWorkout, timer state, progress, gym → plain object. Используется в `renderDay()` и `_dayViewHTML()` (устранено дублирование)
+- `_buildWeekVM(weekNum)` — slots с progress, user info, settings → plain object. Используется в `renderWeek()`, `_weekViewHTML()`, `_weekCardsHTML(vm)` (устранено дублирование)
 
-**Решение:** Выделить view-model слой. Render-функции принимают готовые данные.
+**social-ui.js:**
+- `_loadProfileData(targetId, isOwn)` — 8 async API calls → plain object
+- `_loadFeedData()` — 8 async API calls → plain object
+- `_loadCheckinData(checkinId)` — 4+ async API calls + comment threading → plain object
+
+**builder.js:**
+- `_buildDayEditorVM(dayNum)` — program/choice resolution + exercise extraction → plain object
 
 ---
 
@@ -203,7 +212,7 @@
 | 6 | ~~Свайпы связаны с рендерингом~~ ✅ | **Средняя** | Среднее | 🟡 P1 |
 | 3 | ~~innerHTML / XSS + потеря состояния~~ ✅ | **Средняя** | Среднее | 🟡 P1 |
 | 7 | ~~PROGRAM encapsulation~~ ✅ | **Низкая** | Среднее | 🟢 P2 |
-| 11 | Логика + UI в одном | Высокая | Среднее | 🟢 P2 |
+| 11 | ~~Логика + UI в одном~~ ✅ | **Средняя** | Среднее | 🟢 P2 |
 | 12 | Пароли (легаси) | Низкая | Среднее | 🟢 P2 |
 | 16 | ~~Дублирование closest-паттерна~~ ✅ | **Низкая** | Низкое | 🟢 P2 |
 | 17 | Хрупкая _migrateExerciseNames | Средняя | Среднее | 🟢 P2 |
@@ -235,5 +244,6 @@
 - ~~Добавить `escapeHtml()` для пользовательских данных (#3)~~ ✅ → `esc()` в utils.js, ~65 мест
 - ~~Сохранение состояния инпутов при перерендере (#3)~~ ✅ → `debounce.flush()` + `_restoreFocus()` в renderDay()
 - ~~Инвалидация `_pageCache` при мутациях данных (#18)~~ ✅ → `invalidatePageCache()` + cache-first companions (#6)
+- ~~Выделить view-model слой (#11)~~ ✅ → `_buildXxxVM()` / `_loadXxxData()` в ui.js, social-ui.js, builder.js
 - Удалить `users.js` после полной миграции на Supabase Auth (#12)
 - Рассмотреть миграцию на ES-модули (#14)

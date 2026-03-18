@@ -309,12 +309,10 @@ const Builder = {
     },
 
     // ===== DAY EDITOR =====
-    renderDayEditor(dayNum) {
+    // Data preparation for day editor — resolves choices, extracts exercises
+    _buildDayEditorVM(dayNum) {
         var p = Storage.getProgram();
-        if (!p || !p.dayTemplates[dayNum]) {
-            location.hash = '#/setup';
-            return;
-        }
+        if (!p || !p.dayTemplates[dayNum]) return null;
 
         var dayTemplate = p.dayTemplates[dayNum];
         var items = [];
@@ -345,7 +343,17 @@ const Builder = {
             }
         }
 
-        this._editingDay = { dayNum: dayNum, items: items };
+        return { dayNum: dayNum, items: items };
+    },
+
+    renderDayEditor(dayNum) {
+        var vm = this._buildDayEditorVM(dayNum);
+        if (!vm) {
+            location.hash = '#/setup';
+            return;
+        }
+
+        this._editingDay = vm;
         this._renderDayEditorHTML();
     },
 

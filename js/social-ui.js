@@ -51,6 +51,36 @@ const SocialUI = {
     },
 
     // ===== PROFILE VIEW =====
+    // Async data loading for profile — all API calls in one place
+    async _loadProfileData(targetId, isOwn) {
+        var results = await Promise.all([
+            Social.getProfile(targetId),
+            Social.getFollowCounts(targetId),
+            !isOwn ? Social.isFollowing(targetId) : Promise.resolve(false),
+            Social.getUserCheckins(targetId),
+            Social.getCheckinCounts(targetId),
+            Social.getUnreadMessageCount()
+        ]);
+
+        var checkins = results[3];
+        var ids = checkins.map(function(c) { return c.id; });
+        var extraResults = await Promise.all([
+            Social.getLikesForCheckins(ids),
+            this._preloadPhotos(checkins)
+        ]);
+
+        return {
+            profile: results[0],
+            counts: results[1],
+            isFollowing: results[2],
+            checkins: checkins,
+            postCounts: results[4],
+            msgUnread: results[5] || 0,
+            likes: extraResults[0],
+            cursor: checkins.length >= 20 ? checkins[checkins.length - 1].created_at : null
+        };
+    },
+
     async renderProfile(userId, useCache) {
         var app = document.getElementById('app');
         var myId = Social._getSupaUserId();
@@ -69,28 +99,13 @@ const SocialUI = {
             app.innerHTML = '<div class="social-loading">Загрузка...</div>';
         }
 
-        var results = await Promise.all([
-            Social.getProfile(targetId),
-            Social.getFollowCounts(targetId),
-            !isOwn ? Social.isFollowing(targetId) : Promise.resolve(false),
-            Social.getUserCheckins(targetId),
-            Social.getCheckinCounts(targetId),
-            Social.getUnreadMessageCount()
-        ]);
-        var profile = results[0];
-        var counts = results[1];
-        var isFollowing = results[2];
-        var checkins = results[3];
-        var postCounts = results[4];
-        this._tabBarMsgCount = results[5] || 0;
-
-        // Fetch likes and preload photos
-        var ids = checkins.map(function(c) { return c.id; });
-        var extraResults = await Promise.all([
-            Social.getLikesForCheckins(ids),
-            this._preloadPhotos(checkins)
-        ]);
-        var likes = extraResults[0];
+        var data = await this._loadProfileData(targetId, isOwn);
+        var profile = data.profile;
+        var counts = data.counts;
+        var isFollowing = data.isFollowing;
+        var checkins = data.checkins;
+        var postCounts = data.postCounts;
+        this._tabBarMsgCount = data.msgUnread;
 
         if (!profile && isOwn) {
             location.hash = '#/profile/edit';
@@ -100,7 +115,7 @@ const SocialUI = {
             app.innerHTML = '<div class="social-screen"><div class="social-empty">Профиль не найден</div></div>';
             return;
         }
-        this._profileCheckinsCursor = checkins.length >= 20 ? checkins[checkins.length - 1].created_at : null;
+        this._profileCheckinsCursor = data.cursor;
 
         var html = '<div class="social-screen">';
         if (isOwn) {
@@ -361,6 +376,33 @@ const SocialUI = {
     },
 
     // ===== FEED =====
+    // Async data loading for feed — all API calls in one place
+    async _loadFeedData() {
+        var feedResults = await Promise.all([Social.getFeed(), Social.getMyFollowingIds()]);
+        var checkins = feedResults[0];
+        var ids = checkins.map(function(c) { return c.id; });
+
+        var extra = await Promise.all([
+            Social.getLikesForCheckins(ids),
+            Social.getTagsForCheckins(ids),
+            this._preloadPhotos(checkins),
+            Social.getUnreadNotificationCount(),
+            Social.getCommentCountsForCheckins(ids),
+            Social.getUnreadMessageCount()
+        ]);
+
+        return {
+            checkins: checkins,
+            followingIds: feedResults[1],
+            likes: extra[0],
+            tags: extra[1],
+            unreadCount: extra[3],
+            commentCounts: extra[4],
+            msgUnread: extra[5] || 0,
+            cursor: checkins.length >= 20 ? checkins[checkins.length - 1].created_at : null
+        };
+    },
+
     async renderFeed(useCache) {
         var app = document.getElementById('app');
 
@@ -374,27 +416,15 @@ const SocialUI = {
             app.innerHTML = '<div class="social-loading">Загрузка...</div>' + this._tabBarHTML('feed');
         }
 
-        var feedResults = await Promise.all([Social.getFeed(), Social.getMyFollowingIds()]);
-        var checkins = feedResults[0];
-        var followingIds = feedResults[1];
-        this._feedCursor = checkins.length >= 20 ? checkins[checkins.length - 1].created_at : null;
-
-        // Fetch likes, tags, photos in parallel
-        var ids = checkins.map(function(c) { return c.id; });
-        var extra = await Promise.all([
-            Social.getLikesForCheckins(ids),
-            Social.getTagsForCheckins(ids),
-            this._preloadPhotos(checkins),
-            Social.getUnreadNotificationCount(),
-            Social.getCommentCountsForCheckins(ids),
-            Social.getUnreadMessageCount()
-        ]);
-        var likes = extra[0];
-        var tags = extra[1];
-        var unreadCount = extra[3];
-        var commentCounts = extra[4];
-        var msgUnread = extra[5] || 0;
-        this._tabBarMsgCount = msgUnread;
+        var data = await this._loadFeedData();
+        var checkins = data.checkins;
+        var followingIds = data.followingIds;
+        var likes = data.likes;
+        var tags = data.tags;
+        var unreadCount = data.unreadCount;
+        var commentCounts = data.commentCounts;
+        this._feedCursor = data.cursor;
+        this._tabBarMsgCount = data.msgUnread;
 
         var html = '<div class="social-screen">';
         html += '<div class="social-header"><h2>Лента</h2>';
@@ -436,12 +466,8 @@ const SocialUI = {
     },
 
     // ===== CHECKIN DETAIL =====
-    async renderCheckinDetail(checkinId) {
-        var app = document.getElementById('app');
-        if (!app.querySelector('.checkin-full')) {
-            app.innerHTML = '<div class="social-loading">Загрузка...</div>';
-        }
-
+    // Async data loading for checkin detail — all API calls in one place
+    async _loadCheckinData(checkinId) {
         var results = await Promise.all([
             Social.getCheckin(checkinId),
             Social.getReactions(checkinId),
@@ -450,22 +476,60 @@ const SocialUI = {
         ]);
         var checkin = results[0];
         if (checkin) await this._preloadPhotos([checkin]);
-        var reactions = results[1];
         var comments = results[2];
-        var photoTags = results[3];
+
+        var commentIds = comments.map(function(c) { return c.id; });
+        var commentLikes = commentIds.length ? await Social.getCommentLikes(commentIds) : { counts: {}, myLikes: new Set() };
+
+        var myId = Social._getSupaUserId();
+        var reactions = results[1];
+
+        // Pre-thread comments
+        var topLevel = comments.filter(function(c) { return !c.parent_id; });
+        var replies = {};
+        comments.forEach(function(c) {
+            if (c.parent_id) {
+                if (!replies[c.parent_id]) replies[c.parent_id] = [];
+                replies[c.parent_id].push(c);
+            }
+        });
+
+        return {
+            checkin: checkin,
+            reactions: reactions,
+            myReaction: reactions.find(function(r) { return r.user_id === myId; }),
+            comments: comments,
+            photoTags: results[3],
+            commentLikes: commentLikes,
+            isOwn: checkin ? checkin.user_id === myId : false,
+            topLevel: topLevel,
+            replies: replies,
+            myId: myId
+        };
+    },
+
+    async renderCheckinDetail(checkinId) {
+        var app = document.getElementById('app');
+        if (!app.querySelector('.checkin-full')) {
+            app.innerHTML = '<div class="social-loading">Загрузка...</div>';
+        }
+
+        var data = await this._loadCheckinData(checkinId);
+        var checkin = data.checkin;
         if (!checkin) {
             app.innerHTML = '<div class="social-screen"><div class="social-empty">Чекин не найден</div></div>';
             return;
         }
 
-        // Fetch comment likes
-        var commentIds = comments.map(function(c) { return c.id; });
-        var commentLikes = commentIds.length ? await Social.getCommentLikes(commentIds) : { counts: {}, myLikes: new Set() };
-
-        var myId = Social._getSupaUserId();
-        var myReaction = reactions.find(function(r) { return r.user_id === myId; });
-
-        var isOwn = checkin.user_id === myId;
+        var reactions = data.reactions;
+        var myReaction = data.myReaction;
+        var comments = data.comments;
+        var photoTags = data.photoTags;
+        var commentLikes = data.commentLikes;
+        var isOwn = data.isOwn;
+        var myId = data.myId;
+        var topLevel = data.topLevel;
+        var replies = data.replies;
 
         var html = '<div class="social-screen">';
         html += '<div class="social-header"><button class="social-back" id="btn-checkin-detail-back">&larr;</button><h2>Check-in</h2>';
@@ -485,16 +549,6 @@ const SocialUI = {
             }).join(', ');
             html += '</div>';
         }
-
-        // Comments — group into threads
-        var topLevel = comments.filter(function(c) { return !c.parent_id; });
-        var replies = {};
-        comments.forEach(function(c) {
-            if (c.parent_id) {
-                if (!replies[c.parent_id]) replies[c.parent_id] = [];
-                replies[c.parent_id].push(c);
-            }
-        });
 
         function renderComment(c, isReply) {
             var isMine = c.user_id === myId;
