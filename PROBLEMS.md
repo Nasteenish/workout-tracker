@@ -80,13 +80,9 @@
 
 ---
 
-### 7. Глобальное мутабельное состояние PROGRAM
+### ~~7. Глобальное мутабельное состояние PROGRAM~~ ✅ РЕШЕНО
 
-**Где:** `data.js` (определение), `app.js` (загрузка в `_loadProgramForUser`), `utils.js` (чтение)
-
-**Проблема:** `PROGRAM` — глобальная `let` переменная, доступная из любого файла. Мутируется при загрузке программы. `resolveWorkout()` использует `deepClone`, но `_addSet()` и `_removeSet()` мутируют PROGRAM напрямую и вызывают `Storage.saveProgram()`. Нет единого места контроля.
-
-**Решение:** Инкапсулировать `PROGRAM` внутрь `Storage` с getter-методом. Убрать прямой доступ из `utils.js`.
+**Что сделано:** Глобальная `let PROGRAM` удалена из `data.js`. Программа хранится в `Storage._program` с API: `Storage.getProgram()` (runtime getter), `Storage.setProgram(prog)` (setter с инвалидацией sibling cache), `Storage.getStoredProgram()` (чтение из localStorage). Все ~65 обращений к `PROGRAM` в 6 файлах заменены на `Storage.getProgram()`/`setProgram()`.
 
 ---
 
@@ -217,7 +213,7 @@ if (target.id === 'btn-follow' || target.closest('#btn-follow')) { ... }
 | 5 | App.js слишком большой | Высокая | Высокое | 🟡 P1 |
 | 6 | Свайпы связаны с рендерингом | Средняя | Среднее | 🟡 P1 |
 | 3 | innerHTML / XSS | Высокая | Критическое (но постепенно) | 🟡 P1 |
-| 7 | PROGRAM encapsulation | Низкая | Среднее | 🟢 P2 |
+| 7 | ~~PROGRAM encapsulation~~ ✅ | **Низкая** | Среднее | 🟢 P2 |
 | 11 | Логика + UI в одном | Высокая | Среднее | 🟢 P2 |
 | 12 | Пароли (легаси) | Низкая | Среднее | 🟢 P2 |
 | 16 | Дублирование closest-паттерна | Низкая | Низкое | 🟢 P2 |
@@ -241,7 +237,7 @@ if (target.id === 'btn-follow' || target.closest('#btn-follow')) { ... }
 
 **Шаг 2 — Структурные рефакторинги (средний риск):**
 - Создать `ProgramUtils` для поиска упражнений (#2) — **2 часа**
-- Инкапсулировать `PROGRAM` в Storage (#7) — **1 час**
+- ~~Инкапсулировать `PROGRAM` в Storage (#7)~~ ✅
 - Разделить `handleClick` на подметоды по экранам (#1) — постепенно: сначала social, потом equipment/gym, потом builder
 - Вынести свайпы в `swipe.js` (#5, #6)
 - **Тестировать каждый экран после каждого шага**

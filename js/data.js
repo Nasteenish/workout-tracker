@@ -1,6 +1,6 @@
 // data.js - Training program data
 // Architecture: template + weekly overrides pattern
-// PROGRAM is loaded dynamically from localStorage (or DEFAULT_PROGRAM as fallback)
+// Program is stored in Storage._program, accessed via Storage.getProgram()/setProgram()
 
 const SET_TYPES = {
   S: { label: "Straight", labelRu: "Прямой", color: "#4CAF50" },
@@ -14,9 +14,6 @@ const TECHNIQUE_TYPES = {
   MP: { label: "Myoreps / partial", labelRu: "Миорепы / частичные", abbr: "MP" },
   DROP_OR_REST: { label: "Drop set or Rest-pause", labelRu: "Дроп-сет или Отдых-пауза", abbr: "DROP/REST" }
 };
-
-// Mutable — loaded at runtime from localStorage or DEFAULT_PROGRAM
-let PROGRAM = null;
 
 const DEFAULT_PROGRAM = {
   version: 2,

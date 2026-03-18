@@ -304,18 +304,19 @@ const Builder = {
         };
 
         Storage.saveProgram(program, false);
-        PROGRAM = program;
+        Storage.setProgram(program);
         this._config = null;
     },
 
     // ===== DAY EDITOR =====
     renderDayEditor(dayNum) {
-        if (!PROGRAM || !PROGRAM.dayTemplates[dayNum]) {
+        var p = Storage.getProgram();
+        if (!p || !p.dayTemplates[dayNum]) {
             location.hash = '#/setup';
             return;
         }
 
-        var dayTemplate = PROGRAM.dayTemplates[dayNum];
+        var dayTemplate = p.dayTemplates[dayNum];
         var items = [];
 
         for (var i = 0; i < dayTemplate.exerciseGroups.length; i++) {
@@ -361,10 +362,11 @@ const Builder = {
     },
 
     _extractProgression(dayNum, exerciseId) {
-        if (!PROGRAM || !PROGRAM.weeklyOverrides || !exerciseId) return [];
+        var p = Storage.getProgram();
+        if (!p || !p.weeklyOverrides || !exerciseId) return [];
         var rules = [];
-        for (var w = 1; w <= PROGRAM.totalWeeks; w++) {
-            var dayOver = PROGRAM.weeklyOverrides[w] && PROGRAM.weeklyOverrides[w][dayNum];
+        for (var w = 1; w <= p.totalWeeks; w++) {
+            var dayOver = p.weeklyOverrides[w] && p.weeklyOverrides[w][dayNum];
             if (!dayOver || !dayOver[exerciseId] || !dayOver[exerciseId].sets) continue;
             var setsOver = dayOver[exerciseId].sets;
             for (var s in setsOver) {
@@ -482,7 +484,8 @@ const Builder = {
         var ed = this._editingDay;
         if (!ed) return;
 
-        var dayTitle = PROGRAM.dayTemplates[ed.dayNum].titleRu || PROGRAM.dayTemplates[ed.dayNum].title;
+        var _p = Storage.getProgram();
+        var dayTitle = _p.dayTemplates[ed.dayNum].titleRu || _p.dayTemplates[ed.dayNum].title;
         var listHtml = '';
         var isPremium = this._isPremium();
 
@@ -553,12 +556,13 @@ const Builder = {
         var titleEl = document.getElementById('editor-day-title');
         if (titleEl) {
             titleEl.addEventListener('click', function() {
-                var tmpl = PROGRAM.dayTemplates[ed.dayNum];
+                var _pg = Storage.getProgram();
+                var tmpl = _pg.dayTemplates[ed.dayNum];
                 var newName = prompt('\u041D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u0434\u043D\u044F:', tmpl.titleRu || tmpl.title || '');
                 if (newName !== null && newName.trim()) {
                     tmpl.titleRu = newName.trim();
                     tmpl.title = newName.trim();
-                    Storage.saveProgram(PROGRAM, false);
+                    Storage.saveProgram(_pg, false);
                     self._renderDayEditorHTML();
                 }
             });
@@ -653,7 +657,7 @@ const Builder = {
                 }
                 if (target.matches('.prog-week-plus')) {
                     var val = target.parentElement.querySelector('.prog-week-val');
-                    val.textContent = Math.min(PROGRAM.totalWeeks, parseInt(val.textContent) + 1);
+                    val.textContent = Math.min(Storage.getProgram().totalWeeks, parseInt(val.textContent) + 1);
                     return;
                 }
                 if (target.matches('.prog-set-minus')) {
@@ -943,7 +947,8 @@ const Builder = {
 
     _autoSave() {
         var ed = this._editingDay;
-        if (!ed || !PROGRAM) return;
+        var p = Storage.getProgram();
+        if (!ed || !p) return;
 
         var groups = [];
         for (var i = 0; i < ed.items.length; i++) {
@@ -965,9 +970,9 @@ const Builder = {
             }
         }
 
-        PROGRAM.dayTemplates[ed.dayNum].exerciseGroups = groups;
+        p.dayTemplates[ed.dayNum].exerciseGroups = groups;
         this._syncProgressionToOverrides(ed.dayNum);
-        Storage.saveProgram(PROGRAM, false);
+        Storage.saveProgram(p, false);
     },
 
     _serializeExercise(ex, dayNum, itemIdx) {
@@ -990,9 +995,10 @@ const Builder = {
     },
 
     _syncProgressionToOverrides(dayNum) {
-        if (!PROGRAM.weeklyOverrides) PROGRAM.weeklyOverrides = {};
+        var p = Storage.getProgram();
+        if (!p.weeklyOverrides) p.weeklyOverrides = {};
 
-        var template = PROGRAM.dayTemplates[dayNum];
+        var template = p.dayTemplates[dayNum];
         var allRules = [];
 
         for (var g = 0; g < template.exerciseGroups.length; g++) {
@@ -1011,9 +1017,9 @@ const Builder = {
         if (allRules.length === 0) return;
 
         // Clear this day's overrides across all weeks
-        for (var w = 1; w <= PROGRAM.totalWeeks; w++) {
-            if (PROGRAM.weeklyOverrides[w]) {
-                delete PROGRAM.weeklyOverrides[w][dayNum];
+        for (var w = 1; w <= p.totalWeeks; w++) {
+            if (p.weeklyOverrides[w]) {
+                delete p.weeklyOverrides[w][dayNum];
             }
         }
 
@@ -1021,14 +1027,14 @@ const Builder = {
         for (var i = 0; i < allRules.length; i++) {
             var exId = allRules[i].exerciseId;
             var rule = allRules[i].rule;
-            for (var w = rule.startWeek; w <= PROGRAM.totalWeeks; w++) {
-                if (!PROGRAM.weeklyOverrides[w]) PROGRAM.weeklyOverrides[w] = {};
-                if (!PROGRAM.weeklyOverrides[w][dayNum]) PROGRAM.weeklyOverrides[w][dayNum] = {};
-                if (!PROGRAM.weeklyOverrides[w][dayNum][exId]) PROGRAM.weeklyOverrides[w][dayNum][exId] = { sets: {} };
-                if (!PROGRAM.weeklyOverrides[w][dayNum][exId].sets[rule.setIdx]) {
-                    PROGRAM.weeklyOverrides[w][dayNum][exId].sets[rule.setIdx] = { techniques: [] };
+            for (var w = rule.startWeek; w <= p.totalWeeks; w++) {
+                if (!p.weeklyOverrides[w]) p.weeklyOverrides[w] = {};
+                if (!p.weeklyOverrides[w][dayNum]) p.weeklyOverrides[w][dayNum] = {};
+                if (!p.weeklyOverrides[w][dayNum][exId]) p.weeklyOverrides[w][dayNum][exId] = { sets: {} };
+                if (!p.weeklyOverrides[w][dayNum][exId].sets[rule.setIdx]) {
+                    p.weeklyOverrides[w][dayNum][exId].sets[rule.setIdx] = { techniques: [] };
                 }
-                var techs = PROGRAM.weeklyOverrides[w][dayNum][exId].sets[rule.setIdx].techniques;
+                var techs = p.weeklyOverrides[w][dayNum][exId].sets[rule.setIdx].techniques;
                 if (techs.indexOf(rule.technique) === -1) techs.push(rule.technique);
             }
         }

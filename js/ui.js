@@ -84,16 +84,17 @@ const UI = {
     // ===== SETUP SCREEN =====
     renderSetup() {
         // Phase 2: program loaded, need date/cycle setup → summary screen
-        if (PROGRAM && !Storage.isSetup()) {
-            const programTitle = PROGRAM.title || 'Моя программа';
+        var _p = Storage.getProgram();
+        if (_p && !Storage.isSetup()) {
+            const programTitle = _p.title || 'Моя программа';
             const totalW = getTotalWeeks();
             const totalD = getTotalDays();
-            const athleteName = PROGRAM.athlete ? `<p class="subtitle" style="opacity:0.5;margin-top:4px">${PROGRAM.athlete}</p>` : '';
+            const athleteName = _p.athlete ? `<p class="subtitle" style="opacity:0.5;margin-top:4px">${_p.athlete}</p>` : '';
 
             // Build day list summary
             let daysHtml = '';
             for (let d = 1; d <= totalD; d++) {
-                const tmpl = PROGRAM.dayTemplates[d];
+                const tmpl = _p.dayTemplates[d];
                 const dayTitle = (tmpl && (tmpl.titleRu || tmpl.title)) || ('День ' + d);
                 const exCount = tmpl ? tmpl.exerciseGroups.length : 0;
                 const exText = exCount > 0 ? ` · ${exCount} упражнений` : '';
@@ -191,7 +192,7 @@ const UI = {
                 const dayNum = slot.dayNum;
                 const { completed, total } = getCompletedSets(weekNum, dayNum);
                 const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-                const template = PROGRAM.dayTemplates[dayNum];
+                const template = Storage.getProgram().dayTemplates[dayNum];
                 const dayTitle = template ? template.titleRu : `День ${dayNum}`;
                 const isDone = total > 0 && completed >= total;
                 const isNext = progress.week === weekNum && progress.day === dayNum;
@@ -755,10 +756,11 @@ const UI = {
     },
 
     _findSiblingExercises(ex, currentDayNum) {
-        if (!PROGRAM) return null;
+        var _pg = Storage.getProgram();
+        if (!_pg) return null;
         var name = exName(ex);
         if (!name) return null;
-        var all = getAllProgramExercises(PROGRAM);
+        var all = getAllProgramExercises(_pg);
         var siblings = [];
         for (var i = 0; i < all.length; i++) {
             var e = all[i].exercise;
@@ -965,8 +967,9 @@ const UI = {
 
         // Find exercise name using getGroupExercises helper
         let exerciseName = exerciseId;
+        var _p2 = Storage.getProgram();
         for (let d = 1; d <= getTotalDays(); d++) {
-            const tmpl = PROGRAM.dayTemplates[d];
+            const tmpl = _p2.dayTemplates[d];
             if (!tmpl) continue;
             for (const group of tmpl.exerciseGroups) {
                 const exercises = getGroupExercises(group);
@@ -1123,8 +1126,7 @@ const UI = {
 
     // ===== EQUIPMENT MODAL =====
     _getExerciseInfo(exerciseId) {
-        var program = typeof PROGRAM !== 'undefined' ? PROGRAM : null;
-        var ex = findExerciseInProgram(program, exerciseId);
+        var ex = findExerciseInProgram(Storage.getProgram(), exerciseId);
         if (!ex) return { name: '', nameRu: '', category: 'all' };
         // Look up category in EXERCISE_DB — always use DB's English name
         var coreName = (ex.name || ex.nameRu || '').replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
@@ -1387,9 +1389,10 @@ const UI = {
     // ===== CHOICE MODAL (choose one exercise) =====
     showChoiceModal(choiceKey) {
         // Find the group across all day templates
+        var _p3 = Storage.getProgram();
         let group = null;
         for (let d = 1; d <= getTotalDays(); d++) {
-            const tmpl = PROGRAM.dayTemplates[d];
+            const tmpl = _p3.dayTemplates[d];
             if (!tmpl) continue;
             for (const g of tmpl.exerciseGroups) {
                 if (g.choiceKey === choiceKey) { group = g; break; }
@@ -1452,9 +1455,10 @@ const UI = {
     // ===== SUBSTITUTION MODAL =====
     showSubstitutionModal(exerciseId) {
         // Find original exercise name
+        var _p4 = Storage.getProgram();
         let originalName = exerciseId;
         for (let d = 1; d <= getTotalDays(); d++) {
-            const tmpl = PROGRAM.dayTemplates[d];
+            const tmpl = _p4.dayTemplates[d];
             if (!tmpl) continue;
             for (const group of tmpl.exerciseGroups) {
                 const exercises = getGroupExercises(group);
@@ -1474,7 +1478,7 @@ const UI = {
         const allExercises = [];
         const seenNames = new Set();
         for (let d = 1; d <= getTotalDays(); d++) {
-            const tmpl = PROGRAM.dayTemplates[d];
+            const tmpl = _p4.dayTemplates[d];
             if (!tmpl) continue;
             for (const group of tmpl.exerciseGroups) {
                 const exercises = getGroupExercises(group);

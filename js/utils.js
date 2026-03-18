@@ -63,11 +63,13 @@ const MONTHS_RU = [
 const DAYS_RU = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 
 function getTotalWeeks() {
-    return PROGRAM ? PROGRAM.totalWeeks : 12;
+    var p = Storage.getProgram();
+    return p ? p.totalWeeks : 12;
 }
 
 function getTotalDays() {
-    return PROGRAM ? Object.keys(PROGRAM.dayTemplates).length : 5;
+    var p = Storage.getProgram();
+    return p ? Object.keys(p.dayTemplates).length : 5;
 }
 
 function validateProgram(data) {
@@ -270,10 +272,11 @@ function getAllProgramExercises(program) {
  * data.js structure: weeklyOverrides[weekNum][dayNum][exerciseId].sets[setIdx]
  */
 function resolveWorkout(week, day) {
-    const template = deepClone(PROGRAM.dayTemplates[day]);
+    const p = Storage.getProgram();
+    const template = deepClone(p.dayTemplates[day]);
     if (!template) return null;
 
-    const weekOverrides = PROGRAM.weeklyOverrides[week];
+    const weekOverrides = p.weeklyOverrides[week];
     if (!weekOverrides) return template;
 
     const dayOverrides = weekOverrides[day];

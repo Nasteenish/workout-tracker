@@ -41,9 +41,9 @@ const App = {
             }
         } else {
             // Legacy fallback: try loading stored program directly
-            const storedProgram = Storage.getProgram();
+            const storedProgram = Storage.getStoredProgram();
             if (storedProgram) {
-                PROGRAM = storedProgram;
+                Storage.setProgram(storedProgram);
             }
         }
 
@@ -734,25 +734,27 @@ const App = {
     },
 
     _addWeekToCustomProgram() {
-        if (!PROGRAM) return;
-        if (PROGRAM.totalWeeks >= 16) {
+        var p = Storage.getProgram();
+        if (!p) return;
+        if (p.totalWeeks >= 16) {
             alert('Максимум 16 недель');
             return;
         }
-        if (!confirm(`Добавить неделю ${PROGRAM.totalWeeks + 1}?`)) return;
-        PROGRAM.totalWeeks = (PROGRAM.totalWeeks || 1) + 1;
-        Storage.saveProgram(PROGRAM, false);
-        location.hash = `#/week/${PROGRAM.totalWeeks}`;
+        if (!confirm(`Добавить неделю ${p.totalWeeks + 1}?`)) return;
+        p.totalWeeks = (p.totalWeeks || 1) + 1;
+        Storage.saveProgram(p, false);
+        location.hash = `#/week/${p.totalWeeks}`;
     },
 
     _removeWeekFromCustomProgram() {
-        if (!PROGRAM || PROGRAM.totalWeeks <= 1) return;
-        if (!confirm(`Удалить неделю ${PROGRAM.totalWeeks}? Данные этой недели будут потеряны.`)) return;
-        var removedWeek = PROGRAM.totalWeeks;
-        PROGRAM.totalWeeks -= 1;
-        Storage.saveProgram(PROGRAM, false);
+        var p = Storage.getProgram();
+        if (!p || p.totalWeeks <= 1) return;
+        if (!confirm(`Удалить неделю ${p.totalWeeks}? Данные этой недели будут потеряны.`)) return;
+        var removedWeek = p.totalWeeks;
+        p.totalWeeks -= 1;
+        Storage.saveProgram(p, false);
         Storage.clearWeekLog(removedWeek);
-        location.hash = `#/week/${PROGRAM.totalWeeks}`;
+        location.hash = `#/week/${p.totalWeeks}`;
     },
 
     _handleEditorBack() {
@@ -760,7 +762,8 @@ const App = {
     },
 
     _addDayToCustomProgram() {
-        if (!PROGRAM) return;
+        var p = Storage.getProgram();
+        if (!p) return;
         var numDays = getTotalDays();
         if (numDays >= 7) {
             alert('Все 7 дней заняты тренировками');
@@ -768,7 +771,7 @@ const App = {
         }
         if (!confirm('Убрать день отдыха и добавить тренировку?')) return;
         var newDayNum = numDays + 1;
-        PROGRAM.dayTemplates[newDayNum] = {
+        p.dayTemplates[newDayNum] = {
             title: 'Day ' + newDayNum,
             titleRu: 'День ' + newDayNum,
             exerciseGroups: []
@@ -776,47 +779,50 @@ const App = {
         // Regenerate slots for new day count (always 7 total)
         var slots = UI._generateDefaultSlots(newDayNum, 7);
         Storage.saveWeekSlots(slots);
-        Storage.saveProgram(PROGRAM, false);
+        Storage.saveProgram(p, false);
         UI.renderWeek(this._currentWeek);
     },
 
     _removeDayFromCustomProgram() {
-        if (!PROGRAM) return;
+        var p = Storage.getProgram();
+        if (!p) return;
         var numDays = getTotalDays();
         if (numDays <= 1) return;
         if (!confirm('Удалить день ' + numDays + '? На его место встанет день отдыха.')) return;
-        delete PROGRAM.dayTemplates[numDays];
+        delete p.dayTemplates[numDays];
         // Regenerate slots for new day count (always 7 total)
         var slots = UI._generateDefaultSlots(numDays - 1, 7);
         Storage.saveWeekSlots(slots);
-        Storage.saveProgram(PROGRAM, false);
+        Storage.saveProgram(p, false);
         UI.renderWeek(this._currentWeek);
     },
 
     _loadProgramForUser(user) {
-        var storedProgram = Storage.getProgram();
+        var storedProgram = Storage.getStoredProgram();
         if (storedProgram) {
-            PROGRAM = storedProgram;
+            Storage.setProgram(storedProgram);
             // Migrate to custom if not yet migrated
-            if (!PROGRAM.isCustom) {
-                PROGRAM.isCustom = true;
-                Storage.saveProgram(PROGRAM, false);
+            var p = Storage.getProgram();
+            if (!p.isCustom) {
+                p.isCustom = true;
+                Storage.saveProgram(p, false);
             }
             // No longer auto-update from built-in — program is user's own
         } else {
             // No stored program — load from built-in template
             var builtin = BUILTIN_PROGRAMS[user.programId];
             if (builtin) {
-                PROGRAM = JSON.parse(JSON.stringify(builtin.getProgram()));
-                PROGRAM.isCustom = true;
-                if (PROGRAM) Storage.saveProgram(PROGRAM, false);
+                var prog = JSON.parse(JSON.stringify(builtin.getProgram()));
+                prog.isCustom = true;
+                Storage.setProgram(prog);
+                Storage.saveProgram(prog, false);
             }
         }
     },
 
     switchUser(userId, pushHistory) {
         Storage.setCurrentUser(userId);
-        PROGRAM = null;
+        Storage.setProgram(null);
         var user = Storage.getCurrentUser();
         if (user) this._loadProgramForUser(user);
         if (pushHistory) {
@@ -996,7 +1002,7 @@ const App = {
     logout() {
         this._hideSyncWarning();
         Storage.logout();
-        PROGRAM = null;
+        Storage.setProgram(null);
         this._pendingMigration = null;
         location.hash = '#/login';
     },
@@ -1225,9 +1231,9 @@ const App = {
                     const data = JSON.parse(e.target.result);
                     const error = validateProgram(data);
                     if (error) { reject(error); return; }
-                    const hadProgram = PROGRAM !== null;
+                    const hadProgram = Storage.getProgram() !== null;
                     Storage.saveProgram(data, hadProgram);
-                    PROGRAM = data;
+                    Storage.setProgram(data);
                     resolve();
                 } catch (err) {
                     reject('Неверный JSON файл');
@@ -1371,7 +1377,7 @@ const App = {
         }
 
         // Program check: no program loaded → go to setup
-        if (!PROGRAM && hash !== '#/setup') {
+        if (!Storage.getProgram() && hash !== '#/setup') {
             location.hash = '#/setup';
             return;
         }
@@ -1383,7 +1389,7 @@ const App = {
         }
 
         if (hash === '#/setup' || hash === '') {
-            if (!PROGRAM || !Storage.isSetup()) {
+            if (!Storage.getProgram() || !Storage.isSetup()) {
                 UI.renderSetup();
                 return;
             }
@@ -2069,13 +2075,14 @@ const App = {
             } else {
                 var numDays = getTotalDays();
                 var dayNames = [];
+                var _p = Storage.getProgram();
                 for (var d = 1; d <= numDays; d++) {
-                    var tmpl = PROGRAM && PROGRAM.dayTemplates[d];
+                    var tmpl = _p && _p.dayTemplates[d];
                     dayNames.push(tmpl ? (tmpl.titleRu || tmpl.title || '') : '');
                 }
                 Builder._config = {
-                    title: PROGRAM ? (PROGRAM.title || '') : '',
-                    totalWeeks: PROGRAM ? (PROGRAM.totalWeeks || 4) : 4,
+                    title: _p ? (_p.title || '') : '',
+                    totalWeeks: _p ? (_p.totalWeeks || 4) : 4,
                     numDays: numDays,
                     dayNames: dayNames
                 };
@@ -2118,7 +2125,7 @@ const App = {
         if (target.id === 'setup-use-default' || target.closest('#setup-use-default')) {
             if (typeof DEFAULT_PROGRAM !== 'undefined') {
                 Storage.saveProgram(DEFAULT_PROGRAM, false);
-                PROGRAM = DEFAULT_PROGRAM;
+                Storage.setProgram(DEFAULT_PROGRAM);
                 UI.renderSetup();
             }
             return true;
@@ -3038,19 +3045,21 @@ const App = {
     },
 
     _addSet(exerciseId) {
-        var ex = findExerciseInProgram(PROGRAM, exerciseId);
+        var p = Storage.getProgram();
+        var ex = findExerciseInProgram(p, exerciseId);
         if (!ex) return;
         var lastSet = ex.sets[ex.sets.length - 1] || { type: 'H', rpe: '8', techniques: [] };
         ex.sets.push({ type: lastSet.type, rpe: lastSet.rpe, techniques: lastSet.techniques ? lastSet.techniques.slice() : [] });
-        Storage.saveProgram(PROGRAM, false);
+        Storage.saveProgram(p, false);
         UI.renderDay(this._currentWeek, this._currentDay);
     },
 
     _removeSet(exerciseId) {
-        var ex = findExerciseInProgram(PROGRAM, exerciseId);
+        var p = Storage.getProgram();
+        var ex = findExerciseInProgram(p, exerciseId);
         if (!ex || ex.sets.length <= 1) return;
         ex.sets.pop();
-        Storage.saveProgram(PROGRAM, false);
+        Storage.saveProgram(p, false);
         UI.renderDay(this._currentWeek, this._currentDay);
     },
 
@@ -3585,7 +3594,7 @@ const App = {
         if (modal && modal._exerciseName) {
             exerciseName = modal._exerciseName;
         } else {
-            var exInfo = findExerciseInProgram(PROGRAM, exerciseId);
+            var exInfo = findExerciseInProgram(Storage.getProgram(), exerciseId);
             if (exInfo) exerciseName = exInfo.name || exInfo.nameEn || '';
         }
         if (!exerciseName) return;

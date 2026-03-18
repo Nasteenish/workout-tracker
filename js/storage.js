@@ -9,6 +9,16 @@ function _storageKey() {
 const Storage = {
     _data: null,
     _siblingCache: null,
+    _program: null,
+
+    getProgram() {
+        return this._program;
+    },
+
+    setProgram(prog) {
+        this._program = prog;
+        this._invalidateSiblingCache();
+    },
 
     _invalidateCache() {
         this._data = null;
@@ -20,9 +30,9 @@ const Storage = {
 
     _buildSiblingCache() {
         this._siblingCache = {};
-        if (!PROGRAM) return;
+        if (!this._program) return;
         var nameToIds = {};
-        var all = getAllProgramExercises(PROGRAM);
+        var all = getAllProgramExercises(this._program);
         for (var i = 0; i < all.length; i++) {
             var ex = all[i].exercise;
             var n = ex.nameRu || ex.name;
@@ -419,7 +429,7 @@ const Storage = {
         return this._load().program !== null;
     },
 
-    getProgram() {
+    getStoredProgram() {
         return this._load().program;
     },
 
@@ -489,7 +499,7 @@ const Storage = {
 
     // Find all exercise IDs with the same name across all days (cached)
     _getSiblingIds(exerciseId) {
-        if (!PROGRAM || !PROGRAM.dayTemplates) return [];
+        if (!this._program || !this._program.dayTemplates) return [];
         if (!this._siblingCache) this._buildSiblingCache();
         return this._siblingCache[exerciseId] || [];
     },
@@ -1048,8 +1058,9 @@ const Storage = {
     getExerciseHistory(exerciseId) {
         var data = this._load();
         var history = [];
-        var totalWeeks = PROGRAM ? PROGRAM.totalWeeks : 12;
-        var totalDays = PROGRAM ? Object.keys(PROGRAM.dayTemplates).length : 5;
+        var p = this._program;
+        var totalWeeks = p ? p.totalWeeks : 12;
+        var totalDays = p ? Object.keys(p.dayTemplates).length : 5;
         for (var week = 1; week <= totalWeeks; week++) {
             var w = String(week);
             if (!data.log[w]) continue;
