@@ -90,16 +90,9 @@
 
 ---
 
-### 8. Дублирование привязки оборудования (5 копий)
+### ~~8. Дублирование привязки оборудования (5 копий)~~ ✅ РЕШЕНО
 
-**Где:** 5 мест в `App.handleClick`:
-1. `eq-option` → `setExerciseEquipment()` + `setGymExerciseEquipment()` + `_shareToGymEquipment()`
-2. `eq-add-btn` — та же тройка
-3. `eq-search-item` — та же тройка
-4. `eq-catalog-item` — та же тройка
-5. `eq-gym-item` — та же тройка (без share)
-
-**Решение:** Вынести в `_bindEquipment(exId, eqId, eqName, catalogId)` — 30 минут работы.
+**Что сделано:** Вынесен `_bindEquipment(exId, eqId, shareInfo)` — единый хелпер для `setExerciseEquipment` + `setGymExerciseEquipment` + `_shareToGymEquipment` + hide modal + re-render. Все 5 обработчиков (`eq-option`, `eq-add-btn`, `eq-search-item`, `eq-gym-item`, `eq-catalog-item`) используют его.
 
 ---
 
@@ -219,7 +212,7 @@ if (target.id === 'btn-follow' || target.closest('#btn-follow')) { ... }
 | 2 | Дублирование поиска упражнений | Средняя | Высокое | 🔴 P0 |
 | 9 | ~~Дублирование навигации назад~~ ✅ | **Низкая** | Среднее | 🟡 P1 |
 | 10 | ~~`_getSiblingIds()` O(N²)~~ ✅ | **Низкая** | Среднее (perf) | 🟡 P1 |
-| 8 | 5× дублирование привязки оборудования | **Низкая** | Среднее | 🟡 P1 |
+| 8 | ~~5× дублирование привязки оборудования~~ ✅ | **Низкая** | Среднее | 🟡 P1 |
 | 4 | ~~Миграции в init()~~ ✅ | Низкая | Среднее | 🟡 P1 |
 | 5 | App.js слишком большой | Высокая | Высокое | 🟡 P1 |
 | 6 | Свайпы связаны с рендерингом | Средняя | Среднее | 🟡 P1 |
@@ -242,7 +235,7 @@ if (target.id === 'btn-follow' || target.closest('#btn-follow')) { ... }
 
 **Шаг 1 — Быстрые win'ы (низкий риск, не ломают функционал):**
 - ~~Вынести навигацию назад в `_navigateBack()` (#9)~~ ✅
-- Вынести `_bindEquipment()` (#8) — **30 минут**, убирает 5× дублирование
+- ~~Вынести `_bindEquipment()` (#8)~~ ✅
 - ~~Построить sibling lookup cache (#10)~~ ✅
 - Вынести миграции из `App.init()` (#4) — **1 час**
 

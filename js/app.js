@@ -2171,6 +2171,15 @@ const App = {
     },
 
     // ===== Delegated modal click handlers (substitution, gym, choice, equipment) =====
+    _bindEquipment(exId, eqId, shareInfo) {
+        Storage.setExerciseEquipment(exId, eqId);
+        var activeGym = this._getActiveGymId();
+        if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, eqId);
+        if (shareInfo) this._shareToGymEquipment(exId, shareInfo);
+        UI.hideEquipmentModal();
+        UI.renderDay(this._currentWeek, this._currentDay);
+    },
+
     _handleModalClick(target) {
         // Substitution modal — select exercise from list (must be before eq-option handler)
         if (target.matches('.sub-option') || target.closest('.sub-option')) {
@@ -2344,13 +2353,7 @@ const App = {
             const opt = target.matches('.eq-option') ? target : target.closest('.eq-option');
             const eqId = opt.dataset.eqId;
             const exId = opt.dataset.exercise;
-            Storage.setExerciseEquipment(exId, eqId || null);
-            var activeGym = this._getActiveGymId();
-            if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, eqId || null);
-            // Share to gym_equipment
-            if (eqId) this._shareToGymEquipment(exId, Storage.getEquipmentById(eqId));
-            UI.hideEquipmentModal();
-            UI.renderDay(this._currentWeek, this._currentDay);
+            this._bindEquipment(exId, eqId || null, eqId ? Storage.getEquipmentById(eqId) : null);
             return true;
         }
 
@@ -2367,12 +2370,7 @@ const App = {
                 Social.addSharedEquipment(name, muscleGroup).catch(function() {});
             }
             if (exId) {
-                Storage.setExerciseEquipment(exId, newId);
-                var activeGym = this._getActiveGymId();
-                if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, newId);
-                this._shareToGymEquipment(exId, { name: name });
-                UI.hideEquipmentModal();
-                UI.renderDay(this._currentWeek, this._currentDay);
+                this._bindEquipment(exId, newId, { name: name });
             }
             return true;
         }
@@ -2392,13 +2390,11 @@ const App = {
                 Social.addSharedEquipment(eqName, muscleGroup).catch(function() {});
             }
             if (exId) {
-                Storage.setExerciseEquipment(exId, newId);
-                var activeGym = this._getActiveGymId();
-                if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, newId);
-                this._shareToGymEquipment(exId, { name: eqName, catalogId: catalogId });
+                this._bindEquipment(exId, newId, { name: eqName, catalogId: catalogId });
+            } else {
+                UI.hideEquipmentModal();
+                UI.renderDay(this._currentWeek, this._currentDay);
             }
-            UI.hideEquipmentModal();
-            UI.renderDay(this._currentWeek, this._currentDay);
             return true;
         }
 
@@ -2411,12 +2407,11 @@ const App = {
             var exId = modal ? modal._exerciseId : null;
             var newId = Storage.addEquipment(eqName);
             if (exId) {
-                Storage.setExerciseEquipment(exId, newId);
-                var activeGym = this._getActiveGymId();
-                if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, newId);
+                this._bindEquipment(exId, newId, null);
+            } else {
+                UI.hideEquipmentModal();
+                UI.renderDay(this._currentWeek, this._currentDay);
             }
-            UI.hideEquipmentModal();
-            UI.renderDay(this._currentWeek, this._currentDay);
             return true;
         }
 
@@ -2446,14 +2441,12 @@ const App = {
             var eqImageUrl = catItem.dataset.image || null;
             var newId = Storage.addEquipment(eqName, undefined, eqImageUrl);
             if (exId) {
-                Storage.setExerciseEquipment(exId, newId);
                 Storage.linkEquipmentToExercise(exId, newId);
-                var activeGym = this._getActiveGymId();
-                if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, newId);
-                this._shareToGymEquipment(exId, { name: eqName, catalogId: catalogId });
+                this._bindEquipment(exId, newId, { name: eqName, catalogId: catalogId });
+            } else {
+                UI.hideEquipmentModal();
+                UI.renderDay(this._currentWeek, this._currentDay);
             }
-            UI.hideEquipmentModal();
-            UI.renderDay(this._currentWeek, this._currentDay);
             return true;
         }
 
