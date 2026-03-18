@@ -8,6 +8,7 @@ import { App } from './app.js';
 import { EquipmentManager } from './equipment-manager.js';
 import { WorkoutTimer } from './workout-timer.js';
 import { getTotalWeeks, getTotalDays, formatDateISO, getProgressWeek, getCompletedSets, resolveWorkout, exName, markCachedThumbs, esc, exThumbHtml, getGroupExercises, findExerciseInProgram } from './utils.js';
+import { EXERCISE_DB } from './exercises_db.js';
 
 export const UI = {
     // ===== LOGIN SCREEN =====
