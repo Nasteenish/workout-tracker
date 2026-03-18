@@ -2,18 +2,18 @@
 
 ## 🔴 Критические (чинить первым)
 
-### 1. God Object: `App.handleClick()` — 2000+ строк if/else
+### 1. ~~God Object: `App.handleClick()` — 2000+ строк if/else~~ ✅ РЕШЕНО
 
-**Где:** `js/app.js`, строки ~1597–3140
+**Коммит:** `906bff6` (2026-03-18)
 
-**Проблема:** Один метод обрабатывает ВСЕ клики приложения — логин, соцсеть, тренировки, модалки, оборудование, навигацию, онбординг. Это монолитная if/else цепочка, где каждое новое действие добавляется в конец.
-
-**Следствия:**
-- Невозможно понять какие обработчики относятся к какому экрану
-- Порядок if/else важен (eq-option с data-choice-key должен быть ДО eq-option без него) — легко сломать перестановкой
-- Конфликты: один клик может подходить под несколько условий
-
-**Решение:** Каждый модуль (`UI`, `SocialUI`, `Builder`) получает свой `handleClick()`, а `App` делегирует. Или хотя бы разнести на `_handleSocialClick()`, `_handleWorkoutClick()`, `_handleEquipmentClick()`.
+**Что сделано:** `handleClick()` разбит на 7 доменных под-методов + хелпер `_navigateBack()`. Теперь это 18-строчный диспетчер:
+- `_handleAuthClick()` — login, register, migrate, logout
+- `_handleBuilderClick()` — onboarding, builder, setup, program mgmt
+- `_handleSocialClick()` — profiles, feed, chat, checkins, likes, comments
+- `_handleNavigationClick()` — back buttons с анимацией
+- `_handleSettingsClick()` — timer, equipment, gyms, reset
+- `_handleModalClick()` — substitution, gym, choice, equipment modals
+- `_handleWorkoutClick()` — unit cycle, timer, sets, complete, history, export
 
 ---
 
