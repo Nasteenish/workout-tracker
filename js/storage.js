@@ -8,9 +8,40 @@ function _storageKey() {
 
 const Storage = {
     _data: null,
+    _siblingCache: null,
 
     _invalidateCache() {
         this._data = null;
+    },
+
+    _invalidateSiblingCache() {
+        this._siblingCache = null;
+    },
+
+    _buildSiblingCache() {
+        this._siblingCache = {};
+        if (!PROGRAM || !PROGRAM.dayTemplates) return;
+        var nameToIds = {};
+        for (var dNum in PROGRAM.dayTemplates) {
+            var groups = PROGRAM.dayTemplates[dNum].exerciseGroups || [];
+            for (var g = 0; g < groups.length; g++) {
+                var gr = groups[g];
+                if (gr.exercise) {
+                    var n = gr.exercise.nameRu || gr.exercise.name;
+                    if (n) { if (!nameToIds[n]) nameToIds[n] = []; nameToIds[n].push(gr.exercise.id); }
+                }
+                if (gr.options) { for (var o = 0; o < gr.options.length; o++) { var opt = gr.options[o]; var n = opt.nameRu || opt.name; if (n) { if (!nameToIds[n]) nameToIds[n] = []; nameToIds[n].push(opt.id); } } }
+                if (gr.exercises) { for (var s = 0; s < gr.exercises.length; s++) { var se = gr.exercises[s].exercise || gr.exercises[s]; var n = se.nameRu || se.name; if (n) { if (!nameToIds[n]) nameToIds[n] = []; nameToIds[n].push(se.id); } } }
+            }
+        }
+        var cache = this._siblingCache;
+        for (var name in nameToIds) {
+            var ids = nameToIds[name];
+            if (ids.length < 2) { cache[ids[0]] = []; continue; }
+            for (var i = 0; i < ids.length; i++) {
+                cache[ids[i]] = ids.filter(function(id) { return id !== ids[i]; });
+            }
+        }
     },
 
     _load() {
@@ -442,6 +473,7 @@ const Storage = {
             data.settings.startDate = null;
         }
         data.program = programData;
+        this._invalidateSiblingCache();
         this._save();
     },
 
@@ -494,35 +526,11 @@ const Storage = {
         return this.getEquipmentList().find(function(e) { return e.id === id; }) || null;
     },
 
-    // Find all exercise IDs with the same name across all days
+    // Find all exercise IDs with the same name across all days (cached)
     _getSiblingIds(exerciseId) {
         if (!PROGRAM || !PROGRAM.dayTemplates) return [];
-        var name = null;
-        // Find this exercise's name
-        for (var dNum in PROGRAM.dayTemplates) {
-            var groups = PROGRAM.dayTemplates[dNum].exerciseGroups || [];
-            for (var g = 0; g < groups.length; g++) {
-                var gr = groups[g];
-                if (gr.exercise && gr.exercise.id === exerciseId) { name = gr.exercise.nameRu || gr.exercise.name; break; }
-                if (gr.options) { for (var o = 0; o < gr.options.length; o++) { if (gr.options[o].id === exerciseId) { name = gr.options[o].nameRu || gr.options[o].name; break; } } }
-                if (gr.exercises) { for (var s = 0; s < gr.exercises.length; s++) { var se = gr.exercises[s].exercise || gr.exercises[s]; if (se.id === exerciseId) { name = se.nameRu || se.name; break; } } }
-                if (name) break;
-            }
-            if (name) break;
-        }
-        if (!name) return [];
-        // Collect all IDs with same name
-        var ids = [];
-        for (var dNum in PROGRAM.dayTemplates) {
-            var groups = PROGRAM.dayTemplates[dNum].exerciseGroups || [];
-            for (var g = 0; g < groups.length; g++) {
-                var gr = groups[g];
-                if (gr.exercise && (gr.exercise.nameRu === name || gr.exercise.name === name) && gr.exercise.id !== exerciseId) ids.push(gr.exercise.id);
-                if (gr.options) { for (var o = 0; o < gr.options.length; o++) { var opt = gr.options[o]; if ((opt.nameRu === name || opt.name === name) && opt.id !== exerciseId) ids.push(opt.id); } }
-                if (gr.exercises) { for (var s = 0; s < gr.exercises.length; s++) { var se = gr.exercises[s].exercise || gr.exercises[s]; if ((se.nameRu === name || se.name === name) && se.id !== exerciseId) ids.push(se.id); } }
-            }
-        }
-        return ids;
+        if (!this._siblingCache) this._buildSiblingCache();
+        return this._siblingCache[exerciseId] || [];
     },
 
     getExerciseEquipment(exerciseId) {
