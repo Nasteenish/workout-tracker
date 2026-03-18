@@ -80,7 +80,15 @@ const SwipeNav = {
         const createCarouselCompanion = (targetWeek) => {
             const c = document.createElement('div');
             c.className = 'nav-companion';
-            c.innerHTML = UI._weekCardsHTML(targetWeek);
+            const cached = app._pageCache['#/week/' + targetWeek];
+            if (cached) {
+                const tmp = document.createElement('div');
+                tmp.innerHTML = cached;
+                const slide = tmp.querySelector('.week-slide');
+                c.innerHTML = slide ? slide.innerHTML : UI._weekCardsHTML(targetWeek);
+            } else {
+                c.innerHTML = UI._weekCardsHTML(targetWeek);
+            }
             const container = document.querySelector('.slide-container');
             if (container) container.appendChild(c);
             return c;
@@ -89,10 +97,14 @@ const SwipeNav = {
         const createBackCompanion = (type, dayNum, targetHash) => {
             const c = document.createElement('div');
             c.className = 'back-companion';
-            if (type === 'week') c.innerHTML = UI._weekViewHTML(app._currentWeek);
+            // Cache-first: use previously rendered HTML if available
+            if (targetHash && app._pageCache[targetHash]) {
+                c.innerHTML = app._pageCache[targetHash];
+            }
+            // Fallback: render fresh when cache is cold
+            else if (type === 'week') c.innerHTML = UI._weekViewHTML(app._currentWeek);
             else if (type === 'menu') c.innerHTML = UI._menuHTML();
             else if (type === 'day') c.innerHTML = UI._dayViewHTML(app._currentWeek, dayNum || app._currentDay);
-            else if (targetHash && app._pageCache[targetHash]) c.innerHTML = app._pageCache[targetHash];
             document.body.appendChild(c);
             return c;
         };

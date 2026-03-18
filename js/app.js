@@ -11,6 +11,14 @@ const App = {
     _croppedAvatarBlob: null,
     _pageCache: {},
 
+    invalidatePageCache(hashOrPrefix) {
+        if (!hashOrPrefix) { this._pageCache = {}; return; }
+        for (var key in this._pageCache) {
+            if (key === hashOrPrefix || key.startsWith(hashOrPrefix + '/'))
+                delete this._pageCache[key];
+        }
+    },
+
     init() {
         // Run one-time data migrations (see js/migrations.js)
         Migrations.run();
@@ -291,6 +299,7 @@ const App = {
         if (!confirm(`Добавить неделю ${p.totalWeeks + 1}?`)) return;
         p.totalWeeks = (p.totalWeeks || 1) + 1;
         Storage.saveProgram(p, false);
+        this.invalidatePageCache();
         location.hash = `#/week/${p.totalWeeks}`;
     },
 
@@ -302,6 +311,7 @@ const App = {
         p.totalWeeks -= 1;
         Storage.saveProgram(p, false);
         Storage.clearWeekLog(removedWeek);
+        this.invalidatePageCache();
         location.hash = `#/week/${p.totalWeeks}`;
     },
 
@@ -328,6 +338,7 @@ const App = {
         var slots = UI._generateDefaultSlots(newDayNum, 7);
         Storage.saveWeekSlots(slots);
         Storage.saveProgram(p, false);
+        this.invalidatePageCache();
         UI.renderWeek(this._currentWeek);
     },
 
@@ -342,6 +353,7 @@ const App = {
         var slots = UI._generateDefaultSlots(numDays - 1, 7);
         Storage.saveWeekSlots(slots);
         Storage.saveProgram(p, false);
+        this.invalidatePageCache();
         UI.renderWeek(this._currentWeek);
     },
 
@@ -782,6 +794,7 @@ const App = {
                     const hadProgram = Storage.getProgram() !== null;
                     Storage.saveProgram(data, hadProgram);
                     Storage.setProgram(data);
+                    App.invalidatePageCache(); // Program changed
                     resolve();
                 } catch (err) {
                     reject('Неверный JSON файл');
@@ -1156,6 +1169,7 @@ const App = {
             const exerciseLang = langBtn ? langBtn.dataset.lang : 'ru';
             Storage.saveSettings({ cycleType, startDate, weightUnit, timerDuration, exerciseLang });
             RestTimer.setDefaultDuration(timerDuration);
+            this.invalidatePageCache(); // Settings affect all pages
             location.hash = `#/week/${App._currentWeek}`;
             return true;
         }
@@ -1370,6 +1384,8 @@ const App = {
                     RestTimer.start(row);
                 }
             }
+            // Invalidate week cache (progress changed)
+            this.invalidatePageCache('#/week/' + this._currentWeek);
             return true;
         }
 
@@ -1674,6 +1690,7 @@ const App = {
             if (typeof DEFAULT_PROGRAM !== 'undefined') {
                 Storage.saveProgram(DEFAULT_PROGRAM, false);
                 Storage.setProgram(DEFAULT_PROGRAM);
+                this.invalidatePageCache(); // Program changed
                 UI.renderSetup();
             }
             return true;
@@ -1732,6 +1749,8 @@ const App = {
         if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, eqId);
         if (shareInfo) this._shareToGymEquipment(exId, shareInfo);
         UI.hideEquipmentModal();
+        // Invalidate day cache (equipment changed)
+        this.invalidatePageCache('#/week/' + this._currentWeek + '/day/' + this._currentDay);
         UI.renderDay(this._currentWeek, this._currentDay);
     },
 
@@ -1743,6 +1762,7 @@ const App = {
             const subName = opt.dataset.subName;
             Storage.setSubstitution(exId, subName);
             UI.hideSubstitutionModal();
+            this.invalidatePageCache('#/week/' + this._currentWeek + '/day/' + this._currentDay);
             UI.renderDay(this._currentWeek, this._currentDay);
             return true;
         }
@@ -1894,6 +1914,7 @@ const App = {
             const exerciseId = opt.dataset.exerciseId;
             Storage.saveChoice(choiceKey, exerciseId);
             UI.hideChoiceModal();
+            this.invalidatePageCache('#/week/' + this._currentWeek + '/day/' + this._currentDay);
             UI.renderDay(this._currentWeek, this._currentDay);
             return true;
         }
@@ -2599,6 +2620,7 @@ const App = {
         var lastSet = ex.sets[ex.sets.length - 1] || { type: 'H', rpe: '8', techniques: [] };
         ex.sets.push({ type: lastSet.type, rpe: lastSet.rpe, techniques: lastSet.techniques ? lastSet.techniques.slice() : [] });
         Storage.saveProgram(p, false);
+        this.invalidatePageCache('#/week/' + this._currentWeek);
         UI.renderDay(this._currentWeek, this._currentDay);
     },
 
@@ -2608,6 +2630,7 @@ const App = {
         if (!ex || ex.sets.length <= 1) return;
         ex.sets.pop();
         Storage.saveProgram(p, false);
+        this.invalidatePageCache('#/week/' + this._currentWeek);
         UI.renderDay(this._currentWeek, this._currentDay);
     },
 
