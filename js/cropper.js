@@ -1,6 +1,7 @@
 /* ===== Avatar Cropper ===== */
+import { lockBodyScroll, unlockBodyScroll } from './scroll-lock.js';
 
-const AvatarCropper = {
+export const AvatarCropper = {
     _resolve: null,
     _img: null,
     _canvas: null,

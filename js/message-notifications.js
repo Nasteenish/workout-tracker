@@ -1,10 +1,14 @@
 /* ===== Global Message Notifications ===== */
-const MessageNotifications = {
+import { Social } from './social.js';
+import { SocialUI } from './social-ui.js';
+import { esc } from './utils.js';
+
+export const MessageNotifications = {
     _pollTimer: null,
     _lastKnownCount: 0,
 
     init() {
-        if (typeof Social === 'undefined') return;
+        if (!Social) return;
         var self = this;
         if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission();

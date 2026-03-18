@@ -1,4 +1,4 @@
-const MIKHAIL2_PROGRAM = {
+export const MIKHAIL2_PROGRAM = {
   "title": "OFF-SEASON Program",
   "coach": "Francisco Espin",
   "athlete": "Mikhail Timoshin",

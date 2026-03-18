@@ -1,12 +1,14 @@
 // supabase-sync.js — Supabase Auth + Cloud Sync
+import { Storage } from './storage.js';
+import { App } from './app.js';
 
-const SUPABASE_URL = 'https://mqyfdbfdeuwojgexhwpy.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeWZkYmZkZXV3b2pnZXhod3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NzE1OTYsImV4cCI6MjA4NzQ0NzU5Nn0.5okpQM-UffmYatsVjbzjafsHhY3taCqhDYkiyEjiSvg';
+export const SUPABASE_URL = 'https://mqyfdbfdeuwojgexhwpy.supabase.co';
+export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeWZkYmZkZXV3b2pnZXhod3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NzE1OTYsImV4cCI6MjA4NzQ0NzU5Nn0.5okpQM-UffmYatsVjbzjafsHhY3taCqhDYkiyEjiSvg';
 
 // Initialize Supabase client (global `supabase` from CDN)
-const supa = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+export const supa = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-const SupaSync = {
+export const SupaSync = {
     _saveTimer: null,
     _syncing: false,
 
@@ -77,7 +79,7 @@ const SupaSync = {
             console.error('Supabase push error:', result.error.message);
             this._pushFailCount = (this._pushFailCount || 0) + 1;
             // Show warning after 2 consecutive failures
-            if (this._pushFailCount >= 2 && typeof App !== 'undefined' && App._showSyncWarning) {
+            if (this._pushFailCount >= 2 && App && App._showSyncWarning) {
                 App._showSyncWarning('Данные не синхронизируются. Нажмите, чтобы войти заново.');
             }
             return false;
@@ -144,7 +146,7 @@ const SupaSync = {
             } else if (remote && !localData) {
                 // New device: pull from cloud
                 localStorage.setItem(localStorageKey, JSON.stringify(remote.data));
-                if (typeof Storage !== 'undefined' && Storage._data) {
+                if (Storage && Storage._data) {
                     Storage._data = null;
                 }
             } else if (remote && localData) {
@@ -192,7 +194,7 @@ const SupaSync = {
                 // Save merged result locally and push to cloud
                 localStorage.setItem(localStorageKey, JSON.stringify(base));
                 // Invalidate in-memory cache so UI reads fresh data
-                if (typeof Storage !== 'undefined' && Storage._data) {
+                if (Storage && Storage._data) {
                     Storage._data = null;
                 }
                 await this.pushData(supaUserId, base, '');

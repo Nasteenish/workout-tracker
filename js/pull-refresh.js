@@ -1,5 +1,5 @@
 /* ===== Pull-to-Refresh ===== */
-const PullRefresh = {
+export const PullRefresh = {
     init(onRefresh) {
         let startY = 0;
         let pulling = false;
