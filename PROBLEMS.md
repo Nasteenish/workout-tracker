@@ -54,7 +54,7 @@
 
 ### ~~4. Одноразовые миграции в `App.init()` — 110 строк хардкода~~ ✅ РЕШЕНО
 
-**Коммит:** (pending)
+**Коммит:** `2fbc887` (2026-03-18)
 
 **Что сделано:** Все 4 миграции вынесены в `js/migrations.js` → объект `Migrations` с методом `run()`. Дубликат `_cleanOrphanedLogEntries()` удалён из `App`, перенесён в `Migrations.cleanOrphanedLogEntries()`. `App.init()` теперь вызывает `Migrations.run()` вместо 95 строк inline-кода.
 
