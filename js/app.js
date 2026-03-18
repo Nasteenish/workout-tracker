@@ -3037,30 +3037,8 @@ const App = {
         }
     },
 
-    _findExerciseInProgram(exerciseId) {
-        if (!PROGRAM) return null;
-        for (var dNum in PROGRAM.dayTemplates) {
-            var groups = PROGRAM.dayTemplates[dNum].exerciseGroups || [];
-            for (var g = 0; g < groups.length; g++) {
-                var gr = groups[g];
-                if (gr.exercise && gr.exercise.id === exerciseId) return gr.exercise;
-                if (gr.exercises) {
-                    for (var j = 0; j < gr.exercises.length; j++) {
-                        if (gr.exercises[j].id === exerciseId) return gr.exercises[j];
-                    }
-                }
-                if (gr.options) {
-                    for (var o = 0; o < gr.options.length; o++) {
-                        if (gr.options[o].id === exerciseId) return gr.options[o];
-                    }
-                }
-            }
-        }
-        return null;
-    },
-
     _addSet(exerciseId) {
-        var ex = this._findExerciseInProgram(exerciseId);
+        var ex = findExerciseInProgram(PROGRAM, exerciseId);
         if (!ex) return;
         var lastSet = ex.sets[ex.sets.length - 1] || { type: 'H', rpe: '8', techniques: [] };
         ex.sets.push({ type: lastSet.type, rpe: lastSet.rpe, techniques: lastSet.techniques ? lastSet.techniques.slice() : [] });
@@ -3069,7 +3047,7 @@ const App = {
     },
 
     _removeSet(exerciseId) {
-        var ex = this._findExerciseInProgram(exerciseId);
+        var ex = findExerciseInProgram(PROGRAM, exerciseId);
         if (!ex || ex.sets.length <= 1) return;
         ex.sets.pop();
         Storage.saveProgram(PROGRAM, false);
@@ -3607,7 +3585,7 @@ const App = {
         if (modal && modal._exerciseName) {
             exerciseName = modal._exerciseName;
         } else {
-            var exInfo = this._findExerciseInProgram(exerciseId);
+            var exInfo = findExerciseInProgram(PROGRAM, exerciseId);
             if (exInfo) exerciseName = exInfo.name || exInfo.nameEn || '';
         }
         if (!exerciseName) return;

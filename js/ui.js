@@ -755,43 +755,16 @@ const UI = {
     },
 
     _findSiblingExercises(ex, currentDayNum) {
-        if (!PROGRAM || !PROGRAM.dayTemplates) return null;
+        if (!PROGRAM) return null;
         var name = exName(ex);
         if (!name) return null;
+        var all = getAllProgramExercises(PROGRAM);
         var siblings = [];
-        for (var dNum in PROGRAM.dayTemplates) {
-            var tmpl = PROGRAM.dayTemplates[dNum];
-            var groups = tmpl.exerciseGroups || [];
-            for (var g = 0; g < groups.length; g++) {
-                var group = groups[g];
-                // Single exercise
-                if (group.exercise) {
-                    if ((group.exercise.nameRu === name || group.exercise.name === name) &&
-                        (group.exercise.id !== ex.id || parseInt(dNum) !== currentDayNum)) {
-                        siblings.push({ id: group.exercise.id, day: parseInt(dNum) });
-                    }
-                }
-                // Choose one options
-                if (group.options) {
-                    for (var o = 0; o < group.options.length; o++) {
-                        var opt = group.options[o];
-                        if ((opt.nameRu === name || opt.name === name) &&
-                            (opt.id !== ex.id || parseInt(dNum) !== currentDayNum)) {
-                            siblings.push({ id: opt.id, day: parseInt(dNum) });
-                        }
-                    }
-                }
-                // Superset exercises
-                if (group.exercises) {
-                    for (var s = 0; s < group.exercises.length; s++) {
-                        var ssItem = group.exercises[s];
-                        var ssEx = ssItem.exercise || ssItem;
-                        if ((ssEx.nameRu === name || ssEx.name === name) &&
-                            (ssEx.id !== ex.id || parseInt(dNum) !== currentDayNum)) {
-                            siblings.push({ id: ssEx.id, day: parseInt(dNum) });
-                        }
-                    }
-                }
+        for (var i = 0; i < all.length; i++) {
+            var e = all[i].exercise;
+            if ((e.nameRu === name || e.name === name) &&
+                (e.id !== ex.id || all[i].day !== currentDayNum)) {
+                siblings.push({ id: e.id, day: all[i].day });
             }
         }
         return siblings.length > 0 ? siblings : null;
@@ -1150,30 +1123,8 @@ const UI = {
 
     // ===== EQUIPMENT MODAL =====
     _getExerciseInfo(exerciseId) {
-        // Find exercise in program via dayTemplates
-        var ex = null;
         var program = typeof PROGRAM !== 'undefined' ? PROGRAM : null;
-        if (program && program.dayTemplates) {
-            for (var dNum in program.dayTemplates) {
-                if (ex) break;
-                var groups = program.dayTemplates[dNum].exerciseGroups || [];
-                for (var g = 0; g < groups.length && !ex; g++) {
-                    var gr = groups[g];
-                    if (gr.exercise && gr.exercise.id === exerciseId) { ex = gr.exercise; break; }
-                    if (gr.options) {
-                        for (var o = 0; o < gr.options.length; o++) {
-                            if (gr.options[o].id === exerciseId) { ex = gr.options[o]; break; }
-                        }
-                    }
-                    if (gr.exercises) {
-                        for (var s = 0; s < gr.exercises.length; s++) {
-                            var se = gr.exercises[s].exercise || gr.exercises[s];
-                            if (se.id === exerciseId) { ex = se; break; }
-                        }
-                    }
-                }
-            }
-        }
+        var ex = findExerciseInProgram(program, exerciseId);
         if (!ex) return { name: '', nameRu: '', category: 'all' };
         // Look up category in EXERCISE_DB — always use DB's English name
         var coreName = (ex.name || ex.nameRu || '').replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();

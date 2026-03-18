@@ -218,6 +218,53 @@ function findExerciseInTemplate(template, exerciseId) {
 }
 
 /**
+ * Find an exercise by ID across ALL days in a program.
+ * Builds on findExerciseInTemplate() → getGroupExercises().
+ */
+function findExerciseInProgram(program, exerciseId) {
+    if (!program || !program.dayTemplates) return null;
+    for (var dNum in program.dayTemplates) {
+        var ex = findExerciseInTemplate(program.dayTemplates[dNum], exerciseId);
+        if (ex) return ex;
+    }
+    return null;
+}
+
+/**
+ * Collect ALL exercises from a program with their day numbers.
+ * Returns [{ exercise, day }]. Handles all group types via getGroupExercises().
+ */
+function getAllProgramExercises(program) {
+    var result = [];
+    if (!program) return result;
+    var templates = program.dayTemplates;
+    if (templates) {
+        for (var dNum in templates) {
+            var groups = templates[dNum].exerciseGroups || [];
+            for (var g = 0; g < groups.length; g++) {
+                var exercises = getGroupExercises(groups[g]);
+                for (var i = 0; i < exercises.length; i++) {
+                    result.push({ exercise: exercises[i], day: parseInt(dNum) });
+                }
+            }
+        }
+    }
+    // Legacy format support
+    if (program.days) {
+        for (var d = 0; d < program.days.length; d++) {
+            var dayGroups = program.days[d].groups || [];
+            for (var g2 = 0; g2 < dayGroups.length; g2++) {
+                var exs = getGroupExercises(dayGroups[g2]);
+                for (var i2 = 0; i2 < exs.length; i2++) {
+                    result.push({ exercise: exs[i2], day: d + 1 });
+                }
+            }
+        }
+    }
+    return result;
+}
+
+/**
  * Resolve a workout for a given week/day by merging the day template
  * with any weekly overrides.
  * data.js structure: weeklyOverrides[weekNum][dayNum][exerciseId].sets[setIdx]

@@ -20,19 +20,13 @@ const Storage = {
 
     _buildSiblingCache() {
         this._siblingCache = {};
-        if (!PROGRAM || !PROGRAM.dayTemplates) return;
+        if (!PROGRAM) return;
         var nameToIds = {};
-        for (var dNum in PROGRAM.dayTemplates) {
-            var groups = PROGRAM.dayTemplates[dNum].exerciseGroups || [];
-            for (var g = 0; g < groups.length; g++) {
-                var gr = groups[g];
-                if (gr.exercise) {
-                    var n = gr.exercise.nameRu || gr.exercise.name;
-                    if (n) { if (!nameToIds[n]) nameToIds[n] = []; nameToIds[n].push(gr.exercise.id); }
-                }
-                if (gr.options) { for (var o = 0; o < gr.options.length; o++) { var opt = gr.options[o]; var n = opt.nameRu || opt.name; if (n) { if (!nameToIds[n]) nameToIds[n] = []; nameToIds[n].push(opt.id); } } }
-                if (gr.exercises) { for (var s = 0; s < gr.exercises.length; s++) { var se = gr.exercises[s].exercise || gr.exercises[s]; var n = se.nameRu || se.name; if (n) { if (!nameToIds[n]) nameToIds[n] = []; nameToIds[n].push(se.id); } } }
-            }
+        var all = getAllProgramExercises(PROGRAM);
+        for (var i = 0; i < all.length; i++) {
+            var ex = all[i].exercise;
+            var n = ex.nameRu || ex.name;
+            if (n) { if (!nameToIds[n]) nameToIds[n] = []; nameToIds[n].push(ex.id); }
         }
         var cache = this._siblingCache;
         for (var name in nameToIds) {
@@ -306,40 +300,7 @@ const Storage = {
         if (!d || !d.program) return;
         var count = 0;
 
-        // Collect all exercises from program (support both old .days[] and new .dayTemplates{})
-        function collectExercises(program) {
-            var all = [];
-            function addFromGroups(groups) {
-                if (!groups) return;
-                groups.forEach(function(g) {
-                    if (g.type === 'single' && g.exercise) all.push(g.exercise);
-                    if ((g.type === 'superset') && g.exercises) {
-                        g.exercises.forEach(function(e) {
-                            if (e._chooseOne && e.options) all = all.concat(e.options);
-                            else all.push(e);
-                        });
-                    }
-                    if (g.type === 'choose_one' && g.options) all = all.concat(g.options);
-                    if (g.type === 'warmup' && g.exercise) all.push(g.exercise);
-                });
-            }
-            // New format: dayTemplates { "1": { exerciseGroups: [...] } }
-            if (program.dayTemplates) {
-                Object.keys(program.dayTemplates).forEach(function(k) {
-                    var tmpl = program.dayTemplates[k];
-                    addFromGroups(tmpl.exerciseGroups);
-                });
-            }
-            // Old format: days [ { groups: [...] } ]
-            if (program.days) {
-                program.days.forEach(function(day) {
-                    addFromGroups(day.groups);
-                });
-            }
-            return all;
-        }
-
-        var allExercises = collectExercises(d.program);
+        var allExercises = getAllProgramExercises(d.program).map(function(entry) { return entry.exercise; });
 
         // Also build reverse map: Russian name → English name from EXERCISE_DB
         var DB_RU = {};
