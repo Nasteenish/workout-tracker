@@ -21,15 +21,15 @@
 
 ## 🟡 Оставшиеся серьёзные проблемы
 
-### 2. `App.handleClick()` — всё ещё 1530 строк
+### 2. `App.handleClick()` — частично решено
 
-**Где:** `js/app.js`, строки ~875–2406
+**Где:** `js/app.js`, строки ~875–1940
 
-**Что изменилось:** app.js уменьшился с 4034 до 2515 строк. Вынесены модули. Но `handleClick` по-прежнему содержит ВСЕ click-обработчики в одной if/else цепочке.
+**Что изменилось:** app.js уменьшился с 2515 до 2048 строк. 40+ social handlers (489 строк) вынесены в `SocialUI.handleClick()`. `_replyToCommentId` перемещён из App в SocialUI.
 
-**Что осталось внутри:** login, registration, onboarding, social (follow, like, comment, discover, messages), workout (complete set, add/remove set, choice, substitution), settings, navigation.
+**Что осталось внутри:** login, registration, onboarding, workout (complete set, add/remove set, choice, substitution), settings, navigation.
 
-**Решение:** Разбить на подметоды: `_handleSocialClick()`, `_handleWorkoutClick()`, `_handleSettingsClick()`. Или делегировать в модули: `SocialUI.handleClick()`, `Builder.handleClick()`.
+**Следующий шаг:** Вынести builder handlers → `Builder.handleClick()`, потом workout handlers.
 
 ---
 
@@ -98,7 +98,7 @@
 | # | Проблема | Сложность | Приоритет |
 |---|----------|-----------|-----------|
 | 1 | ~~11 циклических импортов~~ | — | ✅ Решено |
-| 2 | handleClick 1530 строк | Средняя | 🟡 P1 |
+| 2 | handleClick ~~1530~~ ~1040 строк (social вынесен) | Средняя | 🟡 P1 |
 | 3 | UI = data + render | Высокая | 🟡 P1 |
 | 4 | innerHTML re-render | Средняя | 🟡 P1 |
 | 5 | Дублирование closest-паттерна | Низкая | 🟡 P1 |
@@ -113,9 +113,13 @@
 
 **~~Шаг 1~~ ✅ — Циклические импорты (#1) — решено.**
 
-**Шаг 2 — Разбить handleClick (#2):**
+**Шаг 2 — Разбить handleClick (#2):** (в процессе)
 
-Поэтапно: сначала social handlers → `SocialUI.handleClick()` (самый изолированный блок). Потом builder, потом equipment.
+~~Шаг 2a~~ ✅ — Social handlers → `SocialUI.handleClick()` (40+ handlers, 489 строк). `_replyToCommentId` перемещён в SocialUI.
+
+Шаг 2b — Builder handlers → `Builder.handleClick()`.
+
+Шаг 2c — Workout handlers → отдельный модуль или подметод.
 
 **Шаг 3 — Отделить data от render (#3):**
 

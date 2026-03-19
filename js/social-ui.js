@@ -3,11 +3,12 @@ import { Social } from './social.js';
 import { Storage } from './storage.js';
 import { ProfileManager } from './profile-manager.js';
 import { esc } from './utils.js';
-import { SOCIAL, attr } from './data-attrs.js';
+import { SOCIAL, attr, read } from './data-attrs.js';
 
 export const SocialUI = {
     _feedCursor: null,
     _profileCheckinsCursor: null,
+    _replyToCommentId: null,
 
     // Dumbbell-heart SVG for like button
     _likeIconSVG: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5a3.5 3.5 0 0 1 5.5-2.9L12 10l4.5-3.4A3.5 3.5 0 0 1 22 9.5c0 2-1.5 3.8-3.2 5.3L12 21l-6.8-6.2C3.5 13.3 2 11.5 2 9.5z"/></svg>',
@@ -1329,5 +1330,494 @@ export const SocialUI = {
         html += '<div class="chat-bubble-time">' + time + '</div>';
         html += '</div>';
         return html;
+    },
+
+    // ===== Delegated social click handlers =====
+    handleClick(target) {
+        // Profile edit button
+        if (target.closest('#btn-profile-edit')) {
+            location.hash = '#/profile/edit';
+            return true;
+        }
+
+        // New checkin button
+        if (target.closest('#btn-new-checkin')) {
+            location.hash = '#/checkin';
+            return true;
+        }
+
+        // Profile grid item click → detail
+        var gridItem = target.closest('.profile-feed-item');
+        if (gridItem) {
+            var cid = read(gridItem, SOCIAL.CHECKIN);
+            if (cid) location.hash = '#/checkin/' + cid;
+            return true;
+        }
+
+        // Profile post-type tab filter
+        if (target.classList.contains('profile-tab')) {
+            var allTabs = document.querySelectorAll('.profile-tab');
+            allTabs.forEach(function(t) { t.classList.remove('active'); });
+            target.classList.add('active');
+            var tab = read(target, SOCIAL.TAB);
+            var allPosts = SocialUI._profileAllCheckins || [];
+            var filtered;
+            if (tab === 'workouts') filtered = allPosts.filter(function(c) { return !!c.workout_summary; });
+            else if (tab === 'checkins') filtered = allPosts.filter(function(c) { return !c.workout_summary; });
+            else filtered = allPosts;
+            var gridEl = document.getElementById('profile-posts-grid');
+            if (gridEl) {
+                var loadBtn = gridEl.querySelector('.btn-load-more');
+                gridEl.innerHTML = filtered.length ? SocialUI._renderProfileFeed(filtered) : '<div class="social-empty">Нет публикаций</div>';
+                if (loadBtn) gridEl.appendChild(loadBtn);
+            }
+            return true;
+        }
+
+        // Profile save
+        if (target.closest('#btn-profile-save')) {
+            ProfileManager.saveProfile();
+            return true;
+        }
+
+        // Profile back
+        if (target.closest('#btn-profile-back')) {
+            location.hash = '#/profile';
+            return true;
+        }
+
+        // Avatar file input
+        if (target.closest('#avatar-file-input')) {
+            // handled by change event below
+            return false;
+        }
+
+        // Athlete toggle
+        if (target.id === 'edit-is-athlete') {
+            var fields = document.getElementById('edit-athlete-fields');
+            if (fields) fields.style.display = target.checked ? '' : 'none';
+            return true;
+        }
+
+        // Follow/unfollow
+        if (target.closest('#btn-follow')) {
+            var btn = target.closest('#btn-follow');
+            var userId = read(btn, SOCIAL.USER);
+            if (!userId) return true;
+            btn.disabled = true;
+            if (btn.classList.contains('following')) {
+                Social.unfollow(userId).then(function() {
+                    btn.classList.remove('following');
+                    btn.textContent = 'Подписаться';
+                    btn.disabled = false;
+                }).catch(function(e) { btn.disabled = false; alert('Ошибка: ' + e.message); });
+            } else {
+                Social.follow(userId).then(function(ok) {
+                    if (ok) {
+                        btn.classList.add('following');
+                        btn.textContent = 'Отписаться';
+                    }
+                    btn.disabled = false;
+                }).catch(function(e) { btn.disabled = false; alert('Ошибка: ' + e.message); });
+            }
+            return true;
+        }
+
+        // Follow (small btn in discover)
+        if (target.classList.contains('btn-follow-sm')) {
+            var userId = read(target, SOCIAL.USER);
+            if (!userId) return true;
+            target.disabled = true;
+            Social.follow(userId).then(function(ok) {
+                if (ok) {
+                    target.textContent = 'Подписан';
+                    target.classList.add('followed');
+                } else {
+                    target.disabled = false;
+                }
+            }).catch(function(e) { target.disabled = false; alert('Ошибка: ' + e.message); });
+            return true;
+        }
+
+        // Discover navigation
+        if (target.closest('#btn-discover') || target.closest('#btn-discover-empty')) {
+            location.hash = '#/discover';
+            return true;
+        }
+
+        // Discover back
+        if (target.closest('#btn-discover-back')) {
+            location.hash = '#/feed';
+            return true;
+        }
+
+        // Follow list back
+        if (target.closest('#btn-followlist-back')) {
+            history.back();
+            return true;
+        }
+
+        // Discover search
+        if (target.closest('#btn-discover-search')) {
+            var query = (document.getElementById('discover-search-input').value || '').trim();
+            if (!query) return true;
+            var resultsEl = document.getElementById('discover-results');
+            if (resultsEl) resultsEl.innerHTML = '<div class="social-loading">Поиск...</div>';
+            Promise.all([Social.searchUsers(query), Social.getMyFollowingIds()]).then(function(r) {
+                if (resultsEl) resultsEl.innerHTML = SocialUI._renderUserList(r[0], Social._getSupaUserId(), r[1]);
+            });
+            return true;
+        }
+
+        // Discover user click → profile
+        var discoverUser = target.closest('.discover-user');
+        if (discoverUser && !target.classList.contains('btn-follow-sm')) {
+            var userId = discoverUser.querySelector('.btn-follow-sm');
+            if (userId) {
+                var uid = read(userId, SOCIAL.USER);
+                var username = discoverUser.querySelector('.discover-user-username');
+                if (username) {
+                    location.hash = '#/u/' + username.textContent.replace('@', '');
+                }
+            }
+            return true;
+        }
+
+        // Notifications button
+        if (target.closest('#btn-notifications')) {
+            location.hash = '#/notifications';
+            return true;
+        }
+
+        // Messages button (feed header)
+        if (target.closest('#btn-messages')) {
+            location.hash = '#/messages';
+            return true;
+        }
+
+        // Messages back
+        if (target.closest('#btn-messages-back')) {
+            history.back();
+            return true;
+        }
+
+        // Chat back
+        if (target.closest('#btn-chat-back')) {
+            Social.unsubscribeMessages();
+            if (SocialUI._chatViewportCleanup) { SocialUI._chatViewportCleanup(); SocialUI._chatViewportCleanup = null; }
+            history.back();
+            return true;
+        }
+
+        // Conversation item click
+        var convItem = target.closest('.conversation-item');
+        if (convItem) {
+            var userId = read(convItem, SOCIAL.USER);
+            if (userId) location.hash = '#/messages/' + userId;
+            return true;
+        }
+
+        // Send message
+        if (target.closest('#btn-send-message')) {
+            var inp = document.getElementById('chat-input');
+            var text = inp ? inp.value.trim() : '';
+            if (!text || !SocialUI._chatConvId) return true;
+            inp.value = '';
+            // Optimistic render
+            var chatEl = document.getElementById('chat-messages');
+            if (chatEl) {
+                var time = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                chatEl.insertAdjacentHTML('beforeend', '<div class="chat-bubble mine">' + text + '<div class="chat-bubble-time">' + time + '</div></div>');
+                chatEl.scrollTop = chatEl.scrollHeight;
+            }
+            Social.sendMessage(SocialUI._chatConvId, text).catch(function() {});
+            return true;
+        }
+
+        // DM button on other user's profile
+        if (target.closest('#btn-dm')) {
+            var btn = target.closest('#btn-dm');
+            var userId = read(btn, SOCIAL.USER);
+            if (userId) location.hash = '#/messages/' + userId;
+            return true;
+        }
+
+        // Notification back
+        if (target.closest('#btn-notif-back')) {
+            history.back();
+            return true;
+        }
+
+        // Like button (feed cards and detail)
+        var likeBtn = target.closest('.like-btn');
+        if (likeBtn) {
+            var checkinId = read(likeBtn, SOCIAL.CHECKIN);
+            if (!checkinId) return true;
+            // Optimistic UI
+            var wasActive = likeBtn.classList.contains('active');
+            likeBtn.classList.toggle('active');
+            var countEl = likeBtn.querySelector('.like-count');
+            var currentCount = parseInt(countEl.textContent) || 0;
+            countEl.textContent = wasActive ? (currentCount > 1 ? currentCount - 1 : '') : (currentCount + 1);
+            // API call
+            Social.toggleLike(checkinId).catch(function() {
+                // Rollback on error
+                likeBtn.classList.toggle('active');
+                countEl.textContent = currentCount > 0 ? currentCount : '';
+            });
+            return true;
+        }
+
+        // Comment icon button → scroll to or navigate to comments
+        var commentBtnIcon = target.closest('.comment-btn-icon');
+        if (commentBtnIcon) {
+            var checkinId = read(commentBtnIcon, SOCIAL.CHECKIN);
+            var commentInput = document.getElementById('comment-input');
+            if (commentInput) {
+                commentInput.focus();
+            } else if (checkinId) {
+                location.hash = '#/checkin/' + checkinId;
+            }
+            return true;
+        }
+
+        // Comment author profile link
+        var profileLink = target.closest('.comment-profile-link');
+        if (profileLink && !target.closest('.comment-reply-btn') && !target.closest('.comment-like-btn')) {
+            var username = read(profileLink, SOCIAL.USERNAME);
+            if (username) location.hash = '#/u/' + username;
+            return true;
+        }
+
+        // Reply to comment
+        var replyBtn = target.closest('.comment-reply-btn');
+        if (replyBtn) {
+            var username = read(replyBtn, SOCIAL.USERNAME);
+            var commentId = read(replyBtn, SOCIAL.COMMENT_ID);
+            var input = document.getElementById('comment-input');
+            if (input && username) {
+                SocialUI._replyToCommentId = commentId || null;
+                input.value = '@' + username + ' ';
+                input.focus();
+                // Show reply indicator
+                var indicator = document.getElementById('reply-indicator');
+                var nameEl = document.getElementById('reply-indicator-name');
+                if (indicator && nameEl) {
+                    nameEl.textContent = username;
+                    indicator.style.display = 'flex';
+                }
+            }
+            return true;
+        }
+
+        // Cancel reply
+        if (target.closest('#btn-reply-cancel')) {
+            SocialUI._replyToCommentId = null;
+            var indicator = document.getElementById('reply-indicator');
+            if (indicator) indicator.style.display = 'none';
+            var input = document.getElementById('comment-input');
+            if (input) { input.value = ''; input.focus(); }
+            return true;
+        }
+
+        // Comment like
+        var commentLikeBtn = target.closest('.comment-like-btn');
+        if (commentLikeBtn) {
+            var commentId = read(commentLikeBtn, SOCIAL.COMMENT);
+            if (!commentId) return true;
+            var wasActive = commentLikeBtn.classList.contains('active');
+            commentLikeBtn.classList.toggle('active');
+            var countEl = commentLikeBtn.querySelector('.comment-like-count');
+            var cur = parseInt(countEl.textContent) || 0;
+            countEl.textContent = wasActive ? (cur > 1 ? cur - 1 : '') : (cur + 1);
+            Social.toggleCommentLike(commentId).catch(function() {
+                commentLikeBtn.classList.toggle('active');
+                countEl.textContent = cur > 0 ? cur : '';
+            });
+            return true;
+        }
+
+        // Tag user button in checkin form
+        if (target.closest('#btn-tag-user')) {
+            if (!ProfileManager.checkinTaggedUsers) ProfileManager.checkinTaggedUsers = [];
+            SocialUI.renderTagSearch(function(user) {
+                // Check if already tagged
+                var already = ProfileManager.checkinTaggedUsers.some(function(u) { return u.user_id === user.user_id; });
+                if (already) return;
+                ProfileManager.checkinTaggedUsers.push(user);
+                var container = document.getElementById('checkin-tagged-users');
+                if (container) {
+                    var tag = document.createElement('span');
+                    tag.className = 'tagged-user-chip';
+                    tag.setAttribute(SOCIAL.UID, user.user_id);
+                    tag.innerHTML = '@' + esc(user.username) + ' <button class="tagged-user-remove">&times;</button>';
+                    container.appendChild(tag);
+                }
+            });
+            return true;
+        }
+
+        // Remove tagged user chip
+        var removeTag = target.closest('.tagged-user-remove');
+        if (removeTag) {
+            var chip = removeTag.closest('.tagged-user-chip');
+            if (chip && ProfileManager.checkinTaggedUsers) {
+                ProfileManager.checkinTaggedUsers = ProfileManager.checkinTaggedUsers.filter(function(u) { return u.user_id !== read(chip, SOCIAL.UID); });
+                chip.remove();
+            }
+            return true;
+        }
+
+        // Checkin card click → detail (with double-tap detection)
+        var checkinCard = target.closest('.checkin-card');
+        if (checkinCard && !checkinCard.classList.contains('checkin-full') && !target.closest('.like-btn') && !target.closest('.comment-btn-icon')) {
+            var checkinId = read(checkinCard, SOCIAL.CHECKIN);
+            if (!checkinId) return true;
+
+            // Double-tap detection
+            var now = Date.now();
+            var lastTap = checkinCard._lastTap || 0;
+            checkinCard._lastTap = now;
+
+            if (now - lastTap < 300) {
+                // Double tap → like + animation
+                clearTimeout(checkinCard._tapTimer);
+                var likeBtnInCard = checkinCard.querySelector('.like-btn');
+                if (likeBtnInCard && !likeBtnInCard.classList.contains('active')) {
+                    likeBtnInCard.click();
+                }
+                // Show heart animation
+                var anim = document.createElement('div');
+                anim.className = 'double-tap-heart';
+                anim.innerHTML = SocialUI._likeIconSVG;
+                checkinCard.style.position = 'relative';
+                checkinCard.appendChild(anim);
+                setTimeout(function() { anim.remove(); }, 900);
+                return true;
+            }
+
+            // Single tap → navigate after delay
+            checkinCard._tapTimer = setTimeout(function() {
+                location.hash = '#/checkin/' + checkinId;
+            }, 300);
+            return true;
+        }
+
+        // Checkin back
+        if (target.closest('#btn-checkin-back')) {
+            location.hash = '#/profile';
+            return true;
+        }
+
+        // Checkin detail back
+        if (target.closest('#btn-checkin-detail-back')) {
+            history.back();
+            return true;
+        }
+
+        // Delete checkin
+        if (target.closest('#btn-delete-checkin')) {
+            var delBtn = target.closest('#btn-delete-checkin');
+            var cid = read(delBtn, SOCIAL.CHECKIN);
+            if (cid && confirm('Удалить этот чекин?')) {
+                Social.deleteCheckin(cid).then(function() {
+                    location.hash = '#/profile';
+                }).catch(function(err) {
+                    alert('Ошибка: ' + err.message);
+                });
+            }
+            return true;
+        }
+
+        // Checkin submit
+        if (target.closest('#btn-checkin-submit')) {
+            ProfileManager.submitCheckin();
+            return true;
+        }
+
+        // Checkin photo input trigger
+        if (target.closest('.checkin-add-photo')) {
+            // Let label handle file input click
+            return false;
+        }
+
+        // Send comment
+        if (target.closest('#btn-send-comment')) {
+            var btn = target.closest('#btn-send-comment');
+            var checkinId = read(btn, SOCIAL.CHECKIN);
+            var input = document.getElementById('comment-input');
+            var text = input ? input.value.trim() : '';
+            if (!text || !checkinId) return true;
+            btn.disabled = true;
+            var parentId = SocialUI._replyToCommentId || null;
+            SocialUI._replyToCommentId = null;
+            Social.addComment(checkinId, text, parentId).then(function() {
+                SocialUI.renderCheckinDetail(checkinId);
+            }).catch(function() { btn.disabled = false; });
+            return true;
+        }
+
+        // Delete comment
+        var deleteCommentBtn = target.closest('.comment-delete');
+        if (deleteCommentBtn) {
+            var commentId = read(deleteCommentBtn, SOCIAL.COMMENT);
+            if (commentId && confirm('Удалить комментарий?')) {
+                Social.deleteComment(commentId).then(function() {
+                    // Find parent checkin and refresh
+                    var sendBtn = document.getElementById('btn-send-comment');
+                    if (sendBtn) SocialUI.renderCheckinDetail(read(sendBtn, SOCIAL.CHECKIN));
+                });
+            }
+            return true;
+        }
+
+        // Load more (feed)
+        if (target.closest('#btn-load-more-feed')) {
+            target.disabled = true;
+            target.textContent = 'Загрузка...';
+            Social.getFeed(SocialUI._feedCursor).then(function(more) {
+                SocialUI._feedCursor = more.length >= 20 ? more[more.length - 1].created_at : null;
+                var ids = more.map(function(c) { return c.id; });
+                return Promise.all([Promise.resolve(more), Social.getLikesForCheckins(ids), Social.getTagsForCheckins(ids)]);
+            }).then(function(results) {
+                var more = results[0], likes = results[1], tags = results[2];
+                var btn = document.getElementById('btn-load-more-feed');
+                if (btn) {
+                    btn.insertAdjacentHTML('beforebegin', SocialUI._renderCheckinCards(more, likes, tags));
+                    if (!SocialUI._feedCursor) btn.remove();
+                    else { btn.disabled = false; btn.textContent = 'Загрузить ещё'; }
+                }
+            });
+            return true;
+        }
+
+        // Load more (profile)
+        if (target.closest('#btn-load-more-profile')) {
+            var btn = target.closest('#btn-load-more-profile');
+            var userId = read(btn, SOCIAL.USER);
+            btn.disabled = true;
+            btn.textContent = 'Загрузка...';
+            Social.getUserCheckins(userId, SocialUI._profileCheckinsCursor).then(function(more) {
+                SocialUI._profileCheckinsCursor = more.length >= 20 ? more[more.length - 1].created_at : null;
+                SocialUI._profileAllCheckins = (SocialUI._profileAllCheckins || []).concat(more);
+                var gridEl = document.querySelector('.profile-grid');
+                if (gridEl) {
+                    gridEl.insertAdjacentHTML('beforeend', SocialUI._renderProfileFeed(more, true));
+                }
+                if (!SocialUI._profileCheckinsCursor) btn.remove();
+                else { btn.disabled = false; btn.textContent = 'Загрузить ещё'; }
+            });
+            return true;
+        }
+
+        // Checkin author click → profile
+        var checkinAuthor = target.closest('.checkin-author[' + SOCIAL.USERNAME + ']');
+        if (checkinAuthor) {
+            var username = read(checkinAuthor, SOCIAL.USERNAME);
+            if (username) location.hash = '#/u/' + username;
+            return true;
+        }
+
+        return false;
     }
 };
