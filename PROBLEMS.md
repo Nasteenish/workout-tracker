@@ -31,20 +31,30 @@
 
 ---
 
-### 3. UI = data logic + rendering в одном — ✅ частично решено
+### 3. UI = data logic + rendering в одном — ✅ решено
 
-**Где:** `js/ui.js`
+**Где:** `js/ui.js`, `js/social-ui.js`
 
-**Что изменилось:** Все основные render-методы теперь следуют паттерну `_buildXxxVM()` → `_renderXxx(vm)`:
+**Что изменилось:** Все render-методы в обоих файлах следуют паттерну `_buildXxxVM()` → `_renderXxx(vm)`:
 
-- `_buildDayVM()` → `renderDay()` (было с начала рефакторинга)
-- `_buildSetRowVM()` → `_renderSetRow()` (было с начала рефакторинга)
-- `_buildWeekVM()` → `_weekCardsHTML()` (было с начала рефакторинга)
-- **NEW:** `_buildExerciseVM()` → `_renderExercise()` — вынесены Storage.getSettings(), getExerciseEquipment(), getEquipmentById(), getSubstitution()
-- **NEW:** `_buildChooseOneVM()` → `_renderChooseOne()` — вынесен Storage.getChoice()
-- **NEW:** `_buildHistoryVM()` → `renderHistory()` — вынесены все Storage-вызовы, фильтрация по оборудованию, chart data
+**ui.js** (было ранее):
+- `_buildDayVM()` → `renderDay()`
+- `_buildSetRowVM()` → `_renderSetRow()`
+- `_buildWeekVM()` → `_weekCardsHTML()`
+- `_buildExerciseVM()` → `_renderExercise()`
+- `_buildChooseOneVM()` → `_renderChooseOne()`
+- `_buildHistoryVM()` → `renderHistory()`
 
-**Что осталось:** `social-ui.js` — аналогичное разделение для social рендеров (feed, profile, checkin). Менее критично — social экраны проще.
+**social-ui.js** (NEW):
+- `_buildProfileVM()` → `_renderProfile()` — вынесены _loadProfileData(), isOwn/targetId логика
+- `_buildProfileEditVM()` → `_renderProfileEdit()` — вынесены Social.getMyProfile(), category/phase filtering
+- `_buildFeedVM()` → `_renderFeed()` — вынесены _loadFeedData(), cursor, followingIds
+- `_buildCheckinDetailVM()` → `_renderCheckinDetail()` — вынесены _loadCheckinData(), threading комментариев. `renderComment` → `_renderCheckinComment()`
+- `_buildDiscoverVM()` → `_renderDiscover()` — вынесены getRecentUsers(), getMyFollowingIds()
+- `_buildFollowListVM()` → `_renderFollowList()` — вынесены getFollowers/getFollowing()
+- `_buildNotificationsVM()` → `_renderNotifications()` — вынесены getNotifications(), type→text mapping
+- `_buildMessagesVM()` → `_renderMessages()` — вынесены getConversations(), getUnreadMessageCount()
+- `_buildConversationVM()` → `_renderConversation()` — вынесены resolve convId, load messages/profile
 
 ---
 
@@ -102,7 +112,7 @@
 |---|----------|-----------|-----------|
 | 1 | ~~11 циклических импортов~~ | — | ✅ Решено |
 | 2 | ~~handleClick 1530 строк~~ → ~200 строк (social + builder + workout вынесены) | — | ✅ Решено |
-| 3 | ~~UI = data + render~~ → VM-паттерн в ui.js (social-ui.js осталось) | — | ✅ Частично |
+| 3 | ~~UI = data + render~~ → VM-паттерн в ui.js + social-ui.js (15 VM builders) | — | ✅ Решено |
 | 4 | innerHTML re-render | Средняя | 🟡 P1 |
 | 5 | ~~Дублирование closest-паттерна~~ | — | ✅ Решено |
 | 6 | Хрупкая _migrateExerciseNames | Средняя | 🟢 P2 |
@@ -124,6 +134,8 @@
 
 ~~Шаг 2c~~ ✅ — Workout + modal handlers → `WorkoutUI.handleClick()` / `WorkoutUI.handleModalClick()` в `js/workout-ui.js` (~570 строк). handleInput/handleFocus также делегированы.
 
-~~Шаг 3~~ ✅ — Отделить data от render (#3) в `ui.js`:
+~~Шаг 3~~ ✅ — Отделить data от render (#3) в `ui.js` + `social-ui.js`:
 
-Все ключевые render-методы используют VM-паттерн: `_buildExerciseVM()`, `_buildChooseOneVM()`, `_buildHistoryVM()`. Ранее уже были `_buildDayVM()`, `_buildSetRowVM()`, `_buildWeekVM()`. Social-ui.js — на будущее.
+**ui.js:** 6 VM builders — `_buildDayVM()`, `_buildSetRowVM()`, `_buildWeekVM()`, `_buildExerciseVM()`, `_buildChooseOneVM()`, `_buildHistoryVM()`.
+
+**social-ui.js:** 9 VM builders — `_buildProfileVM()`, `_buildProfileEditVM()`, `_buildFeedVM()`, `_buildCheckinDetailVM()`, `_buildDiscoverVM()`, `_buildFollowListVM()`, `_buildNotificationsVM()`, `_buildMessagesVM()`, `_buildConversationVM()`. Inline `renderComment` вынесен в `_renderCheckinComment()`.
