@@ -7,10 +7,10 @@ export const Social = {
 
     // ===== HELPERS =====
 
-    _logError(method, error) {
+    _logError(method, error, showToast) {
         var msg = (error && error.message) ? error.message : String(error);
         console.warn('[Social.' + method + ']', msg);
-        showErrorToast('Ошибка загрузки');
+        if (showToast) showErrorToast('Ошибка загрузки');
     },
 
     _getSupaUserId() {
