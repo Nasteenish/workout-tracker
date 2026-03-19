@@ -51,13 +51,11 @@
 
 ---
 
-### 5. Дублирование `target.id || target.closest()` (~100 раз)
+### 5. Дублирование `target.closest()` — ✅ решено
 
-**Где:** `js/app.js` handleClick
+**Где:** `js/workout-ui.js`, `js/builder.js`, `js/social-ui.js`, `js/app.js`
 
-**Проблема:** Каждый handler: `if (target.id === 'btn-X' || target.closest('#btn-X'))`. 100+ повторений.
-
-**Решение:** Утилита `function closest(e, sel)` + один паттерн.
+**Что изменилось:** Убраны все двойные вызовы `.closest()` (сначала в `if`, потом присваивание внутри). ~25 мест рефакторены на паттерн `const el = target.closest(sel); if (el) {...}` с block scoping.
 
 ---
 
@@ -99,7 +97,7 @@
 | 2 | ~~handleClick 1530 строк~~ → ~200 строк (social + builder + workout вынесены) | — | ✅ Решено |
 | 3 | UI = data + render | Высокая | 🟡 P1 |
 | 4 | innerHTML re-render | Средняя | 🟡 P1 |
-| 5 | Дублирование closest-паттерна | Низкая | 🟡 P1 |
+| 5 | ~~Дублирование closest-паттерна~~ | — | ✅ Решено |
 | 6 | Хрупкая _migrateExerciseNames | Средняя | 🟢 P2 |
 | 7 | Хардкод аккаунтов | Низкая | 🟢 P2 |
 | 8 | Нет JSDoc типизации | Средняя | 🟢 P3 |

@@ -1067,8 +1067,8 @@ export const App = {
         }
 
         // Edit equipment name (inline)
-        if (target.closest('.eq-edit-btn')) {
-            const btn = target.closest('.eq-edit-btn');
+        {const btn = target.closest('.eq-edit-btn');
+        if (btn) {
             const eqId = read(btn, EQ.ID);
             if (!eqId) return true;
             var item = btn.closest('.settings-eq-item');
@@ -1089,11 +1089,11 @@ export const App = {
             inp.addEventListener('blur', function() { setTimeout(save, 100); });
             inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); save(); } });
             return true;
-        }
+        }}
 
         // Remove equipment
-        if (target.closest('.eq-remove-btn')) {
-            const btn = target.closest('.eq-remove-btn');
+        {const btn = target.closest('.eq-remove-btn');
+        if (btn) {
             if (btn.disabled) return true;
             const eqId = read(btn, EQ.ID);
             if (eqId) {
@@ -1101,19 +1101,19 @@ export const App = {
                 UI.renderSettings();
             }
             return true;
-        }
+        }}
 
         // Remove gym
-        if (target.closest('.gym-remove-btn')) {
-            var btn = target.closest('.gym-remove-btn');
-            if (btn.disabled) return true;
-            var gymId = read(btn, EQ.GYM_ID);
+        {var gymBtn = target.closest('.gym-remove-btn');
+        if (gymBtn) {
+            if (gymBtn.disabled) return true;
+            var gymId = read(gymBtn, EQ.GYM_ID);
             if (gymId && confirm('Убрать зал из списка?')) {
                 Storage.removeGym(gymId);
                 UI.renderSettings();
             }
             return true;
-        }
+        }}
 
         // Reset data
         if (target.id === 'btn-reset') {

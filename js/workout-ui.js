@@ -72,32 +72,32 @@ export const WorkoutUI = {
         }
 
         // Add set button
-        if (target.closest('.add-set-btn')) {
-            const btn = target.closest('.add-set-btn');
+        {const btn = target.closest('.add-set-btn');
+        if (btn) {
             const exId = read(btn, WORKOUT.EXERCISE);
             this._addSet(exId, week, day);
             return true;
-        }
+        }}
 
         // Remove set button
-        if (target.closest('.remove-set-btn')) {
-            const btn = target.closest('.remove-set-btn');
+        {const btn = target.closest('.remove-set-btn');
+        if (btn) {
             const exId = read(btn, WORKOUT.EXERCISE);
             this._removeSet(exId, week, day);
             return true;
-        }
+        }}
 
         // Equipment button
-        if (target.closest('.equipment-btn')) {
-            const btn = target.closest('.equipment-btn');
+        {const btn = target.closest('.equipment-btn');
+        if (btn) {
             const exId = read(btn, WORKOUT.EXERCISE);
             UI.showEquipmentModal(exId, read(btn, WORKOUT.EX_NAME) || '', read(btn, WORKOUT.EX_NAME_RU) || '');
             return true;
-        }
+        }}
 
         // Complete button
-        if (target.closest('.complete-btn')) {
-            const btn = target.closest('.complete-btn');
+        {const btn = target.closest('.complete-btn');
+        if (btn) {
             const exId = read(btn, WORKOUT.EXERCISE);
             const setIdx = readInt(btn, WORKOUT.SET);
             const eqId = Storage.getExerciseEquipment(exId);
@@ -154,14 +154,14 @@ export const WorkoutUI = {
             // Invalidate week cache (progress changed)
             if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week);
             return true;
-        }
+        }}
 
         // Choose one: tap exercise name to open selector
-        if (target.closest('.exercise-name-chooser')) {
-            const el = target.closest('.exercise-name-chooser');
+        {const el = target.closest('.exercise-name-chooser');
+        if (el) {
             UI.showChoiceModal(read(el, WORKOUT.CHOICE_KEY));
             return true;
-        }
+        }}
 
         // Choice modal: close on overlay
         if (target.id === 'choice-modal') {
@@ -170,12 +170,12 @@ export const WorkoutUI = {
         }
 
         // History button
-        if (target.closest('.history-btn')) {
-            const btn = target.closest('.history-btn');
+        {const btn = target.closest('.history-btn');
+        if (btn) {
             const exId = read(btn, WORKOUT.EXERCISE);
             location.hash = `#/history/${encodeURIComponent(exId)}`;
             return true;
-        }
+        }}
 
         // Export
         if (target.id === 'btn-export') {
@@ -219,8 +219,8 @@ export const WorkoutUI = {
     // ===== Modal click handlers (substitution, gym, choice, equipment) =====
     handleModalClick(target, week, day) {
         // Substitution modal — select exercise from list (must be before eq-option handler)
-        if (target.closest('.sub-option')) {
-            const opt = target.closest('.sub-option');
+        {const opt = target.closest('.sub-option');
+        if (opt) {
             const exId = read(opt, WORKOUT.TARGET_EXERCISE);
             const subName = read(opt, WORKOUT.SUB_NAME);
             Storage.setSubstitution(exId, subName);
@@ -228,7 +228,7 @@ export const WorkoutUI = {
             if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week + '/day/' + day);
             UI.renderDay(week, day);
             return true;
-        }
+        }}
 
         // Substitution modal — add custom name
         if (target.closest('#sub-add-custom-btn')) {
@@ -246,14 +246,14 @@ export const WorkoutUI = {
         }
 
         // Substitution modal — revert to original
-        if (target.closest('.sub-revert-btn')) {
-            const btn = target.closest('.sub-revert-btn');
+        {const btn = target.closest('.sub-revert-btn');
+        if (btn) {
             const exId = read(btn, WORKOUT.EXERCISE);
             Storage.removeSubstitution(exId);
             UI.hideSubstitutionModal();
             UI.renderDay(week, day);
             return true;
-        }
+        }}
 
         // Substitution modal — close button or overlay
         if (target.closest('#sub-close-btn') || target.id === 'substitution-modal') {
@@ -262,19 +262,19 @@ export const WorkoutUI = {
         }
 
         // Gym modal — select gym
-        if ((target.closest('.eq-option[' + EQ.GYM_ID + ']')) && target.closest('#gym-modal')) {
-            var opt = target.closest('.eq-option[' + EQ.GYM_ID + ']');
+        {var opt = target.closest('.eq-option[' + EQ.GYM_ID + ']');
+        if (opt && target.closest('#gym-modal')) {
             var gymId = read(opt, EQ.GYM_ID) || null;
             var modal = document.getElementById('gym-modal');
             var onSelect = modal ? modal._onSelect : null;
             UI.hideGymModal();
             if (onSelect) onSelect(gymId);
             return true;
-        }
+        }}
 
         // Gym modal — select shared gym from search results
-        if (target.closest('.gym-shared-item')) {
-            var item = target.closest('.gym-shared-item');
+        {var item = target.closest('.gym-shared-item');
+        if (item) {
             var sharedId = read(item, EQ.GYM_SHARED_ID);
             if (sharedId) {
                 Storage.addMyGym(sharedId);
@@ -284,7 +284,7 @@ export const WorkoutUI = {
                 if (onSelect) onSelect(sharedId);
             }
             return true;
-        }
+        }}
 
         // Gym modal — add new gym
         if (target.closest('#gym-add-btn')) {
@@ -371,8 +371,8 @@ export const WorkoutUI = {
         }
 
         // Choice modal: select option (must be before eq-option handler)
-        if (target.closest('.eq-option[' + WORKOUT.CHOICE_KEY + ']')) {
-            const opt = target.closest('.eq-option[' + WORKOUT.CHOICE_KEY + ']');
+        {const opt = target.closest('.eq-option[' + WORKOUT.CHOICE_KEY + ']');
+        if (opt) {
             const choiceKey = read(opt, WORKOUT.CHOICE_KEY);
             const exerciseId = read(opt, WORKOUT.EXERCISE_ID);
             Storage.saveChoice(choiceKey, exerciseId);
@@ -380,7 +380,7 @@ export const WorkoutUI = {
             if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week + '/day/' + day);
             UI.renderDay(week, day);
             return true;
-        }
+        }}
 
         // Equipment modal — ignore clicks on inputs
         if (target.closest('#equipment-modal') && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
@@ -388,13 +388,13 @@ export const WorkoutUI = {
         }
 
         // Equipment modal — select option
-        if (target.closest('.eq-option')) {
-            const opt = target.closest('.eq-option');
+        {const opt = target.closest('.eq-option');
+        if (opt) {
             const eqId = read(opt, EQ.ID);
             const exId = read(opt, WORKOUT.EXERCISE);
             this._bindEquipment(exId, eqId || null, eqId ? Storage.getEquipmentById(eqId) : null, week, day);
             return true;
-        }
+        }}
 
         // Equipment modal — add new custom
         if (target.closest('#eq-add-btn')) {
@@ -415,8 +415,8 @@ export const WorkoutUI = {
         }
 
         // Equipment modal — click search result (catalog or shared)
-        if (target.closest('.eq-search-item')) {
-            var item = target.closest('.eq-search-item');
+        {var item = target.closest('.eq-search-item');
+        if (item) {
             var eqName = read(item, EQ.NAME);
             var catalogId = read(item, EQ.CATALOG_ID) ? readInt(item, EQ.CATALOG_ID) : null;
             if (!eqName) return true;
@@ -435,11 +435,11 @@ export const WorkoutUI = {
                 UI.renderDay(week, day);
             }
             return true;
-        }
+        }}
 
         // Equipment modal — click gym equipment item
-        if (target.closest('.eq-gym-item')) {
-            var item = target.closest('.eq-gym-item');
+        {var item = target.closest('.eq-gym-item');
+        if (item) {
             var eqName = read(item, EQ.NAME);
             if (!eqName) return true;
             var modal = document.getElementById('equipment-modal');
@@ -452,16 +452,16 @@ export const WorkoutUI = {
                 UI.renderDay(week, day);
             }
             return true;
-        }
+        }}
 
         // Equipment modal — brand click → show brand equipment
-        if (target.closest('.eq-brand-item')) {
-            var brandItem = target.closest('.eq-brand-item');
+        {var brandItem = target.closest('.eq-brand-item');
+        if (brandItem) {
             var brand = read(brandItem, EQ.BRAND);
             var extype = read(brandItem, EQ.EXTYPE) || null;
             if (brand) EquipmentManager.loadBrandEquipment(brand, extype);
             return true;
-        }
+        }}
 
         // Equipment modal — back to brands
         if (target.closest('#eq-brand-back')) {
@@ -470,8 +470,8 @@ export const WorkoutUI = {
         }
 
         // Equipment modal — select from catalog
-        if (target.closest('.eq-catalog-item')) {
-            var catItem = target.closest('.eq-catalog-item');
+        {var catItem = target.closest('.eq-catalog-item');
+        if (catItem) {
             var eqName = read(catItem, EQ.NAME);
             var catalogId = read(catItem, EQ.CATALOG_ID) ? readInt(catItem, EQ.CATALOG_ID) : null;
             if (!eqName) return true;
@@ -487,7 +487,7 @@ export const WorkoutUI = {
                 UI.renderDay(week, day);
             }
             return true;
-        }
+        }}
 
         // Equipment modal — remove current equipment
         if (target.closest('#eq-remove-btn')) {

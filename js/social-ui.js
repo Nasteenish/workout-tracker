@@ -1400,8 +1400,8 @@ export const SocialUI = {
         }
 
         // Follow/unfollow
-        if (target.closest('#btn-follow')) {
-            var btn = target.closest('#btn-follow');
+        {var btn = target.closest('#btn-follow');
+        if (btn) {
             var userId = read(btn, SOCIAL.USER);
             if (!userId) return true;
             btn.disabled = true;
@@ -1421,7 +1421,7 @@ export const SocialUI = {
                 }).catch(function(e) { btn.disabled = false; alert('Ошибка: ' + e.message); });
             }
             return true;
-        }
+        }}
 
         // Follow (small btn in discover)
         if (target.classList.contains('btn-follow-sm')) {
@@ -1535,12 +1535,12 @@ export const SocialUI = {
         }
 
         // DM button on other user's profile
-        if (target.closest('#btn-dm')) {
-            var btn = target.closest('#btn-dm');
-            var userId = read(btn, SOCIAL.USER);
+        {var dmBtn = target.closest('#btn-dm');
+        if (dmBtn) {
+            var userId = read(dmBtn, SOCIAL.USER);
             if (userId) location.hash = '#/messages/' + userId;
             return true;
-        }
+        }}
 
         // Notification back
         if (target.closest('#btn-notif-back')) {
@@ -1716,8 +1716,8 @@ export const SocialUI = {
         }
 
         // Delete checkin
-        if (target.closest('#btn-delete-checkin')) {
-            var delBtn = target.closest('#btn-delete-checkin');
+        {var delBtn = target.closest('#btn-delete-checkin');
+        if (delBtn) {
             var cid = read(delBtn, SOCIAL.CHECKIN);
             if (cid && confirm('Удалить этот чекин?')) {
                 Social.deleteCheckin(cid).then(function() {
@@ -1727,7 +1727,7 @@ export const SocialUI = {
                 });
             }
             return true;
-        }
+        }}
 
         // Checkin submit
         if (target.closest('#btn-checkin-submit')) {
@@ -1742,20 +1742,20 @@ export const SocialUI = {
         }
 
         // Send comment
-        if (target.closest('#btn-send-comment')) {
-            var btn = target.closest('#btn-send-comment');
-            var checkinId = read(btn, SOCIAL.CHECKIN);
+        {var commentBtn = target.closest('#btn-send-comment');
+        if (commentBtn) {
+            var checkinId = read(commentBtn, SOCIAL.CHECKIN);
             var input = document.getElementById('comment-input');
             var text = input ? input.value.trim() : '';
             if (!text || !checkinId) return true;
-            btn.disabled = true;
+            commentBtn.disabled = true;
             var parentId = SocialUI._replyToCommentId || null;
             SocialUI._replyToCommentId = null;
             Social.addComment(checkinId, text, parentId).then(function() {
                 SocialUI.renderCheckinDetail(checkinId);
-            }).catch(function() { btn.disabled = false; });
+            }).catch(function() { commentBtn.disabled = false; });
             return true;
-        }
+        }}
 
         // Delete comment
         var deleteCommentBtn = target.closest('.comment-delete');
@@ -1792,11 +1792,11 @@ export const SocialUI = {
         }
 
         // Load more (profile)
-        if (target.closest('#btn-load-more-profile')) {
-            var btn = target.closest('#btn-load-more-profile');
-            var userId = read(btn, SOCIAL.USER);
-            btn.disabled = true;
-            btn.textContent = 'Загрузка...';
+        {var loadMoreBtn = target.closest('#btn-load-more-profile');
+        if (loadMoreBtn) {
+            var userId = read(loadMoreBtn, SOCIAL.USER);
+            loadMoreBtn.disabled = true;
+            loadMoreBtn.textContent = 'Загрузка...';
             Social.getUserCheckins(userId, SocialUI._profileCheckinsCursor).then(function(more) {
                 SocialUI._profileCheckinsCursor = more.length >= 20 ? more[more.length - 1].created_at : null;
                 SocialUI._profileAllCheckins = (SocialUI._profileAllCheckins || []).concat(more);
@@ -1804,11 +1804,11 @@ export const SocialUI = {
                 if (gridEl) {
                     gridEl.insertAdjacentHTML('beforeend', SocialUI._renderProfileFeed(more, true));
                 }
-                if (!SocialUI._profileCheckinsCursor) btn.remove();
-                else { btn.disabled = false; btn.textContent = 'Загрузить ещё'; }
+                if (!SocialUI._profileCheckinsCursor) loadMoreBtn.remove();
+                else { loadMoreBtn.disabled = false; loadMoreBtn.textContent = 'Загрузить ещё'; }
             });
             return true;
-        }
+        }}
 
         // Checkin author click → profile
         var checkinAuthor = target.closest('.checkin-author[' + SOCIAL.USERNAME + ']');

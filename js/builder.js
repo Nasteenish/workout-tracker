@@ -661,9 +661,9 @@ export const Builder = {
                 }
 
                 // Delete sub-exercise from group
-                if (target.closest('.editor-del-sub')) {
-                    var btn = target.closest('.editor-del-sub');
-                    self._deleteSubExercise(readInt(btn, BUILDER.DEL_SUB_ITEM), readInt(btn, BUILDER.DEL_SUB));
+                var delSubBtn = target.closest('.editor-del-sub');
+                if (delSubBtn) {
+                    self._deleteSubExercise(readInt(delSubBtn, BUILDER.DEL_SUB_ITEM), readInt(delSubBtn, BUILDER.DEL_SUB));
                     return;
                 }
 
@@ -1824,11 +1824,11 @@ export const Builder = {
         }
 
         // Day editor: delete exercise
-        if (target.closest('.editor-delete')) {
-            var btn = target.closest('.editor-delete');
-            this.deleteExercise(readInt(btn, BUILDER.IDX));
+        {var delBtn = target.closest('.editor-delete');
+        if (delBtn) {
+            this.deleteExercise(readInt(delBtn, BUILDER.IDX));
             return true;
-        }
+        }}
 
         // Empty day: add exercise → open editor + picker directly
         if (target.closest('#btn-add-exercise-empty')) {
