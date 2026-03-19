@@ -1,6 +1,5 @@
 // supabase-sync.js — Supabase Auth + Cloud Sync
 import { Storage } from './storage.js';
-import { App } from './app.js';
 import { Migrations } from './migrations.js';
 
 export const SUPABASE_URL = 'https://mqyfdbfdeuwojgexhwpy.supabase.co';
@@ -12,6 +11,7 @@ export const supa = window.supabase ? window.supabase.createClient(SUPABASE_URL,
 export const SupaSync = {
     _saveTimer: null,
     _syncing: false,
+    _onSyncWarning: null,
 
     // ===== AUTH =====
 
@@ -80,8 +80,8 @@ export const SupaSync = {
             console.error('Supabase push error:', result.error.message);
             this._pushFailCount = (this._pushFailCount || 0) + 1;
             // Show warning after 2 consecutive failures
-            if (this._pushFailCount >= 2 && App && App._showSyncWarning) {
-                App._showSyncWarning('Данные не синхронизируются. Нажмите, чтобы войти заново.');
+            if (this._pushFailCount >= 2 && this._onSyncWarning) {
+                this._onSyncWarning('Данные не синхронизируются. Нажмите, чтобы войти заново.');
             }
             return false;
         }

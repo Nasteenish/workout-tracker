@@ -1,8 +1,5 @@
 /* ===== Storage Module ===== */
 import { ACCOUNTS } from './users.js';
-import { SupaSync } from './supabase-sync.js';
-import { Social } from './social.js';
-import { Migrations } from './migrations.js';
 import { parseWeight, parseReps, getAllProgramExercises } from './utils.js';
 
 // Dynamic storage key per user
@@ -15,6 +12,8 @@ export const Storage = {
     _data: null,
     _siblingCache: null,
     _program: null,
+    _onSave: null,
+    _migrateFn: null,
 
     getProgram() {
         return this._program;
@@ -78,7 +77,7 @@ export const Storage = {
             }
             // v431: migrate exercise names to Hevy DB standard
             if (!this._data._exerciseNamesMigrated || this._data._exerciseNamesMigrated < 3) {
-                Migrations.migrateExerciseNames(this._data);
+                if (this._migrateFn) this._migrateFn(this._data);
                 this._data._exerciseNamesMigrated = 3;
                 this._save();
             }
@@ -94,7 +93,7 @@ export const Storage = {
             if (this._data) this._data._lastModified = Date.now();
             localStorage.setItem(_storageKey(), JSON.stringify(this._data));
             // Trigger cloud sync if available
-            if (SupaSync) SupaSync.onLocalSave();
+            if (this._onSave) this._onSave();
         } catch (e) {
             console.error('Storage save error:', e);
         }
@@ -591,7 +590,7 @@ export const Storage = {
     },
 
     // Migration: convert old local gyms to Supabase IDs
-    async migrateLocalGyms() {
+    async migrateLocalGyms(Social) {
         var data = this._load();
         if (!data.gyms || !data.gyms.length) return;
         if (!Social) return;

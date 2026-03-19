@@ -1,10 +1,10 @@
 /* ===== Workout Complete Celebration ===== */
-import { App } from './app.js';
 import { Social } from './social.js';
 import { Storage } from './storage.js';
-import { resolveWorkout, exName } from './utils.js';
+import { resolveWorkout, exName } from './program-utils.js';
 
 export const Celebration = {
+    _onShareCheckin: null,
     _colors: ['#9D8DF5', '#B5F22A', '#FF6D28', '#30D4C8', '#FF2D55', '#C3FF3C', '#4A96FF', '#fff'],
     _shapes: ['circle', 'star', 'square', 'diamond'],
     _phrases: [
@@ -134,7 +134,7 @@ export const Celebration = {
             shareBtnEl.addEventListener('click', function(e) {
                 e.stopPropagation();
                 if (self._pendingShare) {
-                    App._pendingCheckinWorkout = self._pendingShare;
+                    if (self._onShareCheckin) self._onShareCheckin(self._pendingShare);
                     self._pendingShare = null;
                 }
                 closed = true;

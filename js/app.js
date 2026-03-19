@@ -18,8 +18,10 @@ import { Migrations } from './migrations.js';
 import { ACCOUNTS, BUILTIN_PROGRAMS } from './users.js';
 import { DEFAULT_PROGRAM } from './data.js';
 import { lockBodyScroll, unlockBodyScroll } from './scroll-lock.js';
-import { debounce, getTotalDays, formatDateISO, validateProgram, getProgressWeek, getTotalWeeks, esc, getCompletedSets, findExerciseInProgram, parseWeight, parseReps } from './utils.js';
+import { debounce, formatDateISO, validateProgram, esc, findExerciseInProgram, parseWeight, parseReps } from './utils.js';
+import { getTotalDays, getProgressWeek, getTotalWeeks, getCompletedSets } from './program-utils.js';
 import { WORKOUT, BUILDER, EQ, SOCIAL, SETTINGS, ONBOARDING, read, readInt } from './data-attrs.js';
+import { AppState } from './app-state.js';
 
 export const App = {
     _currentWeek: 1,
@@ -31,7 +33,7 @@ export const App = {
     _pageCache: {},
 
     invalidatePageCache(hashOrPrefix) {
-        if (!hashOrPrefix) { this._pageCache = {}; return; }
+        if (!hashOrPrefix) { this._pageCache = {}; AppState.pageCache = this._pageCache; return; }
         for (var key in this._pageCache) {
             if (key === hashOrPrefix || key.startsWith(hashOrPrefix + '/'))
                 delete this._pageCache[key];
@@ -39,6 +41,9 @@ export const App = {
     },
 
     init() {
+        // Wire storage callbacks before any data loading
+        Storage._migrateFn = (data) => Migrations.migrateExerciseNames(data);
+
         // Run one-time data migrations (see js/migrations.js)
         Migrations.run();
 
@@ -77,6 +82,21 @@ export const App = {
         this._saveDebounced = debounce((week, day, exId, setIdx, field, value) => {
             Storage.updateSetValue(week, day, exId, setIdx, field, field === 'reps' ? parseReps(value) : parseWeight(value));
         }, 300);
+        AppState.saveDebounced = this._saveDebounced;
+        AppState.pageCache = this._pageCache;
+
+        // Wire callbacks for decoupled modules
+        UI._onClick = (e) => this.handleClick(e);
+        UI._onInput = (e) => this.handleInput(e);
+        Celebration._onShareCheckin = (data) => { this._pendingCheckinWorkout = data; };
+        SupaSync._onSyncWarning = (msg) => this._showSyncWarning(msg);
+        Storage._onSave = () => SupaSync.onLocalSave();
+        EquipmentManager._onRenderDay = (w, d) => UI.renderDay(w, d);
+        EquipmentManager._onRenderSettings = () => UI.renderSettings();
+        Builder._onRoute = () => this.route();
+        Builder._onSwitchUser = (id, flag) => this.switchUser(id, flag);
+        Builder._onEditorBack = () => this._handleEditorBack();
+        Builder._onOnboardingChecked = () => { this._onboardingChecked = true; };
 
         // Route handling
         window.addEventListener('hashchange', () => {
@@ -847,6 +867,8 @@ export const App = {
         if (dayMatch) {
             this._currentWeek = parseInt(dayMatch[1]);
             this._currentDay = parseInt(dayMatch[2]);
+            AppState.currentWeek = this._currentWeek;
+            AppState.currentDay = this._currentDay;
             Storage.snapshotEquipment(this._currentWeek, this._currentDay);
             this._inDayView = true;
             UI.renderDay(this._currentWeek, this._currentDay);
@@ -857,6 +879,7 @@ export const App = {
         const weekMatch = hash.match(/^#\/week\/(\d+)$/);
         if (weekMatch) {
             this._currentWeek = parseInt(weekMatch[1]);
+            AppState.currentWeek = this._currentWeek;
             this._swipeDir = null;
             UI.renderWeek(this._currentWeek);
             this._showNotificationPrompt();

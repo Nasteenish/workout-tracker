@@ -4,14 +4,18 @@ import { Storage } from './storage.js';
 import { Social } from './social.js';
 import { SocialUI } from './social-ui.js';
 import { Builder } from './builder.js';
-import { App } from './app.js';
+import { AppState } from './app-state.js';
 import { EquipmentManager } from './equipment-manager.js';
 import { WorkoutTimer } from './workout-timer.js';
-import { getTotalWeeks, getTotalDays, formatDateISO, getProgressWeek, getCompletedSets, resolveWorkout, exName, markCachedThumbs, esc, exThumbHtml, getGroupExercises, findExerciseInProgram } from './utils.js';
+import { formatDateISO, markCachedThumbs, esc, exThumbHtml, getGroupExercises, findExerciseInProgram } from './utils.js';
+import { getTotalWeeks, getTotalDays, getProgressWeek, getCompletedSets, resolveWorkout, exName } from './program-utils.js';
 import { EXERCISE_DB } from './exercises_db.js';
 import { WORKOUT, EQ, SETTINGS, attr } from './data-attrs.js';
 
 export const UI = {
+    _onClick: null,
+    _onInput: null,
+
     // ===== LOGIN SCREEN =====
     renderLogin() {
         document.getElementById('app').innerHTML = `
@@ -547,15 +551,15 @@ export const UI = {
         const workout = resolveWorkout(weekNum, dayNum);
         if (!workout) return null;
 
-        const timerRunning = WorkoutTimer.isRunning(App._currentWeek, App._currentDay);
-        const timerPaused = WorkoutTimer.isPaused(App._currentWeek, App._currentDay);
+        const timerRunning = WorkoutTimer.isRunning(AppState.currentWeek, AppState.currentDay);
+        const timerPaused = WorkoutTimer.isPaused(AppState.currentWeek, AppState.currentDay);
         const { completed: doneCount, total: totalCount } = getCompletedSets(weekNum, dayNum);
         const allDone = totalCount > 0 && doneCount >= totalCount;
         const isEmpty = workout.exerciseGroups.length === 0;
 
         let timerElapsedStr = '';
         if (timerPaused) {
-            const elapsed = WorkoutTimer.getElapsed(App._currentWeek, App._currentDay);
+            const elapsed = WorkoutTimer.getElapsed(AppState.currentWeek, AppState.currentDay);
             const h = Math.floor(elapsed / 3600);
             const m = Math.floor((elapsed % 3600) / 60);
             const s = elapsed % 60;
@@ -574,7 +578,7 @@ export const UI = {
 
     renderDay(weekNum, dayNum) {
         // Flush pending input saves so Storage is up-to-date before generating HTML
-        if (App._saveDebounced) App._saveDebounced.flush();
+        if (AppState.saveDebounced) AppState.saveDebounced.flush();
 
         const vm = this._buildDayVM(weekNum, dayNum);
         if (!vm) {
@@ -704,7 +708,7 @@ export const UI = {
                 while (appEl.firstChild) appEl.removeChild(appEl.firstChild);
                 while (offscreen.firstChild) appEl.appendChild(offscreen.firstChild);
                 offscreen.remove();
-                if (timerRunning) WorkoutTimer.resume(App._currentWeek, App._currentDay);
+                if (timerRunning) WorkoutTimer.resume(AppState.currentWeek, AppState.currentDay);
                 markCachedThumbs();
                 _restoreFocus(focusInfo);
             };
@@ -717,7 +721,7 @@ export const UI = {
             }
         } else {
             appEl.innerHTML = newHTML;
-            if (timerRunning) WorkoutTimer.resume(App._currentWeek, App._currentDay);
+            if (timerRunning) WorkoutTimer.resume(AppState.currentWeek, AppState.currentDay);
             markCachedThumbs();
             _restoreFocus(focusInfo);
         }
@@ -1248,7 +1252,7 @@ export const UI = {
         overlay._exerciseNameRu = exInfo.nameRu || '';
 
         blockOverlayScroll(overlay, '.equipment-modal');
-        overlay.addEventListener('click', function(e) { App.handleClick(e); });
+        overlay.addEventListener('click', function(e) { UI._onClick && UI._onClick(e); });
 
         // Search mode — like exercise picker
         var eqModal = overlay.querySelector('.equipment-modal');
@@ -1406,8 +1410,8 @@ export const UI = {
 
         overlay._onSelect = onSelect;
         blockOverlayScroll(overlay, '.equipment-modal');
-        overlay.addEventListener('click', function(e) { App.handleClick(e); });
-        overlay.addEventListener('input', function(e) { App.handleInput(e); });
+        overlay.addEventListener('click', function(e) { UI._onClick && UI._onClick(e); });
+        overlay.addEventListener('input', function(e) { UI._onInput && UI._onInput(e); });
 
         EquipmentManager.suggestNearbyGym();
         EquipmentManager.loadSharedGyms();
@@ -1473,7 +1477,7 @@ export const UI = {
 
         blockOverlayScroll(overlay, '.equipment-modal');
         overlay.addEventListener('click', function(e) {
-            App.handleClick(e);
+            UI._onClick && UI._onClick(e);
         });
     },
 
@@ -1574,7 +1578,7 @@ export const UI = {
 
         blockOverlayScroll(overlay, '.substitution-modal');
         overlay.addEventListener('click', function(e) {
-            App.handleClick(e);
+            UI._onClick && UI._onClick(e);
         });
 
         // Wire up search/filter

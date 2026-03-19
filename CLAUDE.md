@@ -26,7 +26,9 @@ js/builder.js           — (1646) Визард, редактор дня, picker
 js/social-ui.js         — (1333) Рендер соцсети: feed, profile, checkin, messages
 js/social.js            — (900) Supabase API для всех social-таблиц
 js/storage.js           — (1001) localStorage CRUD, sibling cache
-js/utils.js             — (440) resolveWorkout(), esc(), даты, имена
+js/app-state.js         — (8) Shared readable state (currentWeek, currentDay, pageCache)
+js/program-utils.js     — (175) Storage-зависимые: resolveWorkout, exName, getTotalWeeks...
+js/utils.js             — (250) Чистые утилиты: esc(), даты, миниатюры, getGroupExercises
 js/data-attrs.js        — (121) Реестр data-атрибутов (WORKOUT, BUILDER, EQ, SOCIAL)
 js/equipment-manager.js — (444) Оборудование + залы (вынесено из app.js)
 js/swipe-nav.js         — (311) Свайп-навигация (вынесено из app.js)
@@ -94,7 +96,7 @@ localStorage.setItem('wt_data_xxx', ...);  // обходит кеш и sync
 
 **Правила:**
 1. Всё через методы `Storage.*`. Прямой доступ к `_data` — только внутри storage.js
-2. `Storage._save()` автоматически → `SupaSync.onLocalSave()` → cloud push (3 сек)
+2. `Storage._save()` автоматически → `Storage._onSave()` → `SupaSync.onLocalSave()` → cloud push (3 сек)
 3. `Storage._invalidateCache()` нужен только при смене пользователя
 4. `Storage._siblingCache` — построен один раз, инвалидируется при смене программы
 
@@ -124,17 +126,36 @@ const setIdx = readInt(btn, WORKOUT.SET);
 ```
 Не используй magic strings (`'data-exercise'`). Всё через реестр.
 
-### 4. Циклические импорты — осторожно!
+### 4. Межмодульное связывание — callback injection
 
-11 circular pairs. Работают пока кросс-обращения внутри функций. **Никогда не обращайся к импортированному модулю на верхнем уровне** (вне функции) — получишь `undefined`:
+**0 циклических импортов.** Все 11 циклов устранены. Граф импортов — строго ациклический (DAG).
+
+**Паттерн — callback injection в `App.init()`:**
+Модули объявляют `_onXxx: null` поля. `App.init()` подставляет реализации. Аналог: `PullRefresh.init(onRefresh)`.
 
 ```javascript
-// ✅ OK — обращение в рантайме:
-export function foo() { App.route(); }
+// В модуле (например, celebration.js):
+export const Celebration = {
+    _onShareCheckin: null,  // wired in App.init()
+    _showShareBtn() {
+        if (this._onShareCheckin) this._onShareCheckin(this._pendingShare);
+    }
+};
 
-// ❌ СЛОМАЕТСЯ — обращение при загрузке модуля:
-const x = App._currentWeek;  // App ещё не инициализирован!
+// В App.init():
+Celebration._onShareCheckin = (data) => { this._pendingCheckinWorkout = data; };
 ```
+
+**Три техники:**
+1. **Callback injection** — модуль вызывает `this._onXxx()` вместо прямого импорта (7 циклов)
+2. **Shared state** — `AppState` (app-state.js) — читаемое состояние (currentWeek, currentDay, pageCache, saveDebounced). App.js пишет, остальные читают (2 цикла)
+3. **Function extraction** — `program-utils.js` содержит Storage-зависимые функции, вынесенные из utils.js. utils.js — чистые утилиты без app-импортов (1 цикл)
+4. **Parameter injection** — `Storage.migrateLocalGyms(Social)` получает модуль аргументом (1 цикл)
+
+**Правила для новых модулей:**
+- Не импортируй app.js из других модулей — используй callback
+- Не импортируй Storage в utils.js — функции с Storage идут в program-utils.js
+- `AppState.*` — только для чтения из модулей (запись только в app.js)
 
 ### 5. Соглашения
 
@@ -151,8 +172,8 @@ const x = App._currentWeek;  // App ещё не инициализирован!
 - Файлы по модулям: `day-view.css`, `social.css`, `timer.css`
 
 **Версионирование:**
-- `css/styles.css?v=158` в index.html
-- `CACHE_NAME = 'workout-tracker-v543'` в sw.js
+- `css/styles.css?v=159` в index.html
+- `CACHE_NAME = 'workout-tracker-v544'` в sw.js
 - Новые файлы → добавить в `ASSETS` массив sw.js
 
 ### 6. После каждого изменения
@@ -179,7 +200,7 @@ Data: No storage changes
 
 1. **Подход не сохраняется**: Проверь `read(btn, WORKOUT.EXERCISE)` и `readInt(btn, WORKOUT.SET)` в handleClick → должны совпадать с `attr()` в `_renderSetRow()`
 
-2. **`undefined` при импорте**: Циклическая зависимость + обращение на верхнем уровне модуля. Оберни в функцию
+2. **`undefined` при импорте**: Не добавляй прямые импорты между модулями — используй callback injection через `App.init()`. См. пункт 4
 
 3. **Stale UI после действия**: Забыли `App.invalidatePageCache()`. Вызови перед навигацией
 

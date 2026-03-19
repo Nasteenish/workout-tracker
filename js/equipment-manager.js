@@ -1,13 +1,14 @@
 /* ===== Equipment & Gym Management ===== */
-import { App } from './app.js';
+import { AppState } from './app-state.js';
 import { Social } from './social.js';
 import { Storage } from './storage.js';
-import { UI } from './ui.js';
 import { WorkoutTimer } from './workout-timer.js';
 import { esc, findExerciseInProgram } from './utils.js';
 import { EQ, attr } from './data-attrs.js';
 
 export const EquipmentManager = {
+    _onRenderDay: null,
+    _onRenderSettings: null,
     _lastGeoPos: null,
     _sharedGymsCache: null,
     _sharedEquipmentCache: null,
@@ -19,8 +20,8 @@ export const EquipmentManager = {
         Social.getAllSharedGyms().then(function(gyms) {
             self._sharedGymsCache = gyms || [];
             Storage.setGymCache(gyms || []);
-            Storage.migrateLocalGyms().then(function() {
-                if (location.hash === '#/settings') UI.renderSettings();
+            Storage.migrateLocalGyms(Social).then(function() {
+                if (location.hash === '#/settings' && this._onRenderSettings) this._onRenderSettings();
             }).catch(function(e) { console.error('Gym migration error:', e); });
         }).catch(function(e) { console.error('Gym cache load error:', e); });
     },
@@ -29,7 +30,7 @@ export const EquipmentManager = {
         var prompt = document.getElementById('gym-link-prompt');
         if (!prompt) {
             WorkoutTimer.start(week, day);
-            UI.renderDay(week, day);
+            if (this._onRenderDay) this._onRenderDay(week, day);
             return;
         }
         prompt.style.display = 'block';
@@ -87,7 +88,7 @@ export const EquipmentManager = {
         modal._exerciseType = exType;
         modal._isFreeWeight = isFreeWeight;
 
-        var activeGymId = this.getActiveGymId(App._currentWeek, App._currentDay);
+        var activeGymId = this.getActiveGymId(AppState.currentWeek, AppState.currentDay);
         var gym = activeGymId ? Storage.getGymById(activeGymId) : null;
         var gymPromise = (gym && gym.city && exName)
             ? Social.getGymEquipmentForExercise(gym.name, gym.city, exName)

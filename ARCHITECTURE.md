@@ -22,7 +22,7 @@
 workout-tracker/
 ├── index.html              # SPA точка входа. Supabase CDN + <script type="module" src="main.js">
 ├── manifest.json           # PWA
-├── sw.js                   # Service Worker (v543): кеш всех файлов + фоновые нотификации таймера
+├── sw.js                   # Service Worker (v544): кеш всех файлов + фоновые нотификации таймера
 ├── css/
 │   ├── styles.css          # Entry: @import всех CSS
 │   ├── variables.css       # CSS custom properties
@@ -47,7 +47,9 @@ workout-tracker/
 │   ├── social.js           # (900) Supabase API: профили, follows, чекины, реакции, DM, залы
 │   ├── storage.js          # (1001) localStorage CRUD + sibling cache + миграции данных
 │   ├── timer.js            # (495) Таймер отдыха: звук, нотификации, фоновый режим
-│   ├── utils.js            # (440) resolveWorkout(), esc(), даты, имена, миниатюры
+│   ├── app-state.js        # (8) Shared readable state (currentWeek, currentDay, pageCache)
+│   ├── program-utils.js    # (175) Storage-зависимые утилиты: resolveWorkout, exName, getTotalWeeks...
+│   ├── utils.js            # (250) Чистые утилиты: esc(), даты, миниатюры, getGroupExercises
 │   ├── data.js             # (2604) DEFAULT_PROGRAM + SET_TYPES, TECHNIQUE_TYPES
 │   ├── mikhail_data.js     # (9064) MIKHAIL_PROGRAM
 │   ├── mikhail2_data.js    # (7846) MIKHAIL2_PROGRAM
@@ -76,29 +78,31 @@ workout-tracker/
 
 ```
 main.js
- └→ app.js (entry hub — импортирует все модули)
-     ├→ storage.js ↔ supabase-sync.js ↔ app.js  [circular]
-     ├→ ui.js ↔ app.js  [circular]
+ └→ app.js (entry hub — импортирует все модули, wires callbacks в init())
+     ├→ storage.js → users.js, utils.js
+     ├→ supabase-sync.js → storage.js, migrations.js
+     ├→ ui.js → app-state.js, program-utils.js, utils.js, storage.js, equipment-manager.js
      ├→ social.js → storage.js, supabase-sync.js
      ├→ social-ui.js → social.js, storage.js, profile-manager.js
-     ├→ builder.js ↔ app.js  [circular]
+     ├→ builder.js → program-utils.js, utils.js, storage.js, supabase-sync.js
      ├→ timer.js → storage.js
-     ├→ celebration.js ↔ app.js  [circular]
-     ├→ swipe-nav.js ↔ app.js  [circular]
-     ├→ equipment-manager.js ↔ app.js, ui.js  [circular]
-     ├→ pull-refresh.js (no circular)
-     ├→ workout-timer.js (no circular)
+     ├→ celebration.js → program-utils.js, social.js, storage.js
+     ├→ swipe-nav.js → program-utils.js, builder.js, ui.js
+     ├→ equipment-manager.js → app-state.js, social.js, storage.js
+     ├→ pull-refresh.js (callback injection)
+     ├→ workout-timer.js (leaf)
      ├→ message-notifications.js → social.js, social-ui.js
      ├→ profile-manager.js → social.js
-     ├→ migrations.js ↔ storage.js  [circular]
-     ├→ scroll-lock.js → data-attrs.js
+     ├→ migrations.js → storage.js, utils.js
+     ├→ program-utils.js → storage.js, utils.js
+     ├→ app-state.js (leaf — no imports)
      ├→ data-attrs.js (leaf — no imports)
-     ├→ utils.js ↔ storage.js  [circular]
+     ├→ utils.js → exercises_db.js
      ├→ users.js → data.js, mikhail_data.js, mikhail2_data.js
      └→ exercises_db.js (leaf)
 ```
 
-**11 циклических пар** — работают пока все кросс-обращения внутри функций (не на верхнем уровне модуля).
+**0 циклических импортов.** Межмодульное связывание через callback injection в `App.init()` (паттерн аналогичен `PullRefresh.init(onRefresh)`).
 
 ---
 
@@ -171,6 +175,8 @@ App.init() → App.route()
 | `Migrations` | migrations.js | One-time data fixes |
 | `MessageNotifications` | message-notifications.js | DM realtime + polling |
 | `ProfileManager` | profile-manager.js | Сохранение профиля |
+| `AppState` | app-state.js | Shared readable state (currentWeek, currentDay, pageCache) |
+| `program-utils` | program-utils.js | Storage-зависимые утилиты: resolveWorkout, exName, getCompletedSets |
 | `data-attrs` | data-attrs.js | Реестр всех data-атрибутов |
 
 ---
@@ -224,7 +230,7 @@ User tap "✓" → App.handleClick()
   → read(btn, WORKOUT.EXERCISE)  // data-attrs.js
   → Storage.saveSetLog(w, d, exId, setIdx, weight, reps, eqId)
     → _data.log[w][d][exId][setIdx] = { ... }
-    → _save() → localStorage + SupaSync.onLocalSave() → debounced push (3s)
+    → _save() → localStorage + Storage._onSave() callback → SupaSync.onLocalSave() → debounced push (3s)
   → App.invalidatePageCache()  // fix stale cache
 ```
 
@@ -232,7 +238,7 @@ User tap "✓" → App.handleClick()
 
 ```
 App.route() → UI.renderDay(3, 1)
-  → resolveWorkout(3, 1)  // utils.js — uses Storage.getProgram()
+  → resolveWorkout(3, 1)  // program-utils.js — uses Storage.getProgram()
   → Storage.getSetLog() per set
   → UI._renderSetRow() → HTML с data-attrs из WORKOUT.*
   → innerHTML

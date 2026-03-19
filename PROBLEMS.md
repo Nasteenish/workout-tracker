@@ -15,41 +15,7 @@
 | — | Stale _pageCache без инвалидации | ✅ `App.invalidatePageCache()` вызывается при мутациях |
 | — | App.js 4034 строк, mixed concerns | ✅ Вынесены 11 модулей: swipe, pull-refresh, equipment, celebration, migrations и т.д. |
 | — | Prop drilling через magic strings | ✅ `data-attrs.js` — единый реестр с `attr()`/`read()`/`readInt()` |
-
----
-
-## 🔴 Новая критическая проблема
-
-### 1. 11 циклических импортов (ES modules)
-
-**Где:** Граф зависимостей между модулями
-
-**Пары:**
-```
-app.js ↔ builder.js
-app.js ↔ celebration.js
-app.js ↔ equipment-manager.js
-app.js ↔ supabase-sync.js
-app.js ↔ swipe-nav.js
-app.js ↔ ui.js
-equipment-manager.js ↔ ui.js
-migrations.js ↔ storage.js
-social.js ↔ storage.js
-storage.js ↔ supabase-sync.js
-storage.js ↔ utils.js
-```
-
-**Почему работает сейчас:** Все кросс-обращения происходят внутри функций (в рантайме), а не при инициализации модуля. ES modules разрешают circular imports при условии что к экспорту обращаются после полной инициализации обоих модулей.
-
-**Почему опасно:** Любой рефакторинг может случайно добавить обращение к circular-зависимости на верхнем уровне модуля (вне функции) → `undefined` без очевидной ошибки. Это тикающая бомба.
-
-**Решение (поэтапно):**
-
-Корневая причина: `app.js` импортируется в 6 модулей (builder, celebration, equipment, supabase-sync, swipe, ui), а сам импортирует их. Разорвать можно через:
-
-1. **Event bus / callback injection** — модули не импортируют `App`, а получают callback при инициализации: `EquipmentManager.init({ onNavigate: App.route, onRender: UI.renderDay })`. Убирает circular для equipment, celebration, swipe
-2. **Выделить `router.js`** из app.js — модули импортируют router (не весь App), router не импортирует модули (использует registry)
-3. **`storage.js ↔ utils.js`**: utils использует `Storage.getProgram()`, storage использует utils для миграций. Вынести программные утилиты в отдельный `program-utils.js` без обратной зависимости
+| 1 | 11 циклических импортов (ES modules) | ✅ Callback injection + `app-state.js` + `program-utils.js`. 0 циклов |
 
 ---
 
@@ -131,7 +97,7 @@ storage.js ↔ utils.js
 
 | # | Проблема | Сложность | Приоритет |
 |---|----------|-----------|-----------|
-| 1 | 11 циклических импортов | Высокая | 🔴 P0 |
+| 1 | ~~11 циклических импортов~~ | — | ✅ Решено |
 | 2 | handleClick 1530 строк | Средняя | 🟡 P1 |
 | 3 | UI = data + render | Высокая | 🟡 P1 |
 | 4 | innerHTML re-render | Средняя | 🟡 P1 |
@@ -145,11 +111,7 @@ storage.js ↔ utils.js
 
 ## Рекомендуемый порядок
 
-**Шаг 1 — Разрешить циклические импорты (#1):**
-
-Самый эффективный первый шаг — `storage.js ↔ utils.js`. Вынести программные утилиты (`resolveWorkout`, `getCompletedSets` и т.д.) в `program-utils.js` который импортирует storage, но storage не импортирует его. Убирает 1 circular, проверяет паттерн.
-
-Далее `app.js ↔ *` (6 пар): внедрить callback injection или event pattern. Equipment, celebration, swipe получают функции при init, а не импортируют App.
+**~~Шаг 1~~ ✅ — Циклические импорты (#1) — решено.**
 
 **Шаг 2 — Разбить handleClick (#2):**
 

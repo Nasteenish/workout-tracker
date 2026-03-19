@@ -1,5 +1,4 @@
 /* ===== Utility Functions ===== */
-import { Storage } from './storage.js';
 import { EXERCISE_DB } from './exercises_db.js';
 
 // Escape HTML entities to prevent XSS
@@ -19,15 +18,6 @@ export function showErrorToast(msg) {
     el.textContent = msg || 'Ошибка сети';
     document.body.appendChild(el);
     setTimeout(function() { el.remove(); }, 4000);
-}
-
-// Exercise display name based on language setting
-export function exName(ex) {
-    if (!ex) return '';
-    var lang = (Storage && Storage._data && Storage._data.settings)
-        ? Storage._data.settings.exerciseLang : 'ru';
-    if (lang === 'en') return ex.name || ex.nameRu || '';
-    return ex.nameRu || ex.name || '';
 }
 
 // Exercise thumbnail URL from name (matches Supabase storage path)
@@ -83,16 +73,6 @@ export const MONTHS_RU = [
 
 export const DAYS_RU = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 
-export function getTotalWeeks() {
-    var p = Storage.getProgram();
-    return p ? p.totalWeeks : 12;
-}
-
-export function getTotalDays() {
-    var p = Storage.getProgram();
-    return p ? Object.keys(p.dayTemplates).length : 5;
-}
-
 export function validateProgram(data) {
     if (!data || typeof data !== 'object') return 'Неверный формат JSON';
     if (!data.title || typeof data.title !== 'string') return 'Отсутствует title';
@@ -135,40 +115,6 @@ export function formatDateISO(date) {
     return `${y}-${m}-${day}`;
 }
 
-export function getScheduleDates(startDate, cycleType) {
-    const dates = [];
-    const start = parseLocalDate(startDate);
-    for (let week = 0; week < getTotalWeeks(); week++) {
-        const weekDates = [];
-        for (let day = 0; day < getTotalDays(); day++) {
-            const totalDays = week * cycleType + day;
-            const date = new Date(start);
-            date.setDate(start.getDate() + totalDays);
-            weekDates.push(date);
-        }
-        dates.push(weekDates);
-    }
-    return dates;
-}
-
-export function getCurrentPosition(startDate, cycleType) {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    const start = parseLocalDate(startDate);
-    const daysSinceStart = Math.floor((now - start) / (1000 * 60 * 60 * 24));
-    if (daysSinceStart < 0) return { week: 1, day: 1, isRestDay: false, isProgramComplete: false };
-    const cycleNumber = Math.floor(daysSinceStart / cycleType);
-    const dayInCycle = daysSinceStart % cycleType;
-    if (cycleNumber >= getTotalWeeks()) return { week: getTotalWeeks(), day: getTotalDays(), isRestDay: false, isProgramComplete: true };
-    const isRestDay = dayInCycle >= getTotalDays();
-    return {
-        week: cycleNumber + 1,
-        day: isRestDay ? null : dayInCycle + 1,
-        isRestDay,
-        isProgramComplete: false
-    };
-}
-
 export function deepClone(obj) {
     return JSON.parse(JSON.stringify(obj));
 }
@@ -190,23 +136,6 @@ export function debounce(fn, ms) {
         }
     };
     return debounced;
-}
-
-/**
- * Resolve a superset exercise item — it may be a normal exercise
- * or a _chooseOne wrapper (Day 4 has choose_one inside supersets).
- */
-export function resolveSupersetItem(item) {
-    if (item._chooseOne) {
-        const chosenId = Storage.getChoice(item.choiceKey);
-        const options = item.options || [];
-        if (chosenId) {
-            const found = options.find(ex => ex.id === chosenId);
-            if (found) return found;
-        }
-        return options[0] || null;
-    }
-    return item;
 }
 
 /**
@@ -296,124 +225,6 @@ export function getAllProgramExercises(program) {
         }
     }
     return result;
-}
-
-/**
- * Resolve a workout for a given week/day by merging the day template
- * with any weekly overrides.
- * data.js structure: weeklyOverrides[weekNum][dayNum][exerciseId].sets[setIdx]
- */
-export function resolveWorkout(week, day) {
-    const p = Storage.getProgram();
-    const template = deepClone(p.dayTemplates[day]);
-    if (!template) return null;
-
-    const weekOverrides = p.weeklyOverrides[week];
-    if (!weekOverrides) return template;
-
-    const dayOverrides = weekOverrides[day];
-    if (!dayOverrides) return template;
-
-    for (const [exerciseId, exOverride] of Object.entries(dayOverrides)) {
-        const exercise = findExerciseInTemplate(template, exerciseId);
-        if (!exercise || !exOverride.sets) continue;
-
-        for (const [setIdx, setOverride] of Object.entries(exOverride.sets)) {
-            const idx = parseInt(setIdx);
-            if (exercise.sets[idx]) {
-                Object.assign(exercise.sets[idx], setOverride);
-            }
-        }
-    }
-
-    return template;
-}
-
-/**
- * Calculate total sets for a day's workout.
- */
-export function getTotalSets(workout) {
-    let total = 0;
-    for (const group of workout.exerciseGroups) {
-        if (group.type === 'choose_one') {
-            const chosen = getChosenExercise(group);
-            if (chosen) {
-                total += chosen.sets.length;
-            }
-        } else if (group.type === 'superset') {
-            for (const item of (group.exercises || [])) {
-                const ex = resolveSupersetItem(item);
-                if (ex && ex.sets) total += ex.sets.length;
-            }
-        } else if (group.type === 'single') {
-            if (group.exercise) {
-                total += group.exercise.sets.length;
-            }
-        }
-    }
-    return total;
-}
-
-/**
- * Count completed sets for a given week/day.
- */
-export function getCompletedSets(week, day) {
-    const workout = resolveWorkout(week, day);
-    if (!workout) return { completed: 0, total: 0 };
-
-    const total = getTotalSets(workout);
-    let completed = 0;
-
-    for (const group of workout.exerciseGroups) {
-        let exercises;
-        if (group.type === 'choose_one') {
-            exercises = [getChosenExercise(group)];
-        } else if (group.type === 'superset') {
-            exercises = (group.exercises || []).map(resolveSupersetItem);
-        } else {
-            exercises = group.exercise ? [group.exercise] : [];
-        }
-
-        for (const ex of exercises) {
-            if (!ex) continue;
-            for (let i = 0; i < ex.sets.length; i++) {
-                const log = Storage.getSetLog(week, day, ex.id, i);
-                if (log && log.completed) completed++;
-            }
-        }
-    }
-
-    return { completed, total };
-}
-
-/**
- * Get the chosen exercise from a choose_one group.
- */
-export function getChosenExercise(group) {
-    const choiceKey = group.choiceKey;
-    const chosenId = Storage.getChoice(choiceKey);
-    const options = group.options || [];
-    if (chosenId) {
-        const found = options.find(ex => ex.id === chosenId);
-        if (found) return found;
-    }
-    return options[0] || null;
-}
-
-/**
- * Find the current progress position — first week/day that is not fully completed.
- */
-export function getProgressWeek() {
-    for (var week = 1; week <= getTotalWeeks(); week++) {
-        for (var day = 1; day <= getTotalDays(); day++) {
-            var result = getCompletedSets(week, day);
-            if (result.total > 0 && result.completed < result.total) {
-                return { week: week, day: day };
-            }
-        }
-    }
-    // Everything done or nothing started
-    return { week: 1, day: 1 };
 }
 
 export function formatRest(rest) {

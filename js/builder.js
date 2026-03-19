@@ -1,12 +1,12 @@
 // builder.js — Program Builder: registration, wizard, day editor, exercise picker
 import { Storage } from './storage.js';
 import { Social } from './social.js';
-import { App } from './app.js';
 import { SupaSync } from './supabase-sync.js';
 import { ACCOUNTS } from './users.js';
 import { EXERCISE_DB, EXERCISE_CATEGORIES } from './exercises_db.js';
 import { lockBodyScroll, unlockBodyScroll, blockOverlayScroll } from './scroll-lock.js';
-import { esc, exName, getGroupExercises, exThumbHtml } from './utils.js';
+import { esc, getGroupExercises, exThumbHtml } from './utils.js';
+import { exName } from './program-utils.js';
 import { BUILDER, WORKOUT, SETTINGS, ONBOARDING, attr, read, readInt, write } from './data-attrs.js';
 
 // Webhook URL for registration notifications (Google Apps Script)
@@ -15,6 +15,10 @@ export const REGISTRATION_WEBHOOK = '';  // Set after creating Apps Script
 export const Builder = {
     _config: null,      // wizard temp: {title, totalWeeks, numDays}
     _editingDay: null,  // editor temp: {dayNum, items: [{type, exercise|exercises|options}]}
+    _onRoute: null,
+    _onSwitchUser: null,
+    _onEditorBack: null,
+    _onOnboardingChecked: null,
 
     // ===== Barbell SVG (shared) =====
     _barbellSVG: '<svg viewBox="0 0 40 40" fill="white" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="16" width="3" height="8" rx="1.5"/><rect x="6" y="11" width="4" height="18" rx="2"/><rect x="11" y="14" width="3" height="12" rx="1.5"/><rect x="14" y="18" width="12" height="4" rx="2"/><rect x="26" y="14" width="3" height="12" rx="1.5"/><rect x="30" y="11" width="4" height="18" rx="2"/><rect x="35" y="16" width="3" height="8" rx="1.5"/></svg>',
@@ -190,7 +194,7 @@ export const Builder = {
             // Start onboarding instead of going straight to app
             Builder._onboardingData = { localId: localId, supaUserId: supaUserId, login: login, isNew: true };
             history.replaceState(null, '', '#/onboarding/1');
-            App.route();
+            if (Builder._onRoute) Builder._onRoute();
         }).catch(function(err) {
             errEl.textContent = err.message || 'Ошибка регистрации';
             errEl.style.display = 'block';
@@ -568,7 +572,7 @@ export const Builder = {
         // Event handlers
         var self = this;
         var backBtn = document.getElementById('btn-back-editor');
-        if (backBtn) backBtn.addEventListener('click', function() { App._handleEditorBack(); });
+        if (backBtn) backBtn.addEventListener('click', function() { if (Builder._onEditorBack) Builder._onEditorBack(); });
 
         var titleEl = document.getElementById('editor-day-title');
         if (titleEl) {
@@ -1594,7 +1598,7 @@ export const Builder = {
             profileData.username = d.login;
             profileData.display_name = d.login;
         }
-        App._onboardingChecked = true;
+        if (Builder._onOnboardingChecked) Builder._onOnboardingChecked();
         // Persist onboarding completion so it never re-triggers
         var onbLocalId = d.localId || Storage.getCurrentUserId();
         if (onbLocalId) localStorage.setItem('wt_onboarding_done_' + onbLocalId, '1');
@@ -1604,10 +1608,10 @@ export const Builder = {
 
         var nav = function() {
             if (isNew && localId) {
-                App.switchUser(localId, true);
+                if (Builder._onSwitchUser) Builder._onSwitchUser(localId, true);
             } else {
                 history.replaceState(null, '', '#/');
-                App.route();
+                if (Builder._onRoute) Builder._onRoute();
             }
         };
 

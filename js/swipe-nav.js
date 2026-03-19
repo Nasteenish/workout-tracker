@@ -1,8 +1,7 @@
 /* ===== Swipe Navigation ===== */
-import { App } from './app.js';
 import { Builder } from './builder.js';
 import { UI } from './ui.js';
-import { getTotalWeeks } from './utils.js';
+import { getTotalWeeks } from './program-utils.js';
 
 export const SwipeNav = {
     // Config-based swipe: add new routes in getConfig only
