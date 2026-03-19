@@ -6,7 +6,9 @@ import { ACCOUNTS } from './users.js';
 import { EXERCISE_DB, EXERCISE_CATEGORIES } from './exercises_db.js';
 import { lockBodyScroll, unlockBodyScroll, blockOverlayScroll } from './scroll-lock.js';
 import { esc, getGroupExercises, exThumbHtml } from './utils.js';
-import { exName } from './program-utils.js';
+import { exName, getTotalDays, getTotalWeeks } from './program-utils.js';
+import { AppState } from './app-state.js';
+import { DEFAULT_PROGRAM } from './data.js';
 import { BUILDER, WORKOUT, SETTINGS, ONBOARDING, attr, read, readInt, write } from './data-attrs.js';
 
 // Webhook URL for registration notifications (Google Apps Script)
@@ -19,6 +21,15 @@ export const Builder = {
     _onSwitchUser: null,
     _onEditorBack: null,
     _onOnboardingChecked: null,
+    _onImportProgram: null,   // wired in App.init()
+    _onStartSetup: null,      // wired in App.init()
+    _onInvalidateCache: null,  // wired in App.init()
+    _onRenderSetup: null,      // wired in App.init()
+    _onSetEditorNavigating: null, // wired in App.init()
+    _onAddDay: null,           // wired in App.init()
+    _onRemoveDay: null,        // wired in App.init()
+    _onAddWeek: null,          // wired in App.init()
+    _onRemoveWeek: null,       // wired in App.init()
 
     // ===== Barbell SVG (shared) =====
     _barbellSVG: '<svg viewBox="0 0 40 40" fill="white" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="16" width="3" height="8" rx="1.5"/><rect x="6" y="11" width="4" height="18" rx="2"/><rect x="11" y="14" width="3" height="12" rx="1.5"/><rect x="14" y="18" width="12" height="4" rx="2"/><rect x="26" y="14" width="3" height="12" rx="1.5"/><rect x="30" y="11" width="4" height="18" rx="2"/><rect x="35" y="16" width="3" height="8" rx="1.5"/></svg>',
@@ -1646,5 +1657,255 @@ export const Builder = {
         } else {
             doSave(profileData);
         }
+    },
+
+    // ===== Delegated builder/onboarding/setup click handlers =====
+    handleClick(target) {
+        // Onboarding: gender
+        var genderBtn = target.closest('.onboard-gender-btn');
+        if (genderBtn) {
+            if (!this._onboardingData) this._onboardingData = {};
+            this._onboardingData.gender = read(genderBtn, ONBOARDING.GENDER);
+            location.hash = '#/onboarding/2';
+            return true;
+        }
+
+        // Onboarding: role selection
+        var roleBtn = target.closest('.onboard-role-btn');
+        if (roleBtn) {
+            if (!this._onboardingData) this._onboardingData = {};
+            this._onboardingData.role = read(roleBtn, ONBOARDING.ROLE);
+            if (read(roleBtn, ONBOARDING.ROLE) === 'casual') location.hash = '#/onboarding/3';
+            else if (read(roleBtn, ONBOARDING.ROLE) === 'athlete') location.hash = '#/onboarding/3a';
+            else if (read(roleBtn, ONBOARDING.ROLE) === 'trainer') location.hash = '#/onboarding/3t';
+            return true;
+        }
+
+        // Onboarding: goal (casual)
+        var goalBtn = target.closest('.onboard-goal-btn');
+        if (goalBtn) {
+            if (!this._onboardingData) this._onboardingData = {};
+            this._onboardingData.goal = read(goalBtn, ONBOARDING.GOAL);
+            this._finishOnboarding();
+            return true;
+        }
+
+        // Onboarding: pro/amateur (athlete)
+        var proBtn = target.closest('.onboard-pro-btn');
+        if (proBtn) {
+            if (!this._onboardingData) this._onboardingData = {};
+            this._onboardingData.is_pro = read(proBtn, ONBOARDING.PRO) === 'true';
+            location.hash = '#/onboarding/4';
+            return true;
+        }
+
+        // Onboarding: category (athlete)
+        var catBtn = target.closest('.onboard-category-btn');
+        if (catBtn) {
+            if (!this._onboardingData) this._onboardingData = {};
+            this._onboardingData.category = read(catBtn, ONBOARDING.CATEGORY);
+            location.hash = '#/onboarding/5';
+            return true;
+        }
+
+        // Onboarding: phase (athlete)
+        var phaseBtn = target.closest('.onboard-phase-btn');
+        if (phaseBtn) {
+            if (!this._onboardingData) this._onboardingData = {};
+            this._onboardingData.phase = read(phaseBtn, ONBOARDING.PHASE);
+            this._finishOnboarding();
+            return true;
+        }
+
+        // Onboarding: client count (trainer)
+        var clientsBtn = target.closest('.onboard-clients-btn');
+        if (clientsBtn) {
+            if (!this._onboardingData) this._onboardingData = {};
+            this._onboardingData.client_count = read(clientsBtn, ONBOARDING.CLIENTS);
+            this._finishOnboarding();
+            return true;
+        }
+
+        // Setup: import program from file
+        if (target.closest('#setup-import-program')) {
+            var self = this;
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(ev) {
+                var file = ev.target.files[0];
+                if (!file) return;
+                if (self._onImportProgram) {
+                    self._onImportProgram(file).then(function() {
+                        if (self._onRenderSetup) self._onRenderSetup();
+                    }).catch(function(err) {
+                        var status = document.getElementById('program-status');
+                        if (status) status.innerHTML = '<span style="color:#FF2D55">' + err + '</span>';
+                    });
+                }
+            };
+            input.click();
+            return true;
+        }
+
+        // Setup: create program (builder)
+        if (target.closest('#setup-create-program')) {
+            location.hash = '#/builder/step1';
+            return true;
+        }
+
+        // Builder wizard: toggle buttons (weeks/days)
+        if (target.matches('.builder-toggle button')) {
+            var btns = target.parentElement.querySelectorAll('button');
+            btns.forEach(function(b) { b.classList.remove('active'); });
+            target.classList.add('active');
+            return true;
+        }
+
+        // Builder wizard: step1 → step2
+        if (target.closest('#builder-next')) {
+            this.saveStep1();
+            location.hash = '#/builder/step2';
+            return true;
+        }
+
+        // Builder wizard: back from step1 → setup
+        if (target.closest('#builder-back-setup')) {
+            location.hash = '#/setup';
+            return true;
+        }
+
+        // Builder wizard: back from step2 → step1
+        if (target.closest('#builder-back-step1')) {
+            if (this._config) {
+                var dayInputs = document.querySelectorAll('.builder-day-name');
+                var names = [];
+                dayInputs.forEach(function(inp) { names.push(inp.value.trim()); });
+                this._config.dayNames = names;
+            }
+            location.hash = '#/builder/step1';
+            return true;
+        }
+
+        // Builder wizard: create program
+        if (target.closest('#builder-create')) {
+            this.createProgram();
+            location.hash = '#/setup';
+            return true;
+        }
+
+        // Setup summary: back to builder
+        if (target.closest('#setup-back-builder')) {
+            if (this._config) {
+                location.hash = '#/builder/step2';
+            } else {
+                var numDays = getTotalDays();
+                var dayNames = [];
+                var _p = Storage.getProgram();
+                for (var d = 1; d <= numDays; d++) {
+                    var tmpl = _p && _p.dayTemplates[d];
+                    dayNames.push(tmpl ? (tmpl.titleRu || tmpl.title || '') : '');
+                }
+                this._config = {
+                    title: _p ? (_p.title || '') : '',
+                    totalWeeks: _p ? (_p.totalWeeks || 4) : 4,
+                    numDays: numDays,
+                    dayNames: dayNames
+                };
+                location.hash = '#/builder/step2';
+            }
+            return true;
+        }
+
+        // Day editor: add exercise
+        if (target.closest('#editor-add-exercise')) {
+            this.showExercisePicker();
+            return true;
+        }
+
+        // Day editor: delete exercise
+        if (target.closest('.editor-delete')) {
+            var btn = target.closest('.editor-delete');
+            this.deleteExercise(readInt(btn, BUILDER.IDX));
+            return true;
+        }
+
+        // Empty day: add exercise → open editor + picker directly
+        if (target.closest('#btn-add-exercise-empty')) {
+            this.renderDayEditor(AppState.currentDay);
+            this.showExercisePicker();
+            return true;
+        }
+
+        // Edit day (pencil on training day view)
+        if (target.closest('#btn-edit-day')) {
+            if (this._onSetEditorNavigating) this._onSetEditorNavigating(true);
+            location.hash = '#/edit/day/' + AppState.currentDay;
+            return true;
+        }
+
+        // Setup: back to onboarding
+        if (target.closest('#setup-back-onboarding')) {
+            this._onboardingData = {};
+            location.hash = '#/onboarding/1';
+            return true;
+        }
+
+        // Setup: use default program
+        if (target.closest('#setup-use-default')) {
+            if (DEFAULT_PROGRAM) {
+                Storage.saveProgram(DEFAULT_PROGRAM, false);
+                Storage.setProgram(DEFAULT_PROGRAM);
+                if (this._onInvalidateCache) this._onInvalidateCache();
+                if (this._onRenderSetup) this._onRenderSetup();
+            }
+            return true;
+        }
+
+        // Setup: cycle toggle
+        if (target.matches('.cycle-toggle button')) {
+            var buttons = target.parentElement.querySelectorAll('button');
+            buttons.forEach(function(b) { b.classList.remove('active'); });
+            target.classList.add('active');
+            return true;
+        }
+
+        // Setup: start button
+        if (target.id === 'setup-start') {
+            if (this._onStartSetup) this._onStartSetup();
+            return true;
+        }
+
+        // Week navigation
+        if (target.closest('#prev-week')) {
+            location.hash = '#/week/' + (AppState.currentWeek === 1 ? getTotalWeeks() : AppState.currentWeek - 1);
+            return true;
+        }
+        if (target.closest('#next-week')) {
+            location.hash = '#/week/' + (AppState.currentWeek === getTotalWeeks() ? 1 : AppState.currentWeek + 1);
+            return true;
+        }
+
+        // Add/remove day for custom programs
+        if (target.closest('#btn-add-day')) {
+            if (this._onAddDay) this._onAddDay();
+            return true;
+        }
+        if (target.closest('#btn-remove-day')) {
+            if (this._onRemoveDay) this._onRemoveDay();
+            return true;
+        }
+
+        // Add/remove week for custom programs
+        if (target.closest('#btn-add-week')) {
+            if (this._onAddWeek) this._onAddWeek();
+            return true;
+        }
+        if (target.closest('#btn-remove-week')) {
+            if (this._onRemoveWeek) this._onRemoveWeek();
+            return true;
+        }
+
+        return false;
     }
 };

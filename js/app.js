@@ -16,11 +16,10 @@ import { ProfileManager } from './profile-manager.js';
 import { AvatarCropper } from './cropper.js';
 import { Migrations } from './migrations.js';
 import { ACCOUNTS, BUILTIN_PROGRAMS } from './users.js';
-import { DEFAULT_PROGRAM } from './data.js';
 import { lockBodyScroll, unlockBodyScroll } from './scroll-lock.js';
 import { debounce, formatDateISO, validateProgram, esc, findExerciseInProgram, parseWeight, parseReps } from './utils.js';
-import { getTotalDays, getProgressWeek, getTotalWeeks, getCompletedSets } from './program-utils.js';
-import { WORKOUT, BUILDER, EQ, SETTINGS, ONBOARDING, read, readInt } from './data-attrs.js';
+import { getTotalDays, getProgressWeek, getCompletedSets } from './program-utils.js';
+import { WORKOUT, EQ, SETTINGS, read, readInt } from './data-attrs.js';
 import { AppState } from './app-state.js';
 
 export const App = {
@@ -97,6 +96,15 @@ export const App = {
         Builder._onSwitchUser = (id, flag) => this.switchUser(id, flag);
         Builder._onEditorBack = () => this._handleEditorBack();
         Builder._onOnboardingChecked = () => { this._onboardingChecked = true; };
+        Builder._onImportProgram = (file) => this.importProgram(file);
+        Builder._onStartSetup = () => this.startSetup();
+        Builder._onInvalidateCache = () => this.invalidatePageCache();
+        Builder._onRenderSetup = () => UI.renderSetup();
+        Builder._onSetEditorNavigating = (v) => { this._editorNavigating = v; };
+        Builder._onAddDay = () => this._addDayToCustomProgram();
+        Builder._onRemoveDay = () => this._removeDayFromCustomProgram();
+        Builder._onAddWeek = () => this._addWeekToCustomProgram();
+        Builder._onRemoveWeek = () => this._removeWeekFromCustomProgram();
 
         // Route handling
         window.addEventListener('hashchange', () => {
@@ -902,7 +910,7 @@ export const App = {
         if (this._handleAuthClick(target)) return;
 
         // Onboarding + Builder + Program management
-        if (this._handleBuilderClick(target)) return;
+        if (Builder.handleClick(target)) return;
 
         // Social (profiles, feed, checkins, chat, notifications)
         if (SocialUI.handleClick(target)) return;
@@ -1371,255 +1379,6 @@ export const App = {
         return false;
     },
 
-    // ===== Delegated builder/onboarding/setup click handlers =====
-    _handleBuilderClick(target) {
-        // Onboarding: gender
-        var genderBtn = target.closest('.onboard-gender-btn');
-        if (genderBtn) {
-            if (!Builder._onboardingData) Builder._onboardingData = {};
-            Builder._onboardingData.gender = read(genderBtn, ONBOARDING.GENDER);
-            location.hash = '#/onboarding/2';
-            return true;
-        }
-
-        // Onboarding: role selection
-        var roleBtn = target.closest('.onboard-role-btn');
-        if (roleBtn) {
-            if (!Builder._onboardingData) Builder._onboardingData = {};
-            Builder._onboardingData.role = read(roleBtn, ONBOARDING.ROLE);
-            if (read(roleBtn, ONBOARDING.ROLE) === 'casual') location.hash = '#/onboarding/3';
-            else if (read(roleBtn, ONBOARDING.ROLE) === 'athlete') location.hash = '#/onboarding/3a';
-            else if (read(roleBtn, ONBOARDING.ROLE) === 'trainer') location.hash = '#/onboarding/3t';
-            return true;
-        }
-
-        // Onboarding: goal (casual)
-        var goalBtn = target.closest('.onboard-goal-btn');
-        if (goalBtn) {
-            if (!Builder._onboardingData) Builder._onboardingData = {};
-            Builder._onboardingData.goal = read(goalBtn, ONBOARDING.GOAL);
-            Builder._finishOnboarding();
-            return true;
-        }
-
-        // Onboarding: pro/amateur (athlete)
-        var proBtn = target.closest('.onboard-pro-btn');
-        if (proBtn) {
-            if (!Builder._onboardingData) Builder._onboardingData = {};
-            Builder._onboardingData.is_pro = read(proBtn, ONBOARDING.PRO) === 'true';
-            location.hash = '#/onboarding/4';
-            return true;
-        }
-
-        // Onboarding: category (athlete)
-        var catBtn = target.closest('.onboard-category-btn');
-        if (catBtn) {
-            if (!Builder._onboardingData) Builder._onboardingData = {};
-            Builder._onboardingData.category = read(catBtn, ONBOARDING.CATEGORY);
-            location.hash = '#/onboarding/5';
-            return true;
-        }
-
-        // Onboarding: phase (athlete)
-        var phaseBtn = target.closest('.onboard-phase-btn');
-        if (phaseBtn) {
-            if (!Builder._onboardingData) Builder._onboardingData = {};
-            Builder._onboardingData.phase = read(phaseBtn, ONBOARDING.PHASE);
-            Builder._finishOnboarding();
-            return true;
-        }
-
-        // Onboarding: client count (trainer)
-        var clientsBtn = target.closest('.onboard-clients-btn');
-        if (clientsBtn) {
-            if (!Builder._onboardingData) Builder._onboardingData = {};
-            Builder._onboardingData.client_count = read(clientsBtn, ONBOARDING.CLIENTS);
-            Builder._finishOnboarding();
-            return true;
-        }
-
-        // Setup: import program from file
-        if (target.closest('#setup-import-program')) {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = (ev) => {
-                const file = ev.target.files[0];
-                if (!file) return;
-                App.importProgram(file).then(() => {
-                    UI.renderSetup();
-                }).catch(err => {
-                    const status = document.getElementById('program-status');
-                    if (status) status.innerHTML = `<span style="color:#FF2D55">${err}</span>`;
-                });
-            };
-            input.click();
-            return true;
-        }
-
-        // Setup: create program (builder)
-        if (target.closest('#setup-create-program')) {
-            location.hash = '#/builder/step1';
-            return true;
-        }
-
-        // Builder wizard: toggle buttons (weeks/days)
-        if (target.matches('.builder-toggle button')) {
-            var btns = target.parentElement.querySelectorAll('button');
-            btns.forEach(function(b) { b.classList.remove('active'); });
-            target.classList.add('active');
-            return true;
-        }
-
-        // Builder wizard: step1 → step2
-        if (target.closest('#builder-next')) {
-            Builder.saveStep1();
-            location.hash = '#/builder/step2';
-            return true;
-        }
-
-        // Builder wizard: back from step1 → setup
-        if (target.closest('#builder-back-setup')) {
-            location.hash = '#/setup';
-            return true;
-        }
-
-        // Builder wizard: back from step2 → step1
-        if (target.closest('#builder-back-step1')) {
-            // Save day names to config
-            if (Builder._config) {
-                var dayInputs = document.querySelectorAll('.builder-day-name');
-                var names = [];
-                dayInputs.forEach(function(inp) { names.push(inp.value.trim()); });
-                Builder._config.dayNames = names;
-            }
-            location.hash = '#/builder/step1';
-            return true;
-        }
-
-        // Builder wizard: create program
-        if (target.closest('#builder-create')) {
-            Builder.createProgram();
-            location.hash = '#/setup';
-            return true;
-        }
-
-        // Setup summary: back to initial setup
-        if (target.closest('#setup-back-builder')) {
-            if (Builder._config) {
-                location.hash = '#/builder/step2';
-            } else {
-                var numDays = getTotalDays();
-                var dayNames = [];
-                var _p = Storage.getProgram();
-                for (var d = 1; d <= numDays; d++) {
-                    var tmpl = _p && _p.dayTemplates[d];
-                    dayNames.push(tmpl ? (tmpl.titleRu || tmpl.title || '') : '');
-                }
-                Builder._config = {
-                    title: _p ? (_p.title || '') : '',
-                    totalWeeks: _p ? (_p.totalWeeks || 4) : 4,
-                    numDays: numDays,
-                    dayNames: dayNames
-                };
-                location.hash = '#/builder/step2';
-            }
-            return true;
-        }
-
-        // Day editor: add exercise
-        if (target.closest('#editor-add-exercise')) {
-            Builder.showExercisePicker();
-            return true;
-        }
-
-        // Day editor: delete exercise
-        if (target.closest('.editor-delete')) {
-            var btn = target.closest('.editor-delete');
-            Builder.deleteExercise(readInt(btn, BUILDER.IDX));
-            return true;
-        }
-
-        // Day editor: back
-        // btn-back-editor handled by direct listener in Builder.renderDayEditor
-
-        // Empty day: add exercise → open editor + picker directly
-        if (target.closest('#btn-add-exercise-empty')) {
-            Builder.renderDayEditor(App._currentDay);
-            Builder.showExercisePicker();
-            return true;
-        }
-
-        // Edit day (pencil on training day view)
-        if (target.closest('#btn-edit-day')) {
-            App._editorNavigating = true;
-            location.hash = '#/edit/day/' + App._currentDay;
-            return true;
-        }
-
-        // Setup: back to onboarding
-        if (target.closest('#setup-back-onboarding')) {
-            Builder._onboardingData = {};
-            location.hash = '#/onboarding/1';
-            return true;
-        }
-
-        // Setup: use default program
-        if (target.closest('#setup-use-default')) {
-            if (DEFAULT_PROGRAM) {
-                Storage.saveProgram(DEFAULT_PROGRAM, false);
-                Storage.setProgram(DEFAULT_PROGRAM);
-                this.invalidatePageCache(); // Program changed
-                UI.renderSetup();
-            }
-            return true;
-        }
-
-        // Setup: cycle toggle
-        if (target.matches('.cycle-toggle button')) {
-            const buttons = target.parentElement.querySelectorAll('button');
-            buttons.forEach(b => b.classList.remove('active'));
-            target.classList.add('active');
-            return true;
-        }
-
-        // Setup: start button
-        if (target.id === 'setup-start') {
-            App.startSetup();
-            return true;
-        }
-
-        // Week navigation
-        if (target.closest('#prev-week')) {
-            location.hash = `#/week/${App._currentWeek === 1 ? getTotalWeeks() : App._currentWeek - 1}`;
-            return true;
-        }
-        if (target.closest('#next-week')) {
-            location.hash = `#/week/${App._currentWeek === getTotalWeeks() ? 1 : App._currentWeek + 1}`;
-            return true;
-        }
-        // Add/remove day for custom programs
-        if (target.closest('#btn-add-day')) {
-            App._addDayToCustomProgram();
-            return true;
-        }
-        if (target.closest('#btn-remove-day')) {
-            App._removeDayFromCustomProgram();
-            return true;
-        }
-        // Add week button for custom programs
-        if (target.closest('#btn-add-week')) {
-            App._addWeekToCustomProgram();
-            return true;
-        }
-        // Remove week button for custom programs
-        if (target.closest('#btn-remove-week')) {
-            App._removeWeekFromCustomProgram();
-            return true;
-        }
-
-        return false;
-    },
 
     // ===== Delegated modal click handlers (substitution, gym, choice, equipment) =====
     _bindEquipment(exId, eqId, shareInfo) {

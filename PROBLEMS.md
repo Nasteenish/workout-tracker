@@ -25,11 +25,11 @@
 
 **Где:** `js/app.js`, строки ~875–1940
 
-**Что изменилось:** app.js уменьшился с 2515 до 2048 строк. 40+ social handlers (489 строк) вынесены в `SocialUI.handleClick()`. `_replyToCommentId` перемещён из App в SocialUI.
+**Что изменилось:** app.js уменьшился с 2515 до ~1800 строк. 40+ social handlers (489 строк) вынесены в `SocialUI.handleClick()`. 29 builder/onboarding/setup handlers (248 строк) вынесены в `Builder.handleClick()`. `_replyToCommentId` перемещён из App в SocialUI.
 
-**Что осталось внутри:** login, registration, onboarding, workout (complete set, add/remove set, choice, substitution), settings, navigation.
+**Что осталось внутри:** login, registration, workout (complete set, add/remove set, choice, substitution), settings, modals (gym, equipment).
 
-**Следующий шаг:** Вынести builder handlers → `Builder.handleClick()`, потом workout handlers.
+**Следующий шаг:** Вынести workout handlers → отдельный модуль или подметод.
 
 ---
 
@@ -98,7 +98,7 @@
 | # | Проблема | Сложность | Приоритет |
 |---|----------|-----------|-----------|
 | 1 | ~~11 циклических импортов~~ | — | ✅ Решено |
-| 2 | handleClick ~~1530~~ ~1040 строк (social вынесен) | Средняя | 🟡 P1 |
+| 2 | handleClick ~~1530~~ ~~1040~~ ~790 строк (social + builder вынесены) | Средняя | 🟡 P1 |
 | 3 | UI = data + render | Высокая | 🟡 P1 |
 | 4 | innerHTML re-render | Средняя | 🟡 P1 |
 | 5 | Дублирование closest-паттерна | Низкая | 🟡 P1 |
@@ -117,7 +117,7 @@
 
 ~~Шаг 2a~~ ✅ — Social handlers → `SocialUI.handleClick()` (40+ handlers, 489 строк). `_replyToCommentId` перемещён в SocialUI.
 
-Шаг 2b — Builder handlers → `Builder.handleClick()`.
+~~Шаг 2b~~ ✅ — Builder/onboarding/setup handlers → `Builder.handleClick()` (29 handlers, 248 строк). 9 callbacks injected в App.init().
 
 Шаг 2c — Workout handlers → отдельный модуль или подметод.
 
