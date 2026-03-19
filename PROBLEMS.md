@@ -58,13 +58,15 @@
 
 ---
 
-### 4. Полный re-render через innerHTML
+### 4. Полный re-render через innerHTML — 🟡 частично решено
 
 **Проблема:** Каждый `renderDay()` уничтожает весь DOM. Потеря фокуса, scroll, мерцание.
 
-**Что уже есть:** Точечное обновление при complete-btn (иконка + класс без re-render). `markCachedThumbs()`. Scroll restore.
+**Что уже есть:** Точечное обновление при complete-btn (иконка + класс без re-render). `markCachedThumbs()`. Scroll restore. `RestTimer.reattach()` после DOM-свапа.
 
-**Что осталось:** Выбор оборудования, выбор упражнения, настройки — всё ещё полный re-render.
+**Решено:** Equipment selection → `_updateEquipmentBadge()` (точечное обновление кнопки). Workout timer pause/resume/cancel → `_updateTimerSection()` (замена только секции таймера). Убраны лишние `UI.renderDay()` в fallback-ветках equipment modal.
+
+**Что осталось:** Add/remove set, substitution, btn-start-workout (применяет gym equipment ко всем упражнениям) — полный re-render.
 
 ---
 
@@ -113,7 +115,7 @@
 | 1 | ~~11 циклических импортов~~ | — | ✅ Решено |
 | 2 | ~~handleClick 1530 строк~~ → ~200 строк (social + builder + workout вынесены) | — | ✅ Решено |
 | 3 | ~~UI = data + render~~ → VM-паттерн в ui.js + social-ui.js (15 VM builders) | — | ✅ Решено |
-| 4 | innerHTML re-render | Средняя | 🟡 P1 |
+| 4 | innerHTML re-render — equipment + timer решены, остались add/remove set, substitution | Средняя | 🟡 P2 |
 | 5 | ~~Дублирование closest-паттерна~~ | — | ✅ Решено |
 | 6 | Хрупкая _migrateExerciseNames | Средняя | 🟢 P2 |
 | 7 | Хардкод аккаунтов | Низкая | 🟢 P2 |

@@ -7,7 +7,7 @@ import { WorkoutTimer } from './workout-timer.js';
 import { EquipmentManager } from './equipment-manager.js';
 import { Celebration } from './celebration.js';
 import { WORKOUT, EQ, read, readInt } from './data-attrs.js';
-import { findExerciseInProgram, parseWeight, parseReps, formatDateISO } from './utils.js';
+import { findExerciseInProgram, parseWeight, parseReps, formatDateISO, esc, markCachedThumbs } from './utils.js';
 import { getCompletedSets } from './program-utils.js';
 
 export const WorkoutUI = {
@@ -55,19 +55,19 @@ export const WorkoutUI = {
 
         if (target.id === 'btn-pause-workout') {
             WorkoutTimer.pause(week, day);
-            UI.renderDay(week, day);
+            this._updateTimerSection(week, day);
             return true;
         }
 
         if (target.id === 'btn-resume-workout') {
             WorkoutTimer.unpause(week, day);
-            UI.renderDay(week, day);
+            this._updateTimerSection(week, day);
             return true;
         }
 
         if (target.id === 'btn-cancel-workout') {
             WorkoutTimer.cancel(week, day);
-            UI.renderDay(week, day);
+            this._updateTimerSection(week, day);
             return true;
         }
 
@@ -432,7 +432,6 @@ export const WorkoutUI = {
                 this._bindEquipment(exId, newId, { name: eqName, catalogId: catalogId }, week, day);
             } else {
                 UI.hideEquipmentModal();
-                UI.renderDay(week, day);
             }
             return true;
         }}
@@ -449,7 +448,6 @@ export const WorkoutUI = {
                 this._bindEquipment(exId, newId, null, week, day);
             } else {
                 UI.hideEquipmentModal();
-                UI.renderDay(week, day);
             }
             return true;
         }}
@@ -484,7 +482,6 @@ export const WorkoutUI = {
                 this._bindEquipment(exId, newId, { name: eqName, catalogId: catalogId }, week, day);
             } else {
                 UI.hideEquipmentModal();
-                UI.renderDay(week, day);
             }
             return true;
         }}
@@ -497,9 +494,10 @@ export const WorkoutUI = {
                 Storage.removeExerciseEquipment(exId);
                 var row = document.getElementById('eq-current-row');
                 if (row) row.remove();
+                if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week + '/day/' + day);
             }
             UI.hideEquipmentModal();
-            UI.renderDay(week, day);
+            if (exId) this._updateEquipmentBadge(exId);
             return true;
         }
 
@@ -624,6 +622,56 @@ export const WorkoutUI = {
         });
     },
 
+    _updateTimerSection(week, day) {
+        const slide = document.querySelector('.day-slide');
+        if (!slide) return false;
+
+        // Remove existing timer elements
+        slide.querySelectorAll('.workout-timer-row, .workout-timer-actions, .btn-timer-pause, .btn-start-workout').forEach(el => el.remove());
+
+        const running = WorkoutTimer.isRunning(week, day);
+        const paused = WorkoutTimer.isPaused(week, day);
+
+        let timerHtml = '';
+        if (paused) {
+            const elapsed = WorkoutTimer.getElapsed(week, day);
+            const h = Math.floor(elapsed / 3600);
+            const m = Math.floor((elapsed % 3600) / 60);
+            const s = elapsed % 60;
+            const str = (h > 0 ? h + ':' : '') + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+            timerHtml = '<div class="workout-timer-row paused"><span class="workout-timer-icon">&#9208;</span><span id="workout-timer">' + str + '</span></div>'
+                + '<div class="workout-timer-actions"><button class="btn-timer-resume" id="btn-resume-workout">ПРОДОЛЖИТЬ</button><button class="btn-timer-cancel" id="btn-cancel-workout">ОТМЕНИТЬ</button></div>';
+        } else if (running) {
+            timerHtml = '<div class="workout-timer-row"><span class="workout-timer-icon">&#9201;</span><span id="workout-timer">00:00</span></div>'
+                + '<button class="btn-timer-pause" id="btn-pause-workout">ПАУЗА</button>';
+        } else {
+            timerHtml = '<button class="btn-start-workout" id="btn-start-workout">НАЧАТЬ ТРЕНИРОВКУ</button>';
+        }
+
+        const temp = document.createElement('div');
+        temp.innerHTML = timerHtml;
+        const firstChild = slide.firstChild;
+        while (temp.firstChild) slide.insertBefore(temp.firstChild, firstChild);
+
+        if (running && !paused) WorkoutTimer.resume(week, day);
+        return true;
+    },
+
+    _updateEquipmentBadge(exId) {
+        const btn = document.querySelector('.equipment-btn[' + WORKOUT.EXERCISE + '="' + exId + '"]');
+        if (!btn) return false;
+        const eqId = Storage.getExerciseEquipment(exId);
+        const eq = eqId ? Storage.getEquipmentById(eqId) : null;
+        const label = eq ? esc(eq.name) : 'Оборудование';
+        const thumb = eq && eq.imageUrl
+            ? '<img class="ex-thumb" src="' + esc(eq.imageUrl) + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">'
+            : '';
+        const badge = '<span class="chooser-badge"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+        btn.innerHTML = thumb + label + badge;
+        markCachedThumbs(btn);
+        return true;
+    },
+
     _bindEquipment(exId, eqId, shareInfo, week, day) {
         Storage.setExerciseEquipment(exId, eqId);
         var activeGym = EquipmentManager.getActiveGymId(week, day);
@@ -631,6 +679,6 @@ export const WorkoutUI = {
         if (shareInfo) EquipmentManager.shareToGymEquipment(exId, shareInfo, week, day);
         UI.hideEquipmentModal();
         if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week + '/day/' + day);
-        UI.renderDay(week, day);
+        this._updateEquipmentBadge(exId);
     },
 };
