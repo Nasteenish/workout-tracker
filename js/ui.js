@@ -736,22 +736,44 @@ export const UI = {
         return !!Storage.getSubstitution(exerciseId);
     },
 
-    _renderExercise(ex, weekNum, dayNum, choiceKey = null) {
-        let setsHtml = '';
-        for (let i = 0; i < ex.sets.length; i++) {
-            setsHtml += this._renderSetRow(this._buildSetRowVM(ex, i, weekNum, dayNum));
-        }
-
+    // Data preparation for exercise card — all Storage reads
+    _buildExerciseVM(ex, weekNum, dayNum, choiceKey = null) {
         const timerSec = Storage.getSettings().timerDuration || 120;
         const restText = timerSec >= 60
             ? `rest ${Math.floor(timerSec / 60)}min`
             : `rest ${timerSec}s`;
 
-        // Equipment selector
         const eqId = Storage.getExerciseEquipment(ex.id);
         const eq = eqId ? Storage.getEquipmentById(eqId) : null;
-        const eqLabel = eq ? esc(eq.name) : 'Оборудование';
-        const eqThumb = eq && eq.imageUrl ? '<img class="ex-thumb" src="' + esc(eq.imageUrl) + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
+        const displayName = this._getExerciseDisplayName(ex);
+
+        const setVMs = [];
+        for (let i = 0; i < ex.sets.length; i++) {
+            setVMs.push(this._buildSetRowVM(ex, i, weekNum, dayNum));
+        }
+
+        return {
+            ex, choiceKey, restText,
+            eqLabel: eq ? esc(eq.name) : 'Оборудование',
+            eqImageUrl: eq && eq.imageUrl ? eq.imageUrl : null,
+            displayName, setVMs
+        };
+    },
+
+    // Pure HTML rendering from exercise view-model
+    _renderExercise(exVMorEx, weekNumOrUndef, dayNumOrUndef, choiceKeyOrUndef) {
+        // Accept either a pre-built VM or raw (ex, weekNum, dayNum, choiceKey) args
+        const vm = exVMorEx.setVMs
+            ? exVMorEx
+            : this._buildExerciseVM(exVMorEx, weekNumOrUndef, dayNumOrUndef, choiceKeyOrUndef);
+        const { ex, choiceKey, restText, eqLabel, eqImageUrl, displayName, setVMs } = vm;
+
+        let setsHtml = '';
+        for (const setVM of setVMs) {
+            setsHtml += this._renderSetRow(setVM);
+        }
+
+        const eqThumb = eqImageUrl ? '<img class="ex-thumb" src="' + esc(eqImageUrl) + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
         const eqTrailing = `<span class="chooser-badge"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
         const eqHtml = `
             <div class="equipment-row">
@@ -761,7 +783,6 @@ export const UI = {
             </div>
         `;
 
-        const displayName = this._getExerciseDisplayName(ex);
         const nameClass = `exercise-name exercise-name-editable ${choiceKey ? 'exercise-name-chooser' : ''}`;
         const nameAttrs = `${attr(WORKOUT.EXERCISE, ex.id)} ${choiceKey ? attr(WORKOUT.CHOICE_KEY, choiceKey) : ''}`;
         const nameContent = choiceKey ? this._nameWithBadge(displayName) : displayName;
@@ -977,7 +998,8 @@ export const UI = {
         return `<span class="chooser-nowrap">${name}${badge}</span>`;
     },
 
-    _renderChooseOne(group, weekNum, dayNum) {
+    // Data preparation for choose-one group — resolve chosen exercise
+    _buildChooseOneVM(group, weekNum, dayNum) {
         const choiceKey = group.choiceKey;
         const chosenId = Storage.getChoice(choiceKey);
         const options = group.options || [];
@@ -985,16 +1007,31 @@ export const UI = {
             ? options.find(ex => ex.id === chosenId)
             : options[0];
 
+        return {
+            choiceKey,
+            exerciseVM: chosen ? this._buildExerciseVM(chosen, weekNum, dayNum, choiceKey) : null
+        };
+    },
+
+    // Pure HTML rendering from choose-one view-model
+    _renderChooseOne(groupOrVM, weekNum, dayNum) {
+        // Accept either a pre-built VM or raw group
+        const vm = groupOrVM.exerciseVM !== undefined
+            ? groupOrVM
+            : this._buildChooseOneVM(groupOrVM, weekNum, dayNum);
+
         let exerciseHtml = '';
-        if (chosen) {
-            exerciseHtml = this._renderExercise(chosen, weekNum, dayNum, choiceKey);
+        if (vm.exerciseVM) {
+            exerciseHtml = this._renderExercise(vm.exerciseVM);
         }
 
         return `<div class="choose-one-group">${exerciseHtml}</div>`;
     },
 
     // ===== HISTORY VIEW =====
-    renderHistory(exerciseId) {
+
+    // Data preparation for history — all Storage reads and data processing
+    _buildHistoryVM(exerciseId) {
         const allHistory = Storage.getExerciseHistory(exerciseId);
         const unit = Storage.getExerciseUnit(exerciseId) || Storage.getWeightUnit();
         const unitLabels = { kg: 'кг', lbs: 'lbs', plates: 'пл' };
@@ -1002,7 +1039,7 @@ export const UI = {
         const currentEqId = Storage.getExerciseEquipment(exerciseId);
         const currentEq = currentEqId ? Storage.getEquipmentById(currentEqId) : null;
 
-        // Find exercise name using getGroupExercises helper
+        // Find exercise name
         let exerciseName = exerciseId;
         var _p2 = Storage.getProgram();
         for (let d = 1; d <= getTotalDays(); d++) {
@@ -1018,11 +1055,10 @@ export const UI = {
                 }
             }
         }
-        // Apply substitution if exists
         const subName = Storage.getSubstitution(exerciseId);
         if (subName) exerciseName = subName;
 
-        // Filter history by current equipment if selected
+        // Filter history by current equipment
         let history, otherHistory;
         if (currentEqId) {
             history = allHistory.map(entry => {
@@ -1038,8 +1074,45 @@ export const UI = {
             otherHistory = [];
         }
 
+        // Compute chart data
+        const weekMap = {};
+        for (const e of history) {
+            const mw = Math.max(...e.sets.map(s => s.weight || 0));
+            if (mw > 0 && (!weekMap[e.week] || mw > weekMap[e.week])) weekMap[e.week] = mw;
+        }
+        const chartWeeks = Object.keys(weekMap).map(Number).sort((a, b) => a - b);
+        const chartValues = chartWeeks.map(w => weekMap[w]);
+
+        // Resolve equipment names for "other" groups
+        const otherByEquipment = {};
+        for (const entry of otherHistory) {
+            const eqKey = (entry.sets[0] && entry.sets[0].equipmentId) || '_none';
+            if (!otherByEquipment[eqKey]) {
+                const eq = eqKey !== '_none' ? Storage.getEquipmentById(eqKey) : null;
+                otherByEquipment[eqKey] = { name: eq ? eq.name : 'Без оборудования', entries: [] };
+            }
+            otherByEquipment[eqKey].entries.push(entry);
+        }
+
+        return {
+            exerciseName, unitLabel,
+            currentEqName: currentEq ? currentEq.name : null,
+            hasCurrentEq: !!currentEqId,
+            history, otherByEquipment,
+            chartWeeks, chartValues
+        };
+    },
+
+    // Pure HTML rendering from history view-model
+    renderHistory(exerciseId) {
+        const vm = this._buildHistoryVM(exerciseId);
+        const { exerciseName, unitLabel, currentEqName, hasCurrentEq,
+                history, otherByEquipment, chartWeeks, chartValues } = vm;
+
         let contentHtml = '';
-        if (history.length === 0 && otherHistory.length === 0) {
+        const noHistory = history.length === 0 && Object.keys(otherByEquipment).length === 0;
+
+        if (noHistory) {
             contentHtml = '<p class="history-empty">Нет записей</p>';
         } else {
             let maxWeight = 0;
@@ -1068,23 +1141,15 @@ export const UI = {
             };
 
             // Progress chart — max weight per week, SVG line chart
-            const weekMap = {};
-            for (const e of history) {
-                const mw = Math.max(...e.sets.map(s => s.weight || 0));
-                if (mw > 0 && (!weekMap[e.week] || mw > weekMap[e.week])) weekMap[e.week] = mw;
-            }
-            const weeks = Object.keys(weekMap).map(Number).sort((a, b) => a - b);
-            if (weeks.length > 1) {
-                const values = weeks.map(w => weekMap[w]);
-                const minV = Math.min(...values);
-                const maxV = Math.max(...values);
+            if (chartWeeks.length > 1) {
+                const minV = Math.min(...chartValues);
+                const maxV = Math.max(...chartValues);
                 const pad = { top: 22, right: 12, bottom: 24, left: 38 };
                 const W = 320, H = 130;
                 const cW = W - pad.left - pad.right, cH = H - pad.top - pad.bottom;
                 const range = maxV - minV || 1;
-                const x = (i) => pad.left + (i / (weeks.length - 1)) * cW;
+                const x = (i) => pad.left + (i / (chartWeeks.length - 1)) * cW;
                 const y = (v) => pad.top + cH - ((v - minV) / range) * cH;
-                // Grid lines (3 levels)
                 let gridHtml = '';
                 const gridSteps = [minV, minV + range / 2, maxV];
                 for (const gv of gridSteps) {
@@ -1092,18 +1157,16 @@ export const UI = {
                     gridHtml += `<line x1="${pad.left}" y1="${gy}" x2="${W - pad.right}" y2="${gy}" class="chart-grid"/>`;
                     gridHtml += `<text x="${pad.left - 5}" y="${gy + 3}" class="chart-y-label">${Math.round(gv)}</text>`;
                 }
-                // X labels
                 let xLabels = '';
-                const step = weeks.length <= 12 ? 1 : Math.ceil(weeks.length / 8);
-                for (let i = 0; i < weeks.length; i += step) {
-                    xLabels += `<text x="${x(i)}" y="${H - 4}" class="chart-x-label">W${weeks[i]}</text>`;
+                const step = chartWeeks.length <= 12 ? 1 : Math.ceil(chartWeeks.length / 8);
+                for (let i = 0; i < chartWeeks.length; i += step) {
+                    xLabels += `<text x="${x(i)}" y="${H - 4}" class="chart-x-label">W${chartWeeks[i]}</text>`;
                 }
-                // Line + points
-                const pts = values.map((v, i) => `${x(i)},${y(v)}`).join(' ');
+                const pts = chartValues.map((v, i) => `${x(i)},${y(v)}`).join(' ');
                 let circles = '';
-                for (let i = 0; i < values.length; i++) {
-                    const isLast = i === values.length - 1;
-                    circles += `<circle cx="${x(i)}" cy="${y(values[i])}" r="${isLast ? 4 : 3}" class="chart-point${isLast ? ' last' : ''}"><title>W${weeks[i]}: ${values[i]}${unitLabel}</title></circle>`;
+                for (let i = 0; i < chartValues.length; i++) {
+                    const isLast = i === chartValues.length - 1;
+                    circles += `<circle cx="${x(i)}" cy="${y(chartValues[i])}" r="${isLast ? 4 : 3}" class="chart-point${isLast ? ' last' : ''}"><title>W${chartWeeks[i]}: ${chartValues[i]}${unitLabel}</title></circle>`;
                 }
                 contentHtml += `<div class="progress-chart"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
                     ${gridHtml}${xLabels}
@@ -1112,31 +1175,21 @@ export const UI = {
                 </svg></div>`;
             }
 
-            if (currentEq) {
-                contentHtml += `<div class="history-equipment-title">${esc(currentEq.name)}</div>`;
+            if (currentEqName) {
+                contentHtml += `<div class="history-equipment-title">${esc(currentEqName)}</div>`;
             }
 
             if (history.length > 0) {
                 contentHtml += renderEntries(history);
-            } else if (currentEqId) {
+            } else if (hasCurrentEq) {
                 contentHtml += '<p class="history-empty">Нет записей для этого оборудования</p>';
             }
 
-            // Show other equipment data as secondary section
-            if (otherHistory.length > 0) {
-                // Group other entries by equipment
-                const byEquipment = {};
-                for (const entry of otherHistory) {
-                    const eqKey = (entry.sets[0] && entry.sets[0].equipmentId) || '_none';
-                    if (!byEquipment[eqKey]) byEquipment[eqKey] = [];
-                    byEquipment[eqKey].push(entry);
-                }
-                for (const eqKey of Object.keys(byEquipment)) {
-                    const eq = eqKey !== '_none' ? Storage.getEquipmentById(eqKey) : null;
-                    const eqName = eq ? eq.name : 'Без оборудования';
-                    contentHtml += `<div class="history-equipment-title history-other-eq">${esc(eqName)}</div>`;
-                    contentHtml += renderEntries(byEquipment[eqKey]);
-                }
+            // Other equipment sections
+            for (const eqKey of Object.keys(otherByEquipment)) {
+                const group = otherByEquipment[eqKey];
+                contentHtml += `<div class="history-equipment-title history-other-eq">${esc(group.name)}</div>`;
+                contentHtml += renderEntries(group.entries);
             }
 
             if (maxWeight > 0) {
@@ -1145,7 +1198,7 @@ export const UI = {
         }
 
         const subtitleParts = [exerciseName];
-        if (currentEq) subtitleParts.push(currentEq.name);
+        if (currentEqName) subtitleParts.push(currentEqName);
 
         document.getElementById('app').innerHTML = `
             <div class="app-header">

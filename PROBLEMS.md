@@ -31,13 +31,20 @@
 
 ---
 
-### 3. UI = data logic + rendering в одном
+### 3. UI = data logic + rendering в одном — ✅ частично решено
 
-**Где:** `js/ui.js` (2047 строк), `js/social-ui.js` (1333 строк)
+**Где:** `js/ui.js`
 
-**Проблема:** `UI.renderDay()` смешивает получение данных (`Storage.getSetLog()`, `resolveWorkout()`), вычисление бизнес-логики (процент выполнения, previous log lookup), и генерацию HTML.
+**Что изменилось:** Все основные render-методы теперь следуют паттерну `_buildXxxVM()` → `_renderXxx(vm)`:
 
-**Решение:** Вынести data-preparation в отдельные функции. Render принимает готовые данные.
+- `_buildDayVM()` → `renderDay()` (было с начала рефакторинга)
+- `_buildSetRowVM()` → `_renderSetRow()` (было с начала рефакторинга)
+- `_buildWeekVM()` → `_weekCardsHTML()` (было с начала рефакторинга)
+- **NEW:** `_buildExerciseVM()` → `_renderExercise()` — вынесены Storage.getSettings(), getExerciseEquipment(), getEquipmentById(), getSubstitution()
+- **NEW:** `_buildChooseOneVM()` → `_renderChooseOne()` — вынесен Storage.getChoice()
+- **NEW:** `_buildHistoryVM()` → `renderHistory()` — вынесены все Storage-вызовы, фильтрация по оборудованию, chart data
+
+**Что осталось:** `social-ui.js` — аналогичное разделение для social рендеров (feed, profile, checkin). Менее критично — social экраны проще.
 
 ---
 
@@ -95,7 +102,7 @@
 |---|----------|-----------|-----------|
 | 1 | ~~11 циклических импортов~~ | — | ✅ Решено |
 | 2 | ~~handleClick 1530 строк~~ → ~200 строк (social + builder + workout вынесены) | — | ✅ Решено |
-| 3 | UI = data + render | Высокая | 🟡 P1 |
+| 3 | ~~UI = data + render~~ → VM-паттерн в ui.js (social-ui.js осталось) | — | ✅ Частично |
 | 4 | innerHTML re-render | Средняя | 🟡 P1 |
 | 5 | ~~Дублирование closest-паттерна~~ | — | ✅ Решено |
 | 6 | Хрупкая _migrateExerciseNames | Средняя | 🟢 P2 |
@@ -117,6 +124,6 @@
 
 ~~Шаг 2c~~ ✅ — Workout + modal handlers → `WorkoutUI.handleClick()` / `WorkoutUI.handleModalClick()` в `js/workout-ui.js` (~570 строк). handleInput/handleFocus также делегированы.
 
-**Шаг 3 — Отделить data от render (#3):**
+~~Шаг 3~~ ✅ — Отделить data от render (#3) в `ui.js`:
 
-Начать с `UI.renderDay()` — самый сложный и самый используемый. Вынести data-preparation.
+Все ключевые render-методы используют VM-паттерн: `_buildExerciseVM()`, `_buildChooseOneVM()`, `_buildHistoryVM()`. Ранее уже были `_buildDayVM()`, `_buildSetRowVM()`, `_buildWeekVM()`. Social-ui.js — на будущее.
