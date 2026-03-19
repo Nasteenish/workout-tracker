@@ -151,6 +151,22 @@ export const RestTimer = {
         }, 250);
     },
 
+    /** Re-insert timer bar into DOM after innerHTML re-render destroys it */
+    reattach() {
+        var bar = this._bar;
+        if (!bar) return;
+        // Timer actively running or paused — re-insert floating bar
+        if (this._interval) {
+            if (!bar.parentNode) document.body.appendChild(bar);
+            bar.classList.add('active', 'floating');
+            return;
+        }
+        // No interval but saved state exists (e.g. app restart) — full restore
+        if (localStorage.getItem('_wt_timer')) {
+            this._restoreState();
+        }
+    },
+
     stop() {
         if (this._interval) clearInterval(this._interval);
         this._interval = null;

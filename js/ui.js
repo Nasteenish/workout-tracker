@@ -7,6 +7,7 @@ import { Builder } from './builder.js';
 import { AppState } from './app-state.js';
 import { EquipmentManager } from './equipment-manager.js';
 import { WorkoutTimer } from './workout-timer.js';
+import { RestTimer } from './timer.js';
 import { formatDateISO, markCachedThumbs, esc, exThumbHtml, getGroupExercises, findExerciseInProgram } from './utils.js';
 import { getTotalWeeks, getTotalDays, getProgressWeek, getCompletedSets, resolveWorkout, exName } from './program-utils.js';
 import { EXERCISE_DB } from './exercises_db.js';
@@ -709,6 +710,7 @@ export const UI = {
                 while (offscreen.firstChild) appEl.appendChild(offscreen.firstChild);
                 offscreen.remove();
                 if (timerRunning) WorkoutTimer.resume(AppState.currentWeek, AppState.currentDay);
+                RestTimer.reattach();
                 markCachedThumbs();
                 _restoreFocus(focusInfo);
             };
@@ -722,6 +724,7 @@ export const UI = {
         } else {
             appEl.innerHTML = newHTML;
             if (timerRunning) WorkoutTimer.resume(AppState.currentWeek, AppState.currentDay);
+            RestTimer.reattach();
             markCachedThumbs();
             _restoreFocus(focusInfo);
         }
