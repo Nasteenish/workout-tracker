@@ -10,6 +10,8 @@ export const RestTimer = {
     _endTime: null,
     _pausedAt: null,
     _bar: null,
+    _targetExId: null,
+    _targetSetIdx: null,
 
     init() {
         const settings = Storage.getSettings();
@@ -106,6 +108,10 @@ export const RestTimer = {
         this._updateDisplay();
         this._updatePauseBtn();
 
+        // Save target row identity for reattach after re-render
+        this._targetExId = targetRow ? targetRow.getAttribute('data-exercise') : null;
+        this._targetSetIdx = targetRow ? targetRow.getAttribute('data-set') : null;
+
         // Ensure notification permission for background alerts
         if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission();
@@ -115,20 +121,9 @@ export const RestTimer = {
 
         // Insert timer inline after completed set/exercise
         var bar = this._bar;
+        bar.classList.remove('floating');
         if (bar.parentNode) bar.remove();
-        if (targetRow) {
-            var card = targetRow.closest('.exercise-card') || targetRow.closest('.superset-group');
-            var nextSib = targetRow.nextElementSibling;
-            var isLastSet = !nextSib || !nextSib.classList.contains('set-row');
-            if (isLastSet && card) {
-                card.after(bar);
-            } else {
-                targetRow.after(bar);
-            }
-        } else {
-            // Fallback: append to body as fixed
-            document.body.appendChild(bar);
-        }
+        this._insertAfterRow(targetRow);
         bar.classList.add('active');
         this._saveState();
 
@@ -151,14 +146,45 @@ export const RestTimer = {
         }, 250);
     },
 
+    /** Find the set row in current DOM and insert bar after it (same logic as start()) */
+    _insertAfterRow(targetRow) {
+        var bar = this._bar;
+        if (bar.parentNode) bar.remove();
+        if (targetRow) {
+            var card = targetRow.closest('.exercise-card') || targetRow.closest('.superset-group');
+            var nextSib = targetRow.nextElementSibling;
+            var isLastSet = !nextSib || !nextSib.classList.contains('set-row');
+            if (isLastSet && card) {
+                card.after(bar);
+            } else {
+                targetRow.after(bar);
+            }
+        } else {
+            document.body.appendChild(bar);
+            bar.classList.add('floating');
+        }
+    },
+
+    /** Find set row by saved exercise/set data attributes */
+    _findTargetRow() {
+        if (!this._targetExId || this._targetSetIdx == null) return null;
+        return document.querySelector(
+            '.set-row[data-exercise="' + this._targetExId + '"][data-set="' + this._targetSetIdx + '"]'
+        );
+    },
+
     /** Re-insert timer bar into DOM after innerHTML re-render destroys it */
     reattach() {
         var bar = this._bar;
         if (!bar) return;
-        // Timer actively running or paused — re-insert floating bar
+        // Timer actively running or paused — re-insert at correct position
         if (this._interval) {
-            if (!bar.parentNode) document.body.appendChild(bar);
-            bar.classList.add('active', 'floating');
+            if (!bar.isConnected) {
+                bar.classList.remove('floating');
+                var row = this._findTargetRow();
+                this._insertAfterRow(row);
+                bar.classList.add('active');
+            }
             return;
         }
         // No interval but saved state exists (e.g. app restart) — full restore
@@ -445,7 +471,9 @@ export const RestTimer = {
             endTime: this._endTime,
             paused: this._paused,
             pausedAt: this._pausedAt,
-            defaultDuration: this._defaultDuration
+            defaultDuration: this._defaultDuration,
+            exId: this._targetExId,
+            setIdx: this._targetSetIdx
         }));
     },
 
@@ -475,6 +503,8 @@ export const RestTimer = {
             this._paused = s.paused;
             this._pausedAt = s.pausedAt;
             this._defaultDuration = s.defaultDuration || this._defaultDuration;
+            this._targetExId = s.exId || null;
+            this._targetSetIdx = s.setIdx != null ? s.setIdx : null;
 
             if (this._paused) {
                 const drift = Date.now() - s.pausedAt;
@@ -482,10 +512,12 @@ export const RestTimer = {
                 this._pausedAt = Date.now();
             }
 
-            // Fallback: append to body since we don't know which set-row to attach to
+            // Insert at correct position (or floating fallback)
             var bar = this._bar;
-            if (!bar.parentNode) document.body.appendChild(bar);
-            bar.classList.add('active', 'floating');
+            bar.classList.remove('floating');
+            var row = this._findTargetRow();
+            this._insertAfterRow(row);
+            bar.classList.add('active');
             this._updateDisplay();
             this._updatePauseBtn();
 
