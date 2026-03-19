@@ -1,0 +1,636 @@
+/* ===== Workout Click/Input/Focus Handlers (extracted from app.js) ===== */
+import { Storage } from './storage.js';
+import { UI } from './ui.js';
+import { Social } from './social.js';
+import { RestTimer } from './timer.js';
+import { WorkoutTimer } from './workout-timer.js';
+import { EquipmentManager } from './equipment-manager.js';
+import { Celebration } from './celebration.js';
+import { WORKOUT, EQ, read, readInt } from './data-attrs.js';
+import { findExerciseInProgram, parseWeight, parseReps, formatDateISO } from './utils.js';
+import { getCompletedSets } from './program-utils.js';
+
+export const WorkoutUI = {
+    // Callbacks — wired in App.init()
+    _onInvalidateCache: null,   // (hash?) => void
+    _onRoute: null,             // () => void
+
+    // ===== Workout day click handlers =====
+    handleClick(target, week, day) {
+        // Unit cycle button
+        if (target.matches('.unit-cycle-btn')) {
+            const exId = read(target, WORKOUT.EXERCISE);
+            const units = ['kg', 'lbs', 'plates'];
+            const labels = { kg: 'кг', lbs: 'lbs', plates: 'пл' };
+            const current = Storage.getExerciseUnit(exId) || Storage.getWeightUnit();
+            const next = units[(units.indexOf(current) + 1) % units.length];
+            Storage.setExerciseUnit(exId, next);
+            const nextLabel = labels[next];
+            document.querySelectorAll('.unit-cycle-btn[' + WORKOUT.EXERCISE + '="' + exId + '"]').forEach(b => {
+                b.textContent = nextLabel;
+            });
+            document.querySelectorAll('.set-prev-unit[' + WORKOUT.EXERCISE + '="' + exId + '"]').forEach(s => {
+                s.textContent = nextLabel;
+            });
+            return true;
+        }
+
+        // Start workout timer
+        if (target.id === 'btn-start-workout') {
+            UI.showGymModal(function(gymId) {
+                Storage.saveWorkoutGym(week, day, gymId || null);
+                if (gymId) {
+                    Storage.touchGym(gymId);
+                    if (Storage.gymHasEquipmentMap(gymId)) {
+                        Storage.applyGymEquipment(gymId);
+                    } else {
+                        Storage.initGymFromCurrentEquipment(gymId);
+                    }
+                }
+                WorkoutTimer.start(week, day);
+                UI.renderDay(week, day);
+            });
+            return true;
+        }
+
+        if (target.id === 'btn-pause-workout') {
+            WorkoutTimer.pause(week, day);
+            UI.renderDay(week, day);
+            return true;
+        }
+
+        if (target.id === 'btn-resume-workout') {
+            WorkoutTimer.unpause(week, day);
+            UI.renderDay(week, day);
+            return true;
+        }
+
+        if (target.id === 'btn-cancel-workout') {
+            WorkoutTimer.cancel(week, day);
+            UI.renderDay(week, day);
+            return true;
+        }
+
+        // Add set button
+        if (target.closest('.add-set-btn')) {
+            const btn = target.closest('.add-set-btn');
+            const exId = read(btn, WORKOUT.EXERCISE);
+            this._addSet(exId, week, day);
+            return true;
+        }
+
+        // Remove set button
+        if (target.closest('.remove-set-btn')) {
+            const btn = target.closest('.remove-set-btn');
+            const exId = read(btn, WORKOUT.EXERCISE);
+            this._removeSet(exId, week, day);
+            return true;
+        }
+
+        // Equipment button
+        if (target.closest('.equipment-btn')) {
+            const btn = target.closest('.equipment-btn');
+            const exId = read(btn, WORKOUT.EXERCISE);
+            UI.showEquipmentModal(exId, read(btn, WORKOUT.EX_NAME) || '', read(btn, WORKOUT.EX_NAME_RU) || '');
+            return true;
+        }
+
+        // Complete button
+        if (target.closest('.complete-btn')) {
+            const btn = target.closest('.complete-btn');
+            const exId = read(btn, WORKOUT.EXERCISE);
+            const setIdx = readInt(btn, WORKOUT.SET);
+            const eqId = Storage.getExerciseEquipment(exId);
+
+            const row = btn.closest('.set-row');
+            const weightInput = row.querySelector('.weight-input');
+            const repsInput = row.querySelector('.reps-input');
+            const weight = parseWeight(weightInput.value) || parseWeight(weightInput.placeholder);
+            const reps = parseReps(repsInput.value) || parseReps(repsInput.placeholder);
+
+            const existing = Storage.getSetLog(week, day, exId, setIdx);
+            if (existing && existing.completed) {
+                Storage.toggleSetComplete(week, day, exId, setIdx, eqId);
+                btn.classList.remove('completed');
+                row.classList.remove('done');
+                btn.innerHTML = '<svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18.5" stroke="rgba(157,141,245,0.4)" stroke-width="1.5"/></svg>';
+            } else {
+                if (weight > 0) {
+                    weightInput.value = weight;
+                }
+                if (reps > 0) {
+                    repsInput.value = reps;
+                }
+                Storage.saveSetLog(week, day, exId, setIdx, weight, reps, eqId);
+                var activeGym = EquipmentManager.getActiveGymId(week, day);
+                if (activeGym && eqId) {
+                    Storage.setGymExerciseEquipment(activeGym, exId, eqId);
+                    EquipmentManager.shareToGymEquipment(exId, Storage.getEquipmentById(eqId), week, day);
+                }
+
+                row.querySelectorAll('.seg-weight-input[' + WORKOUT.SEG + ']').forEach(inp => {
+                    var si = readInt(inp, WORKOUT.SEG);
+                    if (si > 0 && inp.value) Storage.saveSegWeight(week, day, exId, setIdx, si, inp.value);
+                });
+                row.querySelectorAll('.seg-reps-input[' + WORKOUT.SEG + ']').forEach(inp => {
+                    var si = readInt(inp, WORKOUT.SEG);
+                    if (si > 0 && inp.value) Storage.saveSegReps(week, day, exId, setIdx, si, inp.value);
+                });
+
+                btn.classList.add('completed');
+                const gid = `cg-${exId}-${setIdx}`;
+                btn.innerHTML = `<svg width="40" height="40" viewBox="0 0 40 40"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#C3FF3C"/><stop offset="1" stop-color="#5AA00A"/></linearGradient></defs><circle cx="20" cy="20" r="20" fill="url(#${gid})"/><g transform="translate(11,11)"><path d="M4 9l3.5 3.5L14 5.5" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`;
+                btn.classList.add('pop');
+                btn.addEventListener('animationend', () => btn.classList.remove('pop'), { once: true });
+                row.classList.add('done');
+
+                var progress = getCompletedSets(week, day);
+                if (progress.total > 0 && progress.completed >= progress.total) {
+                    this._showFinishButton(week, day);
+                } else {
+                    RestTimer.start(row);
+                }
+            }
+            // Invalidate week cache (progress changed)
+            if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week);
+            return true;
+        }
+
+        // Choose one: tap exercise name to open selector
+        if (target.closest('.exercise-name-chooser')) {
+            const el = target.closest('.exercise-name-chooser');
+            UI.showChoiceModal(read(el, WORKOUT.CHOICE_KEY));
+            return true;
+        }
+
+        // Choice modal: close on overlay
+        if (target.id === 'choice-modal') {
+            UI.hideChoiceModal();
+            return true;
+        }
+
+        // History button
+        if (target.closest('.history-btn')) {
+            const btn = target.closest('.history-btn');
+            const exId = read(btn, WORKOUT.EXERCISE);
+            location.hash = `#/history/${encodeURIComponent(exId)}`;
+            return true;
+        }
+
+        // Export
+        if (target.id === 'btn-export') {
+            const data = Storage.exportData();
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `workout-data-${formatDateISO(new Date())}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            return true;
+        }
+
+        // Import
+        if (target.id === 'btn-import') {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (ev) => {
+                const file = ev.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (Storage.importData(e.target.result)) {
+                        alert('Данные импортированы!');
+                        if (this._onRoute) this._onRoute();
+                    } else {
+                        alert('Ошибка импорта файла');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+            return true;
+        }
+
+        return false;
+    },
+
+    // ===== Modal click handlers (substitution, gym, choice, equipment) =====
+    handleModalClick(target, week, day) {
+        // Substitution modal — select exercise from list (must be before eq-option handler)
+        if (target.closest('.sub-option')) {
+            const opt = target.closest('.sub-option');
+            const exId = read(opt, WORKOUT.TARGET_EXERCISE);
+            const subName = read(opt, WORKOUT.SUB_NAME);
+            Storage.setSubstitution(exId, subName);
+            UI.hideSubstitutionModal();
+            if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week + '/day/' + day);
+            UI.renderDay(week, day);
+            return true;
+        }
+
+        // Substitution modal — add custom name
+        if (target.closest('#sub-add-custom-btn')) {
+            const input = document.getElementById('sub-custom-name');
+            const name = input ? input.value.trim() : '';
+            if (!name) return true;
+            const modal = document.getElementById('substitution-modal');
+            const exId = modal ? modal._exerciseId : null;
+            if (exId) {
+                Storage.setSubstitution(exId, name);
+                UI.hideSubstitutionModal();
+                UI.renderDay(week, day);
+            }
+            return true;
+        }
+
+        // Substitution modal — revert to original
+        if (target.closest('.sub-revert-btn')) {
+            const btn = target.closest('.sub-revert-btn');
+            const exId = read(btn, WORKOUT.EXERCISE);
+            Storage.removeSubstitution(exId);
+            UI.hideSubstitutionModal();
+            UI.renderDay(week, day);
+            return true;
+        }
+
+        // Substitution modal — close button or overlay
+        if (target.closest('#sub-close-btn') || target.id === 'substitution-modal') {
+            UI.hideSubstitutionModal();
+            return true;
+        }
+
+        // Gym modal — select gym
+        if ((target.closest('.eq-option[' + EQ.GYM_ID + ']')) && target.closest('#gym-modal')) {
+            var opt = target.closest('.eq-option[' + EQ.GYM_ID + ']');
+            var gymId = read(opt, EQ.GYM_ID) || null;
+            var modal = document.getElementById('gym-modal');
+            var onSelect = modal ? modal._onSelect : null;
+            UI.hideGymModal();
+            if (onSelect) onSelect(gymId);
+            return true;
+        }
+
+        // Gym modal — select shared gym from search results
+        if (target.closest('.gym-shared-item')) {
+            var item = target.closest('.gym-shared-item');
+            var sharedId = read(item, EQ.GYM_SHARED_ID);
+            if (sharedId) {
+                Storage.addMyGym(sharedId);
+                var modal = document.getElementById('gym-modal');
+                var onSelect = modal ? modal._onSelect : null;
+                UI.hideGymModal();
+                if (onSelect) onSelect(sharedId);
+            }
+            return true;
+        }
+
+        // Gym modal — add new gym
+        if (target.closest('#gym-add-btn')) {
+            var input = document.getElementById('gym-new-name');
+            var name = input ? input.value.trim() : '';
+            if (!name) return true;
+            // Show city prompt
+            var prompt = document.getElementById('gym-city-prompt');
+            if (prompt) {
+                prompt.style.display = 'flex';
+                var cityInput = document.getElementById('gym-new-city');
+                if (cityInput) { cityInput.value = ''; cityInput.focus(); }
+            }
+            return true;
+        }
+
+        // Gym modal — confirm city and save (creates in Supabase shared_gyms)
+        if (target.closest('#gym-city-ok')) {
+            var input = document.getElementById('gym-new-name');
+            var cityInput = document.getElementById('gym-new-city');
+            var name = input ? input.value.trim() : '';
+            var city = cityInput ? cityInput.value.trim() : '';
+            if (!name) return true;
+            var modal = document.getElementById('gym-modal');
+            var onSelect = modal ? modal._onSelect : null;
+            // Create gym in Supabase, then add locally
+            if (Social) {
+                Social.addSharedGym(name, city).then(function(shared) {
+                    if (shared && shared.id) {
+                        // Add to gym cache
+                        Storage._gymCache.push(shared);
+                        Storage.addMyGym(shared.id);
+                        UI.hideGymModal();
+                        if (onSelect) onSelect(shared.id);
+                    }
+                }).catch(function(e) {
+                    console.error('Failed to create gym:', e);
+                    alert('Не удалось создать зал. Проверь интернет.');
+                });
+            }
+            return true;
+        }
+
+        // Gym modal — close on overlay
+        if (target.id === 'gym-modal') {
+            UI.hideGymModal();
+            return true;
+        }
+
+        // Gym geo suggestion — Yes
+        if (target.id === 'gym-geo-yes') {
+            var gymId = read(target, EQ.GYM_ID);
+            var modal = document.getElementById('gym-modal');
+            var onSelect = modal ? modal._onSelect : null;
+            UI.hideGymModal();
+            if (onSelect) onSelect(gymId);
+            return true;
+        }
+
+        // Gym geo suggestion — No
+        if (target.id === 'gym-geo-no') {
+            var el = document.getElementById('gym-geo-suggestion');
+            if (el) el.style.display = 'none';
+            return true;
+        }
+
+        // Gym link prompt — Yes (link current equipment to gym)
+        if (target.id === 'gym-link-yes') {
+            var gymId = read(target, EQ.GYM_ID);
+            Storage.initGymFromCurrentEquipment(gymId);
+            UI.hideGymModal();
+            WorkoutTimer.start(week, day);
+            UI.renderDay(week, day);
+            return true;
+        }
+
+        // Gym link prompt — No (skip linking)
+        if (target.id === 'gym-link-no') {
+            var gymId = read(target, EQ.GYM_ID);
+            UI.hideGymModal();
+            WorkoutTimer.start(week, day);
+            UI.renderDay(week, day);
+            return true;
+        }
+
+        // Choice modal: select option (must be before eq-option handler)
+        if (target.closest('.eq-option[' + WORKOUT.CHOICE_KEY + ']')) {
+            const opt = target.closest('.eq-option[' + WORKOUT.CHOICE_KEY + ']');
+            const choiceKey = read(opt, WORKOUT.CHOICE_KEY);
+            const exerciseId = read(opt, WORKOUT.EXERCISE_ID);
+            Storage.saveChoice(choiceKey, exerciseId);
+            UI.hideChoiceModal();
+            if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week + '/day/' + day);
+            UI.renderDay(week, day);
+            return true;
+        }
+
+        // Equipment modal — ignore clicks on inputs
+        if (target.closest('#equipment-modal') && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+            return true;
+        }
+
+        // Equipment modal — select option
+        if (target.closest('.eq-option')) {
+            const opt = target.closest('.eq-option');
+            const eqId = read(opt, EQ.ID);
+            const exId = read(opt, WORKOUT.EXERCISE);
+            this._bindEquipment(exId, eqId || null, eqId ? Storage.getEquipmentById(eqId) : null, week, day);
+            return true;
+        }
+
+        // Equipment modal — add new custom
+        if (target.closest('#eq-add-btn')) {
+            const input = document.getElementById('eq-new-name');
+            const name = input ? input.value.trim() : '';
+            if (!name) return true;
+            const modal = document.getElementById('equipment-modal');
+            const exId = modal ? modal._exerciseId : null;
+            const muscleGroup = modal ? modal._muscleGroup : null;
+            const newId = Storage.addEquipment(name);
+            if (Social && muscleGroup && muscleGroup !== 'all') {
+                Social.addSharedEquipment(name, muscleGroup).catch(function() {});
+            }
+            if (exId) {
+                this._bindEquipment(exId, newId, { name: name }, week, day);
+            }
+            return true;
+        }
+
+        // Equipment modal — click search result (catalog or shared)
+        if (target.closest('.eq-search-item')) {
+            var item = target.closest('.eq-search-item');
+            var eqName = read(item, EQ.NAME);
+            var catalogId = read(item, EQ.CATALOG_ID) ? readInt(item, EQ.CATALOG_ID) : null;
+            if (!eqName) return true;
+            var modal = document.getElementById('equipment-modal');
+            var exId = modal ? modal._exerciseId : null;
+            var muscleGroup = modal ? modal._muscleGroup : null;
+            var eqImageUrl2 = read(item, EQ.IMAGE) || null;
+            var newId = Storage.addEquipment(eqName, undefined, eqImageUrl2);
+            if (Social && muscleGroup && muscleGroup !== 'all') {
+                Social.addSharedEquipment(eqName, muscleGroup).catch(function() {});
+            }
+            if (exId) {
+                this._bindEquipment(exId, newId, { name: eqName, catalogId: catalogId }, week, day);
+            } else {
+                UI.hideEquipmentModal();
+                UI.renderDay(week, day);
+            }
+            return true;
+        }
+
+        // Equipment modal — click gym equipment item
+        if (target.closest('.eq-gym-item')) {
+            var item = target.closest('.eq-gym-item');
+            var eqName = read(item, EQ.NAME);
+            if (!eqName) return true;
+            var modal = document.getElementById('equipment-modal');
+            var exId = modal ? modal._exerciseId : null;
+            var newId = Storage.addEquipment(eqName);
+            if (exId) {
+                this._bindEquipment(exId, newId, null, week, day);
+            } else {
+                UI.hideEquipmentModal();
+                UI.renderDay(week, day);
+            }
+            return true;
+        }
+
+        // Equipment modal — brand click → show brand equipment
+        if (target.closest('.eq-brand-item')) {
+            var brandItem = target.closest('.eq-brand-item');
+            var brand = read(brandItem, EQ.BRAND);
+            var extype = read(brandItem, EQ.EXTYPE) || null;
+            if (brand) EquipmentManager.loadBrandEquipment(brand, extype);
+            return true;
+        }
+
+        // Equipment modal — back to brands
+        if (target.closest('#eq-brand-back')) {
+            EquipmentManager.backToBrands();
+            return true;
+        }
+
+        // Equipment modal — select from catalog
+        if (target.closest('.eq-catalog-item')) {
+            var catItem = target.closest('.eq-catalog-item');
+            var eqName = read(catItem, EQ.NAME);
+            var catalogId = read(catItem, EQ.CATALOG_ID) ? readInt(catItem, EQ.CATALOG_ID) : null;
+            if (!eqName) return true;
+            var modal = document.getElementById('equipment-modal');
+            var exId = modal ? modal._exerciseId : null;
+            var eqImageUrl = read(catItem, EQ.IMAGE) || null;
+            var newId = Storage.addEquipment(eqName, undefined, eqImageUrl);
+            if (exId) {
+                Storage.linkEquipmentToExercise(exId, newId);
+                this._bindEquipment(exId, newId, { name: eqName, catalogId: catalogId }, week, day);
+            } else {
+                UI.hideEquipmentModal();
+                UI.renderDay(week, day);
+            }
+            return true;
+        }
+
+        // Equipment modal — remove current equipment
+        if (target.closest('#eq-remove-btn')) {
+            var modal = document.getElementById('equipment-modal');
+            var exId = modal ? modal._exerciseId : null;
+            if (exId) {
+                Storage.removeExerciseEquipment(exId);
+                var row = document.getElementById('eq-current-row');
+                if (row) row.remove();
+            }
+            UI.hideEquipmentModal();
+            UI.renderDay(week, day);
+            return true;
+        }
+
+        // Equipment modal — close on overlay or X button
+        if (target.closest('#eq-close')) {
+            UI.hideEquipmentModal();
+            return true;
+        }
+        if (target.id === 'equipment-modal') {
+            // Ignore phantom overlay clicks from iOS input focus (within 600ms)
+            var modal = document.getElementById('equipment-modal');
+            if (modal && modal._inputFocusedAt && (Date.now() - modal._inputFocusedAt < 600)) return true;
+            UI.hideEquipmentModal();
+            return true;
+        }
+
+        return false;
+    },
+
+    // ===== Input handlers (weight, reps, segments, equipment search, gym search) =====
+    handleInput(target, week, day, saveDebounced) {
+        // Weight input
+        if (target.matches('.weight-input')) {
+            const exId = read(target, WORKOUT.EXERCISE);
+            const setIdx = readInt(target, WORKOUT.SET);
+            saveDebounced(week, day, exId, setIdx, 'weight', target.value);
+            return true;
+        }
+
+        // Reps input
+        if (target.matches('.reps-input')) {
+            const exId = read(target, WORKOUT.EXERCISE);
+            const setIdx = readInt(target, WORKOUT.SET);
+            saveDebounced(week, day, exId, setIdx, 'reps', target.value);
+            return true;
+        }
+
+        // Extra segment reps (seg > 0)
+        if (target.matches('.seg-reps-input') && readInt(target, WORKOUT.SEG) > 0) {
+            const exId = read(target, WORKOUT.EXERCISE);
+            const setIdx = readInt(target, WORKOUT.SET);
+            const segIdx = readInt(target, WORKOUT.SEG);
+            Storage.saveSegReps(week, day, exId, setIdx, segIdx, target.value);
+            return true;
+        }
+
+        // Extra segment weight (seg > 0)
+        if (target.matches('.seg-weight-input') && readInt(target, WORKOUT.SEG) > 0) {
+            const exId = read(target, WORKOUT.EXERCISE);
+            const setIdx = readInt(target, WORKOUT.SET);
+            const segIdx = readInt(target, WORKOUT.SEG);
+            Storage.saveSegWeight(week, day, exId, setIdx, segIdx, target.value);
+            return true;
+        }
+
+        // Equipment search
+        if (target.id === 'eq-search') {
+            var query = target.value.trim();
+            EquipmentManager.searchEquipment(query);
+            return true;
+        }
+
+        // Gym modal — filter shared gyms as user types in search
+        if (target.id === 'gym-search-input') {
+            var query = target.value.trim().toLowerCase();
+            EquipmentManager.renderSharedGyms(query);
+            return true;
+        }
+
+        return false;
+    },
+
+    // ===== Focus handler (cursor to end) =====
+    handleFocus(target) {
+        if (target.matches('.weight-input') || target.matches('.reps-input') ||
+            target.matches('.seg-reps-input') || target.matches('.seg-weight-input')) {
+            requestAnimationFrame(() => {
+                const len = target.value.length;
+                target.setSelectionRange(len, len);
+            });
+            return true;
+        }
+        return false;
+    },
+
+    // ===== Helpers =====
+    _addSet(exerciseId, week, day) {
+        var p = Storage.getProgram();
+        var ex = findExerciseInProgram(p, exerciseId);
+        if (!ex) return;
+        var lastSet = ex.sets[ex.sets.length - 1] || { type: 'H', rpe: '8', techniques: [] };
+        ex.sets.push({ type: lastSet.type, rpe: lastSet.rpe, techniques: lastSet.techniques ? lastSet.techniques.slice() : [] });
+        Storage.saveProgram(p, false);
+        if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week);
+        UI.renderDay(week, day);
+    },
+
+    _removeSet(exerciseId, week, day) {
+        var p = Storage.getProgram();
+        var ex = findExerciseInProgram(p, exerciseId);
+        if (!ex || ex.sets.length <= 1) return;
+        ex.sets.pop();
+        Storage.saveProgram(p, false);
+        if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week);
+        UI.renderDay(week, day);
+    },
+
+    _showFinishButton(week, day) {
+        if (document.getElementById('finish-workout-btn')) return;
+        var container = document.querySelector('.day-slide');
+        if (!container) return;
+        var btn = document.createElement('button');
+        btn.id = 'finish-workout-btn';
+        btn.className = 'btn-finish-workout';
+        btn.textContent = 'ЗАВЕРШИТЬ ТРЕНИРОВКУ';
+        container.appendChild(btn);
+        setTimeout(function() { btn.classList.add('visible'); }, 50);
+        btn.addEventListener('click', function() {
+            btn.remove();
+            var elapsed = WorkoutTimer.stop(week, day);
+            Celebration.show(elapsed, week, day);
+        });
+    },
+
+    _bindEquipment(exId, eqId, shareInfo, week, day) {
+        Storage.setExerciseEquipment(exId, eqId);
+        var activeGym = EquipmentManager.getActiveGymId(week, day);
+        if (activeGym) Storage.setGymExerciseEquipment(activeGym, exId, eqId);
+        if (shareInfo) EquipmentManager.shareToGymEquipment(exId, shareInfo, week, day);
+        UI.hideEquipmentModal();
+        if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week + '/day/' + day);
+        UI.renderDay(week, day);
+    },
+};

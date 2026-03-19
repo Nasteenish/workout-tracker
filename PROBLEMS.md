@@ -21,15 +21,13 @@
 
 ## 🟡 Оставшиеся серьёзные проблемы
 
-### 2. `App.handleClick()` — частично решено
+### 2. `App.handleClick()` — ✅ решено
 
-**Где:** `js/app.js`, строки ~875–1940
+**Где:** `js/app.js`
 
-**Что изменилось:** app.js уменьшился с 2515 до ~1800 строк. 40+ social handlers (489 строк) вынесены в `SocialUI.handleClick()`. 29 builder/onboarding/setup handlers (248 строк) вынесены в `Builder.handleClick()`. `_replyToCommentId` перемещён из App в SocialUI.
+**Что изменилось:** app.js уменьшился с 2515 до ~1200 строк. 40+ social handlers (489 строк) вынесены в `SocialUI.handleClick()`. 29 builder/onboarding/setup handlers (248 строк) вынесены в `Builder.handleClick()`. Workout + modal handlers (~570 строк) вынесены в `WorkoutUI.handleClick()` / `WorkoutUI.handleModalClick()` (`js/workout-ui.js`). Также вынесены `handleInput` и `handleFocus`.
 
-**Что осталось внутри:** login, registration, workout (complete set, add/remove set, choice, substitution), settings, modals (gym, equipment).
-
-**Следующий шаг:** Вынести workout handlers → отдельный модуль или подметод.
+**Что осталось внутри:** login, registration, navigation, settings — лёгкий координатор.
 
 ---
 
@@ -98,7 +96,7 @@
 | # | Проблема | Сложность | Приоритет |
 |---|----------|-----------|-----------|
 | 1 | ~~11 циклических импортов~~ | — | ✅ Решено |
-| 2 | handleClick ~~1530~~ ~~1040~~ ~790 строк (social + builder вынесены) | Средняя | 🟡 P1 |
+| 2 | ~~handleClick 1530 строк~~ → ~200 строк (social + builder + workout вынесены) | — | ✅ Решено |
 | 3 | UI = data + render | Высокая | 🟡 P1 |
 | 4 | innerHTML re-render | Средняя | 🟡 P1 |
 | 5 | Дублирование closest-паттерна | Низкая | 🟡 P1 |
@@ -119,7 +117,7 @@
 
 ~~Шаг 2b~~ ✅ — Builder/onboarding/setup handlers → `Builder.handleClick()` (29 handlers, 248 строк). 9 callbacks injected в App.init().
 
-Шаг 2c — Workout handlers → отдельный модуль или подметод.
+~~Шаг 2c~~ ✅ — Workout + modal handlers → `WorkoutUI.handleClick()` / `WorkoutUI.handleModalClick()` в `js/workout-ui.js` (~570 строк). handleInput/handleFocus также делегированы.
 
 **Шаг 3 — Отделить data от render (#3):**
 

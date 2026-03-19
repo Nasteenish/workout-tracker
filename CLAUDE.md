@@ -20,7 +20,7 @@ python3 -m http.server 8000
 ```
 index.html              — SPA: Supabase CDN + <script type="module" src="main.js">
 js/main.js              — Entry: import App → App.init()
-js/app.js               — (2515) Роутинг, handleClick (1530 строк), init, auth
+js/app.js               — (~1200) Роутинг, init, auth, settings, navigation
 js/ui.js                — (2047) Рендер тренировок: week, day, history, settings
 js/builder.js           — (1646) Визард, редактор дня, picker, онбординг
 js/social-ui.js         — (1333) Рендер соцсети: feed, profile, checkin, messages
@@ -30,6 +30,7 @@ js/app-state.js         — (8) Shared readable state (currentWeek, currentDay, 
 js/program-utils.js     — (175) Storage-зависимые: resolveWorkout, exName, getTotalWeeks...
 js/utils.js             — (250) Чистые утилиты: esc(), даты, миниатюры, getGroupExercises
 js/data-attrs.js        — (121) Реестр data-атрибутов (WORKOUT, BUILDER, EQ, SOCIAL)
+js/workout-ui.js        — (~620) Workout + modal click/input/focus handlers (вынесено из app.js)
 js/equipment-manager.js — (444) Оборудование + залы (вынесено из app.js)
 js/swipe-nav.js         — (311) Свайп-навигация (вынесено из app.js)
 js/migrations.js        — (300) One-time data fixes (вынесено из app.js init)
@@ -70,17 +71,17 @@ sw.js                   — Service Worker (v543)
 
 | Изменение | Проверить |
 |---|---|
-| `Storage.saveSetLog()` / формат лога | `App.handleClick` (complete-btn), `UI._renderSetRow()`, `SupaSync._deepMergeLogs()` |
+| `Storage.saveSetLog()` / формат лога | `WorkoutUI.handleClick` (complete-btn), `UI._renderSetRow()`, `SupaSync._deepMergeLogs()` |
 | `Storage._data` структура | `SupaSync.syncOnLogin()` (merge), `Storage._load()` (миграция) |
-| `data-attrs.js` (имя атрибута) | Рендер (ui.js/social-ui.js/builder.js) + обработчик (app.js/equipment-manager.js) |
-| `UI.renderDay()` / `_renderSetRow()` | `App.handleClick()` — data-attrs должны совпадать с `read()`/`readInt()` |
-| `Social.*` API | `SocialUI.*`, `App.handleClick` (social handlers) |
+| `data-attrs.js` (имя атрибута) | Рендер (ui.js/social-ui.js/builder.js) + обработчик (workout-ui.js/app.js/equipment-manager.js) |
+| `UI.renderDay()` / `_renderSetRow()` | `WorkoutUI.handleClick()` — data-attrs должны совпадать с `read()`/`readInt()` |
+| `Social.*` API | `SocialUI.*`, `WorkoutUI.handleModalClick` (gym/equipment handlers) |
 | `SocialUI._tabBarHTML()` | Все экраны с tab bar |
 | `RestTimer.start()` | DOM-структура `.set-row` в `UI.renderDay()` |
 | Новый маршрут в `App.route()` | `SwipeNav._getSwipeConfig()` |
 | `UI.renderWeek()` | `UI._weekCardsHTML()`, `_weekViewHTML()` — swipe companions |
 | `Builder._editingDay` | `Builder.renderDayEditor()`, `Builder._autoSave()` |
-| `EquipmentManager.*` | `UI.showEquipmentModal()`, `App.handleClick` (eq handlers) |
+| `EquipmentManager.*` | `UI.showEquipmentModal()`, `WorkoutUI.handleModalClick` (eq handlers) |
 
 ### 3. Где хранится стейт
 
