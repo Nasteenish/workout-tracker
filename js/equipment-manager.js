@@ -317,7 +317,38 @@ export const EquipmentManager = {
     searchEquipment(query) {
         var resultsDiv = document.getElementById('eq-search-results');
         if (!resultsDiv) return;
-        if (!query || query.length < 2) { resultsDiv.innerHTML = ''; return; }
+        var browseAll = !query || query.length < 2;
+        if (browseAll) {
+            resultsDiv.innerHTML = '<div class="eq-search-empty">Загрузка...</div>';
+            clearTimeout(this._eqSearchTimer);
+            if (!Social) return;
+            this._eqSearchTimer = setTimeout(function() {
+                Social.getCatalogByGroup(null).then(function(catalog) {
+                    var div = document.getElementById('eq-search-results');
+                    if (!div) return;
+                    var input = document.getElementById('eq-search');
+                    if (input && input.value.trim().length >= 2) return;
+                    var html = '';
+                    var seen = {};
+                    for (var i = 0; i < catalog.length; i++) {
+                        var c = catalog[i];
+                        var cName = (c.brand ? c.brand + ' ' : '') + c.name;
+                        var k = cName.toLowerCase();
+                        if (seen[k]) continue;
+                        seen[k] = true;
+                        var sImgHtml = c.image_url ? '<img class="ex-thumb" src="' + esc(c.image_url) + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
+                        html += '<div class="eq-search-item" ' + attr(EQ.NAME, esc(cName)) + ' ' + attr(EQ.CATALOG_ID, c.id) + (c.image_url ? ' ' + attr(EQ.IMAGE, esc(c.image_url)) : '') + '>'
+                            + sImgHtml
+                            + '<span class="eq-shared-name">' + esc(cName) + '</span>'
+                            + (c.model ? '<span class="eq-catalog-model">' + esc(c.model) + '</span>' : '')
+                            + '</div>';
+                    }
+                    if (!html) html = '<div class="eq-search-empty">Каталог пуст</div>';
+                    div.innerHTML = html;
+                }).catch(function() {});
+            }, 100);
+            return;
+        }
         var ql = query.toLowerCase();
 
         var html = '';

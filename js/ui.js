@@ -1358,7 +1358,12 @@ export const UI = {
             }
         }
 
-        searchInput.addEventListener('focus', enterEqSearch);
+        searchInput.addEventListener('focus', function() {
+            enterEqSearch();
+            if (!searchInput.value.trim()) {
+                EquipmentManager.searchEquipment('');
+            }
+        });
 
         searchInput.addEventListener('blur', function() {
             if (searchInput.value.trim()) return;
