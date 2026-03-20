@@ -1055,12 +1055,12 @@ export const Builder = {
                 p.weekTemplateVersion[w][d] = nextVersion;
             }
         }
-        // Current week also gets the old version if it has logs
-        if (this._weekHasLogs(currentWeek, dayNum, oldGroups)) {
-            if (!p.weekTemplateVersion[currentWeek]) p.weekTemplateVersion[currentWeek] = {};
-            if (!p.weekTemplateVersion[currentWeek][d]) {
-                p.weekTemplateVersion[currentWeek][d] = nextVersion;
-            }
+        // Current week always uses the live template — don't bind it to the old snapshot.
+        // This ensures that exercise additions/removals take effect immediately,
+        // even if the user already has logs for this week.
+        // Clear any previous binding (from earlier edits this same week).
+        if (p.weekTemplateVersion[currentWeek]) {
+            delete p.weekTemplateVersion[currentWeek][d];
         }
     },
 
