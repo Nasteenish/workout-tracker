@@ -780,7 +780,7 @@ body.modal-open {
     transition: none;
 }
 
-/* Equipment modal item — 120px rounded rect, no fade */
+/* Equipment modal item — 120px rounded rect, hidden until trimmed */
 .eq-option .ex-thumb,
 .eq-catalog-item .ex-thumb,
 .eq-search-item .ex-thumb {
@@ -790,11 +790,15 @@ body.modal-open {
     margin-right: 12px;
     object-fit: contain;
     background: #FFFFFF;
+}
+.eq-option .ex-thumb.loaded,
+.eq-catalog-item .ex-thumb.loaded,
+.eq-search-item .ex-thumb.loaded {
     opacity: 1;
     transition: none;
 }
 
-/* Equipment button pill — always visible, no fade */
+/* Equipment button pill — hidden until trimmed */
 .equipment-btn .ex-thumb {
     width: 28px;
     height: 28px;
@@ -803,6 +807,8 @@ body.modal-open {
     margin-left: -2px;
     object-fit: contain;
     background: #FFFFFF;
+}
+.equipment-btn .ex-thumb.loaded {
     opacity: 1;
     transition: none;
 }
