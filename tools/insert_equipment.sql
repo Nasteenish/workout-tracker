@@ -6,7 +6,7 @@ INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_t
 -- gym80 SYGNUM (Selectorized)
 (2, 'gym80', '3002', 'Lying Leg Curl', 'legs', 'selectorized', 'lying_leg_curl', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3002.jpg'),
 (3, 'gym80', '3005', 'Radial Gluteus', 'legs', 'selectorized', 'glute_kickback', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3005.jpg'),
-(4, 'gym80', '3006', 'Lying Leg Curl', 'legs', 'selectorized', 'lying_leg_curl', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3006.jpg'),
+(4, 'gym80', '3006', 'Kick Machine', 'legs', 'selectorized', 'glute_kickback', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3006.jpg'),
 (5, 'gym80', '3007', 'Back Extension', 'back', 'selectorized', 'back_extension', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3007.jpg'),
 (6, 'gym80', '3008', 'Abdominal', 'core', 'selectorized', 'crunch', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3008.jpg'),
 (7, 'gym80', '3010', 'Biceps Curl', 'arms', 'selectorized', 'bicep_curl', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3010.jpg'),
