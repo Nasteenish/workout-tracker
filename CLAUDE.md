@@ -80,7 +80,7 @@ tools/                  — Утилиты разработки: SQL, скрип
 | `Storage.saveSetLog()` / формат лога | `WorkoutUI.handleClick` (complete-btn), `UI._renderSetRow()`, `SupaSync._deepMergeLogs()` |
 | `Storage._data` структура | `SupaSync.syncOnLogin()` (merge), `Storage._load()` (миграция) |
 | `data-attrs.js` (имя атрибута) | Рендер (ui.js/social-ui.js/builder.js) + обработчик (workout-ui.js/app.js/equipment-manager.js) |
-| `UI.renderDay()` / `_renderSetRow()` | `WorkoutUI.handleClick()` — data-attrs должны совпадать с `read()`/`readInt()` |
+| `UI.renderDay()` / `_renderSetRow()` | `WorkoutUI.handleClick()` — data-attrs должны совпадать с `read()`/`readInt()`. `WorkoutUI._addSet()` вызывает `UI._buildSetRowVM()` + `UI._renderSetRow()` для точечной вставки |
 | `Social.*` API | `SocialUI.*`, `WorkoutUI.handleModalClick` (gym/equipment handlers) |
 | `SocialUI._tabBarHTML()` | Все экраны с tab bar |
 | `RestTimer.start()` | DOM-структура `.set-row` в `UI.renderDay()` |

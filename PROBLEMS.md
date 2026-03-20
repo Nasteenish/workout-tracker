@@ -66,7 +66,9 @@
 
 **Решено:** Equipment selection → `_updateEquipmentBadge()` (точечное обновление кнопки). Workout timer pause/resume/cancel → `_updateTimerSection()` (замена только секции таймера). Убраны лишние `UI.renderDay()` в fallback-ветках equipment modal.
 
-**Что осталось:** Add/remove set, substitution, btn-start-workout (применяет gym equipment ко всем упражнениям) — полный re-render.
+**Решено (новое):** Start workout → `_updateTimerSection()` + `_updateAllEquipmentBadges()`. Gym link yes/no → `_updateTimerSection()`. Add set → targeted DOM insert (render one set row, insert before `.set-controls`). Remove set → targeted DOM remove (remove last `.set-row`). Substitution select/custom/revert → `_updateExerciseName()` (точечное обновление текста имени).
+
+**Что осталось:** Choice modal select (выбор упражнения из choose_one) — полный re-render (меняется вся секция упражнения).
 
 ---
 
@@ -167,7 +169,7 @@ program = {
 | 1 | ~~11 циклических импортов~~ | — | ✅ Решено |
 | 2 | ~~handleClick 1530 строк~~ → ~276 строк делегатор (social + builder + workout вынесены) | — | ✅ Решено |
 | 3 | ~~UI = data + render~~ → VM-паттерн в ui.js + social-ui.js (15 VM builders) | — | ✅ Решено |
-| 4 | innerHTML re-render — equipment + timer решены, остались add/remove set, substitution | Средняя | 🟡 P2 |
+| 4 | innerHTML re-render — остался только choice modal select | Низкая | 🟢 P3 |
 | 5 | ~~Дублирование closest-паттерна~~ | — | ✅ Решено |
 | 6 | Хрупкая _migrateExerciseNames | Средняя | 🟢 P2 |
 | 7 | Хардкод аккаунтов | Низкая | 🟢 P2 |

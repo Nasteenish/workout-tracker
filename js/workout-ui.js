@@ -8,7 +8,7 @@ import { EquipmentManager } from './equipment-manager.js';
 import { Celebration } from './celebration.js';
 import { WORKOUT, EQ, read, readInt } from './data-attrs.js';
 import { findExerciseInProgram, parseWeight, parseReps, formatDateISO, esc, markCachedThumbs } from './utils.js';
-import { getCompletedSets } from './program-utils.js';
+import { getCompletedSets, exName } from './program-utils.js';
 
 export const WorkoutUI = {
     // Callbacks — wired in App.init()
@@ -48,7 +48,8 @@ export const WorkoutUI = {
                     }
                 }
                 WorkoutTimer.start(week, day);
-                UI.renderDay(week, day);
+                this._updateTimerSection(week, day);
+                this._updateAllEquipmentBadges();
             });
             return true;
         }
@@ -226,7 +227,7 @@ export const WorkoutUI = {
             Storage.setSubstitution(exId, subName);
             UI.hideSubstitutionModal();
             if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week + '/day/' + day);
-            UI.renderDay(week, day);
+            this._updateExerciseName(exId);
             return true;
         }}
 
@@ -240,7 +241,7 @@ export const WorkoutUI = {
             if (exId) {
                 Storage.setSubstitution(exId, name);
                 UI.hideSubstitutionModal();
-                UI.renderDay(week, day);
+                this._updateExerciseName(exId);
             }
             return true;
         }
@@ -251,7 +252,7 @@ export const WorkoutUI = {
             const exId = read(btn, WORKOUT.EXERCISE);
             Storage.removeSubstitution(exId);
             UI.hideSubstitutionModal();
-            UI.renderDay(week, day);
+            this._updateExerciseName(exId);
             return true;
         }}
 
@@ -357,7 +358,7 @@ export const WorkoutUI = {
             Storage.initGymFromCurrentEquipment(gymId);
             UI.hideGymModal();
             WorkoutTimer.start(week, day);
-            UI.renderDay(week, day);
+            this._updateTimerSection(week, day);
             return true;
         }
 
@@ -366,7 +367,7 @@ export const WorkoutUI = {
             var gymId = read(target, EQ.GYM_ID);
             UI.hideGymModal();
             WorkoutTimer.start(week, day);
-            UI.renderDay(week, day);
+            this._updateTimerSection(week, day);
             return true;
         }
 
@@ -592,6 +593,22 @@ export const WorkoutUI = {
         ex.sets.push({ type: lastSet.type, rpe: lastSet.rpe, techniques: lastSet.techniques ? lastSet.techniques.slice() : [] });
         Storage.saveProgram(p, false);
         if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week);
+
+        // Targeted DOM insert: render only the new set row
+        var newSetIdx = ex.sets.length - 1;
+        var card = document.querySelector('.exercise-card .add-set-btn[' + WORKOUT.EXERCISE + '="' + exerciseId + '"]');
+        if (card) {
+            var exerciseCard = card.closest('.exercise-card');
+            var controls = exerciseCard ? exerciseCard.querySelector('.set-controls') : null;
+            if (exerciseCard && controls) {
+                var vm = UI._buildSetRowVM(ex, newSetIdx, week, day);
+                var html = UI._renderSetRow(vm);
+                var temp = document.createElement('div');
+                temp.innerHTML = html;
+                while (temp.firstChild) exerciseCard.insertBefore(temp.firstChild, controls);
+                return;
+            }
+        }
         UI.renderDay(week, day);
     },
 
@@ -602,6 +619,19 @@ export const WorkoutUI = {
         ex.sets.pop();
         Storage.saveProgram(p, false);
         if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week);
+
+        // Targeted DOM remove: remove the last set row for this exercise
+        var card = document.querySelector('.exercise-card .remove-set-btn[' + WORKOUT.EXERCISE + '="' + exerciseId + '"]');
+        if (card) {
+            var exerciseCard = card.closest('.exercise-card');
+            if (exerciseCard) {
+                var rows = exerciseCard.querySelectorAll('.set-row[' + WORKOUT.EXERCISE + '="' + exerciseId + '"]');
+                if (rows.length > 0) {
+                    rows[rows.length - 1].remove();
+                    return;
+                }
+            }
+        }
         UI.renderDay(week, day);
     },
 
@@ -680,5 +710,25 @@ export const WorkoutUI = {
         UI.hideEquipmentModal();
         if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week + '/day/' + day);
         this._updateEquipmentBadge(exId);
+    },
+
+    _updateAllEquipmentBadges() {
+        document.querySelectorAll('.equipment-btn[' + WORKOUT.EXERCISE + ']').forEach(btn => {
+            var exId = read(btn, WORKOUT.EXERCISE);
+            if (exId) this._updateEquipmentBadge(exId);
+        });
+    },
+
+    _updateExerciseName(exId) {
+        var nameEl = document.querySelector('.exercise-name[' + WORKOUT.EXERCISE + '="' + exId + '"]');
+        if (!nameEl) return;
+        var sub = Storage.getSubstitution(exId);
+        if (sub) {
+            nameEl.textContent = sub;
+        } else {
+            var p = Storage.getProgram();
+            var ex = findExerciseInProgram(p, exId);
+            nameEl.textContent = ex ? exName(ex) : exId;
+        }
     },
 };
