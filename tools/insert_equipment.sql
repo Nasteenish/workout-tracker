@@ -1,6 +1,6 @@
 -- gym80 equipment catalog
 -- Exported from Supabase DB on 2026-03-20
--- 140 records
+-- 139 records (duplicate 4350 removed, kept 4350N at id=80)
 
 INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_type, exercise_type, image_url) VALUES
 -- gym80 SYGNUM (Selectorized)
@@ -144,7 +144,6 @@ INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_t
 (394, 'gym80', '4307', 'Lying Abdominal', 'core', 'plate-loaded', 'crunch', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/4307.jpg'),
 (395, 'gym80', '4325', 'Shoulder Lateral Raise Dual', 'shoulders', 'plate-loaded', 'lateral_raise', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/4325.jpg'),
 (396, 'gym80', '4331', 'Bench Press Dual', 'chest', 'plate-loaded', 'chest_press', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/4331.jpg'),
-(397, 'gym80', '4350', 'Pullover', 'chest', 'plate-loaded', 'pullover', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/4350.jpg'),
 (398, 'gym80', '4366', 'Biceps Overhead', 'arms', 'plate-loaded', 'bicep_curl', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/4366.jpg'),
 (399, 'gym80', '4371', 'Neck Press', 'shoulders', 'plate-loaded', 'shoulder_press', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/4371.jpg'),
 (400, 'gym80', '4375', 'Inverse Leg Curl', 'legs', 'plate-loaded', 'lying_leg_curl', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/4375.jpg'),

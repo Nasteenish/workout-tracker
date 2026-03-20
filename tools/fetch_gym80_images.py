@@ -139,6 +139,22 @@ EQUIPMENT = [
     {"id":118,"model":"80CL0029","name":"Total Hip"},
     {"id":119,"model":"4401","name":"FTM Deadlift Machine"},
     {"id":120,"model":"4403","name":"FTM Push & Pull Machine"},
+    # Pure Kraft (added later)
+    {"id":392,"model":"4018","name":"T-Bar Row"},
+    {"id":393,"model":"4026","name":"Seated Calf Raise"},
+    {"id":394,"model":"4307","name":"Lying Abdominal"},
+    {"id":395,"model":"4325","name":"Shoulder Lateral Raise Dual"},
+    {"id":396,"model":"4331","name":"Bench Press Dual"},
+    {"id":398,"model":"4366","name":"Biceps Overhead"},
+    {"id":399,"model":"4371","name":"Neck Press"},
+    {"id":400,"model":"4375","name":"Inverse Leg Curl"},
+    {"id":401,"model":"4376","name":"Lying Inner Chest Dual"},
+    {"id":402,"model":"4380","name":"Donkey Calf"},
+    {"id":403,"model":"4383","name":"55-Degree Rowing Machine"},
+    {"id":404,"model":"4384","name":"Abduction 3D"},
+    {"id":405,"model":"4385","name":"Standing Shoulder Lateral Raise"},
+    {"id":406,"model":"4386","name":"Booty Booster Special"},
+    {"id":407,"model":"4388","name":"Viking Press"},
 ]
 
 # --- Model -> product page URL mapping (from sitemap) ---
@@ -240,6 +256,22 @@ MODEL_TO_URL = {
     "4365": "https://gym80.de/product/plate-loaded/pure-kraft-strong/4365-pure-kraft-strong-schraegbank/",
     "4401": "https://gym80.de/produkt/weight-stack/sygnum-dual/4401-ftm-deadlift-maschine/",
     "4403": "https://gym80.de/product/weight-stack/sygnum-dual/4403-ftm-zug-und-druckmaschine/",
+    # Pure Kraft (added later)
+    "4018": "https://gym80.de/en/product/plate-loaded-en/pure-kraft-en/4018-pure-kraft-t-bar-row/",
+    "4026": "https://gym80.de/en/product/plate-loaded-en/pure-kraft-en/4026-pure-kraft-seated-calf-raise/",
+    "4307": "https://gym80.de/en/product/plate-loaded-en/pure-kraft-en/4307-pure-kraft-lying-abdominal/",
+    "4325": "https://gym80.de/en/product/plate-loaded-en/pure-kraft-en/4325-pure-kraft-seithebemaschine-dual/",
+    "4331": "https://gym80.de/en/product/plate-loaded-en/pure-kraft-en/4331-pure-kraft-bench-press-dual/",
+    "4366": "https://gym80.de/en/product/plate-loaded-en/pure-kraft-en/4338n-pure-kraft-biceps-curl-kopie/",
+    "4371": "https://gym80.de/en/product/plate-loaded-en/pure-kraft-en/4371-pure-kraft-neck-press/",
+    "4375": "https://gym80.de/en/product/plate-loaded-en/pure-kraft-en/4373-pure-kraft-standing-leg-curl-kopie/",
+    "4376": "https://gym80.de/en/product/plate-loaded-en/pure-kraft-en/4376-pure-kraft-lying-inner-chest/",
+    "4380": "https://gym80.de/produkt/plate-loaded/pure-kraft/4380-pure-kraft-donkey-calf/",
+    "4383": "https://gym80.de/en/product/plate-loaded-en/pure-kraft-en/4383-pure-kraft-55-degree-rowing-machine/",
+    "4384": "https://gym80.de/en/product/plate-loaded-en/pure-kraft-en/4384-pure-kraft-abduction-3d/",
+    "4385": "https://gym80.de/en/product/plate-loaded-en/pure-kraft-en/4385-pure-kraft-standing-shoulder-lateral-raise/",
+    "4386": "https://gym80.de/en/product/plate-loaded-en/pure-kraft-en/4386-pure-kraft-booty-booster-special/",
+    "4388": "https://gym80.de/en/product/plate-loaded-en/pure-kraft-en/4388-pure-kraft-viking-press/",
 }
 
 # For German URLs, try the English equivalent too
