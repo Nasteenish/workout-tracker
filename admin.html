@@ -151,6 +151,19 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 .ex-option-name-en { font-size: 11px; color: #666; }
 .ex-option-check { font-size: 16px; color: #4a9eff; width: 24px; text-align: center; flex-shrink: 0; }
 
+/* Exercise type editor */
+.et-section { padding: 0 16px 8px; }
+.et-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.et-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 14px; background: #1a2a1a; color: #6c6; font-size: 12px; font-family: monospace; }
+.et-tag-remove { cursor: pointer; color: #f66; font-size: 14px; margin-left: 2px; line-height: 1; }
+.et-tag-remove:hover { color: #f00; }
+.et-add { display: flex; gap: 6px; }
+.et-select { flex: 1; padding: 6px 10px; border-radius: 10px; border: 1px solid #333; background: #1a1a1a; color: #e0e0e0; font-size: 13px; }
+.et-select:focus { outline: none; border-color: #4a9eff; }
+.et-add-btn { padding: 6px 14px; border-radius: 10px; border: none; background: #4a9eff; color: #fff; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.et-add-btn:hover { background: #3a8eef; }
+.et-matched-item { padding: 3px 0; font-size: 13px; color: #aaa; border-bottom: 1px solid #151515; }
+
 /* Exercise Detail overlay */
 .exdet-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0a0a0a; z-index: 80; overflow-y: auto; transform: translateX(100%); transition: transform 0.3s; -webkit-overflow-scrolling: touch; }
 .exdet-overlay.visible { transform: translateX(0); }
@@ -243,7 +256,9 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
     <div class="det-topbar-title" id="det-topbar-title"></div>
   </div>
   <div id="det-header"></div>
-  <div class="det-section-title">Привязанные упражнения</div>
+  <div class="det-section-title">Привязка к упражнениям (exercise_type)</div>
+  <div class="et-section" id="et-section"></div>
+  <div class="det-section-title">Привязанные упражнения (junction table — legacy)</div>
   <div class="det-linked" id="det-linked"></div>
   <div class="det-section-title" style="margin-top:16px">Добавить упражнения</div>
   <div class="det-search-wrap">
@@ -284,6 +299,125 @@ let showAllExercises = false;
 const FREE_WEIGHT_ONLY = ['barbell', 'dumbbell', 'kettlebell', 'resistance band', 'plate'];
 function getFilteredExercises() {
   return showAllExercises ? exerciseData : machineExercises;
+}
+
+// ===== EXERCISE TYPE MAP (mirrors equipment-manager.js) =====
+const _exerciseTypeMap = {
+  'chest press': 'chest_press', 'iso-lateral chest press': 'chest_press',
+  'incline chest press': 'incline_press', 'decline bench press': 'decline_press',
+  'bench press': 'bench', 'incline bench press': 'incline_press',
+  'floor press': 'bench', 'hex press': 'bench',
+  'chest fly': 'chest_fly', 'butterfly': 'chest_fly', 'chest dip': 'chest_dip',
+  'cable crossover': 'chest_fly', 'single arm cable crossover': 'chest_fly',
+  'cable fly crossovers': 'chest_fly', 'low cable fly crossovers': 'chest_fly',
+  'pullover': 'pullover',
+  'lat pulldown': 'lat_pulldown', 'pull up': 'lat_pulldown', 'chin up': 'lat_pulldown',
+  'vertical traction': 'lat_pulldown', 'straight arm pulldown': 'lat_pulldown',
+  'seated row': 'seated_row', 'seated cable row': 'seated_row',
+  'iso-lateral row': 'seated_row', 'iso-lateral high row': 'seated_row',
+  'iso-lateral low row': 'seated_row', 'low row': 'seated_row',
+  'cable row': 'seated_row', 'single arm cable row': 'seated_row',
+  'bent over row': 'seated_row', 't bar row': 'seated_row',
+  'supported bar rows': 'seated_row', 'chest supported incline row': 'seated_row',
+  'back extension': 'back_extension', 'hyperextension': 'back_extension', 'glute ham raise': 'back_extension',
+  'deadlift': 'deadlift', 'romanian deadlift': 'deadlift', 'straight leg deadlift': 'deadlift',
+  'leg press': 'leg_press', 'leg press horizontal': 'leg_press', 'single leg press': 'leg_press',
+  'leg extension': 'leg_extension', 'single leg extensions': 'leg_extension',
+  'leg curl': 'leg_curl', 'lying leg curl': 'lying_leg_curl', 'seated leg curl': 'seated_leg_curl',
+  'nordic hamstrings curls': 'lying_leg_curl',
+  'hip abduction': 'hip_abduction', 'abduction': 'hip_abduction',
+  'hip adduction': 'hip_adduction', 'adduction': 'hip_adduction',
+  'glute kickback': 'glute_kickback', 'rear kick': 'glute_kickback', 'gluteus kick': 'glute_kickback',
+  'hip thrust': 'hip_thrust', 'glute bridge': 'hip_thrust',
+  'hack squat': 'squat', 'squat': 'squat', 'belt squat': 'squat',
+  'pendulum squat': 'squat', 'bulgarian split squat': 'squat',
+  'calf raise': 'calf', 'calf extension': 'calf', 'calf press': 'calf',
+  'standing calf raise': 'calf', 'seated calf raise': 'calf',
+  'tibial raises': 'calf', 'tibial raise': 'calf', 'donkey calf': 'calf',
+  'medium gluteus on low pulley': 'hip_abduction', 'cable hip abduction': 'hip_abduction',
+  'shoulder press': 'shoulder_press', 'overhead press': 'shoulder_press',
+  'lateral raise': 'lateral_raise',
+  'rear delt': 'rear_delt', 'rear delt reverse fly': 'rear_delt', 'face pull': 'rear_delt', 'reverse fly': 'rear_delt',
+  'front raise': 'cable_multi', 'upright row': 'cable_multi', 'shrug': 'cable_multi',
+  'unilateral low pulley raises': 'lateral_raise',
+  'viking press': 'shoulder_press', 'neck press': 'shoulder_press',
+  'bicep curl': 'bicep_curl', 'hammer curl': 'bicep_curl', 'concentration curl': 'bicep_curl',
+  'behind the back curl': 'bicep_curl', 'single arm curl': 'bicep_curl',
+  'overhead curl': 'bicep_curl', 'rope cable curl': 'bicep_curl', 'reverse curl': 'bicep_curl',
+  'preacher curl': 'preacher_curl', 'scott curl': 'preacher_curl',
+  'triceps extension': 'tricep_extension', 'triceps pushdown': 'tricep_extension',
+  'triceps pressdown': 'tricep_extension', 'triceps kickback': 'tricep_extension',
+  'triceps rope pushdown': 'tricep_extension', 'skull crusher': 'tricep_extension',
+  'triceps dip': 'tricep_dip', 'seated dip machine': 'chest_dip',
+  'crunch': 'crunch', 'sit up': 'crunch',
+  'torso rotation': 'torso_rotation', 'cable twist': 'torso_rotation',
+  'cable core palloff press': 'cable_multi', 'cable pull through': 'cable_multi',
+  'ab swing': 'crunch', 'hanging knee raise': 'crunch', 'leg raise': 'crunch',
+  'smith_machine': 'smith_machine', 'lunge': 'lunge',
+};
+const _reverseTypeMap = {};
+for (const [name, type] of Object.entries(_exerciseTypeMap)) {
+  if (!_reverseTypeMap[type]) _reverseTypeMap[type] = [];
+  _reverseTypeMap[type].push(name);
+}
+const ALL_EXERCISE_TYPES = Object.keys(_reverseTypeMap).sort();
+
+function getMatchingExercises(exerciseTypeStr) {
+  if (!exerciseTypeStr) return [];
+  const types = exerciseTypeStr.split(',').map(t => t.trim()).filter(Boolean);
+  const names = new Set();
+  types.forEach(type => {
+    const m = _reverseTypeMap[type];
+    if (m) m.forEach(n => names.add(n));
+  });
+  return [...names].sort();
+}
+
+function renderExerciseTypeEditor() {
+  if (!detEquipment) return;
+  const el = document.getElementById('et-section');
+  const currentTypes = (detEquipment.exercise_type || '').split(',').map(t => t.trim()).filter(Boolean);
+  const availableTypes = ALL_EXERCISE_TYPES.filter(t => !currentTypes.includes(t));
+
+  const tagsHtml = currentTypes.length
+    ? currentTypes.map(t => `<span class="et-tag">${t}<span class="et-tag-remove" data-et-remove="${t}">&times;</span></span>`).join('')
+    : '<span style="color:#555;font-size:13px">Нет типов — тренажёр не привяжется к упражнениям</span>';
+
+  const matched = getMatchingExercises(detEquipment.exercise_type);
+  const matchedHtml = matched.length
+    ? matched.map(n => `<div class="et-matched-item">${n}</div>`).join('')
+    : '';
+
+  el.innerHTML = `
+    <div class="et-tags">${tagsHtml}</div>
+    <div class="et-add">
+      <select class="et-select" id="et-select">
+        <option value="">+ Добавить тип...</option>
+        ${availableTypes.map(t => {
+          const examples = (_reverseTypeMap[t] || []).slice(0, 2).join(', ');
+          return `<option value="${t}">${t} (${examples})</option>`;
+        }).join('')}
+      </select>
+      <button class="et-add-btn" id="et-add-btn">Добавить</button>
+    </div>
+    ${matchedHtml ? '<div style="margin-top:8px;color:#888;font-size:11px;text-transform:uppercase;letter-spacing:1px">Привязанные упражнения:</div>' + matchedHtml : ''}
+  `;
+}
+
+async function updateExerciseType(newExerciseType) {
+  if (!detEquipment) return false;
+  const val = newExerciseType || null;
+  const r = await fetch(SB + '/rest/v1/equipment_catalog?id=eq.' + detEquipment.id, {
+    method: 'PATCH',
+    headers: { ...H, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ exercise_type: val })
+  });
+  if (r.ok) {
+    detEquipment.exercise_type = newExerciseType;
+    renderExerciseTypeEditor();
+    toast('exercise_type обновлён');
+  }
+  return r.ok;
 }
 
 // ===== TOAST =====
@@ -828,6 +962,7 @@ function openEquipmentDetail(equipmentId) {
   document.getElementById('det-search').value = '';
   document.getElementById('det-search-results').style.display = 'none';
 
+  renderExerciseTypeEditor();
   loadAndRenderLinked(equipmentId);
   renderMuscleGroups();
 }
@@ -1207,8 +1342,32 @@ document.getElementById('det-show-all').addEventListener('change', e => {
   if (q.trim()) renderDetSearchResults(q);
 });
 
-// Detail panel: clicks (toggle link, unlink, muscle group expand)
-document.getElementById('det-overlay').addEventListener('click', e => {
+// Detail panel: clicks (toggle link, unlink, muscle group expand, exercise_type editor)
+document.getElementById('det-overlay').addEventListener('click', async e => {
+  // Exercise type: remove tag
+  const etRemove = e.target.closest('[data-et-remove]');
+  if (etRemove) {
+    const typeToRemove = etRemove.dataset.etRemove;
+    const types = (detEquipment.exercise_type || '').split(',').map(t => t.trim()).filter(Boolean);
+    const newTypes = types.filter(t => t !== typeToRemove);
+    etRemove.closest('.et-tag').style.opacity = '0.3';
+    await updateExerciseType(newTypes.join(','));
+    return;
+  }
+
+  // Exercise type: add button
+  if (e.target.id === 'et-add-btn' || e.target.closest('#et-add-btn')) {
+    const sel = document.getElementById('et-select');
+    const newType = sel.value;
+    if (!newType || !detEquipment) return;
+    const types = (detEquipment.exercise_type || '').split(',').map(t => t.trim()).filter(Boolean);
+    if (types.includes(newType)) return;
+    types.push(newType);
+    sel.disabled = true;
+    await updateExerciseType(types.join(','));
+    return;
+  }
+
   // Toggle exercise link
   const toggle = e.target.closest('[data-toggle-ex]');
   if (toggle) { toggleExerciseLink(toggle.dataset.toggleEx); return; }
