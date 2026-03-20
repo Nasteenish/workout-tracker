@@ -4,7 +4,7 @@
 
 INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_type, exercise_type, image_url) VALUES
 -- gym80 SYGNUM (Selectorized)
-(2, 'gym80', '3002', 'Seated Leg Curl', 'legs', 'selectorized', 'seated_leg_curl', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3002.jpg'),
+(2, 'gym80', '3002', 'Lying Leg Curl', 'legs', 'selectorized', 'lying_leg_curl', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3002.jpg'),
 (3, 'gym80', '3005', 'Radial Gluteus', 'legs', 'selectorized', 'glute_kickback', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3005.jpg'),
 (4, 'gym80', '3006', 'Lying Leg Curl', 'legs', 'selectorized', 'lying_leg_curl', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3006.jpg'),
 (5, 'gym80', '3007', 'Back Extension', 'back', 'selectorized', 'back_extension', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3007.jpg'),
@@ -12,7 +12,7 @@ INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_t
 (7, 'gym80', '3010', 'Biceps Curl', 'arms', 'selectorized', 'bicep_curl', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3010.jpg'),
 (8, 'gym80', '3011', 'Triceps Horizontal', 'arms', 'selectorized', 'tricep_extension', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3011.jpg'),
 (9, 'gym80', '3012', 'Pull Over Machine', 'chest', 'selectorized', 'pullover', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3012.jpg'),
-(10, 'gym80', '3013', 'Leg Curl', 'legs', 'selectorized', 'leg_curl', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3013.jpg'),
+(10, 'gym80', '3013', 'Standing Leg Curl', 'legs', 'selectorized', 'standing_leg_curl', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3013.jpg'),
 (11, 'gym80', '3014', 'Chest Crossover Machine', 'chest', 'selectorized', 'chest_fly', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3014.jpg'),
 (12, 'gym80', '3016', 'Seated Chest Press', 'chest', 'selectorized', 'chest_press', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3016.jpg'),
 (13, 'gym80', '3017', 'Incline Chest Press', 'chest', 'selectorized', 'incline_press', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3017.jpg'),
@@ -106,7 +106,7 @@ INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_t
 (95, 'gym80', '4365', 'Strong Incline Chest Press Dual', 'chest', 'plate-loaded', 'incline_press', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/4365.jpg'),
 -- gym80 80CLASSICS
 (96, 'gym80', '80CL0001', 'Leg Extension', 'legs', 'selectorized', 'leg_extension', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/80CL0001.png'),
-(97, 'gym80', '80CL0002', 'Seated Leg Curl', 'legs', 'selectorized', 'seated_leg_curl', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/80CL0002.png'),
+(97, 'gym80', '80CL0002', 'Lying Leg Curl', 'legs', 'selectorized', 'lying_leg_curl', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/80CL0002.png'),
 (98, 'gym80', '80CL0003', 'Radial Gluteus', 'legs', 'selectorized', 'glute_kickback', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/80CL0003.png'),
 (99, 'gym80', '80CL0004', 'Lower Back', 'back', 'selectorized', 'back_extension', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/80CL0004.png'),
 (100, 'gym80', '80CL0006', 'Abdominal', 'core', 'selectorized', 'crunch', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/80CL0006.png'),
