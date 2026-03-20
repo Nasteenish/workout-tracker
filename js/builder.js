@@ -1104,10 +1104,14 @@ export const Builder = {
         // If no rules at all, don't touch existing overrides
         if (allRules.length === 0) return;
 
-        // Clear this day's overrides across all weeks
+        // Clear this day's overrides across all weeks (preserve _frozenGroups)
         for (var w = 1; w <= p.totalWeeks; w++) {
-            if (p.weeklyOverrides[w]) {
+            if (p.weeklyOverrides[w] && p.weeklyOverrides[w][dayNum]) {
+                var frozen = p.weeklyOverrides[w][dayNum]._frozenGroups;
                 delete p.weeklyOverrides[w][dayNum];
+                if (frozen) {
+                    p.weeklyOverrides[w][dayNum] = { _frozenGroups: frozen };
+                }
             }
         }
 
