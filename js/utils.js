@@ -65,20 +65,31 @@ export function autoTrimImg(img) {
     if (img.src.startsWith('blob:') || img.src.startsWith('data:')) return;
     img._trimmed = true;
     var origSrc = img.src;
-    if (_trimCache[origSrc]) { img.src = _trimCache[origSrc]; return; }
+    if (_trimCache[origSrc]) {
+        img.src = _trimCache[origSrc];
+        img.classList.add('loaded');
+        return;
+    }
     fetch(origSrc).then(function(r) { return r.blob(); }).then(function(blob) {
         var blobUrl = URL.createObjectURL(blob);
         var tmp = new Image();
         tmp.onload = function() {
             var w = tmp.naturalWidth, h = tmp.naturalHeight;
-            if (!w || !h || w < 10 || h < 10) { URL.revokeObjectURL(blobUrl); return; }
+            if (!w || !h || w < 10 || h < 10) {
+                URL.revokeObjectURL(blobUrl);
+                img.classList.add('loaded');
+                return;
+            }
             var c = document.createElement('canvas');
             c.width = w; c.height = h;
             var ctx = c.getContext('2d');
             ctx.drawImage(tmp, 0, 0);
             URL.revokeObjectURL(blobUrl);
             var data;
-            try { data = ctx.getImageData(0, 0, w, h).data; } catch(e) { return; }
+            try { data = ctx.getImageData(0, 0, w, h).data; } catch(e) {
+                img.classList.add('loaded');
+                return;
+            }
             // Find bounding box of non-white pixels (threshold 240)
             var t = 240, minX = w, minY = h, maxX = 0, maxY = 0;
             for (var y = 0; y < h; y++) {
@@ -93,7 +104,7 @@ export function autoTrimImg(img) {
                     }
                 }
             }
-            if (maxX <= minX || maxY <= minY) return; // all white or empty
+            if (maxX <= minX || maxY <= minY) { img.classList.add('loaded'); return; }
             // Add 5% padding
             var cw = maxX - minX, ch = maxY - minY;
             var pad = Math.round(Math.max(cw, ch) * 0.05);
@@ -103,19 +114,20 @@ export function autoTrimImg(img) {
             maxY = Math.min(h - 1, maxY + pad);
             var tw = maxX - minX + 1, th = maxY - minY + 1;
             // Only trim if we're removing at least 20% of area
-            if (tw * th > w * h * 0.8) return;
+            if (tw * th > w * h * 0.8) { img.classList.add('loaded'); return; }
             var c2 = document.createElement('canvas');
             c2.width = tw; c2.height = th;
             c2.getContext('2d').drawImage(c, minX, minY, tw, th, 0, 0, tw, th);
             c2.toBlob(function(outBlob) {
-                if (!outBlob) return;
+                if (!outBlob) { img.classList.add('loaded'); return; }
                 var url = URL.createObjectURL(outBlob);
                 _trimCache[origSrc] = url;
+                img.onload = function() { img.classList.add('loaded'); };
                 img.src = url;
             }, 'image/png');
         };
         tmp.src = blobUrl;
-    }).catch(function() { /* network error, ignore */ });
+    }).catch(function() { img.classList.add('loaded'); });
 }
 
 // Mark already-cached images as loaded instantly (prevents flicker on re-render)

@@ -187,7 +187,7 @@ export const EquipmentManager = {
             for (var i = 0; i < items.length; i++) {
                 var c = items[i];
                 var fullName = brand + ' ' + c.name;
-                var eqImgHtml = c.image_url ? '<img class="ex-thumb" src="' + esc(c.image_url) + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
+                var eqImgHtml = c.image_url ? '<img class="ex-thumb" src="' + esc(c.image_url) + '" loading="lazy" onerror="this.style.display=\'none\'">' : '';
                 html += '<div class="eq-catalog-item" ' + attr(EQ.NAME, esc(fullName)) + ' ' + attr(EQ.CATALOG_ID, c.id) + (c.image_url ? ' ' + attr(EQ.IMAGE, esc(c.image_url)) : '') + '>'
                     + eqImgHtml
                     + '<span class="eq-shared-name">' + esc(c.name) + '</span>'
@@ -351,7 +351,7 @@ export const EquipmentManager = {
                         var k = cName.toLowerCase();
                         if (seen[k]) continue;
                         seen[k] = true;
-                        var sImgHtml = c.image_url ? '<img class="ex-thumb" src="' + esc(c.image_url) + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
+                        var sImgHtml = c.image_url ? '<img class="ex-thumb" src="' + esc(c.image_url) + '" loading="lazy" onerror="this.style.display=\'none\'">' : '';
                         html += '<div class="eq-search-item" ' + attr(EQ.NAME, esc(cName)) + ' ' + attr(EQ.CATALOG_ID, c.id) + (c.image_url ? ' ' + attr(EQ.IMAGE, esc(c.image_url)) : '') + '>'
                             + sImgHtml
                             + '<span class="eq-shared-name">' + esc(cName) + '</span>'
@@ -417,7 +417,7 @@ export const EquipmentManager = {
                     var k = cName.toLowerCase();
                     if (seen2[k]) continue;
                     seen2[k] = true;
-                    var sImgHtml = c.image_url ? '<img class="ex-thumb" src="' + esc(c.image_url) + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
+                    var sImgHtml = c.image_url ? '<img class="ex-thumb" src="' + esc(c.image_url) + '" loading="lazy" onerror="this.style.display=\'none\'">' : '';
                     html2 += '<div class="eq-search-item" ' + attr(EQ.NAME, esc(cName)) + ' ' + attr(EQ.CATALOG_ID, c.id) + (c.image_url ? ' ' + attr(EQ.IMAGE, esc(c.image_url)) : '') + '>'
                         + sImgHtml
                         + '<span class="eq-shared-name">' + esc(cName) + '</span>'

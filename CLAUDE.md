@@ -201,6 +201,10 @@ Celebration._onShareCheckin = (data) => { this._pendingCheckinWorkout = data; };
    - Решил проблему из PROBLEMS.md → отметь ✅
    - Нашёл новую архитектурную проблему → добавь в PROBLEMS.md
    - **НЕ обновляй:** line counts, номера версий кеша — они читаются из кода напрямую
+8. **Git** — после завершения изменений:
+   - `git add -A && git commit -m "краткое описание изменений"`
+   - `git push origin main`
+   - Проект деплоится через GitHub Pages — без push изменения не видны для тестирования
 
 **Формат описания:**
 ```
