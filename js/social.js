@@ -877,7 +877,7 @@ export const Social = {
     async getCatalogByBrandAndType(brand, exerciseType) {
         if (!supa) return [];
         var q = supa.from('equipment_catalog')
-            .select('id, brand, model, name, muscle_group, image_url, exercise_type')
+            .select('id, brand, model, name, muscle_group, equipment_type, image_url, exercise_type')
             .eq('brand', brand)
             .order('name');
         if (exerciseType) q = q.ilike('exercise_type', '%' + exerciseType + '%');

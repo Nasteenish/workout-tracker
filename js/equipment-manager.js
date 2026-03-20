@@ -221,11 +221,11 @@ export const EquipmentManager = {
                 div.innerHTML = '<div class="eq-section-label">Нет тренажёров для этого упражнения</div>';
                 return;
             }
-            var seenIds = {};
+            var seenKeys = {};
             var unique = [];
             for (var j = 0; j < items.length; j++) {
-                var key = items[j].id;
-                if (!seenIds[key]) { seenIds[key] = true; unique.push(items[j]); }
+                var key = (items[j].name || '') + '|' + (items[j].equipment_type || '');
+                if (!seenKeys[key]) { seenKeys[key] = true; unique.push(items[j]); }
             }
             items = unique;
             var html = '';
