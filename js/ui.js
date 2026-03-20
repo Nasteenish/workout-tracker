@@ -8,7 +8,7 @@ import { AppState } from './app-state.js';
 import { EquipmentManager } from './equipment-manager.js';
 import { WorkoutTimer } from './workout-timer.js';
 import { RestTimer } from './timer.js';
-import { formatDateISO, markCachedThumbs, esc, exThumbHtml, getGroupExercises, findExerciseInProgram } from './utils.js';
+import { formatDateISO, markCachedThumbs, autoTrimImg, esc, exThumbHtml, getGroupExercises, findExerciseInProgram } from './utils.js';
 import { getTotalWeeks, getTotalDays, getProgressWeek, getCompletedSets, resolveWorkout, exName } from './program-utils.js';
 import { EXERCISE_DB } from './exercises_db.js';
 import { WORKOUT, EQ, SETTINGS, attr } from './data-attrs.js';
@@ -712,6 +712,7 @@ export const UI = {
                 if (timerRunning) WorkoutTimer.resume(AppState.currentWeek, AppState.currentDay);
                 RestTimer.reattach();
                 markCachedThumbs();
+                this._trimEqBadges();
                 _restoreFocus(focusInfo);
             };
 
@@ -726,7 +727,18 @@ export const UI = {
             if (timerRunning) WorkoutTimer.resume(AppState.currentWeek, AppState.currentDay);
             RestTimer.reattach();
             markCachedThumbs();
+            this._trimEqBadges();
             _restoreFocus(focusInfo);
+        }
+    },
+
+    _trimEqBadges() {
+        var imgs = document.querySelectorAll('.eq-badge-thumb');
+        for (var i = 0; i < imgs.length; i++) {
+            (function(img) {
+                if (img.complete && img.naturalWidth > 0) autoTrimImg(img);
+                else img.addEventListener('load', function() { autoTrimImg(img); });
+            })(imgs[i]);
         }
     },
 
@@ -776,7 +788,7 @@ export const UI = {
             setsHtml += this._renderSetRow(setVM);
         }
 
-        const eqThumb = eqImageUrl ? '<img class="ex-thumb" src="' + esc(eqImageUrl) + '" loading="lazy" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'">' : '';
+        const eqThumb = eqImageUrl ? '<img class="ex-thumb eq-badge-thumb" src="' + esc(eqImageUrl) + '" loading="lazy" onerror="this.style.display=\'none\'">' : '';
         const eqTrailing = `<span class="chooser-badge"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
         const eqHtml = `
             <div class="equipment-row">
