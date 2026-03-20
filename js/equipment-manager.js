@@ -108,7 +108,26 @@ export const EquipmentManager = {
             ? Social.getGymEquipmentForExercise(gym.name, gym.city, exName)
             : Promise.resolve([]);
 
-        var brandsPromise = isFreeWeight ? Promise.resolve([]) : Social.getCatalogBrands(exType);
+        var isCable = this._isCableExercise(exName, exNameRu);
+        var brandsPromise;
+        if (isFreeWeight) {
+            brandsPromise = Promise.resolve([]);
+        } else if (isCable && exType && exType !== 'cable_multi') {
+            brandsPromise = Promise.all([
+                Social.getCatalogBrands(exType),
+                Social.getCatalogBrands('cable_multi')
+            ]).then(function(r) {
+                var seen = {};
+                var merged = [];
+                var all = (r[0] || []).concat(r[1] || []);
+                for (var i = 0; i < all.length; i++) {
+                    if (!seen[all[i]]) { seen[all[i]] = true; merged.push(all[i]); }
+                }
+                return merged;
+            });
+        } else {
+            brandsPromise = Social.getCatalogBrands(isCable ? 'cable_multi' : exType);
+        }
 
         Promise.all([gymPromise, brandsPromise]).then(function(results) {
             var gymItems = results[0] || [];
@@ -301,6 +320,16 @@ export const EquipmentManager = {
         var m = exerciseName.match(/\(([^)]+)\)/);
         if (!m) return null;
         return m[1].toLowerCase().trim();
+    },
+
+    _isCableExercise(exerciseEnName, exerciseRuName) {
+        var mod = this._getEquipmentModifier(exerciseEnName || '');
+        if (mod === 'cable') return true;
+        var modRu = this._getEquipmentModifier(exerciseRuName || '');
+        if (modRu === 'на блоке' || modRu === 'на кроссовере' || modRu === 'на нижнем блоке' || modRu === 'на верхнем блоке') return true;
+        var lower = (exerciseEnName || '').toLowerCase();
+        if (lower.indexOf('cable ') !== -1 || lower.indexOf('pulley') !== -1) return true;
+        return false;
     },
 
     _isFreeWeightExercise(exerciseEnName, exerciseRuName) {
