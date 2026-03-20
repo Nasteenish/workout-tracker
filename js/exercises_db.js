@@ -35,6 +35,7 @@ export const EXERCISE_DB = [
     { nameRu: 'Жим от груди (в тренажёре)', name: 'Chest Press (Machine)', category: 'chest' },
     { nameRu: 'Жим от груди (с резиной)', name: 'Chest Press (Band)', category: 'chest' },
     { nameRu: 'Жим от груди на наклонной скамье (в тренажёре)', name: 'Incline Chest Press (Machine)', category: 'chest' },
+    { nameRu: 'Жим от груди на наклонной скамье вниз (в тренажёре)', name: 'Decline Chest Press (Machine)', category: 'chest' },
     { nameRu: 'Жим от груди раздельный (в тренажёре)', name: 'Iso-Lateral Chest Press (Machine)', category: 'chest' },
     { nameRu: 'Жим с диском', name: 'Plate Press', category: 'chest' },
     { nameRu: 'Отжимание', name: 'Push Up', category: 'chest' },
@@ -110,11 +111,12 @@ export const EXERCISE_DB = [
     { nameRu: 'Тяга с плинтов (рэк-пулл)', name: 'Rack Pull', category: 'back' },
     { nameRu: 'Тяга с упором в наклонную скамью (с гантелями)', name: 'Chest Supported Incline Row (Dumbbell)', category: 'back' },
     { nameRu: 'Тяга сидя (в тренажёре)', name: 'Seated Row (Machine)', category: 'back' },
-    // === Ноги (75) ===
+    // === Ноги (76) ===
     { nameRu: 'Боковое приседание', name: 'Lateral Squat', category: 'legs' },
     { nameRu: 'Боковой выпад', name: 'Lateral Lunge', category: 'legs' },
     { nameRu: 'Боковой прыжок на тумбу', name: 'Lateral Box Jump', category: 'legs' },
     { nameRu: 'Болгарские сплит-приседания', name: 'Bulgarian Split Squat', category: 'legs' },
+    { nameRu: 'Болгарские выпады в Смите', name: 'Bulgarian Split Squat (Smith Machine)', category: 'legs' },
     { nameRu: 'Выпад', name: 'Lunge', category: 'legs' },
     { nameRu: 'Выпад (с гантелями)', name: 'Lunge (Dumbbell)', category: 'legs' },
     { nameRu: 'Выпад (со штангой)', name: 'Lunge (Barbell)', category: 'legs' },

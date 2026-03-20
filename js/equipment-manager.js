@@ -258,7 +258,7 @@ export const EquipmentManager = {
         // Chest
         'chest press': 'chest_press', 'iso-lateral chest press': 'chest_press',
         'incline chest press': 'incline_press',
-        'decline bench press': 'decline_press',
+        'decline chest press': 'decline_press', 'decline bench press': 'decline_press',
         'bench press': 'bench', 'incline bench press': 'incline_press',
         'floor press': 'bench', 'hex press': 'bench',
         'chest fly': 'chest_fly', 'butterfly': 'chest_fly', 'chest dip': 'chest_dip',
@@ -286,7 +286,7 @@ export const EquipmentManager = {
         'glute kickback': 'glute_kickback', 'rear kick': 'glute_kickback', 'gluteus kick': 'glute_kickback',
         'hip thrust': 'hip_thrust', 'glute bridge': 'hip_thrust',
         'hack squat': 'squat', 'squat': 'squat', 'belt squat': 'squat',
-        'pendulum squat': 'squat', 'bulgarian split squat': 'squat',
+        'pendulum squat': 'squat', 'bulgarian split squat': 'squat', 'bulgarian split squat (smith machine)': 'squat',
         'calf raise': 'calf', 'calf extension': 'calf', 'calf press': 'calf',
         'standing calf raise': 'calf', 'seated calf raise': 'calf',
         'tibial raises': 'calf', 'tibial raise': 'calf', 'donkey calf': 'calf',
