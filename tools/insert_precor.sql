@@ -1,32 +1,18 @@
 -- Precor equipment catalog
 -- Exported from Supabase DB on 2026-03-20
--- 68 records
+-- 54 records (removed 14 DSL duplicates of RSL series)
 
 INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_type, exercise_type, image_url) VALUES
 -- Precor Discovery Selectorized (DSL)
-(121, 'Precor', 'DSL0204', 'Biceps Curl', 'arms', 'selectorized', 'bicep_curl', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0204.png'),
-(122, 'Precor', 'DSL0208', 'Triceps Extension', 'arms', 'selectorized', 'tricep_extension', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0208.png'),
 (123, 'Precor', 'DSL0215', 'Seated Dip', 'chest', 'selectorized', 'chest_dip', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0215.png'),
 (124, 'Precor', 'DSL0310', 'Seated Row', 'back', 'selectorized', 'seated_row', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0310.png'),
-(125, 'Precor', 'DSL0313', 'Back Extension', 'back', 'selectorized', 'back_extension', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0313.png'),
-(126, 'Precor', 'DSL0314', 'Diverging Lat Pulldown', 'back', 'selectorized', 'lat_pulldown', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0314.png'),
-(127, 'Precor', 'DSL0315', 'Rotary Torso', 'core', 'selectorized', 'torso_rotation', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0315.png'),
 (128, 'Precor', 'DSL0324', 'Diverging Low Row', 'back', 'selectorized', 'seated_row', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0324.jpg'),
 (129, 'Precor', 'DSL0404', 'Chest Press', 'chest', 'selectorized', 'chest_press', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0404.png'),
-(130, 'Precor', 'DSL0414', 'Converging Chest Press', 'chest', 'selectorized', 'chest_press', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0414.png'),
 (131, 'Precor', 'DSL0500', 'Shoulder Press', 'shoulders', 'selectorized', 'shoulder_press', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0500.jpg'),
-(132, 'Precor', 'DSL0504', 'Lateral Raise', 'shoulders', 'selectorized', 'lateral_raise', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0504.png'),
-(133, 'Precor', 'DSL0505', 'Pec Fly / Rear Delt', 'chest', 'selectorized', 'chest_fly,rear_delt', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0505.png'),
-(134, 'Precor', 'DSL0515', 'Converging Shoulder Press', 'shoulders', 'selectorized', 'shoulder_press', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0515.png'),
-(135, 'Precor', 'DSL0602', 'Leg Press', 'legs', 'selectorized', 'leg_press', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0602.png'),
-(136, 'Precor', 'DSL0605', 'Leg Extension', 'legs', 'selectorized', 'leg_extension', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0605.png'),
-(137, 'Precor', 'DSL0606', 'Prone Leg Curl', 'legs', 'selectorized', 'lying_leg_curl', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0606.png'),
 (138, 'Precor', 'DSL0618', 'Glute Extension', 'legs', 'selectorized', 'glute_kickback', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0618.png'),
-(139, 'Precor', 'DSL0619', 'Seated Leg Curl', 'legs', 'selectorized', 'seated_leg_curl', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0619.png'),
 (140, 'Precor', 'DSL0621', 'Inner/Outer Thigh', 'legs', 'selectorized', 'hip_abduction,hip_adduction', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0621.png'),
 (141, 'Precor', 'DSL0623', 'Seated Calf Extension', 'legs', 'selectorized', 'calf', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0623.png'),
 (142, 'Precor', 'DSL0712', 'Abdominal', 'core', 'selectorized', 'crunch', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0712.jpg'),
-(143, 'Precor', 'DSL0714', 'Abdominal Crunch', 'core', 'selectorized', 'crunch', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DSL0714.png'),
 -- Precor Discovery Plate Loaded (DPL)
 (144, 'Precor', 'DPL0305', 'Lat Pulldown', 'back', 'plate-loaded', 'lat_pulldown', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DPL0305.png'),
 (145, 'Precor', 'DPL0309', 'Seated Row', 'back', 'plate-loaded', 'seated_row', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DPL0309.png'),
