@@ -691,7 +691,15 @@ export const App = {
             var appEl = document.getElementById('app');
             if (appEl && appEl.innerHTML) this._pageCache[prevHash] = appEl.innerHTML;
         }
-        if (!skipAnimation) document.getElementById('app').classList.remove('no-animate');
+        // Safety: clear any stuck swipe/pull styles that break position:fixed for tab bar
+        var routeAppEl = document.getElementById('app');
+        routeAppEl.style.transform = '';
+        routeAppEl.style.position = '';
+        routeAppEl.style.top = '';
+        routeAppEl.style.left = '';
+        routeAppEl.style.right = '';
+        routeAppEl.classList.remove('swiping-back');
+        if (!skipAnimation) routeAppEl.classList.remove('no-animate');
         window.scrollTo(0, 0);
         const hash = location.hash || '';
         this._lastRouteHash = hash;
