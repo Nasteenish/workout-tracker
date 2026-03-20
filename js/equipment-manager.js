@@ -3,8 +3,22 @@ import { AppState } from './app-state.js';
 import { Social } from './social.js';
 import { Storage } from './storage.js';
 import { WorkoutTimer } from './workout-timer.js';
-import { esc, findExerciseInProgram } from './utils.js';
+import { esc, findExerciseInProgram, autoTrimImg } from './utils.js';
 import { EQ, attr } from './data-attrs.js';
+
+function _trimEquipmentImages(container) {
+    if (!container) return;
+    var imgs = container.querySelectorAll('.ex-thumb');
+    for (var i = 0; i < imgs.length; i++) {
+        (function(img) {
+            if (img.complete && img.naturalWidth > 0) {
+                autoTrimImg(img);
+            } else {
+                img.addEventListener('load', function() { autoTrimImg(img); });
+            }
+        })(imgs[i]);
+    }
+}
 
 export const EquipmentManager = {
     _onRenderDay: null,
@@ -181,6 +195,7 @@ export const EquipmentManager = {
                     + '</div>';
             }
             div.innerHTML = html;
+            _trimEquipmentImages(div);
         }).catch(function() {
             var div = document.getElementById('eq-brand-list');
             if (div) div.innerHTML = '<div class="eq-section-label">Ошибка загрузки</div>';
@@ -345,6 +360,7 @@ export const EquipmentManager = {
                     }
                     if (!html) html = '<div class="eq-search-empty">Каталог пуст</div>';
                     div.innerHTML = html;
+                    _trimEquipmentImages(div);
                 }).catch(function() {});
             }, 100);
             return;
@@ -417,6 +433,7 @@ export const EquipmentManager = {
                 }
                 if (!html2) html2 = '<div class="eq-search-empty">Ничего не найдено</div>';
                 div.innerHTML = html2;
+                _trimEquipmentImages(div);
             }).catch(function() {});
         }, 300);
     },

@@ -58,6 +58,66 @@ export function exThumbHtml(name, sizeOrNameRu, size) {
     var cls = sz ? ' style="width:' + sz + 'px;height:' + sz + 'px"' : '';
     return '<img class="ex-thumb" src="' + exThumbUrl(name, nameRu) + '" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'"' + cls + '>';
 }
+// Auto-trim whitespace from equipment images (fetch→blob→canvas, bypasses CORS)
+var _trimCache = {};
+export function autoTrimImg(img) {
+    if (!img || !img.src || img._trimmed) return;
+    if (img.src.startsWith('blob:') || img.src.startsWith('data:')) return;
+    img._trimmed = true;
+    var origSrc = img.src;
+    if (_trimCache[origSrc]) { img.src = _trimCache[origSrc]; return; }
+    fetch(origSrc).then(function(r) { return r.blob(); }).then(function(blob) {
+        var blobUrl = URL.createObjectURL(blob);
+        var tmp = new Image();
+        tmp.onload = function() {
+            var w = tmp.naturalWidth, h = tmp.naturalHeight;
+            if (!w || !h || w < 10 || h < 10) { URL.revokeObjectURL(blobUrl); return; }
+            var c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            var ctx = c.getContext('2d');
+            ctx.drawImage(tmp, 0, 0);
+            URL.revokeObjectURL(blobUrl);
+            var data;
+            try { data = ctx.getImageData(0, 0, w, h).data; } catch(e) { return; }
+            // Find bounding box of non-white pixels (threshold 240)
+            var t = 240, minX = w, minY = h, maxX = 0, maxY = 0;
+            for (var y = 0; y < h; y++) {
+                for (var x = 0; x < w; x++) {
+                    var i = (y * w + x) * 4;
+                    if (data[i + 3] < 10) continue; // transparent
+                    if (data[i] < t || data[i+1] < t || data[i+2] < t) {
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                    }
+                }
+            }
+            if (maxX <= minX || maxY <= minY) return; // all white or empty
+            // Add 5% padding
+            var cw = maxX - minX, ch = maxY - minY;
+            var pad = Math.round(Math.max(cw, ch) * 0.05);
+            minX = Math.max(0, minX - pad);
+            minY = Math.max(0, minY - pad);
+            maxX = Math.min(w - 1, maxX + pad);
+            maxY = Math.min(h - 1, maxY + pad);
+            var tw = maxX - minX + 1, th = maxY - minY + 1;
+            // Only trim if we're removing at least 20% of area
+            if (tw * th > w * h * 0.8) return;
+            var c2 = document.createElement('canvas');
+            c2.width = tw; c2.height = th;
+            c2.getContext('2d').drawImage(c, minX, minY, tw, th, 0, 0, tw, th);
+            c2.toBlob(function(outBlob) {
+                if (!outBlob) return;
+                var url = URL.createObjectURL(outBlob);
+                _trimCache[origSrc] = url;
+                img.src = url;
+            }, 'image/png');
+        };
+        tmp.src = blobUrl;
+    }).catch(function() { /* network error, ignore */ });
+}
+
 // Mark already-cached images as loaded instantly (prevents flicker on re-render)
 export function markCachedThumbs(root) {
     var imgs = (root || document).querySelectorAll('.ex-thumb:not(.loaded)');
