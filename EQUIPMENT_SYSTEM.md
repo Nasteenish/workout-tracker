@@ -19,10 +19,11 @@
 
 *Cybex: 180 файлов в storage при 110 записях — вероятно дубли или старые файлы.
 
-### equipment_exercises (junction table)
+### equipment_exercises (junction table) — LEGACY
 - **500+ строк**, 151 уникальных equipment_id → 76 уникальных exercise_id
-- Заполняется через `admin.html` и `catalog.html`
-- **НЕ используется в runtime** — мёртвые данные для приложения
+- Заполнялась через старую админку (`admin.html`)
+- **НЕ используется в runtime** — мёртвые данные. Runtime использует `exercise_type` поле в `equipment_catalog`
+- Управление привязками: `catalog.html` → модалка тренажёра → редактор exercise_type (добавить/удалить типы)
 
 ### Supabase Storage
 - Bucket: `equipment-images`
@@ -75,13 +76,18 @@ seated_leg_curl, seated_row, shoulder_press, smith_machine, squat,
 standing_leg_curl, standing_multi, torso_rotation, tricep_dip, tricep_extension
 ```
 
-### Система 2: Админка (equipment_exercises junction table)
-**Файлы:** `admin.html`, `catalog.html`, `tools/create_equipment_exercises.sql`
+### Система 2: Каталог — редактор exercise_type
+**Файл:** `catalog.html`
 
-Many-to-many: `equipment_catalog.id ↔ equipment_exercises ↔ exercise_id (text)`
-- exercise_id формат: `Chest_Fly__Machine_`, `Butterfly__Pec_Deck_` (из exercises таблицы в Supabase)
-- Заполняется вручную через UI админки
-- **Runtime НЕ использует** — двойная работа
+Модалка тренажёра в каталоге позволяет:
+- Видеть текущие `exercise_type` значения как теги
+- Удалять тип (×) — PATCH в `equipment_catalog`
+- Добавлять тип из дропдауна (все доступные типы с примерами упражнений)
+- Видеть список привязанных упражнений (runtime matching через `_exerciseTypeMap`)
+
+Изменения **сразу влияют на runtime** — exercise_type читается из БД при каждом запуске приложения.
+
+> **Legacy:** `equipment_exercises` junction table (500+ строк) — заполнена через старую админку, **НЕ используется в runtime**. См. TASK-06.
 
 ### Система 3: localStorage (пользовательская привязка)
 **Файл:** `storage.js`

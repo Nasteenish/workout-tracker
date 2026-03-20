@@ -68,6 +68,22 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 .modal-close { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border-radius: 50%; border: none; background: rgba(0,0,0,0.5); color: #fff; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .modal-overlay { position: fixed; }
 .modal-wrapper { position: relative; max-width: 500px; width: 100%; }
+
+/* Exercise type editor */
+.et-section { margin-top: 14px; }
+.et-label { color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.et-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.et-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 14px; background: #1a2a1a; color: #6c6; font-size: 12px; font-family: monospace; }
+.et-tag-remove { cursor: pointer; color: #f66; font-size: 14px; margin-left: 2px; line-height: 1; }
+.et-tag-remove:hover { color: #f00; }
+.et-add { display: flex; gap: 6px; margin-bottom: 10px; }
+.et-select { flex: 1; padding: 6px 10px; border-radius: 10px; border: 1px solid #333; background: #1a1a1a; color: #e0e0e0; font-size: 13px; }
+.et-select:focus { outline: none; border-color: #4a9eff; }
+.et-add-btn { padding: 6px 14px; border-radius: 10px; border: none; background: #4a9eff; color: #fff; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.et-add-btn:hover { background: #3a8eef; }
+.et-matched { margin-top: 8px; }
+.et-matched-item { padding: 4px 0; font-size: 13px; color: #ccc; border-bottom: 1px solid #252525; }
+.et-saving { color: #ff0; font-size: 11px; margin-left: 8px; }
 </style>
 </head>
 <body>
@@ -672,10 +688,29 @@ document.getElementById('modal-close').addEventListener('click', () => modalOver
 modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) modalOverlay.classList.remove('open'); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') modalOverlay.classList.remove('open'); });
 
+// All unique exercise_type codes from the reverse map
+const ALL_EXERCISE_TYPES = Object.keys(_reverseTypeMap).sort();
+
+let _currentModalItem = null;
+
 function showEquipmentModal(item) {
+  _currentModalItem = item;
   const imgHtml = item.image_url
     ? `<img class="modal-img" src="${item.image_url}" alt="${item.name}">`
     : `<div class="modal-img no-img">📷</div>`;
+
+  const currentTypes = (item.exercise_type || '').split(',').map(t => t.trim()).filter(Boolean);
+  const availableTypes = ALL_EXERCISE_TYPES.filter(t => !currentTypes.includes(t));
+
+  const tagsHtml = currentTypes.length
+    ? currentTypes.map(t => `<span class="et-tag">${t}<span class="et-tag-remove" data-type="${t}">&times;</span></span>`).join('')
+    : '<span style="color:#555;font-size:13px">Нет типов</span>';
+
+  const matched = getMatchingExercises(item.exercise_type);
+  const matchedHtml = matched.length
+    ? matched.map(n => `<div class="et-matched-item">${n}</div>`).join('')
+    : (currentTypes.length ? '<div style="color:#f88;font-size:13px">Ни одно упражнение не матчится</div>' : '');
+
   modalContent.innerHTML = `
     ${imgHtml}
     <div class="modal-body">
@@ -684,19 +719,70 @@ function showEquipmentModal(item) {
       ${item.model ? `<div class="modal-subtitle">${item.model}</div>` : ''}
       <div class="modal-row"><span class="modal-row-label">Группа мышц</span><span class="modal-row-value">${item.muscle_group || '—'}</span></div>
       <div class="modal-row"><span class="modal-row-label">Тип</span><span class="modal-row-value">${item.equipment_type || '—'}</span></div>
-      ${item.exercise_type ? `<div class="modal-row"><span class="modal-row-label">exercise_type</span><span class="modal-row-value" style="font-family:monospace;font-size:12px">${item.exercise_type}</span></div>` : ''}
       ${item.category ? `<div class="modal-row"><span class="modal-row-label">Категория</span><span class="modal-row-value">${item.category}</span></div>` : ''}
-      ${(() => {
-        const matched = getMatchingExercises(item.exercise_type);
-        if (!matched.length) return item.exercise_type ? '<div style="margin-top:12px;color:#f88;font-size:13px">⚠ exercise_type не матчится ни к одному упражнению</div>' : '';
-        return '<div style="margin-top:14px"><div style="color:#888;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Привязанные упражнения (runtime)</div>' +
-          matched.map(n => '<div style="padding:4px 0;font-size:13px;color:#ccc;border-bottom:1px solid #252525">' + n + '</div>').join('') + '</div>';
-      })()}
-      ${item.description ? `<div style="margin-top:12px;color:#bbb;font-size:14px;line-height:1.5">${item.description}</div>` : ''}
+
+      <div class="et-section">
+        <div class="et-label">Привязка к упражнениям (exercise_type)</div>
+        <div class="et-tags" id="et-tags">${tagsHtml}</div>
+        <div class="et-add">
+          <select class="et-select" id="et-select">
+            <option value="">+ Добавить тип...</option>
+            ${availableTypes.map(t => {
+              const examples = (_reverseTypeMap[t] || []).slice(0, 2).join(', ');
+              return `<option value="${t}">${t} (${examples})</option>`;
+            }).join('')}
+          </select>
+          <button class="et-add-btn" id="et-add-btn">Добавить</button>
+        </div>
+        <div class="et-label" style="margin-top:12px">Привязанные упражнения</div>
+        <div class="et-matched" id="et-matched">${matchedHtml}</div>
+      </div>
     </div>
   `;
   modalOverlay.classList.add('open');
+  trimEquipmentImages(modalContent);
 }
+
+async function updateExerciseType(item, newExerciseType) {
+  const val = newExerciseType || null;
+  const r = await fetch(SB + '/rest/v1/equipment_catalog?id=eq.' + item.id, {
+    method: 'PATCH',
+    headers: { ...H, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ exercise_type: val })
+  });
+  if (r.ok) {
+    item.exercise_type = newExerciseType;
+  }
+  return r.ok;
+}
+
+// Handle add/remove exercise_type in modal
+document.addEventListener('click', async e => {
+  // Remove type tag
+  if (e.target.matches('.et-tag-remove')) {
+    const typeToRemove = e.target.dataset.type;
+    if (!_currentModalItem) return;
+    const types = (_currentModalItem.exercise_type || '').split(',').map(t => t.trim()).filter(Boolean);
+    const newTypes = types.filter(t => t !== typeToRemove);
+    e.target.closest('.et-tag').style.opacity = '0.3';
+    const ok = await updateExerciseType(_currentModalItem, newTypes.join(','));
+    if (ok) showEquipmentModal(_currentModalItem);
+  }
+
+  // Add type button
+  if (e.target.id === 'et-add-btn' || e.target.closest('#et-add-btn')) {
+    const sel = document.getElementById('et-select');
+    const newType = sel.value;
+    if (!newType || !_currentModalItem) return;
+    const types = (_currentModalItem.exercise_type || '').split(',').map(t => t.trim()).filter(Boolean);
+    if (types.includes(newType)) return;
+    types.push(newType);
+    sel.disabled = true;
+    const ok = await updateExerciseType(_currentModalItem, types.join(','));
+    if (ok) showEquipmentModal(_currentModalItem);
+    else sel.disabled = false;
+  }
+});
 
 function showExerciseModal(item) {
   const imgs = item.images || [];
