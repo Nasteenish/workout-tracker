@@ -88,7 +88,13 @@ export function resolveWorkout(week, day) {
     const dayOverrides = weekOverrides[day];
     if (!dayOverrides) return template;
 
+    // Use frozen template if exercise was replaced after this week
+    if (dayOverrides._frozenGroups) {
+        template.exerciseGroups = deepClone(dayOverrides._frozenGroups);
+    }
+
     for (const [exerciseId, exOverride] of Object.entries(dayOverrides)) {
+        if (exerciseId === '_frozenGroups') continue;
         const exercise = findExerciseInTemplate(template, exerciseId);
         if (!exercise || !exOverride.sets) continue;
 

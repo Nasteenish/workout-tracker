@@ -1002,9 +1002,65 @@ export const Builder = {
             }
         }
 
+        // Freeze old template for past weeks that have logs, so replacing
+        // an exercise doesn't retroactively erase history
+        this._freezeTemplateForPastWeeks(p, ed.dayNum, groups);
+
         p.dayTemplates[ed.dayNum].exerciseGroups = groups;
         this._syncProgressionToOverrides(ed.dayNum);
         Storage.saveProgram(p, false);
+    },
+
+    _freezeTemplateForPastWeeks(p, dayNum, newGroups) {
+        var oldGroups = p.dayTemplates[dayNum].exerciseGroups;
+        if (!oldGroups) return;
+
+        // Collect exercise IDs from old and new templates
+        var oldIds = {};
+        for (var g = 0; g < oldGroups.length; g++) {
+            var exs = getGroupExercises(oldGroups[g]);
+            for (var e = 0; e < exs.length; e++) {
+                if (exs[e].id) oldIds[exs[e].id] = true;
+            }
+        }
+        var newIds = {};
+        for (var g = 0; g < newGroups.length; g++) {
+            var exs = getGroupExercises(newGroups[g]);
+            for (var e = 0; e < exs.length; e++) {
+                if (exs[e].id) newIds[exs[e].id] = true;
+            }
+        }
+
+        // Check if any exercise was removed
+        var removedIds = [];
+        for (var id in oldIds) {
+            if (!newIds[id]) removedIds.push(id);
+        }
+        if (removedIds.length === 0) return;
+
+        // For each past week that has logs for removed exercises, freeze the old template
+        var currentWeek = AppState.currentWeek || 1;
+        if (!p.weeklyOverrides) p.weeklyOverrides = {};
+        var d = String(dayNum);
+
+        for (var w = 1; w < currentWeek; w++) {
+            // Check if this week has logs for any removed exercise
+            var hasLogs = false;
+            for (var r = 0; r < removedIds.length; r++) {
+                if (Storage.getSetLog(w, dayNum, removedIds[r], 0)) {
+                    hasLogs = true;
+                    break;
+                }
+            }
+            if (!hasLogs) continue;
+
+            // Don't overwrite an existing freeze
+            if (!p.weeklyOverrides[w]) p.weeklyOverrides[w] = {};
+            if (!p.weeklyOverrides[w][d]) p.weeklyOverrides[w][d] = {};
+            if (p.weeklyOverrides[w][d]._frozenGroups) continue;
+
+            p.weeklyOverrides[w][d]._frozenGroups = JSON.parse(JSON.stringify(oldGroups));
+        }
     },
 
     _serializeExercise(ex, dayNum, itemIdx) {
