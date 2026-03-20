@@ -11,11 +11,11 @@
 
 | Бренд | В БД | С картинкой | Без картинки | SQL-файл | Storage папка |
 |-------|------|-------------|--------------|----------|---------------|
-| gym80 | 140 | 140 | 0 | `tools/insert_equipment.sql` (145 строк, 135 data rows, +5 в БД не в SQL) | `gym80/` (140 файлов) |
-| Cybex | 110 | 110 | 0 | `tools/insert_cybex.sql` (119 строк, 108 data rows, 3 нет в SQL) | `cybex/` (180 файлов*) |
-| Hammer Strength | 82 | 82 | 0 | **нет SQL-файла** | `hammer/` (82 файла) |
-| Precor | 68 | 68 | 0 | `tools/insert_precor.sql` (72 строки, 65 data rows, 3 нет в SQL) | `precor/` (68 файлов) |
-| **Итого** | **400** | **400** | **0** | — | **470 файлов** |
+| gym80 | 140 | 140 | 0 | `tools/insert_equipment.sql` (140 data rows, synced) | `gym80/` (140 файлов) |
+| Cybex | 110 | 110 | 0 | `tools/insert_cybex.sql` (110 data rows, synced) | `cybex/` (180 файлов*) |
+| Hammer Strength | 82 | 82 | 0 | `tools/insert_hammer.sql` (82 data rows, synced) | `hammer/` (82 файла) |
+| Precor | 68 | 68 | 0 | `tools/insert_precor.sql` (68 data rows, synced) | `precor/` (68 файлов) |
+| **Итого** | **400** | **400** | **0** | **4 SQL-файла, все synced** | **470 файлов** |
 
 *Cybex: 180 файлов в storage при 110 записях — вероятно дубли или старые файлы.
 
@@ -58,21 +58,13 @@
        SELECT * FROM equipment_catalog WHERE brand=X AND exercise_type ILIKE '%type%'
 ```
 
-**Покрытие (438 упражнений в exercises_db.js, хедер файла говорит "429 from Hevy" — устарел):**
-- 159 → совпадение с каталогом (показываются тренажёры)
+**Покрытие (438 упражнений в exercises_db.js):**
+- 186 → совпадение с каталогом (показываются тренажёры)
 - 112 → free weight (каталог пропускается, это корректно)
-- **167 → нет матча** (каталог не показывается)
+- 140 → нет матча (каталог не показывается — кардио, bodyweight, olympic lifts, neck/wrist)
 
-**Из 167 без матча:**
-- ~30 кардио (Running, Cycling, Swimming...) — тренажёры не нужны
-- ~40 bodyweight (Push Up, Plank, Burpee...) — тренажёры не нужны
-- ~15 olympic lifts (Clean, Snatch...) — тренажёры не нужны
-- **~20 cable-специфичные** — ПРОБЛЕМА, есть `cable_multi` в каталоге
-- **~10 machine-специфичные** — ПРОБЛЕМА (`Shrug (Machine)`, `Vertical Traction`, `Triceps Pressdown`)
-- ~50 прочие (landmine, neck, stretching...) — тренажёры не критичны
-
-**exercise_type значения в каталоге (38 уникальных в БД, из них 31 покрыт маппингом):**
-Не покрыты маппингом: `back_machine`, `cable_multi`, `kneeling_leg_curl`, `rack`, `standing_leg_curl`, `standing_multi`, `bench` (частично — только через 'bench press'/'floor press'/'hex press')
+**exercise_type значения в каталоге (38 уникальных в БД, из них 34 покрыт маппингом):**
+Не покрыты маппингом: `back_machine`, `kneeling_leg_curl`, `rack`, `standing_leg_curl`, `standing_multi` (нет соответствующих упражнений в exercises_db)
 ```
 back_extension, back_machine, bench, bicep_curl, cable_multi, calf,
 chest_dip, chest_fly, chest_press, crunch, deadlift, decline_press,
@@ -129,9 +121,10 @@ gym_equipment: { gym_name, gym_city, exercise_name, equipment_name, catalog_id }
 ### Инструменты
 | Файл | Что делает |
 |------|-----------|
-| `tools/insert_equipment.sql` | INSERT gym80 (145 строк / 135 data rows) |
-| `tools/insert_cybex.sql` | INSERT Cybex (119 строк / 108 data rows) |
-| `tools/insert_precor.sql` | INSERT Precor (72 строки / 65 data rows) |
+| `tools/insert_equipment.sql` | INSERT/UPDATE gym80 (140 rows) |
+| `tools/insert_cybex.sql` | INSERT/UPDATE Cybex (110 rows) |
+| `tools/insert_precor.sql` | INSERT/UPDATE Precor (68 rows) |
+| `tools/insert_hammer.sql` | INSERT/UPDATE Hammer Strength (82 rows) |
 | `tools/create_equipment_exercises.sql` | CREATE TABLE equipment_exercises |
 | `tools/fetch_gym80_images.py` | Скрапинг gym80.de → upload в Storage |
 | `tools/fetch_precor_images.py` | Скрапинг precor.com → upload в Storage |
@@ -278,59 +271,45 @@ DB Mgmt API  = https://api.supabase.com/v1/projects/mqyfdbfdeuwojgexhwpy/databas
 ---
 
 ### TASK-03: Синхронизировать SQL-файлы с БД
-**Статус:** `[ ]`
+**Статус:** `[x]` (2026-03-20)
 **Приоритет:** MEDIUM
-**Описание:** SQL-файлы не отражают реальное состояние БД:
-- gym80: ~~16 не в БД~~ (TASK-02 done); 5 моделей в БД но не в SQL (4002, 4036, 4040, 4040 Basic, 4382)
-- Cybex: 1 в SQL не в БД (5437); 3 в БД не в SQL (16121, 5341, CI-SM)
-- Precor: 3 в БД не в SQL (DPL0802, Icarian, VBR6802)
-- Hammer Strength: **нет SQL-файла вообще** (82 записи в БД)
+**Описание:** SQL-файлы не отражали реальное состояние БД.
 
-**Подход:** Экспортировать текущее состояние БД → сгенерировать актуальные SQL-файлы. Создать `tools/insert_hammer.sql`.
+**Что сделано:**
+- Экспортировали все 400 записей из Supabase DB через REST API
+- Перегенерировали все 4 SQL-файла с полными данными (id, exercise_type, image_url — которых не было в старых файлах)
+- Создали `tools/insert_hammer.sql` (82 записи) — раньше его не было
+- Все файлы сгруппированы по сериям с комментариями
+- `ON CONFLICT (id) DO UPDATE SET` вместо `DO NOTHING` — перезапуск SQL обновляет данные
+- Итого: gym80 140 + Cybex 110 + Precor 68 + Hammer 82 = 400 записей
 
-**Результат:** Каждый бренд имеет актуальный SQL-файл. `SELECT * FROM equipment_catalog` полностью воспроизводится из SQL-файлов.
+**Формат SQL-файлов (новый):**
+```sql
+INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_type, exercise_type, image_url) VALUES
+-- brand Series
+(id, 'brand', 'model', 'name', 'muscle_group', 'equipment_type', 'exercise_type', 'image_url'),
+...
+ON CONFLICT (id) DO UPDATE SET brand=EXCLUDED.brand, ...;
+```
 
 ---
 
 ### TASK-04: Расширить _exerciseTypeMap для cable и machine упражнений
-**Статус:** `[ ]`
+**Статус:** `[x]` (2026-03-20)
 **Приоритет:** MEDIUM
-**Описание:** ~30 упражнений с тренажёрами не показывают каталог из-за отсутствия маппинга.
+**Описание:** ~30 упражнений с тренажёрами не показывали каталог из-за отсутствия маппинга.
 
-**Упражнения, которые должны показывать каталог:**
-```
-Cable:
-  Cable Fly Crossovers → chest_fly
-  Low Cable Fly Crossovers → chest_fly
-  Cable Core Palloff Press → cable_multi
-  Cable Pull Through → cable_multi
-  Cable Twist (Down to up) → torso_rotation
-  Cable Twist (Up to down) → torso_rotation
-  Front Raise (Cable) → cable_multi
-  Reverse Fly Single Arm (Cable) → rear_delt
-  Behind the Back Curl (Cable) → bicep_curl
-  Single Arm Curl (Cable) → bicep_curl
-  Overhead Curl (Cable) → bicep_curl
-  Rope Cable Curl → bicep_curl
-  Reverse Curl (Cable) → bicep_curl
-  Triceps Kickback (Cable) → tricep_extension
-  Triceps Pressdown → tricep_extension
-  Triceps Rope Pushdown → tricep_extension
-  Rope Straight Arm Pulldown → lat_pulldown
-  Upright Row (Cable) → cable_multi
-  Shrug (Cable) → cable_multi
-  Unilateral Low Pulley Raises → lateral_raise
+**Что сделано:**
+Добавлено 22 новых записи в `_exerciseTypeMap` (equipment-manager.js, строки 224-272):
+- Chest: cable fly crossovers, low cable fly crossovers → chest_fly
+- Back: vertical traction, straight arm pulldown → lat_pulldown; glute ham raise → back_extension
+- Legs: nordic hamstrings curls → lying_leg_curl
+- Shoulders: reverse fly → rear_delt; front raise, upright row, shrug → cable_multi; unilateral low pulley raises → lateral_raise
+- Arms: behind the back curl, single arm curl, overhead curl, rope cable curl, reverse curl → bicep_curl; triceps pressdown, triceps kickback, triceps rope pushdown → tricep_extension
+- Core: cable twist → torso_rotation; cable core palloff press, cable pull through → cable_multi
 
-Machine:
-  Shrug (Machine) → back_machine? (нужен новый тип?)
-  Vertical Traction (Machine) → lat_pulldown
-  Glute Ham Raise → back_extension (или glute_kickback?)
-  Nordic Hamstrings Curls → lying_leg_curl
-```
-
-**Подход:** Добавить записи в `_exerciseTypeMap`. Для cable-упражнений использовать `cable_multi` или конкретный тип мышцы.
-
-**Результат:** Покрытие увеличивается с 159 до ~185 упражнений (+ cable/machine).
+**Покрытие:** 159 → 186 упражнений (+27). Map entries: 90 → 112.
+Оставшиеся 140 unmatched — кардио, bodyweight, olympic lifts, neck/wrist — тренажёры не нужны.
 
 ---
 
