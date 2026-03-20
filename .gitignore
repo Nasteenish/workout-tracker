@@ -1,2 +1,4 @@
 logs/
 .claude/
+.worktrees/
+.DS_Store
