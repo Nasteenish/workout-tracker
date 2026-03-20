@@ -472,9 +472,10 @@
 .eq-current-thumb {
     width: 40px;
     height: 40px;
-    object-fit: contain;
+    object-fit: cover;
     border-radius: 6px;
     background: #fff;
+    flex-shrink: 0;
 }
 .eq-current-name {
     flex: 1;

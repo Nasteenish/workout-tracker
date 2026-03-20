@@ -64,10 +64,21 @@ export function autoTrimImg(img) {
     if (!img || !img.src || img._trimmed) return;
     if (img.src.startsWith('blob:') || img.src.startsWith('data:')) return;
     img._trimmed = true;
+    // Hide image while trimming to prevent visible crop flash
+    img.classList.remove('loaded');
     var origSrc = img.src;
     if (_trimCache[origSrc]) {
-        img.src = _trimCache[origSrc];
-        img.classList.add('loaded');
+        var cached = new Image();
+        cached.onload = function() {
+            cached.decode().then(function() {
+                img.src = _trimCache[origSrc];
+                img.classList.add('loaded');
+            }).catch(function() {
+                img.src = _trimCache[origSrc];
+                img.classList.add('loaded');
+            });
+        };
+        cached.src = _trimCache[origSrc];
         return;
     }
     fetch(origSrc).then(function(r) { return r.blob(); }).then(function(blob) {
@@ -122,8 +133,18 @@ export function autoTrimImg(img) {
                 if (!outBlob) { img.classList.add('loaded'); return; }
                 var url = URL.createObjectURL(outBlob);
                 _trimCache[origSrc] = url;
-                img.onload = function() { img.classList.add('loaded'); };
-                img.src = url;
+                // Pre-decode trimmed image offscreen before showing
+                var pre = new Image();
+                pre.onload = function() {
+                    pre.decode().then(function() {
+                        img.src = url;
+                        img.classList.add('loaded');
+                    }).catch(function() {
+                        img.src = url;
+                        img.classList.add('loaded');
+                    });
+                };
+                pre.src = url;
             }, 'image/png');
         };
         tmp.src = blobUrl;
