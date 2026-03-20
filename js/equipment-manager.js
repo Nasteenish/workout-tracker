@@ -217,6 +217,7 @@ export const EquipmentManager = {
         if (eqModal) {
             eqModal.style.maxHeight = '';
             eqModal.style.minHeight = '';
+            eqModal.scrollTop = 0;
         }
         if (brandContent) {
             brandContent.style.flex = '';
