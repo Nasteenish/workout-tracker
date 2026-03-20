@@ -986,88 +986,102 @@ export const Builder = {
         for (var i = 0; i < ed.items.length; i++) {
             var item = ed.items[i];
             if (item.type === 'single') {
-                groups.push({ type: 'single', exercise: this._serializeExercise(item.exercise, ed.dayNum, i) });
+                groups.push({ type: 'single', exercise: this._serializeExercise(item.exercise, ed.dayNum, i, -1) });
             } else if (item.type === 'superset') {
                 var exs = [];
                 for (var j = 0; j < item.exercises.length; j++) {
-                    exs.push(this._serializeExercise(item.exercises[j], ed.dayNum, i));
+                    exs.push(this._serializeExercise(item.exercises[j], ed.dayNum, i, j));
                 }
                 groups.push({ type: 'superset', exercises: exs });
             } else if (item.type === 'choose_one') {
                 var opts = [];
                 for (var j = 0; j < item.options.length; j++) {
-                    opts.push(this._serializeExercise(item.options[j], ed.dayNum, i));
+                    opts.push(this._serializeExercise(item.options[j], ed.dayNum, i, j));
                 }
                 groups.push({ type: 'choose_one', choiceKey: item.choiceKey, options: opts });
             }
         }
 
-        // Freeze old template for past weeks that have logs, so replacing
-        // an exercise doesn't retroactively erase history
-        this._freezeTemplateForPastWeeks(p, ed.dayNum, groups);
+        // Snapshot the old template if exerciseGroups changed (new/removed exercises, reorder, etc.)
+        this._snapshotIfChanged(p, ed.dayNum, groups);
 
         p.dayTemplates[ed.dayNum].exerciseGroups = groups;
         this._syncProgressionToOverrides(ed.dayNum);
         Storage.saveProgram(p, false);
     },
 
-    _freezeTemplateForPastWeeks(p, dayNum, newGroups) {
+    // Build a fingerprint of exercise IDs + order to detect template changes
+    _templateFingerprint(groups) {
+        var ids = [];
+        for (var g = 0; g < groups.length; g++) {
+            var exs = getGroupExercises(groups[g]);
+            for (var e = 0; e < exs.length; e++) {
+                if (exs[e].id) ids.push(exs[e].id);
+            }
+        }
+        return ids.join(',');
+    },
+
+    // Create a snapshot of the old template if it changed, and bind past weeks to the old version
+    _snapshotIfChanged(p, dayNum, newGroups) {
         var oldGroups = p.dayTemplates[dayNum].exerciseGroups;
         if (!oldGroups) return;
 
-        // Collect exercise IDs from old and new templates
-        var oldIds = {};
-        for (var g = 0; g < oldGroups.length; g++) {
-            var exs = getGroupExercises(oldGroups[g]);
-            for (var e = 0; e < exs.length; e++) {
-                if (exs[e].id) oldIds[exs[e].id] = true;
-            }
-        }
-        var newIds = {};
-        for (var g = 0; g < newGroups.length; g++) {
-            var exs = getGroupExercises(newGroups[g]);
-            for (var e = 0; e < exs.length; e++) {
-                if (exs[e].id) newIds[exs[e].id] = true;
-            }
-        }
+        // Compare fingerprints — if identical, nothing to snapshot
+        var oldFp = this._templateFingerprint(oldGroups);
+        var newFp = this._templateFingerprint(newGroups);
+        if (oldFp === newFp) return;
 
-        // Check if any exercise was removed
-        var removedIds = [];
-        for (var id in oldIds) {
-            if (!newIds[id]) removedIds.push(id);
-        }
-        if (removedIds.length === 0) return;
-
-        // For each past week that has logs for removed exercises, freeze the old template
-        var currentWeek = AppState.currentWeek || 1;
-        if (!p.weeklyOverrides) p.weeklyOverrides = {};
         var d = String(dayNum);
+        if (!p.templateSnapshots) p.templateSnapshots = {};
+        if (!p.templateSnapshots[d]) p.templateSnapshots[d] = [];
+        if (!p.weekTemplateVersion) p.weekTemplateVersion = {};
 
+        var snapshots = p.templateSnapshots[d];
+        var nextVersion = snapshots.length + 1;
+
+        // Save old template as a new snapshot
+        snapshots.push({
+            version: nextVersion,
+            groups: JSON.parse(JSON.stringify(oldGroups))
+        });
+
+        // Bind past weeks (that don't already have a version) to the old snapshot
+        var currentWeek = AppState.currentWeek || 1;
         for (var w = 1; w < currentWeek; w++) {
-            // Check if this week has logs for any removed exercise
-            var hasLogs = false;
-            for (var r = 0; r < removedIds.length; r++) {
-                if (Storage.getSetLog(w, dayNum, removedIds[r], 0)) {
-                    hasLogs = true;
-                    break;
-                }
+            if (!p.weekTemplateVersion[w]) p.weekTemplateVersion[w] = {};
+            // Don't overwrite — week already bound to an earlier snapshot
+            if (!p.weekTemplateVersion[w][d]) {
+                p.weekTemplateVersion[w][d] = nextVersion;
             }
-            if (!hasLogs) continue;
-
-            // Don't overwrite an existing freeze
-            if (!p.weeklyOverrides[w]) p.weeklyOverrides[w] = {};
-            if (!p.weeklyOverrides[w][d]) p.weeklyOverrides[w][d] = {};
-            if (p.weeklyOverrides[w][d]._frozenGroups) continue;
-
-            p.weeklyOverrides[w][d]._frozenGroups = JSON.parse(JSON.stringify(oldGroups));
+        }
+        // Current week also gets the old version if it has logs
+        if (this._weekHasLogs(currentWeek, dayNum, oldGroups)) {
+            if (!p.weekTemplateVersion[currentWeek]) p.weekTemplateVersion[currentWeek] = {};
+            if (!p.weekTemplateVersion[currentWeek][d]) {
+                p.weekTemplateVersion[currentWeek][d] = nextVersion;
+            }
         }
     },
 
-    _serializeExercise(ex, dayNum, itemIdx) {
+    // Check if a week has any logged sets for any exercise in the given groups
+    _weekHasLogs(week, dayNum, groups) {
+        for (var g = 0; g < groups.length; g++) {
+            var exs = getGroupExercises(groups[g]);
+            for (var e = 0; e < exs.length; e++) {
+                if (exs[e].id && Storage.getSetLog(week, dayNum, exs[e].id, 0)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    },
+
+    _serializeExercise(ex, dayNum, itemIdx, subIdx) {
         var sets = ex.sets && ex.sets.length > 0
             ? ex.sets
             : [{ type: 'H', rpe: '8', techniques: [] }, { type: 'H', rpe: '8', techniques: [] }, { type: 'H', rpe: '8', techniques: [] }];
-        var id = ex._id || ('D' + dayNum + 'E' + (itemIdx + 1));
+        var id = ex._id || ('D' + dayNum + 'E' + (itemIdx + 1) + (subIdx >= 0 ? '_' + (subIdx + 1) : ''));
         var result = {
             id: id,
             name: ex.name || ex.nameRu,
@@ -1104,14 +1118,10 @@ export const Builder = {
         // If no rules at all, don't touch existing overrides
         if (allRules.length === 0) return;
 
-        // Clear this day's overrides across all weeks (preserve _frozenGroups)
+        // Clear this day's overrides across all weeks
         for (var w = 1; w <= p.totalWeeks; w++) {
             if (p.weeklyOverrides[w] && p.weeklyOverrides[w][dayNum]) {
-                var frozen = p.weeklyOverrides[w][dayNum]._frozenGroups;
                 delete p.weeklyOverrides[w][dayNum];
-                if (frozen) {
-                    p.weeklyOverrides[w][dayNum] = { _frozenGroups: frozen };
-                }
             }
         }
 

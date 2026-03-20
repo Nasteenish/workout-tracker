@@ -191,6 +191,43 @@ export const SupaSync = {
                         }
                     }
                 }
+                // Merge templateSnapshots — append-only, keep all versions from both sides
+                if (base.program && other.program) {
+                    var baseSnaps = base.program.templateSnapshots || {};
+                    var otherSnaps = other.program.templateSnapshots || {};
+                    for (var sd in otherSnaps) {
+                        if (!baseSnaps[sd]) {
+                            baseSnaps[sd] = otherSnaps[sd];
+                        } else {
+                            // Append snapshots from other that base doesn't have (by version)
+                            var baseVersions = {};
+                            for (var si = 0; si < baseSnaps[sd].length; si++) {
+                                baseVersions[baseSnaps[sd][si].version] = true;
+                            }
+                            for (var si = 0; si < otherSnaps[sd].length; si++) {
+                                if (!baseVersions[otherSnaps[sd][si].version]) {
+                                    baseSnaps[sd].push(otherSnaps[sd][si]);
+                                }
+                            }
+                        }
+                    }
+                    base.program.templateSnapshots = baseSnaps;
+                    // Merge weekTemplateVersion — keep bindings from both sides
+                    var baseWTV = base.program.weekTemplateVersion || {};
+                    var otherWTV = other.program.weekTemplateVersion || {};
+                    for (var wk in otherWTV) {
+                        if (!baseWTV[wk]) {
+                            baseWTV[wk] = otherWTV[wk];
+                        } else {
+                            for (var dk in otherWTV[wk]) {
+                                if (!(dk in baseWTV[wk])) {
+                                    baseWTV[wk][dk] = otherWTV[wk][dk];
+                                }
+                            }
+                        }
+                    }
+                    base.program.weekTemplateVersion = baseWTV;
+                }
                 // Fix exercise names that remote may have reverted to old values
                 Migrations.migrateExerciseNames(base);
                 base._lastModified = Date.now();

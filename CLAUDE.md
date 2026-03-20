@@ -87,6 +87,7 @@ tools/                  — Утилиты разработки: SQL, скрип
 | Новый маршрут в `App.route()` | `SwipeNav._getSwipeConfig()` |
 | `UI.renderWeek()` | `UI._weekCardsHTML()`, `_weekViewHTML()` — swipe companions |
 | `Builder._editingDay` | `Builder.renderDayEditor()`, `Builder._autoSave()` |
+| `Builder._snapshotIfChanged()` / `templateSnapshots` | `resolveWorkout()` (program-utils.js), `SupaSync.syncOnLogin()` (merge snapshots), `migrations.js` (_frozenGroups → snapshots) |
 | `EquipmentManager.*` | `UI.showEquipmentModal()`, `WorkoutUI.handleModalClick` (eq handlers) |
 
 ### 3. Где хранится стейт

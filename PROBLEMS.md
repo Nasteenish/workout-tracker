@@ -86,67 +86,55 @@
 
 ---
 
-### 10. dayTemplates — один шаблон на все недели (ретроактивное изменение истории) — 🟡 частично решено
+### 10. dayTemplates — один шаблон на все недели (ретроактивное изменение истории) — ✅ решено
 
-**Текущая архитектура:**
+**Архитектура (template snapshots):**
 
 ```javascript
 program = {
-  dayTemplates: {
-    1: { name: "Ноги", exerciseGroups: [...] },
-    4: { name: "Плечи и спина", exerciseGroups: [
-      { type: 'single', exercise: { id: 'D4E1', name: 'Жим гантелей', sets: [...] } },
-      { type: 'superset', exercises: [
-        { id: 'D4E7', name: 'Тяга верхнего блока одной рукой', sets: [...] },
-        { id: 'D4E8', name: 'Махи в стороны', sets: [...] }
-      ]}
-    ]}
+  dayTemplates: { 4: { name: "Плечи и спина", exerciseGroups: [...] } },  // текущий шаблон
+  templateSnapshots: {                                     // версионированные снимки
+    "4": [
+      { version: 1, groups: [...] },                       // начальный шаблон
+      { version: 2, groups: [...] }                        // после замены упражнения
+    ]
   },
-  weeklyOverrides: {
-    // Только set-level патчи (RPE, техники). НЕ хранит замены упражнений
+  weekTemplateVersion: {                                   // привязка недели к версии
+    "1": { "4": 1 }, "2": { "4": 1 },                     // недели 1-2 → версия 1
+    "3": { "4": 2 }                                        // неделя 3 → версия 2
+  },
+  weeklyOverrides: {                                       // set-level патчи (как раньше)
     3: { 4: { 'D4E1': { sets: { 0: { techniques: ['dropset'] } } } } }
   }
 }
 ```
 
-Логи тренировок (отдельно от программы):
-```javascript
-log = {
-  "1": { "4": { "D4E7": { "0": { weight: 30, reps: 12, completed: true } } } },
-  "2": { "4": { "D4E7": { "0": { weight: 32, reps: 12, completed: true } } } },
-  "3": { "4": { "D4E7": { "0": { weight: 35, reps: 10, completed: true } } } }
-}
-```
+**Как работает:**
+1. `Builder._autoSave()` вызывает `_snapshotIfChanged()` при каждом сохранении
+2. `_snapshotIfChanged()` сравнивает fingerprint (список ID) старого и нового шаблона
+3. Если fingerprint изменился — создаёт snapshot старого шаблона, привязывает прошлые недели к этой версии
+4. `resolveWorkout(week, day)` проверяет `weekTemplateVersion[week][day]` → берёт snapshot → клонирует → накладывает overrides
+5. Legacy fallback: если есть `_frozenGroups` (до миграции), используется как раньше
 
-`resolveWorkout(week, day)` берёт `dayTemplates[day]` (ОДИН шаблон на все недели), клонирует, накладывает `weeklyOverrides[week][day]` (только set-level патчи). При рендере истории для каждого упражнения ищет `log[week][day][exercise.id][setIdx]`.
-
-**Баг:** Когда пользователь заменяет упражнение в day editor, `_autoSave()` записывает новые exerciseGroups напрямую в `dayTemplates[day]` (builder.js:1005). Старый exercise ID (например `D4E7`) исчезает из шаблона. При просмотре прошлых недель `resolveWorkout` возвращает новый шаблон без `D4E7` → логи `log[1][4]["D4E7"]` не отображаются → прогресс "потерян".
-
-**Текущий фикс (`_frozenGroups`, коммит 7147428):**
-
-При замене упражнения `_freezeTemplateForPastWeeks()` сравнивает старые и новые exercise ID. Если ID удалён — для каждой прошлой недели с логами сохраняет старый шаблон в `weeklyOverrides[w][d]._frozenGroups`. `resolveWorkout()` проверяет `_frozenGroups` и использует замороженный шаблон вместо текущего.
-
-**Ограничения фикса:**
-- Замораживает только при замене упражнений (удаление ID). Изменение sets/reps/порядка всё ещё ретроактивное
-- Дублирование данных: полный `exerciseGroups` копируется в каждую прошлую неделю с логами
-- `_frozenGroups` — специальный ключ в weeklyOverrides, который нужно пропускать во всех итерациях (`_syncProgressionToOverrides` уже исправлен)
-- Не решает проблему для существующих данных — если пользователь УЖЕ заменял упражнения до этого фикса, те логи уже потеряны
+**Что решено:**
+- ✅ Замена упражнений не теряет историю прошлых недель
+- ✅ Дедупликация: один snapshot на все недели (а не копия в каждую неделю)
+- ✅ Покрывает ВСЕ изменения шаблона (не только удаление ID)
+- ✅ `weeklyOverrides` чист — только set-level патчи, без `_frozenGroups` hack
+- ✅ Побочный баг коллизии ID в суперсетах исправлен (`_serializeExercise` принимает `subIdx`)
+- ✅ Миграция `_frozenGroups` → `templateSnapshots` в `migrations.js`
+- ✅ Sync: `SupaSync.syncOnLogin()` мержит snapshots + weekTemplateVersion с обеих сторон
 
 **Ключевые файлы:**
 
 | Файл | Роль |
 |------|------|
-| `js/builder.js` `_autoSave()` (~980-1008) | Сериализует day editor → записывает в `dayTemplates` |
-| `js/builder.js` `_freezeTemplateForPastWeeks()` (~1012-1063) | Заморозка старого шаблона для прошлых недель |
-| `js/builder.js` `_syncProgressionToOverrides()` (~1085-1129) | Генерирует set-level overrides, сохраняет `_frozenGroups` при очистке |
-| `js/builder.js` `_serializeExercise()` (~1066-1083) | Генерирует ID: `ex._id \|\| ('D' + dayNum + 'E' + (itemIdx + 1))` |
-| `js/program-utils.js` `resolveWorkout()` (80-108) | Собирает шаблон + overrides, учитывает `_frozenGroups` |
-| `js/storage.js` `getSetLog()` (752-759) | Читает `log[week][day][exerciseId][setIdx]` |
-| `js/supabase-sync.js` `_deepMergeLogs()` (93+) | Merge логов при sync — работает по exercise ID |
-
-**Побочный баг в `_serializeExercise`:** строка ~1070: `var id = ex._id || ('D' + dayNum + 'E' + (itemIdx + 1))` — для суперсетов `itemIdx` это индекс группы, а НЕ индекс упражнения внутри группы. Оба упражнения суперсета получают одинаковый сгенерированный ID. При замене упражнения в суперсете новое упражнение получит коллидирующий ID.
-
-**Идеальное решение — template versioning:** каждое изменение шаблона создаёт новую версию, каждая неделя привязана к версии, актуальной на момент тренировки. Это потребует переписать модель данных, миграцию существующих программ и sync логику.
+| `js/builder.js` `_autoSave()` | Сериализует day editor → `_snapshotIfChanged()` → записывает в `dayTemplates` |
+| `js/builder.js` `_snapshotIfChanged()` | Сравнивает fingerprint, создаёт snapshot, привязывает недели |
+| `js/builder.js` `_serializeExercise()` | Генерирует ID: `ex._id \|\| ('D' + dayNum + 'E' + (itemIdx + 1) + subIdx)` |
+| `js/program-utils.js` `resolveWorkout()` | Берёт snapshot по версии, fallback на `dayTemplates` + legacy `_frozenGroups` |
+| `js/supabase-sync.js` `syncOnLogin()` | Merge `templateSnapshots` + `weekTemplateVersion` при sync |
+| `js/migrations.js` `_migrate_frozen_to_snapshots_v1` | Конвертирует `_frozenGroups` → snapshots |
 
 ---
 
@@ -185,7 +173,7 @@ log = {
 | 7 | Хардкод аккаунтов | Низкая | 🟢 P2 |
 | 8 | Нет JSDoc типизации | Средняя | 🟢 P3 |
 | 9 | Программы грузятся всегда | Средняя | 🟢 P3 |
-| 10 | dayTemplates — один шаблон на все недели (замена упражнения теряет историю). Частичный фикс `_frozenGroups` + побочный баг коллизии ID в суперсетах | Высокая | 🟡 P1 |
+| 10 | ~~dayTemplates — один шаблон на все недели~~ → template snapshots + version binding. Коллизия ID в суперсетах исправлена | — | ✅ Решено |
 
 ---
 

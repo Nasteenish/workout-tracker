@@ -82,26 +82,37 @@ export function resolveWorkout(week, day) {
     const template = deepClone(p.dayTemplates[day]);
     if (!template) return null;
 
-    const weekOverrides = p.weeklyOverrides[week];
-    if (!weekOverrides) return template;
+    const d = String(day);
 
-    const dayOverrides = weekOverrides[day];
-    if (!dayOverrides) return template;
+    // Check if this week is bound to a snapshot version
+    const version = p.weekTemplateVersion && p.weekTemplateVersion[week]
+        && p.weekTemplateVersion[week][d];
+    if (version && p.templateSnapshots && p.templateSnapshots[d]) {
+        const snap = p.templateSnapshots[d].find(s => s.version === version);
+        if (snap) {
+            template.exerciseGroups = deepClone(snap.groups);
+        }
+    }
 
-    // Use frozen template if exercise was replaced after this week
-    if (dayOverrides._frozenGroups) {
+    // Legacy fallback: support _frozenGroups from old data (before migration runs)
+    const weekOverrides = p.weeklyOverrides && p.weeklyOverrides[week];
+    const dayOverrides = weekOverrides && weekOverrides[day];
+    if (dayOverrides && dayOverrides._frozenGroups && !version) {
         template.exerciseGroups = deepClone(dayOverrides._frozenGroups);
     }
 
-    for (const [exerciseId, exOverride] of Object.entries(dayOverrides)) {
-        if (exerciseId === '_frozenGroups') continue;
-        const exercise = findExerciseInTemplate(template, exerciseId);
-        if (!exercise || !exOverride.sets) continue;
+    // Apply set-level overrides
+    if (dayOverrides) {
+        for (const [exerciseId, exOverride] of Object.entries(dayOverrides)) {
+            if (exerciseId === '_frozenGroups') continue;
+            const exercise = findExerciseInTemplate(template, exerciseId);
+            if (!exercise || !exOverride.sets) continue;
 
-        for (const [setIdx, setOverride] of Object.entries(exOverride.sets)) {
-            const idx = parseInt(setIdx);
-            if (exercise.sets[idx]) {
-                Object.assign(exercise.sets[idx], setOverride);
+            for (const [setIdx, setOverride] of Object.entries(exOverride.sets)) {
+                const idx = parseInt(setIdx);
+                if (exercise.sets[idx]) {
+                    Object.assign(exercise.sets[idx], setOverride);
+                }
             }
         }
     }

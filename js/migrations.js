@@ -296,6 +296,69 @@ export const Migrations = {
                     if (changed) localStorage.setItem(key, JSON.stringify(d));
                 }
             }
+        },
+        // v5: Migrate _frozenGroups → templateSnapshots + weekTemplateVersion
+        {
+            key: '_migrate_frozen_to_snapshots_v1',
+            fn: function() {
+                var allUsers = Storage.getUsers ? Storage.getUsers() : [];
+                for (var ui = 0; ui < allUsers.length; ui++) {
+                    var key = 'wt_data_' + allUsers[ui].id;
+                    var d = JSON.parse(localStorage.getItem(key) || '{}');
+                    if (!d.program || !d.program.weeklyOverrides) continue;
+
+                    var changed = false;
+                    var p = d.program;
+                    if (!p.templateSnapshots) p.templateSnapshots = {};
+                    if (!p.weekTemplateVersion) p.weekTemplateVersion = {};
+
+                    // Group frozen data by dayNum to deduplicate snapshots
+                    var frozenByDay = {};
+                    for (var w in p.weeklyOverrides) {
+                        for (var dd in p.weeklyOverrides[w]) {
+                            var dayOv = p.weeklyOverrides[w][dd];
+                            if (!dayOv || !dayOv._frozenGroups) continue;
+                            if (!frozenByDay[dd]) frozenByDay[dd] = [];
+                            frozenByDay[dd].push({ week: w, groups: dayOv._frozenGroups });
+                        }
+                    }
+
+                    for (var dd in frozenByDay) {
+                        var entries = frozenByDay[dd];
+                        if (!p.templateSnapshots[dd]) p.templateSnapshots[dd] = [];
+
+                        // All _frozenGroups for one day are identical (frozen at same time)
+                        // so we only need one snapshot
+                        var snap = entries[0].groups;
+                        var version = p.templateSnapshots[dd].length + 1;
+                        p.templateSnapshots[dd].push({ version: version, groups: snap });
+
+                        // Bind all those weeks to this snapshot version
+                        for (var i = 0; i < entries.length; i++) {
+                            var wk = String(entries[i].week);
+                            if (!p.weekTemplateVersion[wk]) p.weekTemplateVersion[wk] = {};
+                            if (!p.weekTemplateVersion[wk][dd]) {
+                                p.weekTemplateVersion[wk][dd] = version;
+                            }
+                        }
+
+                        // Remove _frozenGroups from weeklyOverrides
+                        for (var i = 0; i < entries.length; i++) {
+                            var wk = String(entries[i].week);
+                            if (p.weeklyOverrides[wk] && p.weeklyOverrides[wk][dd]) {
+                                delete p.weeklyOverrides[wk][dd]._frozenGroups;
+                                // Clean up empty day override objects
+                                if (Object.keys(p.weeklyOverrides[wk][dd]).length === 0) {
+                                    delete p.weeklyOverrides[wk][dd];
+                                }
+                            }
+                        }
+                        changed = true;
+                    }
+
+                    if (changed) localStorage.setItem(key, JSON.stringify(d));
+                }
+            }
         }
     ]
 };
