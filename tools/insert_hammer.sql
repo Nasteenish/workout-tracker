@@ -26,7 +26,7 @@ INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_t
 (326, 'Hammer Strength', 'PL-GD', 'Plate-Loaded Glute Drive', 'legs', NULL, 'hip_thrust', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/hammer/PL-GD.png'),
 (327, 'Hammer Strength', 'PL-SCR', 'Plate-Loaded Seated Calf Raise', 'legs', NULL, 'calf', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/hammer/PL-SCR.png'),
 (328, 'Hammer Strength', 'PL-SHC', 'Plate-Loaded Super Horizontal Calf', 'legs', NULL, 'calf', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/hammer/PL-SHC.png'),
-(329, 'Hammer Strength', 'PL-VSM', 'Plate-Loaded Vertical Smith Machine', 'full_body', NULL, 'smith_machine', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/hammer/PL-VSM.png'),
+(329, 'Hammer Strength', 'PL-VSM', 'Plate-Loaded Vertical Smith Machine', 'full_body', NULL, 'smith_machine,squat,shoulder_press,chest_press,incline_press,lunge,calf', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/hammer/PL-VSM.png'),
 (330, 'Hammer Strength', 'PL-PXS', 'Plate-Loaded Pendulum Squat', 'legs', NULL, 'squat', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/hammer/PL-PXS.png'),
 -- Hammer Strength HD Elite
 (331, 'Hammer Strength', 'HS-CP', 'Select Chest Press', 'chest', NULL, 'chest_press', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/hammer/HS-CP.jpg'),
@@ -77,7 +77,7 @@ INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_t
 (374, 'Hammer Strength', 'PL-GHR', 'Glute Ham Reverse Hyper', 'back', NULL, 'back_extension', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/hammer/PL-GHR.png'),
 (375, 'Hammer Strength', 'PL-AC', 'Plate-Loaded Abdominal Oblique Crunch', 'core', NULL, 'crunch', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/hammer/PL-AC.png'),
 -- Hammer Strength Smith Machine
-(376, 'Hammer Strength', 'SM', 'Smith Machine', 'full_body', NULL, 'smith_machine', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/hammer/SM.png'),
+(376, 'Hammer Strength', 'SM', 'Smith Machine', 'full_body', NULL, 'smith_machine,squat,shoulder_press,chest_press,incline_press,lunge,calf', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/hammer/SM.png'),
 -- Hammer Strength HD Elite
 (377, 'Hammer Strength', 'HS-FPD', 'Select Fixed Pulldown', 'back', NULL, 'lat_pulldown', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/hammer/HS-FPD.jpg'),
 -- Hammer Strength Plate-Loaded

@@ -132,10 +132,10 @@ INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_t
 (119, 'gym80', '4401', 'FTM Deadlift Machine', 'back', 'selectorized', 'deadlift', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/4401.jpg'),
 (120, 'gym80', '4403', 'FTM Push & Pull Machine', 'chest', 'selectorized', 'cable_multi', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/4403.jpg'),
 -- gym80 PURE KRAFT (Plate-Loaded)
-(300, 'gym80', '4002', 'Basic Multi Press Station', 'full_body', NULL, 'smith_machine', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/4002.jpg'),
-(301, 'gym80', '4036', 'Multipress Station', 'full_body', NULL, 'smith_machine', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/4036.jpg'),
-(302, 'gym80', '4040', 'Max Rack', 'full_body', NULL, 'smith_machine', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/4040.jpg'),
-(303, 'gym80', '4040 Basic', 'Basic Max Rack', 'full_body', NULL, 'smith_machine', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/4040_Basic.jpg'),
+(300, 'gym80', '4002', 'Basic Multi Press Station', 'full_body', NULL, 'smith_machine,squat,shoulder_press,chest_press,incline_press,lunge,calf', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/4002.jpg'),
+(301, 'gym80', '4036', 'Multipress Station', 'full_body', NULL, 'smith_machine,squat,shoulder_press,chest_press,incline_press,lunge,calf', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/4036.jpg'),
+(302, 'gym80', '4040', 'Max Rack', 'full_body', NULL, 'smith_machine,squat,shoulder_press,chest_press,incline_press,lunge,calf', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/4040.jpg'),
+(303, 'gym80', '4040 Basic', 'Basic Max Rack', 'full_body', NULL, 'smith_machine,squat,shoulder_press,chest_press,incline_press,lunge,calf', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/4040_Basic.jpg'),
 -- gym80 SYGNUM (Selectorized)
 (391, 'gym80', '3001', 'Leg Extension', 'legs', 'selectorized', 'leg_extension', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/gym80/3001.jpg'),
 -- gym80 PURE KRAFT (Plate-Loaded)

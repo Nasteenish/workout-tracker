@@ -121,11 +121,11 @@ INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_t
 -- Cybex Plate Loaded (5000 Series)
 (293, 'Cybex', '16210', 'Seated Calf', 'legs', 'plate-loaded', 'calf', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/16210.png'),
 -- Cybex Smith Press
-(297, 'Cybex', '5341', 'Smith Press', 'full_body', NULL, 'smith_machine', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/5341.webp'),
+(297, 'Cybex', '5341', 'Smith Press', 'full_body', NULL, 'smith_machine,squat,shoulder_press,chest_press,incline_press,lunge,calf', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/5341.webp'),
 -- Cybex Specialty
-(298, 'Cybex', '16121', 'Plate Loaded Smith Press', 'full_body', NULL, 'smith_machine', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/16121.png'),
+(298, 'Cybex', '16121', 'Plate Loaded Smith Press', 'full_body', NULL, 'smith_machine,squat,shoulder_press,chest_press,incline_press,lunge,calf', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/16121.png'),
 -- Cybex Ion Series (Selectorized)
-(299, 'Cybex', 'CI-SM', 'Ion Series Smith Rack', 'full_body', NULL, 'smith_machine', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/CI-SM.png')
+(299, 'Cybex', 'CI-SM', 'Ion Series Smith Rack', 'full_body', NULL, 'smith_machine,squat,shoulder_press,chest_press,incline_press,lunge,calf', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/CI-SM.png')
 ON CONFLICT (id) DO UPDATE SET
   brand = EXCLUDED.brand,
   model = EXCLUDED.model,

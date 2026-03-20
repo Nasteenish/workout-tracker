@@ -74,11 +74,11 @@ INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_t
 -- Precor FTS (Cable/Functional)
 (185, 'Precor', 'FTS', 'Functional Training System Glide', 'chest', 'cable', 'cable_multi', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/FTS.png'),
 -- Precor Discovery Plate Loaded (DPL)
-(304, 'Precor', 'DPL0802', 'Discovery Series Smith Machine', 'full_body', NULL, 'smith_machine', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DPL0802.webp'),
+(304, 'Precor', 'DPL0802', 'Discovery Series Smith Machine', 'full_body', NULL, 'smith_machine,squat,shoulder_press,chest_press,incline_press,lunge,calf', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/DPL0802.webp'),
 -- Precor Vitality Series
-(305, 'Precor', 'VBR6802', 'Vitality Series Smith Machine', 'full_body', NULL, 'smith_machine', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/VBR6802.png'),
+(305, 'Precor', 'VBR6802', 'Vitality Series Smith Machine', 'full_body', NULL, 'smith_machine,squat,shoulder_press,chest_press,incline_press,lunge,calf', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/VBR6802.png'),
 -- Precor Icarian
-(306, 'Precor', 'Icarian', 'Icarian Linear Counter Balanced Smith Machine', 'full_body', NULL, 'smith_machine', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/Icarian.jpg')
+(306, 'Precor', 'Icarian', 'Icarian Linear Counter Balanced Smith Machine', 'full_body', NULL, 'smith_machine,squat,shoulder_press,chest_press,incline_press,lunge,calf', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/precor/Icarian.jpg')
 ON CONFLICT (id) DO UPDATE SET
   brand = EXCLUDED.brand,
   model = EXCLUDED.model,
