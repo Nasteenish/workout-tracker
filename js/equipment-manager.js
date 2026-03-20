@@ -236,29 +236,30 @@ export const EquipmentManager = {
         'leg press': 'leg_press', 'leg press horizontal': 'leg_press', 'single leg press': 'leg_press',
         'leg extension': 'leg_extension', 'single leg extensions': 'leg_extension',
         'leg curl': 'leg_curl', 'lying leg curl': 'lying_leg_curl', 'seated leg curl': 'seated_leg_curl',
-        'hip abduction': 'hip_abduction',
-        'hip adduction': 'hip_adduction',
-        'glute kickback': 'glute_kickback', 'rear kick': 'glute_kickback',
+        'hip abduction': 'hip_abduction', 'abduction': 'hip_abduction',
+        'hip adduction': 'hip_adduction', 'adduction': 'hip_adduction',
+        'glute kickback': 'glute_kickback', 'rear kick': 'glute_kickback', 'gluteus kick': 'glute_kickback',
         'hip thrust': 'hip_thrust', 'glute bridge': 'hip_thrust',
         'hack squat': 'squat', 'squat': 'squat', 'belt squat': 'squat',
         'pendulum squat': 'squat', 'bulgarian split squat': 'squat',
         'calf raise': 'calf', 'calf extension': 'calf', 'calf press': 'calf',
         'standing calf raise': 'calf', 'seated calf raise': 'calf',
-        'tibial raises': 'calf', 'tibial raise': 'calf',
+        'tibial raises': 'calf', 'tibial raise': 'calf', 'donkey calf': 'calf',
         'medium gluteus on low pulley': 'hip_abduction', 'cable hip abduction': 'hip_abduction',
         // Shoulders
         'shoulder press': 'shoulder_press', 'overhead press': 'shoulder_press',
         'lateral raise': 'lateral_raise',
         'rear delt': 'rear_delt', 'rear delt reverse fly': 'rear_delt', 'face pull': 'rear_delt',
+        'viking press': 'shoulder_press', 'neck press': 'shoulder_press',
         // Arms
         'bicep curl': 'bicep_curl', 'hammer curl': 'bicep_curl', 'concentration curl': 'bicep_curl',
-        'preacher curl': 'preacher_curl',
+        'preacher curl': 'preacher_curl', 'scott curl': 'preacher_curl',
         'triceps extension': 'tricep_extension', 'triceps pushdown': 'tricep_extension',
         'skull crusher': 'tricep_extension',
         'triceps dip': 'tricep_dip', 'seated dip machine': 'chest_dip',
         // Core
         'crunch': 'crunch', 'sit up': 'crunch',
-        'torso rotation': 'torso_rotation',
+        'torso rotation': 'torso_rotation', 'ab swing': 'crunch',
         'hanging knee raise': 'crunch', 'leg raise': 'crunch',
     },
 
@@ -330,8 +331,8 @@ export const EquipmentManager = {
         this._eqSearchTimer = setTimeout(function() {
             if (!Social) return;
             var promises = [
-                isFreeWeight ? Promise.resolve([]) : Social.searchCatalog(query, muscleGroup !== 'all' ? muscleGroup : null),
-                Social.searchSharedEquipment(query, muscleGroup !== 'all' ? muscleGroup : null)
+                Social.searchCatalog(query, null),
+                Social.searchSharedEquipment(query, null)
             ];
             Promise.all(promises).then(function(results) {
                 var catalog = results[0] || [];
