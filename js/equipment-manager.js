@@ -183,6 +183,13 @@ export const EquipmentManager = {
                 div.innerHTML = '<div class="eq-section-label">Нет тренажёров для этого упражнения</div>';
                 return;
             }
+            var seenNames = {};
+            var unique = [];
+            for (var j = 0; j < items.length; j++) {
+                var key = items[j].name;
+                if (!seenNames[key]) { seenNames[key] = true; unique.push(items[j]); }
+            }
+            items = unique;
             var html = '';
             for (var i = 0; i < items.length; i++) {
                 var c = items[i];
