@@ -1,4 +1,6 @@
 /* ===== Workout Session Timer ===== */
+import { Storage } from './storage.js';
+
 export const WorkoutTimer = {
     _interval: null,
 

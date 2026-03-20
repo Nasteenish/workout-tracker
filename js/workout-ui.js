@@ -37,7 +37,7 @@ export const WorkoutUI = {
 
         // Start workout timer
         if (target.id === 'btn-start-workout') {
-            UI.showGymModal(function(gymId) {
+            UI.showGymModal((gymId) => {
                 Storage.saveWorkoutGym(week, day, gymId || null);
                 if (gymId) {
                     Storage.touchGym(gymId);
