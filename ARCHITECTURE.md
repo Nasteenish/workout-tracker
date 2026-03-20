@@ -22,7 +22,7 @@
 workout-tracker/
 ├── index.html              # SPA точка входа. Supabase CDN + <script type="module" src="main.js">
 ├── manifest.json           # PWA
-├── sw.js                   # Service Worker (v544): кеш всех файлов + фоновые нотификации таймера
+├── sw.js                   # Service Worker: кеш всех файлов + фоновые нотификации таймера
 ├── css/
 │   ├── styles.css          # Entry: @import всех CSS
 │   ├── variables.css       # CSS custom properties
@@ -39,37 +39,39 @@ workout-tracker/
 │   ├── chat.css            # Сообщения (DM)
 │   └── animations.css      # Свайпы, переходы
 ├── js/
-│   ├── main.js             # (5) Entry point: import App → App.init()
-│   ├── app.js              # (2515) Роутинг, handleClick, init, login/logout
-│   ├── ui.js               # (2047) Рендер: login, week, day, history, settings, menu, модалки
-│   ├── builder.js          # (1646) Визард, редактор дня, picker, онбординг, регистрация
-│   ├── social-ui.js        # (1333) Рендер соцсети: feed, profile, checkin, discover, messages
-│   ├── social.js           # (900) Supabase API: профили, follows, чекины, реакции, DM, залы
-│   ├── storage.js          # (1001) localStorage CRUD + sibling cache + миграции данных
-│   ├── timer.js            # (495) Таймер отдыха: звук, нотификации, фоновый режим
-│   ├── app-state.js        # (8) Shared readable state (currentWeek, currentDay, pageCache)
-│   ├── program-utils.js    # (175) Storage-зависимые утилиты: resolveWorkout, exName, getTotalWeeks...
-│   ├── utils.js            # (250) Чистые утилиты: esc(), даты, миниатюры, getGroupExercises
-│   ├── data.js             # (2604) DEFAULT_PROGRAM + SET_TYPES, TECHNIQUE_TYPES
-│   ├── mikhail_data.js     # (9064) MIKHAIL_PROGRAM
-│   ├── mikhail2_data.js    # (7846) MIKHAIL2_PROGRAM
-│   ├── users.js            # (34) ACCOUNTS + BUILTIN_PROGRAMS
-│   ├── exercises_db.js     # (463) EXERCISE_DB (429 упражнений)
-│   ├── supabase-sync.js    # (238) Auth + cloud sync (push/pull/merge)
-│   ├── data-attrs.js       # (121) Реестр data-атрибутов (WORKOUT, BUILDER, EQ, SOCIAL...)
-│   ├── equipment-manager.js# (444) Привязка оборудования, залы, каталог
-│   ├── swipe-nav.js        # (311) Свайп-навигация (carousel, back-swipe, tabs)
-│   ├── migrations.js       # (300) Одноразовые data-fix миграции
-│   ├── cropper.js          # (314) Canvas-кроппер аватарок
-│   ├── celebration.js      # (203) Конфетти + статистика при завершении тренировки
-│   ├── pull-refresh.js     # (166) Pull-to-refresh
-│   ├── workout-timer.js    # (114) Таймер длительности тренировки (elapsed)
-│   ├── profile-manager.js  # (100) Сохранение профиля, обработка формы
-│   ├── message-notifications.js # (83) Realtime DM уведомления + polling
-│   └── scroll-lock.js      # (40) lockBodyScroll, unlockBodyScroll для модалок
+│   ├── main.js             # Entry point: import App → App.init()
+│   ├── app.js              # Роутинг, handleClick (делегатор), init, login/logout
+│   ├── ui.js               # Рендер: login, week, day, history, settings, menu, модалки
+│   ├── builder.js          # Визард, редактор дня, picker, онбординг, регистрация
+│   ├── social-ui.js        # Рендер соцсети: feed, profile, checkin, discover, messages
+│   ├── social.js           # Supabase API: профили, follows, чекины, реакции, DM, залы
+│   ├── storage.js          # localStorage CRUD + sibling cache + миграции данных
+│   ├── timer.js            # Таймер отдыха: звук, нотификации, фоновый режим
+│   ├── app-state.js        # Shared readable state (currentWeek, currentDay, pageCache)
+│   ├── program-utils.js    # Storage-зависимые утилиты: resolveWorkout, exName, getTotalWeeks...
+│   ├── utils.js            # Чистые утилиты: esc(), даты, миниатюры, getGroupExercises
+│   ├── data.js             # DEFAULT_PROGRAM + SET_TYPES, TECHNIQUE_TYPES
+│   ├── mikhail_data.js     # MIKHAIL_PROGRAM
+│   ├── mikhail2_data.js    # MIKHAIL2_PROGRAM
+│   ├── users.js            # ACCOUNTS + BUILTIN_PROGRAMS
+│   ├── exercises_db.js     # EXERCISE_DB (438 упражнений) + EXERCISE_CATEGORIES (8)
+│   ├── supabase-sync.js    # Auth + cloud sync (push/pull/merge)
+│   ├── data-attrs.js       # Реестр data-атрибутов (WORKOUT, BUILDER, EQ, SOCIAL, SETTINGS, ONBOARDING)
+│   ├── workout-ui.js       # Workout + modal click/input/focus handlers
+│   ├── equipment-manager.js# Привязка оборудования, залы, каталог
+│   ├── swipe-nav.js        # Свайп-навигация (carousel, back-swipe, tabs)
+│   ├── migrations.js       # Одноразовые data-fix миграции
+│   ├── cropper.js          # Canvas-кроппер аватарок
+│   ├── celebration.js      # Конфетти + статистика при завершении тренировки
+│   ├── pull-refresh.js     # Pull-to-refresh
+│   ├── workout-timer.js    # Таймер длительности тренировки (elapsed)
+│   ├── profile-manager.js  # Сохранение профиля, обработка формы
+│   ├── message-notifications.js # Realtime DM уведомления + polling
+│   └── scroll-lock.js      # lockBodyScroll, unlockBodyScroll для модалок
 ├── tools/                  # Утилиты разработки (не runtime)
 ├── admin.html              # Админ-панель
-└── catalog.html            # Каталог оборудования
+├── catalog.html            # Каталог оборудования
+└── v2.html                 # Экспериментальный интерфейс
 ```
 
 ---
@@ -81,25 +83,31 @@ main.js
  └→ app.js (entry hub — импортирует все модули, wires callbacks в init())
      ├→ storage.js → users.js, utils.js
      ├→ supabase-sync.js → storage.js, migrations.js
-     ├→ ui.js → app-state.js, program-utils.js, utils.js, storage.js, equipment-manager.js
-     ├→ social.js → storage.js, supabase-sync.js
-     ├→ social-ui.js → social.js, storage.js, profile-manager.js
-     ├→ builder.js → program-utils.js, utils.js, storage.js, supabase-sync.js
+     ├→ ui.js → scroll-lock.js, storage.js, social.js, social-ui.js, builder.js, app-state.js, equipment-manager.js, workout-timer.js, timer.js, utils.js, program-utils.js, exercises_db.js, data-attrs.js
+     ├→ social.js → storage.js, supabase-sync.js, utils.js
+     ├→ social-ui.js → social.js, storage.js, profile-manager.js, utils.js, data-attrs.js
+     ├→ builder.js → storage.js, social.js, supabase-sync.js, users.js, exercises_db.js, scroll-lock.js, utils.js, program-utils.js, app-state.js, data.js, data-attrs.js
      ├→ timer.js → storage.js
      ├→ celebration.js → program-utils.js, social.js, storage.js
      ├→ swipe-nav.js → program-utils.js, builder.js, ui.js
-     ├→ equipment-manager.js → app-state.js, social.js, storage.js
-     ├→ pull-refresh.js (callback injection)
-     ├→ workout-timer.js (leaf)
-     ├→ message-notifications.js → social.js, social-ui.js
-     ├→ profile-manager.js → social.js
-     ├→ migrations.js → storage.js, utils.js
+     ├→ equipment-manager.js → app-state.js, social.js, storage.js, workout-timer.js, utils.js, data-attrs.js
+     ├→ workout-ui.js → storage.js, ui.js, social.js, timer.js, workout-timer.js, equipment-manager.js, celebration.js, data-attrs.js, utils.js, program-utils.js
+     ├→ pull-refresh.js (callback injection, no imports)
+     ├→ message-notifications.js → social.js, social-ui.js, utils.js
+     ├→ profile-manager.js → social.js, utils.js
+     ├→ cropper.js → scroll-lock.js
+     ├→ migrations.js → storage.js, exercises_db.js, utils.js
      ├→ program-utils.js → storage.js, utils.js
+     ├→ scroll-lock.js → data-attrs.js
      ├→ app-state.js (leaf — no imports)
      ├→ data-attrs.js (leaf — no imports)
      ├→ utils.js → exercises_db.js
-     ├→ users.js → data.js, mikhail_data.js, mikhail2_data.js
-     └→ exercises_db.js (leaf)
+     └→ users.js → data.js, mikhail_data.js, mikhail2_data.js
+
+Транзитивные leaf-модули (не импортируются app.js напрямую):
+  workout-timer.js — через ui.js, equipment-manager.js, workout-ui.js
+  exercises_db.js  — через ui.js, builder.js, utils.js, migrations.js
+  data.js          — через builder.js, users.js
 ```
 
 **0 циклических импортов.** Межмодульное связывание через callback injection в `App.init()` (паттерн аналогичен `PullRefresh.init(onRefresh)`).
@@ -159,7 +167,7 @@ App.init() → App.route()
 
 | Модуль | Файл | Что делает |
 |--------|------|------------|
-| `App` | app.js | Init, роутинг, handleClick (1530 строк), login/logout |
+| `App` | app.js | Init, роутинг, handleClick (~276 строк, делегатор → Builder/SocialUI/WorkoutUI), login/logout |
 | `UI` | ui.js | Рендер тренировочных экранов + модалки |
 | `SocialUI` | social-ui.js | Рендер соцсети |
 | `Builder` | builder.js | Визард, редактор, picker, онбординг |
@@ -167,7 +175,10 @@ App.init() → App.route()
 | `Social` | social.js | Supabase API для всех social-таблиц |
 | `SupaSync` | supabase-sync.js | Auth + data sync (push/pull/merge) |
 | `RestTimer` | timer.js | Таймер отдыха между подходами |
+| `WorkoutUI` | workout-ui.js | Workout + modal click/input/focus handlers (делегат из App.handleClick) |
 | `EquipmentManager` | equipment-manager.js | Привязка оборудования + залы |
+| `AvatarCropper` | cropper.js | Canvas-кроппер аватарок |
+| `ScrollLock` | scroll-lock.js | lockBodyScroll, unlockBodyScroll, blockOverlayScroll для модалок |
 | `SwipeNav` | swipe-nav.js | Свайп-навигация |
 | `PullRefresh` | pull-refresh.js | Pull-to-refresh |
 | `Celebration` | celebration.js | Конфетти при завершении тренировки |
@@ -183,16 +194,17 @@ App.init() → App.route()
 
 ## Поток данных
 
-### Полная схема `Storage._data`
+### Схема `Storage._data` (пример заполненного состояния)
 
 ```javascript
+// _defaultData() содержит только базовые поля. Остальные добавляются динамически.
 Storage._data = {
   settings: {
     cycleType: 7,              // дней в цикле
-    startDate: "2025-01-06",
+    startDate: "2025-01-06",   // default: null — устанавливается при старте
     weightUnit: "kg",
-    timerDuration: 120,
-    exerciseLang: "ru"
+    timerDuration: 120,        // dynamic — не в _defaultData()
+    exerciseLang: "ru"         // dynamic — не в _defaultData()
   },
   program: { ... } | null,     // кастомная программа (null → BUILTIN)
   log: {
@@ -216,10 +228,11 @@ Storage._data = {
   exerciseUnits: { "D3E5": "lb" },
   exerciseSubstitutions: { "D1E4": "Выпады с гантелями" },
   equipment: [{ id: "eq_123", name: "Cybex Eagle NX", type: "machine", imageUrl: "..." }],
-  myGymIds: ["uuid-1"],
-  gymLastUsed: { "uuid-1": 1710000000 },
+  gyms: [],                    // legacy локальные залы (в _defaultData)
+  myGymIds: ["uuid-1"],        // dynamic — не в _defaultData()
+  gymLastUsed: { "uuid-1": 1710000000 },  // dynamic
   gymEquipmentMap: { "uuid-1": { "D1E2": "eq_123" } },
-  weekSlots: [{ type: "day", dayNum: 1 }, { type: "rest" }, ...]
+  weekSlots: [{ type: "day", dayNum: 1 }, { type: "rest" }, ...]  // dynamic
 }
 ```
 

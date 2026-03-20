@@ -100,7 +100,7 @@
 
 ---
 
-### 9. mikhail_data.js (17K строк) загружается всегда
+### 9. mikhail_data.js (9K строк) + mikhail2_data.js (8K) загружаются всегда
 
 Даже если пользователь не Михаил. ES modules загружают при первом import — а `users.js` импортирует оба.
 
@@ -113,7 +113,7 @@
 | # | Проблема | Сложность | Приоритет |
 |---|----------|-----------|-----------|
 | 1 | ~~11 циклических импортов~~ | — | ✅ Решено |
-| 2 | ~~handleClick 1530 строк~~ → ~200 строк (social + builder + workout вынесены) | — | ✅ Решено |
+| 2 | ~~handleClick 1530 строк~~ → ~276 строк делегатор (social + builder + workout вынесены) | — | ✅ Решено |
 | 3 | ~~UI = data + render~~ → VM-паттерн в ui.js + social-ui.js (15 VM builders) | — | ✅ Решено |
 | 4 | innerHTML re-render — equipment + timer решены, остались add/remove set, substitution | Средняя | 🟡 P2 |
 | 5 | ~~Дублирование closest-паттерна~~ | — | ✅ Решено |
@@ -128,7 +128,7 @@
 
 **~~Шаг 1~~ ✅ — Циклические импорты (#1) — решено.**
 
-**Шаг 2 — Разбить handleClick (#2):** (в процессе)
+**~~Шаг 2~~ ✅ — Разбить handleClick (#2):**
 
 ~~Шаг 2a~~ ✅ — Social handlers → `SocialUI.handleClick()` (40+ handlers, 489 строк). `_replyToCommentId` перемещён в SocialUI.
 

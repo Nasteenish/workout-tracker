@@ -20,21 +20,21 @@ python3 -m http.server 8000
 ```
 index.html              — SPA: Supabase CDN + <script type="module" src="main.js">
 js/main.js              — Entry: import App → App.init()
-js/app.js               — (~1200) Роутинг, init, auth, settings, navigation
-js/ui.js                — (2047) Рендер тренировок: week, day, history, settings
-js/builder.js           — (1646) Визард, редактор дня, picker, онбординг
-js/social-ui.js         — (1333) Рендер соцсети: feed, profile, checkin, messages
+js/app.js               — (1196) Роутинг, init, auth, settings, navigation
+js/ui.js                — (2107) Рендер тренировок: week, day, history, settings
+js/builder.js           — (1911) Визард, редактор дня, picker, онбординг
+js/social-ui.js         — (1906) Рендер соцсети: feed, profile, checkin, messages
 js/social.js            — (900) Supabase API для всех social-таблиц
-js/storage.js           — (1001) localStorage CRUD, sibling cache
+js/storage.js           — (1000) localStorage CRUD, sibling cache
 js/app-state.js         — (8) Shared readable state (currentWeek, currentDay, pageCache)
-js/program-utils.js     — (175) Storage-зависимые: resolveWorkout, exName, getTotalWeeks...
-js/utils.js             — (250) Чистые утилиты: esc(), даты, миниатюры, getGroupExercises
-js/data-attrs.js        — (121) Реестр data-атрибутов (WORKOUT, BUILDER, EQ, SOCIAL)
-js/workout-ui.js        — (~620) Workout + modal click/input/focus handlers (вынесено из app.js)
-js/equipment-manager.js — (444) Оборудование + залы (вынесено из app.js)
-js/swipe-nav.js         — (311) Свайп-навигация (вынесено из app.js)
+js/program-utils.js     — (191) Storage-зависимые: resolveWorkout, exName, getTotalWeeks...
+js/utils.js             — (251) Чистые утилиты: esc(), даты, миниатюры, getGroupExercises
+js/data-attrs.js        — (121) Реестр data-атрибутов (WORKOUT, BUILDER, EQ, SOCIAL, SETTINGS, ONBOARDING)
+js/workout-ui.js        — (684) Workout + modal click/input/focus handlers (вынесено из app.js)
+js/equipment-manager.js — (445) Оборудование + залы (вынесено из app.js)
+js/swipe-nav.js         — (310) Свайп-навигация (вынесено из app.js)
 js/migrations.js        — (300) One-time data fixes (вынесено из app.js init)
-js/timer.js             — (495) Таймер отдыха
+js/timer.js             — (543) Таймер отдыха
 js/supabase-sync.js     — (238) Auth + cloud sync
 js/celebration.js       — (203) Конфетти при завершении
 js/pull-refresh.js      — (166) Pull-to-refresh
@@ -43,13 +43,19 @@ js/profile-manager.js   — (100) Сохранение профиля
 js/message-notifications.js — (83) DM realtime
 js/scroll-lock.js       — (40) Блокировка скролла для модалок
 js/data.js              — (2604) DEFAULT_PROGRAM
-js/mikhail_data.js      — MIKHAIL_PROGRAM
-js/mikhail2_data.js     — MIKHAIL2_PROGRAM
+js/mikhail_data.js      — (9064) MIKHAIL_PROGRAM
+js/mikhail2_data.js     — (7846) MIKHAIL2_PROGRAM
 js/users.js             — (34) ACCOUNTS + BUILTIN_PROGRAMS (легаси)
-js/exercises_db.js      — (463) 429 упражнений
+js/exercises_db.js      — (463) 438 упражнений + 8 категорий
 js/cropper.js           — (314) Canvas-кроппер аватарок
 css/styles.css          — Entry: @import 13 файлов (variables, base, day-view, social...)
-sw.js                   — Service Worker (v543)
+sw.js                   — Service Worker (версия в CACHE_NAME внутри файла)
+manifest.json           — PWA manifest
+admin.html              — Админ-панель (не runtime)
+catalog.html            — Каталог оборудования (не runtime)
+v2.html                 — Экспериментальный интерфейс (не runtime)
+icons/                  — PWA-иконки (192, 512)
+tools/                  — Утилиты разработки: SQL, скрипты импорта, парсеры (не runtime)
 ```
 
 ---
@@ -100,6 +106,8 @@ localStorage.setItem('wt_data_xxx', ...);  // обходит кеш и sync
 2. `Storage._save()` автоматически → `Storage._onSave()` → `SupaSync.onLocalSave()` → cloud push (3 сек)
 3. `Storage._invalidateCache()` нужен только при смене пользователя
 4. `Storage._siblingCache` — построен один раз, инвалидируется при смене программы
+
+**Исключение:** миграционные флаги (`wt_migrated_*`, `wt_supa_*`, `wt_email_*`, `_wt_notif_asked`, `wt_onboarding_done_*`) используют `localStorage` напрямую в app.js и builder.js — это одноразовые ключи вне основного хранилища данных, не трогать.
 
 **Программа:**
 1. Больше нет глобального `let PROGRAM`. Везде `Storage.getProgram()` или передаётся аргументом
@@ -173,8 +181,8 @@ Celebration._onShareCheckin = (data) => { this._pendingCheckinWorkout = data; };
 - Файлы по модулям: `day-view.css`, `social.css`, `timer.css`
 
 **Версионирование:**
-- `css/styles.css?v=159` в index.html
-- `CACHE_NAME = 'workout-tracker-v544'` в sw.js
+- `css/styles.css?v=NNN` в index.html — инкрементировать при изменении CSS/JS
+- `CACHE_NAME` в sw.js — инкрементировать при любом изменении файлов
 - Новые файлы → добавить в `ASSETS` массив sw.js
 
 ### 6. После каждого изменения
@@ -186,6 +194,13 @@ Celebration._onShareCheckin = (data) => { this._pendingCheckinWorkout = data; };
 4. Если добавил маршрут — `SwipeNav._getSwipeConfig()`
 5. Если менял data-attrs — проверь и рендер и обработчик
 6. Вызови `App.invalidatePageCache()` если мутация данных влияет на кешированные страницы
+7. **Документация** — пробегись по `CLAUDE.md`, `ARCHITECTURE.md`, `PROBLEMS.md`:
+   - Изменился контракт между модулями (новый callback, новый data-attr, изменение API модуля) → обнови CLAUDE.md секцию "Связанные компоненты"
+   - Добавил/удалил/переименовал файл → обнови структуру в ARCHITECTURE.md
+   - Изменил граф импортов (новый import, новая зависимость) → обнови граф в ARCHITECTURE.md
+   - Решил проблему из PROBLEMS.md → отметь ✅
+   - Нашёл новую архитектурную проблему → добавь в PROBLEMS.md
+   - **НЕ обновляй:** line counts, номера версий кеша — они читаются из кода напрямую
 
 **Формат описания:**
 ```
