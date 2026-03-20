@@ -556,6 +556,79 @@ function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+// ===== EXERCISE TYPE MATCHING (mirrors equipment-manager.js _exerciseTypeMap) =====
+const _exerciseTypeMap = {
+  'chest press': 'chest_press', 'iso-lateral chest press': 'chest_press',
+  'incline chest press': 'incline_press', 'decline bench press': 'decline_press',
+  'bench press': 'bench', 'incline bench press': 'incline_press',
+  'floor press': 'bench', 'hex press': 'bench',
+  'chest fly': 'chest_fly', 'butterfly': 'chest_fly', 'chest dip': 'chest_dip',
+  'cable crossover': 'chest_fly', 'single arm cable crossover': 'chest_fly',
+  'cable fly crossovers': 'chest_fly', 'low cable fly crossovers': 'chest_fly',
+  'pullover': 'pullover',
+  'lat pulldown': 'lat_pulldown', 'pull up': 'lat_pulldown', 'chin up': 'lat_pulldown',
+  'vertical traction': 'lat_pulldown', 'straight arm pulldown': 'lat_pulldown',
+  'seated row': 'seated_row', 'seated cable row': 'seated_row',
+  'iso-lateral row': 'seated_row', 'iso-lateral high row': 'seated_row',
+  'iso-lateral low row': 'seated_row', 'low row': 'seated_row',
+  'cable row': 'seated_row', 'single arm cable row': 'seated_row',
+  'bent over row': 'seated_row', 't bar row': 'seated_row',
+  'supported bar rows': 'seated_row', 'chest supported incline row': 'seated_row',
+  'back extension': 'back_extension', 'hyperextension': 'back_extension', 'glute ham raise': 'back_extension',
+  'deadlift': 'deadlift', 'romanian deadlift': 'deadlift', 'straight leg deadlift': 'deadlift',
+  'leg press': 'leg_press', 'leg press horizontal': 'leg_press', 'single leg press': 'leg_press',
+  'leg extension': 'leg_extension', 'single leg extensions': 'leg_extension',
+  'leg curl': 'leg_curl', 'lying leg curl': 'lying_leg_curl', 'seated leg curl': 'seated_leg_curl',
+  'nordic hamstrings curls': 'lying_leg_curl',
+  'hip abduction': 'hip_abduction', 'abduction': 'hip_abduction',
+  'hip adduction': 'hip_adduction', 'adduction': 'hip_adduction',
+  'glute kickback': 'glute_kickback', 'rear kick': 'glute_kickback', 'gluteus kick': 'glute_kickback',
+  'hip thrust': 'hip_thrust', 'glute bridge': 'hip_thrust',
+  'hack squat': 'squat', 'squat': 'squat', 'belt squat': 'squat',
+  'pendulum squat': 'squat', 'bulgarian split squat': 'squat',
+  'calf raise': 'calf', 'calf extension': 'calf', 'calf press': 'calf',
+  'standing calf raise': 'calf', 'seated calf raise': 'calf',
+  'tibial raises': 'calf', 'tibial raise': 'calf', 'donkey calf': 'calf',
+  'medium gluteus on low pulley': 'hip_abduction', 'cable hip abduction': 'hip_abduction',
+  'shoulder press': 'shoulder_press', 'overhead press': 'shoulder_press',
+  'lateral raise': 'lateral_raise',
+  'rear delt': 'rear_delt', 'rear delt reverse fly': 'rear_delt', 'face pull': 'rear_delt', 'reverse fly': 'rear_delt',
+  'front raise': 'cable_multi', 'upright row': 'cable_multi', 'shrug': 'cable_multi',
+  'unilateral low pulley raises': 'lateral_raise',
+  'viking press': 'shoulder_press', 'neck press': 'shoulder_press',
+  'bicep curl': 'bicep_curl', 'hammer curl': 'bicep_curl', 'concentration curl': 'bicep_curl',
+  'behind the back curl': 'bicep_curl', 'single arm curl': 'bicep_curl',
+  'overhead curl': 'bicep_curl', 'rope cable curl': 'bicep_curl', 'reverse curl': 'bicep_curl',
+  'preacher curl': 'preacher_curl', 'scott curl': 'preacher_curl',
+  'triceps extension': 'tricep_extension', 'triceps pushdown': 'tricep_extension',
+  'triceps pressdown': 'tricep_extension', 'triceps kickback': 'tricep_extension',
+  'triceps rope pushdown': 'tricep_extension', 'skull crusher': 'tricep_extension',
+  'triceps dip': 'tricep_dip', 'seated dip machine': 'chest_dip',
+  'crunch': 'crunch', 'sit up': 'crunch',
+  'torso rotation': 'torso_rotation', 'cable twist': 'torso_rotation',
+  'cable core palloff press': 'cable_multi', 'cable pull through': 'cable_multi',
+  'ab swing': 'crunch', 'hanging knee raise': 'crunch', 'leg raise': 'crunch',
+  'smith_machine': 'smith_machine', 'lunge': 'lunge',
+};
+
+// Build reverse map: exercise_type → [exercise names]
+const _reverseTypeMap = {};
+for (const [name, type] of Object.entries(_exerciseTypeMap)) {
+  if (!_reverseTypeMap[type]) _reverseTypeMap[type] = [];
+  _reverseTypeMap[type].push(name);
+}
+
+function getMatchingExercises(exerciseTypeStr) {
+  if (!exerciseTypeStr) return [];
+  const types = exerciseTypeStr.split(',').map(t => t.trim());
+  const names = new Set();
+  types.forEach(type => {
+    const matches = _reverseTypeMap[type];
+    if (matches) matches.forEach(n => names.add(n));
+  });
+  return [...names].sort();
+}
+
 // ===== EVENT LISTENERS =====
 
 // Tabs
@@ -611,7 +684,14 @@ function showEquipmentModal(item) {
       ${item.model ? `<div class="modal-subtitle">${item.model}</div>` : ''}
       <div class="modal-row"><span class="modal-row-label">Группа мышц</span><span class="modal-row-value">${item.muscle_group || '—'}</span></div>
       <div class="modal-row"><span class="modal-row-label">Тип</span><span class="modal-row-value">${item.equipment_type || '—'}</span></div>
+      ${item.exercise_type ? `<div class="modal-row"><span class="modal-row-label">exercise_type</span><span class="modal-row-value" style="font-family:monospace;font-size:12px">${item.exercise_type}</span></div>` : ''}
       ${item.category ? `<div class="modal-row"><span class="modal-row-label">Категория</span><span class="modal-row-value">${item.category}</span></div>` : ''}
+      ${(() => {
+        const matched = getMatchingExercises(item.exercise_type);
+        if (!matched.length) return item.exercise_type ? '<div style="margin-top:12px;color:#f88;font-size:13px">⚠ exercise_type не матчится ни к одному упражнению</div>' : '';
+        return '<div style="margin-top:14px"><div style="color:#888;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Привязанные упражнения (runtime)</div>' +
+          matched.map(n => '<div style="padding:4px 0;font-size:13px;color:#ccc;border-bottom:1px solid #252525">' + n + '</div>').join('') + '</div>';
+      })()}
       ${item.description ? `<div style="margin-top:12px;color:#bbb;font-size:14px;line-height:1.5">${item.description}</div>` : ''}
     </div>
   `;
