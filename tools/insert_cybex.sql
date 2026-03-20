@@ -1,6 +1,6 @@
 -- Cybex equipment catalog
 -- Exported from Supabase DB on 2026-03-20
--- 110 records
+-- 131 records (110 original + 21 PWR PLAY)
 
 INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_type, exercise_type, image_url) VALUES
 -- Cybex Eagle NX (Selectorized)
@@ -125,7 +125,32 @@ INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_t
 -- Cybex Specialty
 (298, 'Cybex', '16121', 'Plate Loaded Smith Press', 'full_body', NULL, 'smith_machine,squat,shoulder_press,chest_press,incline_press,lunge,calf', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/16121.png'),
 -- Cybex Ion Series (Selectorized)
-(299, 'Cybex', 'CI-SM', 'Ion Series Smith Rack', 'full_body', NULL, 'smith_machine,squat,shoulder_press,chest_press,incline_press,lunge,calf', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/CI-SM.png')
+(299, 'Cybex', 'CI-SM', 'Ion Series Smith Rack', 'full_body', NULL, 'smith_machine,squat,shoulder_press,chest_press,incline_press,lunge,calf', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/CI-SM.png'),
+-- Cybex PWR PLAY — Traditional Cable Stations
+(408, 'Cybex', 'PP-AP', 'PWR Play Adjustable Pulley 2:1', 'full_body', 'cable', 'cable_multi', NULL),
+(409, 'Cybex', 'PP-LP', 'PWR Play Lat Pull', 'back', 'cable', 'lat_pulldown', NULL),
+(410, 'Cybex', 'PP-RW', 'PWR Play Low Row', 'back', 'cable', 'seated_row', NULL),
+(411, 'Cybex', 'PP-TP', 'PWR Play Triceps Pushdown', 'arms', 'cable', 'tricep_extension', NULL),
+(412, 'Cybex', 'PP-ACO', 'PWR Play Attached Cable Crossover', 'chest', 'cable', 'chest_fly,cable_multi', NULL),
+(413, 'Cybex', 'PP-AXO', 'PWR Play Embedded Cable Crossover', 'chest', 'cable', 'chest_fly,cable_multi', NULL),
+(414, 'Cybex', 'PP-ACO-FCS', 'PWR Play Free Standing Cable Crossover', 'chest', 'cable', 'chest_fly,cable_multi', NULL),
+-- Cybex PWR PLAY — High Low / Crossover Stations
+(415, 'Cybex', 'PP-FCO', 'PWR Play Attached High Low Crossover', 'full_body', 'cable', 'cable_multi', NULL),
+(416, 'Cybex', 'PP-FXO', 'PWR Play Embedded High Low Crossover', 'full_body', 'cable', 'cable_multi', NULL),
+(417, 'Cybex', 'PP-HL', 'PWR Play High Low Station', 'full_body', 'cable', 'cable_multi', NULL),
+-- Cybex PWR PLAY — PWR Stations
+(418, 'Cybex', 'PP-AP41', 'PWR Play Adjustable Pulley 4:1', 'full_body', 'cable', 'cable_multi', NULL),
+(419, 'Cybex', 'PP-ADC', 'PWR Play Dip Chin Assist', 'chest', 'cable', 'chest_dip,tricep_dip', NULL),
+(420, 'Cybex', 'PP-LPD', 'PWR Play Dual Pulley Pulldown', 'back', 'cable', 'lat_pulldown', NULL),
+(421, 'Cybex', 'PP-RWD', 'PWR Play Dual Pulley Row', 'back', 'cable', 'seated_row', NULL),
+(422, 'Cybex', 'PP-DPH', 'PWR Play Dual Pulley High', 'full_body', 'cable', 'cable_multi', NULL),
+(423, 'Cybex', 'PP-DPL', 'PWR Play Dual Pulley Low', 'full_body', 'cable', 'cable_multi', NULL),
+-- Cybex PWR PLAY — PLAY Stations
+(424, 'Cybex', 'PP-BX', 'PWR Play Boxing Station', 'full_body', 'cable', NULL, NULL),
+(425, 'Cybex', 'PP-SB', 'PWR Play Stall Bars', 'full_body', 'cable', NULL, NULL),
+(426, 'Cybex', 'PP-RPL', 'PWR Play Rope Pull', 'back', 'cable', 'cable_multi', NULL),
+(427, 'Cybex', 'PP-RP', 'PWR Play Rope Pull Power Pivot', 'core', 'cable', 'cable_multi,torso_rotation', NULL),
+(428, 'Cybex', 'PP-DIP', 'PWR Play Dip Station', 'chest', 'cable', 'chest_dip,tricep_dip', NULL)
 ON CONFLICT (id) DO UPDATE SET
   brand = EXCLUDED.brand,
   model = EXCLUDED.model,
