@@ -100,6 +100,7 @@ export const EquipmentManager = {
         var exType = exName ? this._getExerciseType(exName) : null;
         var isFreeWeight = this._isFreeWeightExercise(exName, exNameRu);
         modal._exerciseType = exType;
+        modal._extraTypes = [];
         modal._isFreeWeight = isFreeWeight;
 
         var activeGymId = this.getActiveGymId(AppState.currentWeek, AppState.currentDay);
@@ -109,19 +110,23 @@ export const EquipmentManager = {
             : Promise.resolve([]);
 
         var isCable = this._isCableExercise(exName, exNameRu);
+        var extraTypes = modal._extraTypes;
+        if (isCable && exType && exType !== 'cable_multi') extraTypes.push('cable_multi');
+        if (exType === 'high_row' || exType === 'low_row') extraTypes.push('seated_row');
         var brandsPromise;
         if (isFreeWeight) {
             brandsPromise = Promise.resolve([]);
-        } else if (isCable && exType && exType !== 'cable_multi') {
-            brandsPromise = Promise.all([
-                Social.getCatalogBrands(exType),
-                Social.getCatalogBrands('cable_multi')
-            ]).then(function(r) {
+        } else if (extraTypes.length > 0) {
+            var queries = [Social.getCatalogBrands(exType)];
+            for (var i = 0; i < extraTypes.length; i++) queries.push(Social.getCatalogBrands(extraTypes[i]));
+            brandsPromise = Promise.all(queries).then(function(results) {
                 var seen = {};
                 var merged = [];
-                var all = (r[0] || []).concat(r[1] || []);
-                for (var i = 0; i < all.length; i++) {
-                    if (!seen[all[i]]) { seen[all[i]] = true; merged.push(all[i]); }
+                for (var r = 0; r < results.length; r++) {
+                    var arr = results[r] || [];
+                    for (var j = 0; j < arr.length; j++) {
+                        if (!seen[arr[j]]) { seen[arr[j]] = true; merged.push(arr[j]); }
+                    }
                 }
                 return merged;
             });
@@ -194,7 +199,21 @@ export const EquipmentManager = {
         var header = modal.querySelector('.eq-modal-header h3');
         if (header) header.textContent = brand;
 
-        Social.getCatalogByBrandAndType(brand, exType).then(function(items) {
+        var allTypes = [exType].concat(modal._extraTypes || []);
+        var itemsPromise = allTypes.length > 1
+            ? Promise.all(allTypes.map(function(t) { return Social.getCatalogByBrandAndType(brand, t); })).then(function(results) {
+                var seen = {};
+                var merged = [];
+                for (var r = 0; r < results.length; r++) {
+                    var arr = results[r] || [];
+                    for (var j = 0; j < arr.length; j++) {
+                        if (!seen[arr[j].id]) { seen[arr[j].id] = true; merged.push(arr[j]); }
+                    }
+                }
+                return merged;
+            })
+            : Social.getCatalogByBrandAndType(brand, exType);
+        itemsPromise.then(function(items) {
             if (!document.getElementById('equipment-modal')) return;
             var div = document.getElementById('eq-brand-list');
             if (!div) return;
