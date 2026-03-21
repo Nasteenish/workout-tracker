@@ -2,7 +2,7 @@
 /* Single source of truth for all data-attribute names used across renderers and handlers.
    Eliminates magic strings, prevents namespace collisions, and makes the contract explicit. */
 
-// --- Workout day display (ui.js → app.js) ---
+// --- Workout day display (ui.js → app.js/workout-ui.js) ---
 export const WORKOUT = {
     EXERCISE:        'data-exercise',
     SET:             'data-set',
@@ -13,6 +13,11 @@ export const WORKOUT = {
     EXERCISE_ID:     'data-exercise-id',
     TARGET_EXERCISE: 'data-target-exercise',
     SUB_NAME:        'data-sub-name',
+    // Inline day editing (day-editor.js)
+    GROUP_IDX:       'data-group-idx',        // index in exerciseGroups array
+    SUB_EX:          'data-sub-ex',           // sub-exercise index within group (superset/choose_one)
+    TECH:            'data-tech',             // technique name (DROP, REST_PAUSE, MP)
+    TYPE_BTN:        'data-type-btn',         // set type (S, SH, H)
 };
 
 // --- Program builder (builder.js internal) ---

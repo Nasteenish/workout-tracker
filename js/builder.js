@@ -6,7 +6,7 @@ import { ACCOUNTS } from './users.js';
 import { EXERCISE_DB, EXERCISE_CATEGORIES } from './exercises_db.js';
 import { lockBodyScroll, unlockBodyScroll, blockOverlayScroll } from './scroll-lock.js';
 import { esc, getGroupExercises, exThumbHtml } from './utils.js';
-import { exName, getTotalDays, getTotalWeeks } from './program-utils.js';
+import { exName, getTotalDays, getTotalWeeks, buildDayEditorVM, autoSaveEditorItems, extractExForEdit, extractProgression, snapshotIfChanged, templateFingerprint, serializeExercise, syncProgressionToOverrides } from './program-utils.js';
 import { AppState } from './app-state.js';
 import { DEFAULT_PROGRAM } from './data.js';
 import { BUILDER, WORKOUT, SETTINGS, ONBOARDING, attr, read, readInt, write } from './data-attrs.js';
@@ -335,39 +335,7 @@ export const Builder = {
     // ===== DAY EDITOR =====
     // Data preparation for day editor — resolves choices, extracts exercises
     _buildDayEditorVM(dayNum) {
-        var p = Storage.getProgram();
-        if (!p || !p.dayTemplates[dayNum]) return null;
-
-        var dayTemplate = p.dayTemplates[dayNum];
-        var items = [];
-
-        for (var i = 0; i < dayTemplate.exerciseGroups.length; i++) {
-            var group = dayTemplate.exerciseGroups[i];
-            if (group.type === 'single' || group.type === 'warmup') {
-                items.push({ type: 'single', exercise: this._extractExForEdit(group.exercise, dayNum) });
-            } else if (group.type === 'superset' && group.exercises) {
-                var exs = [];
-                for (var j = 0; j < group.exercises.length; j++) {
-                    var e = group.exercises[j];
-                    if (e._chooseOne && e.options) {
-                        var chosenId = Storage.getChoice(e.choiceKey);
-                        var chosen = chosenId ? e.options.find(function(o) { return o.id === chosenId; }) : null;
-                        exs.push(this._extractExForEdit(chosen || e.options[0], dayNum));
-                    } else {
-                        exs.push(this._extractExForEdit(e, dayNum));
-                    }
-                }
-                items.push({ type: 'superset', exercises: exs });
-            } else if (group.type === 'choose_one' && group.options) {
-                var opts = [];
-                for (var j = 0; j < group.options.length; j++) {
-                    opts.push(this._extractExForEdit(group.options[j], dayNum));
-                }
-                items.push({ type: 'choose_one', choiceKey: group.choiceKey || ('c_' + Date.now()), options: opts });
-            }
-        }
-
-        return { dayNum: dayNum, items: items };
+        return buildDayEditorVM(dayNum);
     },
 
     renderDayEditor(dayNum) {
@@ -382,35 +350,11 @@ export const Builder = {
     },
 
     _extractExForEdit(e, dayNum) {
-        if (!e) return { nameRu: '?', name: '?', reps: '8-12', rest: 120, sets: [], _id: '', note: '', noteRu: '', progression: [] };
-        return {
-            nameRu: e.nameRu || e.name, name: e.name || e.nameRu,
-            reps: e.reps, rest: e.rest,
-            note: e.note || '', noteRu: e.noteRu || '',
-            sets: JSON.parse(JSON.stringify(e.sets || [])),
-            _id: e.id,
-            progression: e.progression ? JSON.parse(JSON.stringify(e.progression)) : this._extractProgression(dayNum, e.id)
-        };
+        return extractExForEdit(e, dayNum);
     },
 
     _extractProgression(dayNum, exerciseId) {
-        var p = Storage.getProgram();
-        if (!p || !p.weeklyOverrides || !exerciseId) return [];
-        var rules = [];
-        for (var w = 1; w <= p.totalWeeks; w++) {
-            var dayOver = p.weeklyOverrides[w] && p.weeklyOverrides[w][dayNum];
-            if (!dayOver || !dayOver[exerciseId] || !dayOver[exerciseId].sets) continue;
-            var setsOver = dayOver[exerciseId].sets;
-            for (var s in setsOver) {
-                if (!setsOver[s].techniques) continue;
-                for (var t = 0; t < setsOver[s].techniques.length; t++) {
-                    var tech = setsOver[s].techniques[t];
-                    var exists = rules.some(function(r) { return r.setIdx === parseInt(s) && r.technique === tech; });
-                    if (!exists) rules.push({ startWeek: w, setIdx: parseInt(s), technique: tech });
-                }
-            }
-        }
-        return rules;
+        return extractProgression(dayNum, exerciseId);
     },
 
     _isPremium() {
@@ -978,90 +922,15 @@ export const Builder = {
     },
 
     _autoSave() {
-        var ed = this._editingDay;
-        var p = Storage.getProgram();
-        if (!ed || !p) return;
-
-        var groups = [];
-        for (var i = 0; i < ed.items.length; i++) {
-            var item = ed.items[i];
-            if (item.type === 'single') {
-                groups.push({ type: 'single', exercise: this._serializeExercise(item.exercise, ed.dayNum, i, -1) });
-            } else if (item.type === 'superset') {
-                var exs = [];
-                for (var j = 0; j < item.exercises.length; j++) {
-                    exs.push(this._serializeExercise(item.exercises[j], ed.dayNum, i, j));
-                }
-                groups.push({ type: 'superset', exercises: exs });
-            } else if (item.type === 'choose_one') {
-                var opts = [];
-                for (var j = 0; j < item.options.length; j++) {
-                    opts.push(this._serializeExercise(item.options[j], ed.dayNum, i, j));
-                }
-                groups.push({ type: 'choose_one', choiceKey: item.choiceKey, options: opts });
-            }
-        }
-
-        // Snapshot the old template if exerciseGroups changed (new/removed exercises, reorder, etc.)
-        this._snapshotIfChanged(p, ed.dayNum, groups);
-
-        p.dayTemplates[ed.dayNum].exerciseGroups = groups;
-        this._syncProgressionToOverrides(ed.dayNum);
-        Storage.saveProgram(p, false);
+        autoSaveEditorItems(this._editingDay);
     },
 
-    // Build a fingerprint of exercise IDs + order to detect template changes
     _templateFingerprint(groups) {
-        var ids = [];
-        for (var g = 0; g < groups.length; g++) {
-            var exs = getGroupExercises(groups[g]);
-            for (var e = 0; e < exs.length; e++) {
-                if (exs[e].id) ids.push(exs[e].id);
-            }
-        }
-        return ids.join(',');
+        return templateFingerprint(groups);
     },
 
-    // Create a snapshot of the old template if it changed, and bind past weeks to the old version
     _snapshotIfChanged(p, dayNum, newGroups) {
-        var oldGroups = p.dayTemplates[dayNum].exerciseGroups;
-        if (!oldGroups) return;
-
-        // Compare fingerprints — if identical, nothing to snapshot
-        var oldFp = this._templateFingerprint(oldGroups);
-        var newFp = this._templateFingerprint(newGroups);
-        if (oldFp === newFp) return;
-
-        var d = String(dayNum);
-        if (!p.templateSnapshots) p.templateSnapshots = {};
-        if (!p.templateSnapshots[d]) p.templateSnapshots[d] = [];
-        if (!p.weekTemplateVersion) p.weekTemplateVersion = {};
-
-        var snapshots = p.templateSnapshots[d];
-        var nextVersion = snapshots.length + 1;
-
-        // Save old template as a new snapshot
-        snapshots.push({
-            version: nextVersion,
-            groups: JSON.parse(JSON.stringify(oldGroups))
-        });
-
-        // Bind past weeks (that don't already have a version) to the old snapshot
-        var currentWeek = AppState.currentWeek || 1;
-        for (var w = 1; w < currentWeek; w++) {
-            if (!p.weekTemplateVersion[w]) p.weekTemplateVersion[w] = {};
-            // Don't overwrite — week already bound to an earlier snapshot
-            if (!p.weekTemplateVersion[w][d]) {
-                p.weekTemplateVersion[w][d] = nextVersion;
-            }
-        }
-        // Current week always uses the live template — don't bind it to the old snapshot.
-        // This ensures that exercise additions/removals take effect immediately,
-        // even if the user already has logs for this week.
-        // Clear any previous binding (from earlier edits this same week).
-        if (p.weekTemplateVersion[currentWeek]) {
-            delete p.weekTemplateVersion[currentWeek][d];
-        }
+        snapshotIfChanged(p, dayNum, newGroups);
     },
 
     // Check if a week has any logged sets for any exercise in the given groups
@@ -1077,69 +946,12 @@ export const Builder = {
         return false;
     },
 
-    _serializeExercise(ex, dayNum, itemIdx, subIdx) {
-        var sets = ex.sets && ex.sets.length > 0
-            ? ex.sets
-            : [{ type: 'H', rpe: '8', techniques: [] }, { type: 'H', rpe: '8', techniques: [] }, { type: 'H', rpe: '8', techniques: [] }];
-        var id = ex._id || ('ex_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
-        var result = {
-            id: id,
-            name: ex.name || ex.nameRu,
-            nameRu: ex.nameRu || ex.name,
-            reps: ex.reps,
-            rest: ex.rest,
-            sets: sets,
-            note: ex.note || '',
-            noteRu: ex.noteRu || ''
-        };
-        if (ex.progression && ex.progression.length > 0) result.progression = ex.progression;
-        return result;
+    _serializeExercise(ex) {
+        return serializeExercise(ex);
     },
 
     _syncProgressionToOverrides(dayNum) {
-        var p = Storage.getProgram();
-        if (!p.weeklyOverrides) p.weeklyOverrides = {};
-
-        var template = p.dayTemplates[dayNum];
-        var allRules = [];
-
-        for (var g = 0; g < template.exerciseGroups.length; g++) {
-            var group = template.exerciseGroups[g];
-            var exercises = getGroupExercises(group);
-            for (var e = 0; e < exercises.length; e++) {
-                if (exercises[e].progression && exercises[e].progression.length > 0) {
-                    for (var r = 0; r < exercises[e].progression.length; r++) {
-                        allRules.push({ exerciseId: exercises[e].id, rule: exercises[e].progression[r] });
-                    }
-                }
-            }
-        }
-
-        // If no rules at all, don't touch existing overrides
-        if (allRules.length === 0) return;
-
-        // Clear this day's overrides across all weeks
-        for (var w = 1; w <= p.totalWeeks; w++) {
-            if (p.weeklyOverrides[w] && p.weeklyOverrides[w][dayNum]) {
-                delete p.weeklyOverrides[w][dayNum];
-            }
-        }
-
-        // Generate overrides from rules
-        for (var i = 0; i < allRules.length; i++) {
-            var exId = allRules[i].exerciseId;
-            var rule = allRules[i].rule;
-            for (var w = rule.startWeek; w <= p.totalWeeks; w++) {
-                if (!p.weeklyOverrides[w]) p.weeklyOverrides[w] = {};
-                if (!p.weeklyOverrides[w][dayNum]) p.weeklyOverrides[w][dayNum] = {};
-                if (!p.weeklyOverrides[w][dayNum][exId]) p.weeklyOverrides[w][dayNum][exId] = { sets: {} };
-                if (!p.weeklyOverrides[w][dayNum][exId].sets[rule.setIdx]) {
-                    p.weeklyOverrides[w][dayNum][exId].sets[rule.setIdx] = { techniques: [] };
-                }
-                var techs = p.weeklyOverrides[w][dayNum][exId].sets[rule.setIdx].techniques;
-                if (techs.indexOf(rule.technique) === -1) techs.push(rule.technique);
-            }
-        }
+        syncProgressionToOverrides(dayNum);
     },
 
     saveDayEdits() {

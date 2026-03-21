@@ -812,3 +812,153 @@ body.modal-open {
     opacity: 1;
     transition: none;
 }
+
+/* ===== Inline Day Editor ===== */
+
+/* Gear button in exercise header */
+.exercise-gear-btn {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.15s, color 0.15s;
+    margin-left: auto;
+}
+.exercise-gear-btn:active {
+    opacity: 1;
+    color: var(--accent-primary);
+}
+
+/* Tech panel (collapsible) */
+.day-tech-panel {
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin: 0 calc(-1 * var(--spacing-md));
+    background: rgba(255, 255, 255, 0.02);
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.day-tech-section-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin: var(--spacing-xs) 0;
+}
+.day-tech-section-label:first-child {
+    margin-top: 0;
+}
+
+.day-tech-set-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+.day-tech-set-row:last-child {
+    margin-bottom: 0;
+}
+
+.day-tech-set-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    width: 28px;
+    flex-shrink: 0;
+}
+
+.day-tech-btn {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    min-height: var(--touch-min);
+}
+.day-tech-btn.active {
+    background: rgba(157, 141, 245, 0.2);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.day-type-btn {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    min-height: var(--touch-min);
+}
+.day-type-btn.active {
+    background: rgba(181, 242, 42, 0.15);
+    border-color: var(--accent-success);
+    color: var(--accent-success);
+}
+
+.day-rpe-input {
+    width: 50px;
+    font-size: 11px;
+    padding: 4px 6px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    text-align: center;
+    font-family: inherit;
+    margin-left: 4px;
+}
+
+/* Action buttons row in tech panel */
+.day-tech-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.day-tech-action-btn {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.day-tech-action-btn:active {
+    background: rgba(255, 255, 255, 0.08);
+}
+.day-tech-action-btn.danger {
+    color: var(--accent-red);
+    border-color: rgba(239, 68, 68, 0.25);
+}
+.day-tech-action-btn.danger:active {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* Add exercise button at bottom of day */
+.day-add-exercise-btn {
+    margin-top: var(--spacing-lg);
+    width: 100%;
+    opacity: 0.7;
+}

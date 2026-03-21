@@ -21,6 +21,7 @@ import { debounce, formatDateISO, validateProgram, esc, parseWeight, parseReps }
 import { getTotalDays, getProgressWeek } from './program-utils.js';
 import { WORKOUT, EQ, SETTINGS, read, readInt } from './data-attrs.js';
 import { AppState } from './app-state.js';
+import { DayEditor } from './day-editor.js';
 
 export const App = {
     _currentWeek: 1,
@@ -112,6 +113,9 @@ export const App = {
         EquipmentManager._onRenderSettings = () => UI.renderSettings();
         WorkoutUI._onInvalidateCache = (hash) => this.invalidatePageCache(hash);
         WorkoutUI._onRoute = () => this.route();
+        DayEditor._onInvalidateCache = () => this.invalidatePageCache();
+        DayEditor._onRenderDay = (w, d) => UI.renderDay(w, d);
+        UI._isDayEditorPremium = () => DayEditor._isPremium();
         Builder._onRoute = () => this.route();
         Builder._onSwitchUser = (id, flag) => this.switchUser(id, flag);
         Builder._onEditorBack = () => this._handleEditorBack();
@@ -934,6 +938,7 @@ export const App = {
             Storage.rollbackEquipmentIfNoSets();
             this._inDayView = false;
             this._returnFromDay = this._currentDay;
+            DayEditor.stopEditing();
         }
 
         // Day view: #/week/{n}/day/{n}
