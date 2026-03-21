@@ -1212,10 +1212,11 @@ export const App = {
         setTimeout(() => {
             app.style.transition = 'none';
             app.style.transform = '';
-            app.style.opacity = '';
+            // Keep opacity=0 during route — show after DOM + scroll are ready
             if (beforeNav) beforeNav();
             if (hash === null) history.back();
             else location.hash = hash;
+            app.style.opacity = '';
         }, 190);
     },
 
