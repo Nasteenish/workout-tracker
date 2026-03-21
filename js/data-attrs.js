@@ -62,6 +62,12 @@ export const SOCIAL = {
     CONV:         'data-conv',
 };
 
+// --- Inline editor (inline-editor.js ↔ ui.js → workout-ui.js) ---
+export const INLINE = {
+    GROUP_IDX: 'data-group-idx',   // index in exerciseGroups[]
+    EX_ID:     'data-inline-ex',   // exercise ID for menu actions
+};
+
 // --- Settings / auth / onboarding (builder.js → app.js) ---
 export const SETTINGS = {
     TARGET: 'data-target',

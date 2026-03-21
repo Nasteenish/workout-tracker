@@ -6,7 +6,7 @@ import { RestTimer } from './timer.js';
 import { WorkoutTimer } from './workout-timer.js';
 import { EquipmentManager } from './equipment-manager.js';
 import { Celebration } from './celebration.js';
-import { WORKOUT, EQ, read, readInt } from './data-attrs.js';
+import { WORKOUT, EQ, INLINE, read, readInt } from './data-attrs.js';
 import { findExerciseInProgram, parseWeight, parseReps, formatDateISO, esc, markCachedThumbs } from './utils.js';
 import { getCompletedSets, exName } from './program-utils.js';
 
@@ -14,6 +14,8 @@ export const WorkoutUI = {
     // Callbacks — wired in App.init()
     _onInvalidateCache: null,   // (hash?) => void
     _onRoute: null,             // () => void
+    _onInlineMenu: null,        // (exId, groupIdx, dayNum, weekNum) => void
+    _onInlineAdd: null,         // (dayNum) => void
 
     // ===== Workout day click handlers =====
     handleClick(target, week, day) {
@@ -177,6 +179,22 @@ export const WorkoutUI = {
             location.hash = `#/history/${encodeURIComponent(exId)}`;
             return true;
         }}
+
+        // Inline editor: menu button (⋮)
+        {const btn = target.closest('.inline-menu-btn');
+        if (btn && this._onInlineMenu) {
+            const exId = read(btn, INLINE.EX_ID);
+            const groupIdx = readInt(btn, INLINE.GROUP_IDX);
+            const displayName = btn.getAttribute('data-ex-display') || '';
+            this._onInlineMenu(exId, groupIdx, week, day, displayName);
+            return true;
+        }}
+
+        // Inline editor: add exercise button
+        if (target.id === 'btn-add-exercise-inline' || target.closest('#btn-add-exercise-inline')) {
+            if (this._onInlineAdd) this._onInlineAdd(day);
+            return true;
+        }
 
         // Export
         if (target.id === 'btn-export') {

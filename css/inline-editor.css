@@ -1,0 +1,433 @@
+/* ===== Inline Editor — Day View Quick Edit ===== */
+
+/* --- Menu button (⋮) on exercise card --- */
+.inline-menu-btn {
+    position: absolute;
+    top: var(--spacing-sm);
+    right: var(--spacing-sm);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    z-index: 2;
+    border-radius: var(--radius-sm);
+    -webkit-tap-highlight-color: transparent;
+}
+.inline-menu-btn:active {
+    background: var(--bg-card);
+    color: var(--text-secondary);
+}
+
+/* Exercise card needs relative for absolute button */
+.exercise-card {
+    position: relative;
+}
+
+/* Make room for the ⋮ button in header */
+.exercise-card .exercise-header {
+    padding-right: calc(var(--spacing-sm) + 36px);
+}
+
+/* --- Swipe-to-delete --- */
+.swipe-delete-bg {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-red);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    color: white;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    z-index: 0;
+}
+
+.exercise-card.swiping,
+.superset-group.swiping {
+    overflow: visible;
+}
+
+.exercise-card.swipe-animate,
+.superset-group.swipe-animate {
+    transition: transform 0.25s ease;
+}
+
+/* --- Bottom Sheet Menu --- */
+.inline-sheet {
+    background: rgba(18, 18, 32, 0.92);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    padding: var(--spacing-md) var(--spacing-lg);
+    padding-bottom: calc(var(--spacing-lg) + env(safe-area-inset-bottom, 0px));
+    max-width: 500px;
+    margin: 0 auto;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.inline-sheet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.inline-sheet-header h3 {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    margin-right: var(--spacing-sm);
+}
+
+.inline-sheet-close {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card);
+    border: none;
+    border-radius: 50%;
+    color: var(--text-secondary);
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.inline-sheet-close:active {
+    opacity: 0.7;
+}
+
+/* Menu items */
+.inline-menu-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-sm);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    border-radius: var(--radius-sm);
+}
+
+.inline-menu-item:last-child {
+    border-bottom: none;
+}
+
+.inline-menu-item:active {
+    background: var(--bg-card);
+}
+
+.inline-menu-item.danger {
+    color: var(--accent-red);
+}
+
+.inline-menu-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+    font-size: 16px;
+}
+
+.inline-menu-item.danger .inline-menu-icon {
+    background: rgba(255, 45, 85, 0.15);
+}
+
+.inline-menu-label {
+    flex: 1;
+    font-size: var(--font-size-base);
+    font-weight: 500;
+}
+
+.inline-menu-value {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+/* --- Sub-menu panels (techniques, sets, reps, rest) --- */
+.inline-sub-panel {
+    padding: var(--spacing-md) 0;
+}
+
+.inline-sub-title {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Technique toggles per set */
+.inline-tech-set {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    padding: var(--spacing-xs) 0;
+}
+
+.inline-tech-set-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    min-width: 36px;
+}
+
+.inline-tech-btn {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 32px;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.inline-tech-btn.active {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    background: rgba(157, 141, 245, 0.12);
+}
+
+.inline-tech-btn.tech-DROP.active {
+    border-color: var(--tech-drop);
+    color: var(--tech-drop);
+    background: rgba(255, 45, 85, 0.12);
+}
+
+.inline-tech-btn.tech-REST_PAUSE.active {
+    border-color: var(--tech-rp);
+    color: var(--tech-rp);
+    background: rgba(74, 150, 255, 0.12);
+}
+
+.inline-tech-btn.tech-MP.active {
+    border-color: var(--tech-mp);
+    color: var(--tech-mp);
+    background: rgba(181, 242, 42, 0.12);
+}
+
+/* Stepper control (for sets count) */
+.inline-stepper {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    justify-content: center;
+    padding: var(--spacing-md) 0;
+}
+
+.inline-stepper-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    color: var(--text-primary);
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.inline-stepper-btn:active {
+    background: var(--bg-card-hover);
+}
+
+.inline-stepper-val {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    min-width: 40px;
+    text-align: center;
+}
+
+/* Input row (for reps) */
+.inline-input-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) 0;
+}
+
+.inline-input-row input {
+    flex: 1;
+    height: var(--input-height);
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    padding: 0 var(--spacing-md);
+    text-align: center;
+    font-weight: 600;
+}
+
+.inline-input-row input:focus {
+    outline: 1px solid var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+
+/* Rest time presets */
+.inline-rest-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) 0;
+}
+
+.inline-rest-btn {
+    height: var(--touch-min);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.inline-rest-btn.active {
+    border-color: var(--accent-primary);
+    background: rgba(157, 141, 245, 0.12);
+    color: var(--accent-primary);
+}
+
+.inline-rest-btn:active {
+    opacity: 0.7;
+}
+
+/* Apply button (for sub-panels) */
+.inline-apply-btn {
+    width: 100%;
+    height: var(--button-height);
+    background: var(--accent-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: var(--spacing-md);
+}
+
+.inline-apply-btn:active {
+    opacity: 0.8;
+}
+
+/* --- Confirm dialog --- */
+.inline-confirm {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-modal);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.inline-confirm-box {
+    background: rgba(28, 28, 40, 0.95);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    max-width: 300px;
+    width: calc(100% - var(--spacing-xl) * 2);
+    text-align: center;
+}
+
+.inline-confirm-box p {
+    font-size: var(--font-size-base);
+    margin: 0 0 var(--spacing-lg);
+    line-height: 1.4;
+}
+
+.inline-confirm-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.inline-confirm-actions button {
+    flex: 1;
+    height: var(--touch-min);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.inline-confirm-cancel {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+.inline-confirm-ok {
+    background: var(--accent-red);
+    color: white;
+}
+
+.inline-confirm-cancel:active,
+.inline-confirm-ok:active {
+    opacity: 0.7;
+}
+
+/* --- Add exercise button --- */
+.btn-add-exercise-inline {
+    display: block;
+    width: calc(100% - var(--spacing-md) * 2);
+    margin: var(--spacing-md) auto;
+    padding: var(--spacing-md);
+    background: none;
+    border: 2px dashed var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn-add-exercise-inline:active {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+/* --- Drag reorder visual --- */
+.exercise-card.drag-placeholder,
+.superset-group.drag-placeholder {
+    opacity: 0.15;
+}

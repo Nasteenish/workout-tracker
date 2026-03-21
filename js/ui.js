@@ -11,7 +11,7 @@ import { RestTimer } from './timer.js';
 import { formatDateISO, markCachedThumbs, autoTrimImg, esc, exThumbHtml, getGroupExercises, findExerciseInProgram } from './utils.js';
 import { getTotalWeeks, getTotalDays, getProgressWeek, getCompletedSets, resolveWorkout, exName } from './program-utils.js';
 import { EXERCISE_DB } from './exercises_db.js';
-import { WORKOUT, EQ, SETTINGS, attr } from './data-attrs.js';
+import { WORKOUT, EQ, SETTINGS, INLINE, attr } from './data-attrs.js';
 
 export const UI = {
     _onClick: null,
@@ -593,7 +593,8 @@ export const UI = {
         let html = '';
         let currentSection = '';
 
-        for (const group of workout.exerciseGroups) {
+        for (let gi = 0; gi < workout.exerciseGroups.length; gi++) {
+            const group = workout.exerciseGroups[gi];
             const sectionTitle = group.sectionTitleRu || group.sectionTitle || '';
             if (sectionTitle && sectionTitle !== currentSection) {
                 currentSection = sectionTitle;
@@ -611,14 +612,18 @@ export const UI = {
                     `;
                 }
             } else if (group.type === 'superset') {
-                html += this._renderSuperset(group, weekNum, dayNum);
+                html += this._renderSuperset(group, weekNum, dayNum, gi);
             } else if (group.type === 'choose_one') {
-                html += this._renderChooseOne(group, weekNum, dayNum);
+                html += this._renderChooseOne(group, weekNum, dayNum, gi);
             } else if (group.type === 'single') {
                 if (group.exercise) {
-                    html += this._renderExercise(group.exercise, weekNum, dayNum);
+                    html += this._renderExercise(group.exercise, weekNum, dayNum, undefined, gi);
                 }
             }
+        }
+
+        if (!isEmpty) {
+            html += `<button class="btn-add-exercise-inline" id="btn-add-exercise-inline">+ Добавить упражнение</button>`;
         }
 
         const editBtn = '<button class="edit-mode-btn" id="btn-edit-day"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
@@ -776,7 +781,7 @@ export const UI = {
     },
 
     // Pure HTML rendering from exercise view-model
-    _renderExercise(exVMorEx, weekNumOrUndef, dayNumOrUndef, choiceKeyOrUndef) {
+    _renderExercise(exVMorEx, weekNumOrUndef, dayNumOrUndef, choiceKeyOrUndef, groupIdx) {
         // Accept either a pre-built VM or raw (ex, weekNum, dayNum, choiceKey) args
         const vm = exVMorEx.setVMs
             ? exVMorEx
@@ -807,8 +812,12 @@ export const UI = {
             <button class="set-ctrl-btn add-set-btn" ${attr(WORKOUT.EXERCISE, ex.id)}>+ подход</button>
         </div>`;
 
+        const groupIdxAttr = groupIdx != null ? ` ${attr(INLINE.GROUP_IDX, groupIdx)}` : '';
+        const menuBtn = groupIdx != null ? `<button class="inline-menu-btn" ${attr(INLINE.EX_ID, ex.id)} ${attr(INLINE.GROUP_IDX, groupIdx)} data-ex-display="${esc(displayName)}"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>` : '';
+
         return `
-            <div class="exercise-card ${choiceKey ? 'is-chooser' : ''}">
+            <div class="exercise-card ${choiceKey ? 'is-chooser' : ''}"${groupIdxAttr}>
+                ${menuBtn}
                 <div class="exercise-header">
                     <div class="exercise-name-row">
                         ${exThumbHtml(ex.name, ex.nameRu)}
@@ -977,24 +986,24 @@ export const UI = {
         `;
     },
 
-    _renderSuperset(group, weekNum, dayNum) {
+    _renderSuperset(group, weekNum, dayNum, groupIdx) {
         const items = group.exercises || [];
         let exercisesHtml = '';
         for (let i = 0; i < items.length; i++) {
             const item = items[i];
             if (item._chooseOne) {
-                // Render inline choose_one within superset
                 exercisesHtml += this._renderChooseOne(item, weekNum, dayNum);
             } else {
-                exercisesHtml += this._renderExercise(item, weekNum, dayNum);
+                exercisesHtml += this._renderExercise(item, weekNum, dayNum, undefined, groupIdx);
             }
             if (i < items.length - 1) {
                 exercisesHtml += '<div class="superset-arrow">&#8595; без отдыха &#8595;</div>';
             }
         }
 
+        const groupIdxAttr = groupIdx != null ? ` ${attr(INLINE.GROUP_IDX, groupIdx)}` : '';
         return `
-            <div class="superset-group">
+            <div class="superset-group"${groupIdxAttr}>
                 <div class="superset-label">
                     <svg width="18" height="12" viewBox="0 0 18 12" fill="none"><circle cx="5.5" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/><circle cx="12.5" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/></svg>
                     Суперсет
@@ -1029,7 +1038,7 @@ export const UI = {
     },
 
     // Pure HTML rendering from choose-one view-model
-    _renderChooseOne(groupOrVM, weekNum, dayNum) {
+    _renderChooseOne(groupOrVM, weekNum, dayNum, groupIdx) {
         // Accept either a pre-built VM or raw group
         const vm = groupOrVM.exerciseVM !== undefined
             ? groupOrVM
@@ -1037,10 +1046,11 @@ export const UI = {
 
         let exerciseHtml = '';
         if (vm.exerciseVM) {
-            exerciseHtml = this._renderExercise(vm.exerciseVM);
+            exerciseHtml = this._renderExercise(vm.exerciseVM, undefined, undefined, undefined, groupIdx);
         }
 
-        return `<div class="choose-one-group">${exerciseHtml}</div>`;
+        const groupIdxAttr = groupIdx != null ? ` ${attr(INLINE.GROUP_IDX, groupIdx)}` : '';
+        return `<div class="choose-one-group"${groupIdxAttr}>${exerciseHtml}</div>`;
     },
 
     // ===== HISTORY VIEW =====

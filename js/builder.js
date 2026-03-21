@@ -1507,14 +1507,26 @@ export const Builder = {
         }
     },
 
+    _inlineConfirmCb: null,  // set by InlineEditor for picker reuse
+
     confirmExercise() {
-        if (!this._configExercise || !this._editingDay) return;
+        if (!this._configExercise) return;
 
         var cfg = this._configExercise;
         var setsVal = document.getElementById('cfg-sets-val');
-        
+        var numSets = parseInt(setsVal ? setsVal.textContent : '3') || 3;
 
-        var numSets = parseInt(setsVal.textContent) || 3;
+        // Inline editor callback — delegate to caller instead of editing Builder state
+        if (this._inlineConfirmCb) {
+            var cb = this._inlineConfirmCb;
+            this._inlineConfirmCb = null;
+            this._closeExerciseConfig();
+            cb({ nameRu: cfg.nameRu, name: cfg.name, numSets: numSets });
+            return;
+        }
+
+        if (!this._editingDay) return;
+
         var setsArr = [];
         for (var s = 0; s < numSets; s++) {
             setsArr.push({ type: 'H', rpe: '8', techniques: [] });

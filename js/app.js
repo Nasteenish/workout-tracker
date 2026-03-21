@@ -21,6 +21,7 @@ import { debounce, formatDateISO, validateProgram, esc, parseWeight, parseReps }
 import { getTotalDays, getProgressWeek } from './program-utils.js';
 import { WORKOUT, EQ, SETTINGS, read, readInt } from './data-attrs.js';
 import { AppState } from './app-state.js';
+import { InlineEditor } from './inline-editor.js';
 
 export const App = {
     _currentWeek: 1,
@@ -112,6 +113,15 @@ export const App = {
         EquipmentManager._onRenderSettings = () => UI.renderSettings();
         WorkoutUI._onInvalidateCache = (hash) => this.invalidatePageCache(hash);
         WorkoutUI._onRoute = () => this.route();
+        WorkoutUI._onInlineMenu = (exId, groupIdx, dayNum, weekNum, displayName) => InlineEditor.showExerciseMenu(exId, groupIdx, dayNum, weekNum, displayName);
+        WorkoutUI._onInlineAdd = (dayNum) => InlineEditor.addExercise(dayNum);
+
+        // Inline editor callbacks
+        InlineEditor._onAutoSave = (ed) => { Builder._editingDay = ed; Builder._autoSave(); Builder._editingDay = null; };
+        InlineEditor._onBuildVM = (dayNum) => Builder._buildDayEditorVM(dayNum);
+        InlineEditor._onInvalidateCache = () => this.invalidatePageCache();
+        InlineEditor._onRenderDay = () => this.route(true);
+        InlineEditor._onShowPicker = (cb) => { Builder._inlineConfirmCb = cb; Builder._editingDay = { dayNum: AppState.currentDay, items: [] }; Builder.showExercisePicker(); };
         Builder._onRoute = () => this.route();
         Builder._onSwitchUser = (id, flag) => this.switchUser(id, flag);
         Builder._onEditorBack = () => this._handleEditorBack();
@@ -942,6 +952,9 @@ export const App = {
             AppState.currentDay = this._currentDay;
             this._inDayView = true;
             UI.renderDay(this._currentWeek, this._currentDay);
+            // Attach inline editor touch handlers to day slide
+            var daySlide = document.querySelector('.day-slide');
+            if (daySlide) InlineEditor.attachHandlers(daySlide);
             return;
         }
 
