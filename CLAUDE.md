@@ -13,6 +13,27 @@ python3 -m http.server 8000
 
 Нужен сервер (не `file://`) — ES modules требуют HTTP.
 
+## Supabase — прямой доступ
+
+Credentials хранятся в `tools/fetch_gym80_images.py`. Claude может и должен выполнять SQL/API операции напрямую:
+
+```bash
+# SQL запросы (INSERT, UPDATE, SELECT):
+curl -s -X POST "https://api.supabase.com/v1/projects/{SUPABASE_REF}/database/query" \
+  -H "Authorization: Bearer {MGMT_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "SQL тут"}'
+
+# Upload файлов в Storage:
+curl -X POST "https://{REF}.supabase.co/storage/v1/object/equipment-images/{path}" \
+  -H "Authorization: Bearer {SERVICE_KEY}" \
+  -H "Content-Type: image/png" \
+  -H "x-upsert: true" \
+  --data-binary @file.png
+```
+
+**Не проси пользователя запускать SQL вручную** — делай сам через API.
+
 ---
 
 ## Структура проекта (после рефакторинга)
