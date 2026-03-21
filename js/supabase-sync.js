@@ -213,6 +213,23 @@ export const SupaSync = {
                         }
                     }
                 }
+                // Merge equipment array — union by id, prefer entries with imageUrl
+                if (other.equipment || base.equipment) {
+                    var baseEq = base.equipment || [];
+                    var otherEq = other.equipment || [];
+                    var eqById = {};
+                    for (var bi = 0; bi < baseEq.length; bi++) eqById[baseEq[bi].id] = baseEq[bi];
+                    for (var oi3 = 0; oi3 < otherEq.length; oi3++) {
+                        var oe = otherEq[oi3];
+                        if (!eqById[oe.id]) {
+                            eqById[oe.id] = oe;
+                        } else if (oe.imageUrl && !eqById[oe.id].imageUrl) {
+                            // Other has imageUrl, base doesn't — take other's
+                            eqById[oe.id] = oe;
+                        }
+                    }
+                    base.equipment = Object.values(eqById);
+                }
                 // Merge templateSnapshots — append-only, keep all versions from both sides
                 if (base.program && other.program) {
                     var baseSnaps = base.program.templateSnapshots || {};
