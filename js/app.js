@@ -749,7 +749,12 @@ export const App = {
         if (!skipAnimation) routeAppEl.classList.remove('no-animate');
         const hash = location.hash || '';
         this._pendingScroll = this._scrollCache[hash] || 0;
-        window.scrollTo(0, 0);
+        // When returning from day view, restore saved scroll immediately to avoid flash-to-top
+        if (this._inDayView && this._pendingScroll) {
+            window.scrollTo(0, this._pendingScroll);
+        } else {
+            window.scrollTo(0, 0);
+        }
         this._lastRouteHash = hash;
         // Clear checkin workout data when leaving checkin page
         if (hash !== '#/checkin') this._activeCheckinWorkout = null;
