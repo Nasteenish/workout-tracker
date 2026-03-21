@@ -250,7 +250,6 @@ export const SwipeNav = {
                         resetApp(appEl);
                         unlockScroll();
                         removeCompanion();
-                        window.scrollTo(0, 0);
                     } else if (cfg.useReplace) {
                         // Editor: replace entry instead of history.back to avoid forward-history loop
                         history.replaceState(null, '', target);
@@ -260,14 +259,12 @@ export const SwipeNav = {
                         resetApp(appEl);
                         unlockScroll();
                         removeCompanion();
-                        window.scrollTo(0, 0);
                     } else {
                         // Pop history entry properly with history.back()
                         app._pendingSwipeCleanup = () => {
                             resetApp(appEl);
                             unlockScroll();
                             removeCompanion();
-                            window.scrollTo(0, 0);
                         };
                         app._swipeLock = false;
                         app._backSwipeFallbackTimer = setTimeout(() => {
@@ -304,7 +301,7 @@ export const SwipeNav = {
             const next = swipingLeft
                 ? (app._currentWeek === getTotalWeeks() ? 1 : app._currentWeek + 1)
                 : (app._currentWeek === 1 ? getTotalWeeks() : app._currentWeek - 1);
-            setTimeout(() => { unlockScroll(); location.hash = `#/week/${next}`; requestAnimationFrame(removeCompanion); }, 190);
+            setTimeout(() => { unlockScroll(); app._scrollCache[`#/week/${next}`] = savedScrollY; location.hash = `#/week/${next}`; requestAnimationFrame(removeCompanion); }, 190);
         }, { passive: true });
     }
 };
