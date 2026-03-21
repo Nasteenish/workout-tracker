@@ -30,16 +30,27 @@ export const App = {
     _pendingMigration: null,
     _pendingCheckinWorkout: null,
     _pageCache: {},
+    _scrollCache: {},
+
+    _restoreScroll() {
+        window.scrollTo(0, this._pendingScroll || 0);
+        this._pendingScroll = 0;
+    },
 
     invalidatePageCache(hashOrPrefix) {
-        if (!hashOrPrefix) { this._pageCache = {}; AppState.pageCache = this._pageCache; return; }
+        if (!hashOrPrefix) { this._pageCache = {}; this._scrollCache = {}; AppState.pageCache = this._pageCache; return; }
         for (var key in this._pageCache) {
-            if (key === hashOrPrefix || key.startsWith(hashOrPrefix + '/'))
+            if (key === hashOrPrefix || key.startsWith(hashOrPrefix + '/')) {
                 delete this._pageCache[key];
+                delete this._scrollCache[key];
+            }
         }
     },
 
     init() {
+        // Disable browser's auto scroll restoration — we manage it ourselves
+        if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
         // Wire storage callbacks before any data loading
         Storage._migrateFn = (data) => Migrations.migrateExerciseNames(data);
 
@@ -685,11 +696,12 @@ export const App = {
     },
 
     route(skipAnimation) {
-        // Cache current page HTML before navigating away
+        // Cache current page HTML + scroll position before navigating away
         var prevHash = this._lastRouteHash || '';
         if (prevHash) {
             var appEl = document.getElementById('app');
             if (appEl && appEl.innerHTML) this._pageCache[prevHash] = appEl.innerHTML;
+            this._scrollCache[prevHash] = window.scrollY;
         }
         // Safety: clear any stuck swipe/pull styles that break position:fixed for tab bar
         var routeAppEl = document.getElementById('app');
@@ -700,9 +712,10 @@ export const App = {
         routeAppEl.style.right = '';
         routeAppEl.classList.remove('swiping-back');
         if (!skipAnimation) routeAppEl.classList.remove('no-animate');
-        window.scrollTo(0, 0);
         const hash = location.hash || '';
         this._lastRouteHash = hash;
+        this._pendingScroll = this._scrollCache[hash] || 0;
+        window.scrollTo(0, 0);
         // Clear checkin workout data when leaving checkin page
         if (hash !== '#/checkin') this._activeCheckinWorkout = null;
 
@@ -900,6 +913,7 @@ export const App = {
             AppState.currentWeek = this._currentWeek;
             this._swipeDir = null;
             UI.renderWeek(this._currentWeek);
+            this._restoreScroll();
             this._showNotificationPrompt();
             return;
         }
