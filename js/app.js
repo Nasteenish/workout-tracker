@@ -901,6 +901,7 @@ export const App = {
         if (this._inDayView) {
             Storage.rollbackEquipmentIfNoSets();
             this._inDayView = false;
+            this._returnFromDay = this._currentDay;
         }
 
         // Day view: #/week/{n}/day/{n}
@@ -923,7 +924,14 @@ export const App = {
             AppState.currentWeek = this._currentWeek;
             this._swipeDir = null;
             UI.renderWeek(this._currentWeek);
-            this._restoreScroll();
+            // Scroll to the day card we just returned from, or restore saved position
+            if (this._returnFromDay) {
+                var dayCard = document.querySelector('a.day-card[href*="day/' + this._returnFromDay + '"]');
+                if (dayCard) dayCard.scrollIntoView({ block: 'center', behavior: 'instant' });
+                this._returnFromDay = null;
+            } else {
+                this._restoreScroll();
+            }
             this._showNotificationPrompt();
             return;
         }
