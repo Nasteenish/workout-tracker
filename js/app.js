@@ -749,10 +749,8 @@ export const App = {
         if (!skipAnimation) routeAppEl.classList.remove('no-animate');
         const hash = location.hash || '';
         this._pendingScroll = this._scrollCache[hash] || 0;
-        // When returning from day view, restore saved scroll immediately to avoid flash-to-top
-        if (this._inDayView && this._pendingScroll) {
-            window.scrollTo(0, this._pendingScroll);
-        } else {
+        // Skip scroll-to-top when returning from day view — scrollIntoView will position later
+        if (!this._inDayView) {
             window.scrollTo(0, 0);
         }
         this._lastRouteHash = hash;
