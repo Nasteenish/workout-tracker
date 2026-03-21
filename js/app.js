@@ -132,6 +132,9 @@ export const App = {
             if (this._isBackSwipe) {
                 clearTimeout(this._backSwipeFallbackTimer);
                 this._isBackSwipe = false;
+                // Unlock scroll BEFORE route() so scrollTo() works inside _restoreScroll()
+                document.documentElement.style.overflow = '';
+                document.body.style.overflow = '';
                 this.route(true);
                 if (this._pendingSwipeCleanup) {
                     this._pendingSwipeCleanup();

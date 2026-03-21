@@ -244,26 +244,25 @@ export const SwipeNav = {
                             // Editor: also clean forward history by replacing current entry
                             history.replaceState(null, '', target);
                         }
+                        unlockScroll();
                         app.route(true);
                         app._isBackSwipe = false;
                         app._swipeLock = false;
                         resetApp(appEl);
-                        unlockScroll();
                         removeCompanion();
                     } else if (cfg.useReplace) {
                         // Editor: replace entry instead of history.back to avoid forward-history loop
                         history.replaceState(null, '', target);
                         app._isBackSwipe = false;
                         app._swipeLock = false;
+                        unlockScroll();
                         app.route(true);
                         resetApp(appEl);
-                        unlockScroll();
                         removeCompanion();
                     } else {
                         // Pop history entry properly with history.back()
                         app._pendingSwipeCleanup = () => {
                             resetApp(appEl);
-                            unlockScroll();
                             removeCompanion();
                         };
                         app._swipeLock = false;
@@ -271,6 +270,7 @@ export const SwipeNav = {
                             if (app._isBackSwipe) {
                                 history.replaceState(null, '', target);
                                 app._isBackSwipe = false;
+                                unlockScroll();
                                 app.route(true);
                                 if (app._pendingSwipeCleanup) {
                                     app._pendingSwipeCleanup();
