@@ -360,5 +360,30 @@ export const Migrations = {
                 }
             }
         }
+        // v6: Restore exerciseEquipment from exerciseEquipmentOptions after rollback bug
+        // The rollback mechanism could clear exerciseEquipment (defaults) while leaving
+        // exerciseEquipmentOptions (history) intact. Restore defaults from options.
+        {
+            key: '_restore_eq_from_opts_v1',
+            fn: function() {
+                var keys = Object.keys(localStorage);
+                for (var ki = 0; ki < keys.length; ki++) {
+                    if (keys[ki].indexOf('wt_data_') !== 0) continue;
+                    var dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}');
+                    var opts = dd.exerciseEquipmentOptions;
+                    if (!opts) continue;
+                    if (!dd.exerciseEquipment) dd.exerciseEquipment = {};
+                    var changed = false;
+                    for (var exId in opts) {
+                        // Only restore if no current assignment (null/undefined/missing)
+                        if (!dd.exerciseEquipment[exId] && opts[exId] && opts[exId].length > 0) {
+                            dd.exerciseEquipment[exId] = opts[exId][0];
+                            changed = true;
+                        }
+                    }
+                    if (changed) localStorage.setItem(keys[ki], JSON.stringify(dd));
+                }
+            }
+        }
     ]
 };

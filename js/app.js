@@ -205,8 +205,8 @@ export const App = {
         // Pull-to-refresh (js/pull-refresh.js)
         PullRefresh.init(() => this.route(true));
 
-        // Rollback equipment from previous session if no sets were completed
-        Storage.checkPendingEquipmentRollback();
+        // Clear any stale equipment snapshot from previous session
+        localStorage.removeItem('_wt_eq_snapshot');
 
         // Init rest timer
         RestTimer.init();
@@ -235,8 +235,7 @@ export const App = {
             return SupaSync.syncOnLogin(supaUserId, 'wt_data_' + userId);
         }).then(function(result) {
             if (result === undefined) return; // session was expired, skip post-sync
-            // Rollback equipment after sync (sync may overwrite a pre-sync rollback)
-            Storage.checkPendingEquipmentRollback();
+            localStorage.removeItem('_wt_eq_snapshot');
             // Remove stuck Precor equipment — only local, no immediate push
             try {
                 Storage._invalidateCache();
@@ -929,9 +928,7 @@ export const App = {
             return;
         }
 
-        // Rollback equipment if leaving day view without completed sets
         if (this._inDayView) {
-            Storage.rollbackEquipmentIfNoSets();
             this._inDayView = false;
             this._returnFromDay = this._currentDay;
         }
@@ -943,7 +940,6 @@ export const App = {
             this._currentDay = parseInt(dayMatch[2]);
             AppState.currentWeek = this._currentWeek;
             AppState.currentDay = this._currentDay;
-            Storage.snapshotEquipment(this._currentWeek, this._currentDay);
             this._inDayView = true;
             UI.renderDay(this._currentWeek, this._currentDay);
             return;
