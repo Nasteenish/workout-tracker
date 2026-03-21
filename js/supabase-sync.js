@@ -177,8 +177,8 @@ export const SupaSync = {
                 if (other.exerciseEquipment) {
                     if (!base.exerciseEquipment) base.exerciseEquipment = {};
                     for (var ek in other.exerciseEquipment) {
-                        // Use 'in' check so explicit null deletions in base are respected
-                        if (other.exerciseEquipment[ek] && !(ek in base.exerciseEquipment)) {
+                        // Prefer non-null: if base has tombstone but other has real value, take the real value
+                        if (other.exerciseEquipment[ek] && !base.exerciseEquipment[ek]) {
                             base.exerciseEquipment[ek] = other.exerciseEquipment[ek];
                         }
                     }

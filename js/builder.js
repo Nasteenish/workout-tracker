@@ -1081,7 +1081,7 @@ export const Builder = {
         var sets = ex.sets && ex.sets.length > 0
             ? ex.sets
             : [{ type: 'H', rpe: '8', techniques: [] }, { type: 'H', rpe: '8', techniques: [] }, { type: 'H', rpe: '8', techniques: [] }];
-        var id = ex._id || ('D' + dayNum + 'E' + (itemIdx + 1) + (subIdx >= 0 ? '_' + (subIdx + 1) : ''));
+        var id = ex._id || ('ex_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
         var result = {
             id: id,
             name: ex.name || ex.nameRu,
@@ -1522,6 +1522,7 @@ export const Builder = {
         this._editingDay.items.push({
             type: 'single',
             exercise: {
+                _id: 'ex_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
                 nameRu: cfg.nameRu,
                 name: cfg.name,
                 sets: setsArr,
