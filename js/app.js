@@ -967,6 +967,10 @@ export const App = {
                     this._restoreScroll();
                 }
             }
+            if (this._pendingFadeIn) {
+                document.getElementById('app').style.opacity = '';
+                this._pendingFadeIn = false;
+            }
             this._showNotificationPrompt();
             return;
         }
@@ -1212,11 +1216,11 @@ export const App = {
         setTimeout(() => {
             app.style.transition = 'none';
             app.style.transform = '';
-            // Keep opacity=0 during route — show after DOM + scroll are ready
+            // Keep opacity=0 — route() will restore it via _pendingFadeIn after DOM + scroll are ready
+            this._pendingFadeIn = true;
             if (beforeNav) beforeNav();
             if (hash === null) history.back();
             else location.hash = hash;
-            app.style.opacity = '';
         }, 190);
     },
 
