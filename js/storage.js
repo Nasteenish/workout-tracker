@@ -900,21 +900,22 @@ export const Storage = {
     },
 
     getPreviousLog(week, day, exerciseId, setIdx, equipmentId, siblings) {
-        // Standard: same exerciseId, same day, previous weeks
+        // 1. Same exerciseId, same day, previous weeks
+        var sameDayResult = null;
         for (var w = week - 1; w >= 1; w--) {
             var log = this.getSetLog(w, day, exerciseId, setIdx);
             if (log && log.completed) {
                 if (equipmentId) {
-                    if (log.equipmentId === equipmentId) return log;
+                    if (log.equipmentId === equipmentId) { sameDayResult = log; break; }
                 } else {
-                    return log;
+                    sameDayResult = log; break;
                 }
             }
         }
-        // Fallback: search sibling exercises (same name, different day)
-        // No equipment filter — different days may use different machines
+        // 2. Sibling exercises (same name, different day) — find most recent
+        var sibResult = null;
         if (siblings && siblings.length > 0) {
-            var best = null, bestTime = 0;
+            var bestTime = 0;
             for (var w = week; w >= 1; w--) {
                 for (var si = 0; si < siblings.length; si++) {
                     var sib = siblings[si];
@@ -922,14 +923,17 @@ export const Storage = {
                     if (w === week && sib.day >= day) continue;
                     var log = this.getSetLog(w, sib.day, sib.id, setIdx);
                     if (log && log.completed && log.timestamp > bestTime) {
-                        best = log;
+                        sibResult = log;
                         bestTime = log.timestamp;
                     }
                 }
             }
-            if (best) return best;
         }
-        return null;
+        // Return whichever is more recent
+        if (sameDayResult && sibResult) {
+            return (sibResult.timestamp > (sameDayResult.timestamp || 0)) ? sibResult : sameDayResult;
+        }
+        return sameDayResult || sibResult || null;
     },
 
     getExerciseHistory(exerciseId) {
