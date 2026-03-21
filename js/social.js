@@ -888,13 +888,24 @@ export const Social = {
 
     async getGymEquipmentForExercise(gymName, gymCity, exerciseName) {
         if (!supa) return [];
-        var q = supa.from('gym_equipment')
-            .select('equipment_name')
+        // Try JOIN to get image_url from catalog; fall back to plain query
+        var r = await supa.from('gym_equipment')
+            .select('equipment_name, catalog_id, equipment_catalog(image_url)')
             .eq('gym_name', gymName)
             .eq('gym_city', gymCity)
             .eq('exercise_name', exerciseName);
-        var r = await q;
-        if (r.error) { this._logError('getGymEquipmentForExercise', r.error); return []; }
-        return (r.data || []).map(function(row) { return row.equipment_name; });
+        if (r.error) {
+            // Fallback: query without JOIN (FK may not exist)
+            r = await supa.from('gym_equipment')
+                .select('equipment_name')
+                .eq('gym_name', gymName)
+                .eq('gym_city', gymCity)
+                .eq('exercise_name', exerciseName);
+            if (r.error) { this._logError('getGymEquipmentForExercise', r.error); return []; }
+        }
+        return (r.data || []).map(function(row) {
+            var img = row.equipment_catalog ? row.equipment_catalog.image_url : null;
+            return { name: row.equipment_name, imageUrl: img };
+        });
     }
 };

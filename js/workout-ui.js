@@ -442,9 +442,10 @@ export const WorkoutUI = {
         if (item) {
             var eqName = read(item, EQ.NAME);
             if (!eqName) return true;
+            var eqImage = read(item, EQ.IMAGE) || null;
             var modal = document.getElementById('equipment-modal');
             var exId = modal ? modal._exerciseId : null;
-            var newId = Storage.addEquipment(eqName);
+            var newId = Storage.addEquipment(eqName, undefined, eqImage);
             if (exId) {
                 this._bindEquipment(exId, newId, null, week, day);
             } else {

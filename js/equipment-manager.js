@@ -143,8 +143,13 @@ export const EquipmentManager = {
             if (gymSection && gymItems.length > 0) {
                 var gymHtml = '<div class="eq-section-label">В этом зале:</div>';
                 for (var i = 0; i < gymItems.length; i++) {
-                    gymHtml += '<div class="eq-gym-item" ' + attr(EQ.NAME, esc(gymItems[i])) + '>'
-                        + '<span class="eq-shared-name">' + esc(gymItems[i]) + '</span>'
+                    var gi = gymItems[i];
+                    var giName = typeof gi === 'string' ? gi : gi.name;
+                    var giImg = typeof gi === 'string' ? null : gi.imageUrl;
+                    var imgTag = giImg ? '<img class="ex-thumb eq-badge-thumb" src="' + esc(giImg) + '" loading="lazy" onerror="this.style.display=\'none\'">' : '';
+                    gymHtml += '<div class="eq-gym-item" ' + attr(EQ.NAME, esc(giName)) + (giImg ? ' ' + attr(EQ.IMAGE, esc(giImg)) : '') + '>'
+                        + imgTag
+                        + '<span class="eq-shared-name">' + esc(giName) + '</span>'
                         + '</div>';
                 }
                 gymSection.innerHTML = gymHtml;
