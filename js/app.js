@@ -1167,7 +1167,6 @@ export const App = {
             app.style.transition = 'none';
             app.style.transform = '';
             app.style.opacity = '';
-            window.scrollTo(0, 0);
             if (beforeNav) beforeNav();
             if (hash === null) history.back();
             else location.hash = hash;
