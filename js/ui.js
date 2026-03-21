@@ -1497,24 +1497,50 @@ export const UI = {
     },
 
     // ===== CHOICE MODAL (choose one exercise) =====
-    showChoiceModal(choiceKey, week) {
-        // Find the group across all day templates
+    showChoiceModal(choiceKey, week, day) {
+        // Find the group — use snapshot if week is bound to one, else live template
         var _p3 = Storage.getProgram();
         let group = null;
-        for (let d = 1; d <= getTotalDays(); d++) {
-            const tmpl = _p3.dayTemplates[d];
-            if (!tmpl) continue;
-            for (const g of tmpl.exerciseGroups) {
-                if (g.choiceKey === choiceKey) { group = g; break; }
+
+        // Determine which exerciseGroups to search for this week/day
+        const _findGroup = (groups) => {
+            for (const g of groups) {
+                if (g.choiceKey === choiceKey) return g;
                 // Also check inside supersets
                 if (g.type === 'superset' && g.exercises) {
                     for (const item of g.exercises) {
-                        if (item._chooseOne && item.choiceKey === choiceKey) { group = item; break; }
+                        if (item._chooseOne && item.choiceKey === choiceKey) return item;
                     }
                 }
+            }
+            return null;
+        };
+
+        // If day is known, check snapshot first
+        if (day) {
+            const d = String(day);
+            const version = _p3.weekTemplateVersion && _p3.weekTemplateVersion[week]
+                && _p3.weekTemplateVersion[week][d];
+            if (version && _p3.templateSnapshots && _p3.templateSnapshots[d]) {
+                const snap = _p3.templateSnapshots[d].find(s => s.version === version);
+                if (snap) {
+                    group = _findGroup(snap.groups);
+                }
+            }
+            // Fallback: try live template for this day
+            if (!group && _p3.dayTemplates[day]) {
+                group = _findGroup(_p3.dayTemplates[day].exerciseGroups);
+            }
+        }
+
+        // Final fallback: search all day templates (legacy path)
+        if (!group) {
+            for (let d = 1; d <= getTotalDays(); d++) {
+                const tmpl = _p3.dayTemplates[d];
+                if (!tmpl) continue;
+                group = _findGroup(tmpl.exerciseGroups);
                 if (group) break;
             }
-            if (group) break;
         }
         if (!group) return;
 
