@@ -451,19 +451,31 @@ export const App = {
             SupaSync._pushFailCount = 0;
             self._hideSyncWarning();
 
-            self.switchUser(localId);
+            // Set current user so Storage reads/writes the right key
+            Storage.setCurrentUser(localId);
 
-            // Sync data from cloud
-            SupaSync.syncOnLogin(supaUserId, 'wt_data_' + localId).then(function() {
-                // Reload data after sync
+            // Ensure email is stored in profiles for cross-device login by username
+            try {
+                Social.upsertProfile({ email: email }).catch(function() {});
+            } catch (e) {}
+
+            // Sync data from cloud BEFORE rendering UI (so program is available)
+            return SupaSync.syncOnLogin(supaUserId, 'wt_data_' + localId).then(function() {
                 Storage._invalidateCache();
                 Migrations.cleanOrphanedLogEntries();
                 var user = Storage.getCurrentUser();
                 if (user) self._loadProgramForUser(user);
+                // Now render — program should be loaded from cloud data
+                history.replaceState(null, '', window.location.pathname);
                 self.route();
-            }).catch(function() {});
-
-            return true;
+            }).catch(function(syncErr) {
+                console.error('Sync after login failed:', syncErr);
+                // Still render even if sync failed — user can use local data
+                var user = Storage.getCurrentUser();
+                if (user) self._loadProgramForUser(user);
+                history.replaceState(null, '', window.location.pathname);
+                self.route();
+            });
         }).catch(function(err) {
             if (errEl) {
                 errEl.textContent = err.message || 'Неверный email или пароль';
@@ -474,38 +486,51 @@ export const App = {
         });
     },
 
-    // Login by username — look up email from profiles, then sign in via Supabase
+    // Login by username — look up email, then sign in via Supabase
     async _loginByUsername(username, password) {
         var errEl = document.getElementById('login-error');
         var btn = document.getElementById('login-submit');
         if (btn) { btn.disabled = true; btn.textContent = 'ВХОД...'; }
         try {
             if (!supa) throw new Error('Supabase не загружен');
-            var result = await supa.from('profiles').select('user_id').eq('username', username).single();
+            // Look up user_id and email from profiles table
+            var result = await supa.from('profiles').select('user_id, email').eq('username', username).single();
             if (result.error || !result.data) {
-                // Try the username as-is with Supabase (in case it's an email without @... unlikely but safe)
                 throw new Error('Пользователь не найден');
             }
-            // Got user_id, now get their email from auth
-            // We can't query auth directly, but we can try signing in with email
-            // Look up email from auth users via admin... no, we're client-side.
-            // Instead, query profiles or look for stored email mapping
-            // Fallback: try to get user email from Supabase auth metadata
             var userId = result.data.user_id;
-            // Check if we have a local email cached
-            var cachedEmail = null;
-            var users = Storage.getUsers();
-            for (var i = 0; i < users.length; i++) {
-                if (users[i].id === 'supa_' + userId && users[i].email) {
-                    cachedEmail = users[i].email;
-                    break;
+            var email = result.data.email;
+
+            // 1. Try email from profiles table (stored during registration)
+            if (email) {
+                await this.loginSupabase(email, password);
+                return;
+            }
+
+            // 2. Try locally cached email (same device)
+            var cachedEmail = localStorage.getItem('wt_email_supa_' + userId);
+            if (!cachedEmail) {
+                var users = Storage.getUsers();
+                for (var i = 0; i < users.length; i++) {
+                    if (users[i].id === 'supa_' + userId && users[i].email) {
+                        cachedEmail = users[i].email;
+                        break;
+                    }
                 }
             }
             if (cachedEmail) {
                 await this.loginSupabase(cachedEmail, password);
                 return;
             }
-            // No cached email — tell user to use email
+
+            // 3. Try looking up email from user_data table
+            var udResult = await supa.from('user_data').select('data').eq('user_id', userId).single();
+            if (udResult.data && udResult.data.data) {
+                // The data blob may contain user info from the users array
+                // But more reliably, use Supabase auth metadata
+            }
+
+            // No email found — tell user to use email
             throw new Error('Войдите через email, а не логин');
         } catch (e) {
             if (errEl) {
@@ -617,9 +642,9 @@ export const App = {
             self._pendingMigration = null;
             self.switchUser(newLocalId);
 
-            // 7. Auto-create social profile so user appears in discover
+            // 7. Auto-create social profile so user appears in discover (include email for cross-device login)
             try {
-                Social.upsertProfile({ username: account.login, display_name: account.name }).catch(function() {});
+                Social.upsertProfile({ username: account.login, display_name: account.name, email: email }).catch(function() {});
             } catch (e) {}
 
             // 8. Push data to cloud (backup)

@@ -197,9 +197,9 @@ export const Builder = {
             SupaSync._currentSupaUserId = supaUserId;
             SupaSync._currentStorageKey = 'wt_data_' + localId;
 
-            // Auto-create social profile so user appears in discover
+            // Auto-create social profile so user appears in discover (include email for cross-device login by username)
             try {
-                Social.upsertProfile({ username: login, display_name: login }).catch(function() {});
+                Social.upsertProfile({ username: login, display_name: login, email: email }).catch(function() {});
             } catch (e) {}
 
             // Start onboarding instead of going straight to app
