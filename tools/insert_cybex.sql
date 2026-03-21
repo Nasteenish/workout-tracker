@@ -1,6 +1,6 @@
 -- Cybex equipment catalog
 -- Exported from Supabase DB on 2026-03-20
--- 131 records (110 original + 21 PWR PLAY)
+-- 138 records (110 original + 28 PWR PLAY)
 
 INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_type, exercise_type, image_url) VALUES
 -- Cybex Eagle NX (Selectorized)
@@ -137,7 +137,15 @@ INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_t
 (418, 'Cybex', 'PP-AP41', 'PWR Play Adjustable Pulley 4:1', 'full_body', 'cable', 'cable_multi', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/PP-AP41.png'),
 (420, 'Cybex', 'PP-LPD', 'PWR Play Dual Pulley Pulldown', 'back', 'cable', 'lat_pulldown', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/PP-LPD.png'),
 (422, 'Cybex', 'PP-DPH', 'PWR Play Dual Pulley High', 'full_body', 'cable', 'cable_multi', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/PP-DPH.png'),
-(423, 'Cybex', 'PP-DPL', 'PWR Play Dual Pulley Low', 'full_body', 'cable', 'cable_multi', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/PP-DPL.png')
+(423, 'Cybex', 'PP-DPL', 'PWR Play Dual Pulley Low', 'full_body', 'cable', 'cable_multi', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/PP-DPL.png'),
+-- Cybex PWR PLAY — Additional Stations
+(424, 'Cybex', 'PP-ECO', 'PWR Play Embedded Cable Crossover', 'chest', 'cable', 'chest_fly,cable_multi', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/PP-ECO.png'),
+(425, 'Cybex', 'PP-AC', 'PWR Play Adjustable Cable Column', 'full_body', 'cable', 'cable_multi', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/PP-AC.png'),
+(426, 'Cybex', 'PP-DHLP', 'PWR Play Dual Handle Lat Pull', 'back', 'cable', 'lat_pulldown', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/PP-DHLP.png'),
+(427, 'Cybex', 'PP-LR', 'PWR Play Low Row', 'back', 'cable', 'seated_row', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/PP-LR.png'),
+(428, 'Cybex', 'PP-ADHLR', 'PWR Play Adjustable Dual Handle Low Row', 'back', 'cable', 'seated_row', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/PP-ADHLR.png'),
+(429, 'Cybex', 'PP-TP', 'PWR Play Triceps Pushdown', 'arms', 'cable', 'tricep_extension', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/PP-TP.png'),
+(430, 'Cybex', 'PP-DCA', 'PWR Play Dip/Chin Assist', 'full_body', 'cable', 'chest_dip,tricep_dip,lat_pulldown', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/cybex/PP-DCA.png')
 ON CONFLICT (id) DO UPDATE SET
   brand = EXCLUDED.brand,
   model = EXCLUDED.model,
