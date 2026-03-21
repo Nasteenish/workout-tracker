@@ -59,9 +59,9 @@ export function getCurrentPosition(startDate, cycleType) {
  * Resolve a superset exercise item — it may be a normal exercise
  * or a _chooseOne wrapper (Day 4 has choose_one inside supersets).
  */
-export function resolveSupersetItem(item) {
+export function resolveSupersetItem(item, week) {
     if (item._chooseOne) {
-        const chosenId = Storage.getChoice(item.choiceKey);
+        const chosenId = Storage.getChoice(item.choiceKey, week);
         const options = item.options || [];
         if (chosenId) {
             const found = options.find(ex => ex.id === chosenId);
@@ -123,17 +123,17 @@ export function resolveWorkout(week, day) {
 /**
  * Calculate total sets for a day's workout.
  */
-export function getTotalSets(workout) {
+export function getTotalSets(workout, week) {
     let total = 0;
     for (const group of workout.exerciseGroups) {
         if (group.type === 'choose_one') {
-            const chosen = getChosenExercise(group);
+            const chosen = getChosenExercise(group, week);
             if (chosen) {
                 total += chosen.sets.length;
             }
         } else if (group.type === 'superset') {
             for (const item of (group.exercises || [])) {
-                const ex = resolveSupersetItem(item);
+                const ex = resolveSupersetItem(item, week);
                 if (ex && ex.sets) total += ex.sets.length;
             }
         } else if (group.type === 'single') {
@@ -152,15 +152,15 @@ export function getCompletedSets(week, day) {
     const workout = resolveWorkout(week, day);
     if (!workout) return { completed: 0, total: 0 };
 
-    const total = getTotalSets(workout);
+    const total = getTotalSets(workout, week);
     let completed = 0;
 
     for (const group of workout.exerciseGroups) {
         let exercises;
         if (group.type === 'choose_one') {
-            exercises = [getChosenExercise(group)];
+            exercises = [getChosenExercise(group, week)];
         } else if (group.type === 'superset') {
-            exercises = (group.exercises || []).map(resolveSupersetItem);
+            exercises = (group.exercises || []).map(item => resolveSupersetItem(item, week));
         } else {
             exercises = group.exercise ? [group.exercise] : [];
         }
@@ -180,9 +180,9 @@ export function getCompletedSets(week, day) {
 /**
  * Get the chosen exercise from a choose_one group.
  */
-export function getChosenExercise(group) {
+export function getChosenExercise(group, week) {
     const choiceKey = group.choiceKey;
-    const chosenId = Storage.getChoice(choiceKey);
+    const chosenId = Storage.getChoice(choiceKey, week);
     const options = group.options || [];
     if (chosenId) {
         const found = options.find(ex => ex.id === chosenId);

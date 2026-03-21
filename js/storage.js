@@ -724,12 +724,19 @@ export const Storage = {
     },
 
     // Exercise choices (for choose_one groups)
-    getChoice(groupKey) {
-        return this._load().exerciseChoices[groupKey] || null;
+    // week param makes choices per-week; falls back to global (legacy) choice
+    getChoice(groupKey, week) {
+        var choices = this._load().exerciseChoices;
+        if (week != null) {
+            var perWeek = choices[week + ':' + groupKey];
+            if (perWeek) return perWeek;
+        }
+        return choices[groupKey] || null;
     },
 
-    saveChoice(groupKey, exerciseId) {
-        this._load().exerciseChoices[groupKey] = exerciseId;
+    saveChoice(groupKey, exerciseId, week) {
+        var key = week != null ? (week + ':' + groupKey) : groupKey;
+        this._load().exerciseChoices[key] = exerciseId;
         this._save();
     },
 

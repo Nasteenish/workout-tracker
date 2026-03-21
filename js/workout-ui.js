@@ -160,7 +160,7 @@ export const WorkoutUI = {
         // Choose one: tap exercise name to open selector
         {const el = target.closest('.exercise-name-chooser');
         if (el) {
-            UI.showChoiceModal(read(el, WORKOUT.CHOICE_KEY));
+            UI.showChoiceModal(read(el, WORKOUT.CHOICE_KEY), week);
             return true;
         }}
 
@@ -376,7 +376,7 @@ export const WorkoutUI = {
         if (opt) {
             const choiceKey = read(opt, WORKOUT.CHOICE_KEY);
             const exerciseId = read(opt, WORKOUT.EXERCISE_ID);
-            Storage.saveChoice(choiceKey, exerciseId);
+            Storage.saveChoice(choiceKey, exerciseId, week);
             UI.hideChoiceModal();
             if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week + '/day/' + day);
             UI.renderDay(week, day);

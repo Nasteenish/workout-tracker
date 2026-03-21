@@ -86,7 +86,7 @@ export const Celebration = {
                             buildExDetail(item.exercise || item);
                         });
                     } else if (g.type === 'choose_one' && g.exercises) {
-                        var chosen = typeof getChosenExercise === 'function' ? getChosenExercise(g) : g.exercises[0];
+                        var chosen = typeof getChosenExercise === 'function' ? getChosenExercise(g, weekNum) : g.exercises[0];
                         if (chosen) buildExDetail(chosen);
                     }
                 });

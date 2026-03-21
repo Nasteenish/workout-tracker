@@ -1016,7 +1016,7 @@ export const UI = {
     // Data preparation for choose-one group — resolve chosen exercise
     _buildChooseOneVM(group, weekNum, dayNum) {
         const choiceKey = group.choiceKey;
-        const chosenId = Storage.getChoice(choiceKey);
+        const chosenId = Storage.getChoice(choiceKey, weekNum);
         const options = group.options || [];
         const chosen = chosenId
             ? options.find(ex => ex.id === chosenId)
@@ -1497,7 +1497,7 @@ export const UI = {
     },
 
     // ===== CHOICE MODAL (choose one exercise) =====
-    showChoiceModal(choiceKey) {
+    showChoiceModal(choiceKey, week) {
         // Find the group across all day templates
         var _p3 = Storage.getProgram();
         let group = null;
@@ -1519,7 +1519,7 @@ export const UI = {
         if (!group) return;
 
         const options = group.options || [];
-        const chosenId = Storage.getChoice(choiceKey);
+        const chosenId = Storage.getChoice(choiceKey, week);
 
         let optionsHtml = '';
         for (const ex of options) {
