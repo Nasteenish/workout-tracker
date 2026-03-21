@@ -115,6 +115,7 @@ input, button, select {
 
 .slide-container {
     position: relative;
+    overflow: hidden;
     animation: none;
 }
 
