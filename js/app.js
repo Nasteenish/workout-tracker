@@ -951,14 +951,21 @@ export const App = {
             this._currentWeek = parseInt(weekMatch[1]);
             AppState.currentWeek = this._currentWeek;
             this._swipeDir = null;
-            UI.renderWeek(this._currentWeek);
-            // Scroll to the day card we just returned from, or restore saved position
-            if (this._returnFromDay) {
-                var dayCard = document.querySelector('a.day-card[href*="day/' + this._returnFromDay + '"]');
-                if (dayCard) dayCard.scrollIntoView({ block: 'center', behavior: 'instant' });
+            // When returning from day view, restore cached HTML + scroll in one frame to avoid flash
+            if (this._returnFromDay && this._pageCache[hash]) {
+                document.getElementById('app').innerHTML = this._pageCache[hash];
+                window.scrollTo(0, this._scrollCache[hash] || 0);
+                UI._initSlotDragDrop(this._currentWeek);
                 this._returnFromDay = null;
             } else {
-                this._restoreScroll();
+                UI.renderWeek(this._currentWeek);
+                if (this._returnFromDay) {
+                    var dayCard = document.querySelector('a.day-card[href*="day/' + this._returnFromDay + '"]');
+                    if (dayCard) dayCard.scrollIntoView({ block: 'center', behavior: 'instant' });
+                    this._returnFromDay = null;
+                } else {
+                    this._restoreScroll();
+                }
             }
             this._showNotificationPrompt();
             return;
