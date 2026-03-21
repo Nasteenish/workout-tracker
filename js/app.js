@@ -135,11 +135,15 @@ export const App = {
                 // Unlock scroll BEFORE route() so scrollTo() works inside _restoreScroll()
                 document.documentElement.style.overflow = '';
                 document.body.style.overflow = '';
-                this.route(true);
+                // Reset app position/transform, but keep hidden via opacity
+                var appEl = document.getElementById('app');
+                appEl.style.opacity = '0';
                 if (this._pendingSwipeCleanup) {
                     this._pendingSwipeCleanup();
                     this._pendingSwipeCleanup = null;
                 }
+                this.route(true);
+                appEl.style.opacity = '';
                 return;
             }
             this.route();
