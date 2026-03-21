@@ -9,7 +9,6 @@ import { Celebration } from './celebration.js';
 import { WORKOUT, EQ, read, readInt } from './data-attrs.js';
 import { findExerciseInProgram, parseWeight, parseReps, formatDateISO, esc, markCachedThumbs } from './utils.js';
 import { getCompletedSets, exName } from './program-utils.js';
-import { DayEditor } from './day-editor.js';
 
 export const WorkoutUI = {
     // Callbacks — wired in App.init()
@@ -516,110 +515,6 @@ export const WorkoutUI = {
             return true;
         }
 
-        // ===== Inline Day Editor handlers =====
-
-        // Gear button — toggle tech panel
-        if (target.closest('.exercise-gear-btn')) {
-            const btn = target.closest('.exercise-gear-btn');
-            const gIdx = readInt(btn, WORKOUT.GROUP_IDX);
-            const sIdx = readInt(btn, WORKOUT.SUB_EX);
-            const card = btn.closest('.exercise-card');
-            if (card) {
-                const panel = card.querySelector('.day-tech-panel');
-                if (panel) {
-                    const isHidden = panel.style.display === 'none';
-                    panel.style.display = isHidden ? '' : 'none';
-                    // Ensure DayEditor has editing state loaded
-                    if (isHidden) DayEditor.startEditing(day);
-                }
-            }
-            return true;
-        }
-
-        // Tech button — cycle technique (DROP/R-P/MP)
-        if (target.matches('.day-tech-btn')) {
-            const gIdx = readInt(target, WORKOUT.GROUP_IDX);
-            const sIdx = readInt(target, WORKOUT.SUB_EX);
-            const setIdx = readInt(target, WORKOUT.SET);
-            const tech = read(target, WORKOUT.TECH);
-            DayEditor.startEditing(day);
-            const next = DayEditor.cycleTechnique(gIdx, sIdx, setIdx, tech);
-            if (next != null) {
-                const techLabels = { DROP: 'DROP', REST_PAUSE: 'R-P', MP: 'MP' };
-                target.textContent = techLabels[tech] + (next > 1 ? ' \u00D7' + next : '');
-                target.classList.toggle('active', next > 0);
-                DayEditor._saveSilent();
-            }
-            return true;
-        }
-
-        // Type button — set type (S/SH/H)
-        if (target.matches('.day-type-btn')) {
-            const gIdx = readInt(target, WORKOUT.GROUP_IDX);
-            const sIdx = readInt(target, WORKOUT.SUB_EX);
-            const setIdx = readInt(target, WORKOUT.SET);
-            const typeName = read(target, WORKOUT.TYPE_BTN);
-            DayEditor.startEditing(day);
-            DayEditor.cycleType(gIdx, sIdx, setIdx, typeName);
-            const row = target.closest('.day-tech-set-row');
-            if (row) row.querySelectorAll('.day-type-btn').forEach(b => b.classList.remove('active'));
-            target.classList.add('active');
-            DayEditor._saveSilent();
-            return true;
-        }
-
-        // Delete exercise
-        {const btn = target.closest('.day-action-delete');
-        if (btn) {
-            const gIdx = readInt(btn, WORKOUT.GROUP_IDX);
-            if (confirm('Удалить упражнение?')) {
-                DayEditor.startEditing(day);
-                DayEditor.deleteExercise(gIdx, week, day);
-            }
-            return true;
-        }}
-
-        // Split superset
-        {const btn = target.closest('.day-action-split-superset');
-        if (btn) {
-            const gIdx = readInt(btn, WORKOUT.GROUP_IDX);
-            DayEditor.startEditing(day);
-            DayEditor.splitSuperset(gIdx, week, day);
-            return true;
-        }}
-
-        // Remove alternative from choose_one
-        {const btn = target.closest('.day-action-remove-alt');
-        if (btn) {
-            const gIdx = readInt(btn, WORKOUT.GROUP_IDX);
-            const sIdx = readInt(btn, WORKOUT.SUB_EX);
-            DayEditor.startEditing(day);
-            DayEditor.removeAlternative(gIdx, sIdx, week, day);
-            return true;
-        }}
-
-        // Remove from superset (individual exercise)
-        // Note: split-superset splits the whole group; this would remove one exercise from it.
-        // Currently the UI uses split-superset for the whole group.
-
-        // Move exercise up
-        {const btn = target.closest('.day-action-move-up');
-        if (btn) {
-            const gIdx = readInt(btn, WORKOUT.GROUP_IDX);
-            DayEditor.startEditing(day);
-            DayEditor.moveExercise(gIdx, -1, week, day);
-            return true;
-        }}
-
-        // Move exercise down
-        {const btn = target.closest('.day-action-move-down');
-        if (btn) {
-            const gIdx = readInt(btn, WORKOUT.GROUP_IDX);
-            DayEditor.startEditing(day);
-            DayEditor.moveExercise(gIdx, 1, week, day);
-            return true;
-        }}
-
         return false;
     },
 
@@ -670,17 +565,6 @@ export const WorkoutUI = {
         if (target.id === 'gym-search-input') {
             var query = target.value.trim().toLowerCase();
             EquipmentManager.renderSharedGyms(query);
-            return true;
-        }
-
-        // Day editor — RPE input
-        if (target.matches('.day-rpe-input')) {
-            const gIdx = readInt(target, WORKOUT.GROUP_IDX);
-            const sIdx = readInt(target, WORKOUT.SUB_EX);
-            const setIdx = readInt(target, WORKOUT.SET);
-            DayEditor.startEditing(day);
-            DayEditor.setRPE(gIdx, sIdx, setIdx, target.value);
-            DayEditor._saveSilent();
             return true;
         }
 

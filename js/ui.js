@@ -16,7 +16,6 @@ import { WORKOUT, EQ, SETTINGS, attr } from './data-attrs.js';
 export const UI = {
     _onClick: null,
     _onInput: null,
-    _isDayEditorPremium: null,  // wired in App.init()
 
     // ===== LOGIN SCREEN =====
     renderLogin() {
@@ -594,8 +593,7 @@ export const UI = {
         let html = '';
         let currentSection = '';
 
-        for (let gi = 0; gi < workout.exerciseGroups.length; gi++) {
-            const group = workout.exerciseGroups[gi];
+        for (const group of workout.exerciseGroups) {
             const sectionTitle = group.sectionTitleRu || group.sectionTitle || '';
             if (sectionTitle && sectionTitle !== currentSection) {
                 currentSection = sectionTitle;
@@ -613,18 +611,15 @@ export const UI = {
                     `;
                 }
             } else if (group.type === 'superset') {
-                html += this._renderSuperset(group, weekNum, dayNum, gi);
+                html += this._renderSuperset(group, weekNum, dayNum);
             } else if (group.type === 'choose_one') {
-                html += this._renderChooseOne(group, weekNum, dayNum, gi);
+                html += this._renderChooseOne(group, weekNum, dayNum);
             } else if (group.type === 'single') {
                 if (group.exercise) {
-                    html += this._renderExercise(group.exercise, weekNum, dayNum, undefined, gi, -1, 'single');
+                    html += this._renderExercise(group.exercise, weekNum, dayNum);
                 }
             }
         }
-
-        // Add exercise button at the bottom of exercises list
-        html += '<button class="btn-primary day-add-exercise-btn" id="day-add-exercise"><span style="font-size:20px;margin-right:6px">+</span> ДОБАВИТЬ УПРАЖНЕНИЕ</button>';
 
         const editBtn = '<button class="edit-mode-btn" id="btn-edit-day"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
 
@@ -781,7 +776,7 @@ export const UI = {
     },
 
     // Pure HTML rendering from exercise view-model
-    _renderExercise(exVMorEx, weekNumOrUndef, dayNumOrUndef, choiceKeyOrUndef, groupIdx, subIdx, groupType) {
+    _renderExercise(exVMorEx, weekNumOrUndef, dayNumOrUndef, choiceKeyOrUndef) {
         // Accept either a pre-built VM or raw (ex, weekNum, dayNum, choiceKey) args
         const vm = exVMorEx.setVMs
             ? exVMorEx
@@ -812,27 +807,18 @@ export const UI = {
             <button class="set-ctrl-btn add-set-btn" ${attr(WORKOUT.EXERCISE, ex.id)}>+ подход</button>
         </div>`;
 
-        // Inline tech panel (gear button + collapsible panel)
-        const gIdx = groupIdx != null ? groupIdx : -1;
-        const sIdx = subIdx != null ? subIdx : -1;
-        const gearBtn = gIdx >= 0 ? `<button class="exercise-gear-btn" ${attr(WORKOUT.GROUP_IDX, gIdx)} ${attr(WORKOUT.SUB_EX, sIdx)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>` : '';
-
-        const techPanelHtml = gIdx >= 0 ? this._buildDayTechPanel(ex, gIdx, sIdx, groupType) : '';
-
         return `
-            <div class="exercise-card ${choiceKey ? 'is-chooser' : ''}" ${gIdx >= 0 ? attr(WORKOUT.GROUP_IDX, gIdx) : ''} ${sIdx >= 0 ? attr(WORKOUT.SUB_EX, sIdx) : ''}>
+            <div class="exercise-card ${choiceKey ? 'is-chooser' : ''}">
                 <div class="exercise-header">
                     <div class="exercise-name-row">
                         ${exThumbHtml(ex.name, ex.nameRu)}
                         <div class="${nameClass}" ${nameAttrs}>${nameContent}</div>
-                        ${gearBtn}
                     </div>
                     <div class="exercise-meta">
                         <span>${ex.reps} reps</span>
                         ${restText ? `<span>${restText}</span>` : ''}
                     </div>
                 </div>
-                ${techPanelHtml}
                 ${eqHtml}
                 ${setsHtml}
                 ${setControls}
@@ -841,80 +827,6 @@ export const UI = {
                 </button>
             </div>
         `;
-    },
-
-    /** Build inline tech panel HTML for day view */
-    _buildDayTechPanel(ex, groupIdx, subIdx, groupType) {
-        const setsArr = ex.sets || [];
-        if (setsArr.length === 0) return '';
-
-        const isPremium = this._isDayEditorPremium ? this._isDayEditorPremium() : false;
-        let html = '<div class="day-tech-panel" style="display:none" ' + attr(WORKOUT.GROUP_IDX, groupIdx) + ' ' + attr(WORKOUT.SUB_EX, subIdx) + '>';
-
-        // Technique buttons per set: DROP, R-P, MP
-        html += '<div class="day-tech-section-label">ТЕХНИКА</div>';
-        for (let s = 0; s < setsArr.length; s++) {
-            const techs = setsArr[s].techniques || [];
-            html += '<div class="day-tech-set-row"><span class="day-tech-set-label">П.' + (s + 1) + '</span>';
-            const tt = [['DROP', 'DROP'], ['REST_PAUSE', 'R-P'], ['MP', 'MP']];
-            for (let t = 0; t < tt.length; t++) {
-                const count = techs.filter(function(x) { return x === tt[t][0]; }).length;
-                const ac = count > 0 ? ' active' : '';
-                const label = tt[t][1] + (count > 1 ? ' \u00D7' + count : '');
-                html += '<button class="day-tech-btn' + ac + '" '
-                    + attr(WORKOUT.GROUP_IDX, groupIdx) + ' '
-                    + attr(WORKOUT.SUB_EX, subIdx) + ' '
-                    + attr(WORKOUT.SET, s) + ' '
-                    + attr(WORKOUT.TECH, tt[t][0]) + '>' + label + '</button>';
-            }
-            html += '</div>';
-        }
-
-        // Premium: type and RPE per set
-        if (isPremium) {
-            html += '<div class="day-tech-section-label">ТИП И RPE</div>';
-            for (let s = 0; s < setsArr.length; s++) {
-                const st = setsArr[s];
-                html += '<div class="day-tech-set-row"><span class="day-tech-set-label">П.' + (s + 1) + '</span>';
-                const types = ['S', 'SH', 'H'];
-                for (let ti = 0; ti < types.length; ti++) {
-                    const ac = st.type === types[ti] ? ' active' : '';
-                    html += '<button class="day-type-btn' + ac + '" '
-                        + attr(WORKOUT.GROUP_IDX, groupIdx) + ' '
-                        + attr(WORKOUT.SUB_EX, subIdx) + ' '
-                        + attr(WORKOUT.SET, s) + ' '
-                        + attr(WORKOUT.TYPE_BTN, types[ti]) + '>' + types[ti] + '</button>';
-                }
-                html += '<input class="day-rpe-input" type="text" inputmode="decimal" placeholder="RPE" value="' + (st.rpe || '') + '" '
-                    + attr(WORKOUT.GROUP_IDX, groupIdx) + ' '
-                    + attr(WORKOUT.SUB_EX, subIdx) + ' '
-                    + attr(WORKOUT.SET, s) + '>';
-                html += '</div>';
-            }
-        }
-
-        // Action buttons (contextual based on group type)
-        const ga = attr(WORKOUT.GROUP_IDX, groupIdx) + ' ' + attr(WORKOUT.SUB_EX, subIdx);
-        html += '<div class="day-tech-actions">';
-        if (groupType !== 'superset') {
-            html += '<button class="day-tech-action-btn day-action-superset" ' + ga + '>Добавить в суперсет</button>';
-        }
-        if (groupType === 'superset') {
-            html += '<button class="day-tech-action-btn day-action-split-superset" ' + ga + '>Убрать из суперсета</button>';
-        }
-        if (groupType !== 'choose_one') {
-            html += '<button class="day-tech-action-btn day-action-alternative" ' + ga + '>Добавить альтернативное упражнение</button>';
-        }
-        if (groupType === 'choose_one') {
-            html += '<button class="day-tech-action-btn day-action-remove-alt" ' + ga + '>Убрать альтернативное упражнение</button>';
-        }
-        html += '<button class="day-tech-action-btn day-action-move-up" ' + ga + '>\u2191</button>';
-        html += '<button class="day-tech-action-btn day-action-move-down" ' + ga + '>\u2193</button>';
-        html += '<button class="day-tech-action-btn day-action-delete danger" ' + ga + '>Удалить упражнение</button>';
-        html += '</div>';
-
-        html += '</div>';
-        return html;
     },
 
     // Data preparation for set row — all Storage reads and computations
@@ -1065,15 +977,16 @@ export const UI = {
         `;
     },
 
-    _renderSuperset(group, weekNum, dayNum, groupIdx) {
+    _renderSuperset(group, weekNum, dayNum) {
         const items = group.exercises || [];
         let exercisesHtml = '';
         for (let i = 0; i < items.length; i++) {
             const item = items[i];
             if (item._chooseOne) {
-                exercisesHtml += this._renderChooseOne(item, weekNum, dayNum, groupIdx);
+                // Render inline choose_one within superset
+                exercisesHtml += this._renderChooseOne(item, weekNum, dayNum);
             } else {
-                exercisesHtml += this._renderExercise(item, weekNum, dayNum, undefined, groupIdx, i, 'superset');
+                exercisesHtml += this._renderExercise(item, weekNum, dayNum);
             }
             if (i < items.length - 1) {
                 exercisesHtml += '<div class="superset-arrow">&#8595; без отдыха &#8595;</div>';
@@ -1081,7 +994,7 @@ export const UI = {
         }
 
         return `
-            <div class="superset-group" ${groupIdx != null ? attr(WORKOUT.GROUP_IDX, groupIdx) : ''}>
+            <div class="superset-group">
                 <div class="superset-label">
                     <svg width="18" height="12" viewBox="0 0 18 12" fill="none"><circle cx="5.5" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/><circle cx="12.5" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/></svg>
                     Суперсет
@@ -1116,7 +1029,7 @@ export const UI = {
     },
 
     // Pure HTML rendering from choose-one view-model
-    _renderChooseOne(groupOrVM, weekNum, dayNum, groupIdx) {
+    _renderChooseOne(groupOrVM, weekNum, dayNum) {
         // Accept either a pre-built VM or raw group
         const vm = groupOrVM.exerciseVM !== undefined
             ? groupOrVM
@@ -1124,10 +1037,10 @@ export const UI = {
 
         let exerciseHtml = '';
         if (vm.exerciseVM) {
-            exerciseHtml = this._renderExercise(vm.exerciseVM, undefined, undefined, undefined, groupIdx, 0, 'choose_one');
+            exerciseHtml = this._renderExercise(vm.exerciseVM);
         }
 
-        return `<div class="choose-one-group" ${groupIdx != null ? attr(WORKOUT.GROUP_IDX, groupIdx) : ''}>${exerciseHtml}</div>`;
+        return `<div class="choose-one-group">${exerciseHtml}</div>`;
     },
 
     // ===== HISTORY VIEW =====
