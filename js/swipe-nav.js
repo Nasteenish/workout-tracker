@@ -109,6 +109,15 @@ export const SwipeNav = {
             else if (type === 'week') c.innerHTML = UI._weekViewHTML(app._currentWeek);
             else if (type === 'menu') c.innerHTML = UI._menuHTML();
             else if (type === 'day') c.innerHTML = UI._dayViewHTML(app._currentWeek, dayNum || app._currentDay);
+            // Offset companion content to match saved scroll position
+            var savedScroll = targetHash && app._scrollCache[targetHash];
+            if (savedScroll) {
+                // Wrap content in a container shifted up by the scroll offset
+                var inner = document.createElement('div');
+                inner.style.transform = 'translateY(-' + savedScroll + 'px)';
+                while (c.firstChild) inner.appendChild(c.firstChild);
+                c.appendChild(inner);
+            }
             document.body.appendChild(c);
             return c;
         };
