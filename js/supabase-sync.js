@@ -171,23 +171,45 @@ export const SupaSync = {
                         }
                     }
                 }
-                // Merge exerciseEquipment — keep from 'other' for exercises where 'base'
-                // has no value. This prevents equipment loss when remote wins due to clock
-                // drift while still respecting explicit deletions made on the base side.
-                if (other.exerciseEquipment) {
+                // Merge exerciseEquipment — union merge, always prefer non-null values.
+                // Equipment assignment is always intentional, so we never want to lose a
+                // binding just because the other side has an older or null value.
+                if (other.exerciseEquipment || base.exerciseEquipment) {
                     if (!base.exerciseEquipment) base.exerciseEquipment = {};
-                    for (var ek in other.exerciseEquipment) {
-                        // Prefer non-null: if base has tombstone but other has real value, take the real value
-                        if (other.exerciseEquipment[ek] && !base.exerciseEquipment[ek]) {
-                            base.exerciseEquipment[ek] = other.exerciseEquipment[ek];
+                    if (other.exerciseEquipment) {
+                        for (var ek in other.exerciseEquipment) {
+                            // If other has a real value and base doesn't — take other's
+                            if (other.exerciseEquipment[ek] && !base.exerciseEquipment[ek]) {
+                                base.exerciseEquipment[ek] = other.exerciseEquipment[ek];
+                            }
+                        }
+                    }
+                    // Also check base keys: if base has null but other has a value — take other's
+                    if (other.exerciseEquipment) {
+                        for (var ek1 in base.exerciseEquipment) {
+                            if (!base.exerciseEquipment[ek1] && other.exerciseEquipment[ek1]) {
+                                base.exerciseEquipment[ek1] = other.exerciseEquipment[ek1];
+                            }
                         }
                     }
                 }
-                if (other.exerciseEquipmentOptions) {
+                // Merge exerciseEquipmentOptions — union merge, keep all options from both sides
+                if (other.exerciseEquipmentOptions || base.exerciseEquipmentOptions) {
                     if (!base.exerciseEquipmentOptions) base.exerciseEquipmentOptions = {};
-                    for (var ek2 in other.exerciseEquipmentOptions) {
-                        if (!(ek2 in base.exerciseEquipmentOptions)) {
-                            base.exerciseEquipmentOptions[ek2] = other.exerciseEquipmentOptions[ek2];
+                    if (other.exerciseEquipmentOptions) {
+                        for (var ek2 in other.exerciseEquipmentOptions) {
+                            if (!base.exerciseEquipmentOptions[ek2]) {
+                                base.exerciseEquipmentOptions[ek2] = other.exerciseEquipmentOptions[ek2];
+                            } else {
+                                // Merge option arrays — add any from other that base doesn't have
+                                var baseOpts = base.exerciseEquipmentOptions[ek2];
+                                var otherOpts = other.exerciseEquipmentOptions[ek2];
+                                var seen = {};
+                                for (var oi = 0; oi < baseOpts.length; oi++) seen[baseOpts[oi]] = true;
+                                for (var oi2 = 0; oi2 < otherOpts.length; oi2++) {
+                                    if (!seen[otherOpts[oi2]]) baseOpts.push(otherOpts[oi2]);
+                                }
+                            }
                         }
                     }
                 }
