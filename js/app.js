@@ -1216,11 +1216,17 @@ export const App = {
         setTimeout(() => {
             app.style.transition = 'none';
             app.style.transform = '';
-            // Keep opacity=0 — route() will restore it via _pendingFadeIn after DOM + scroll are ready
-            this._pendingFadeIn = true;
+            // Keep opacity=0 — restore only after DOM + scroll are ready
             if (beforeNav) beforeNav();
-            if (hash === null) history.back();
-            else location.hash = hash;
+            if (hash === null) {
+                this._pendingFadeIn = true;
+                history.back();
+            } else {
+                // pushState doesn't fire hashchange — lets us run route() synchronously
+                history.pushState(null, '', hash);
+                this.route();
+                app.style.opacity = '';
+            }
         }, 190);
     },
 
