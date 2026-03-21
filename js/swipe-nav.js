@@ -241,24 +241,27 @@ export const SwipeNav = {
                     if (location.hash !== originalHash) {
                         // iOS native back already navigated
                         if (cfg.useReplace) {
-                            // Editor: also clean forward history by replacing current entry
                             history.replaceState(null, '', target);
                         }
+                        appEl.style.opacity = '0';
                         unlockScroll();
-                        app.route(true);
-                        app._isBackSwipe = false;
-                        app._swipeLock = false;
                         resetApp(appEl);
                         removeCompanion();
+                        app.route(true);
+                        appEl.style.opacity = '';
+                        app._isBackSwipe = false;
+                        app._swipeLock = false;
                     } else if (cfg.useReplace) {
                         // Editor: replace entry instead of history.back to avoid forward-history loop
                         history.replaceState(null, '', target);
+                        appEl.style.opacity = '0';
                         app._isBackSwipe = false;
                         app._swipeLock = false;
                         unlockScroll();
-                        app.route(true);
                         resetApp(appEl);
                         removeCompanion();
+                        app.route(true);
+                        appEl.style.opacity = '';
                     } else {
                         // Pop history entry properly with history.back()
                         app._pendingSwipeCleanup = () => {
@@ -270,12 +273,14 @@ export const SwipeNav = {
                             if (app._isBackSwipe) {
                                 history.replaceState(null, '', target);
                                 app._isBackSwipe = false;
+                                appEl.style.opacity = '0';
                                 unlockScroll();
-                                app.route(true);
                                 if (app._pendingSwipeCleanup) {
                                     app._pendingSwipeCleanup();
                                     app._pendingSwipeCleanup = null;
                                 }
+                                app.route(true);
+                                appEl.style.opacity = '';
                             }
                         }, 100);
                         history.back();
