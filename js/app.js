@@ -51,6 +51,13 @@ export const App = {
         // Disable browser's auto scroll restoration — we manage it ourselves
         if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
+        // Continuously track scroll position for current page
+        var self = this;
+        window.addEventListener('scroll', function() {
+            var h = self._lastRouteHash;
+            if (h) self._scrollCache[h] = window.scrollY;
+        }, { passive: true });
+
         // Wire storage callbacks before any data loading
         Storage._migrateFn = (data) => Migrations.migrateExerciseNames(data);
 
@@ -713,9 +720,9 @@ export const App = {
         routeAppEl.classList.remove('swiping-back');
         if (!skipAnimation) routeAppEl.classList.remove('no-animate');
         const hash = location.hash || '';
-        this._lastRouteHash = hash;
         this._pendingScroll = this._scrollCache[hash] || 0;
         window.scrollTo(0, 0);
+        this._lastRouteHash = hash;
         // Clear checkin workout data when leaving checkin page
         if (hash !== '#/checkin') this._activeCheckinWorkout = null;
 
