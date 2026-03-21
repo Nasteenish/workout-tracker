@@ -359,7 +359,7 @@ export const Migrations = {
                     if (changed) localStorage.setItem(key, JSON.stringify(d));
                 }
             }
-        }
+        },
         // v6: Restore exerciseEquipment from exerciseEquipmentOptions after rollback bug
         // The rollback mechanism could clear exerciseEquipment (defaults) while leaving
         // exerciseEquipmentOptions (history) intact. Restore defaults from options.
