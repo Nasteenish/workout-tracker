@@ -466,6 +466,11 @@ export const InlineEditor = {
                 this._confirmDelete(groupIdx, null, null);
                 break;
         }
+
+        // Scroll sub-panel into view
+        if (panel.innerHTML) {
+            setTimeout(function() { panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 50);
+        }
     },
 
     // --- Technique panel ---
