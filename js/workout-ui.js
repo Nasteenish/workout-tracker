@@ -186,7 +186,7 @@ export const WorkoutUI = {
             const exId = read(btn, INLINE.EX_ID);
             const groupIdx = readInt(btn, INLINE.GROUP_IDX);
             const displayName = btn.getAttribute('data-ex-display') || '';
-            this._onInlineMenu(exId, groupIdx, week, day, displayName);
+            this._onInlineMenu(exId, groupIdx, day, week, displayName);
             return true;
         }}
 
