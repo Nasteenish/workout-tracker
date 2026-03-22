@@ -58,6 +58,7 @@ workout-tracker/
 │   ├── supabase-sync.js    # Auth + cloud sync (push/pull/merge)
 │   ├── data-attrs.js       # Реестр data-атрибутов (WORKOUT, BUILDER, EQ, SOCIAL, SETTINGS, ONBOARDING)
 │   ├── workout-ui.js       # Workout + modal click/input/focus handlers
+│   ├── inline-editor.js    # Day view: swipe-delete, reorder mode (long-press→drag), exercise menu (три точки)
 │   ├── equipment-manager.js# Привязка оборудования, залы, каталог
 │   ├── swipe-nav.js        # Свайп-навигация (carousel, back-swipe, tabs)
 │   ├── migrations.js       # Одноразовые data-fix миграции
@@ -92,6 +93,7 @@ main.js
      ├→ swipe-nav.js → program-utils.js, builder.js, ui.js
      ├→ equipment-manager.js → app-state.js, social.js, storage.js, workout-timer.js, utils.js, data-attrs.js
      ├→ workout-ui.js → storage.js, ui.js, social.js, timer.js, workout-timer.js, equipment-manager.js, celebration.js, data-attrs.js, utils.js, program-utils.js
+     ├→ inline-editor.js → scroll-lock.js, storage.js, app-state.js, data-attrs.js, utils.js, program-utils.js
      ├→ pull-refresh.js (callback injection, no imports)
      ├→ message-notifications.js → social.js, social-ui.js, utils.js
      ├→ profile-manager.js → social.js, utils.js
@@ -153,6 +155,10 @@ App.init() → App.route()
  ├── SocialUI.renderConversation()
  └── SocialUI.renderFollowList()
 
+Inline-editor (день — touch-обработчики):
+  InlineEditor.attachHandlers()  — swipe-delete + reorder mode
+  InlineEditor.showExerciseMenu() — модалка три точки (техники, повторения, замена, удаление)
+
 Модалки (поверх текущего экрана):
   UI.showEquipmentModal()    — EquipmentManager обрабатывает клики
   UI.showGymModal()
@@ -176,6 +182,7 @@ App.init() → App.route()
 | `SupaSync` | supabase-sync.js | Auth + data sync (push/pull/merge) |
 | `RestTimer` | timer.js | Таймер отдыха между подходами |
 | `WorkoutUI` | workout-ui.js | Workout + modal click/input/focus handlers (делегат из App.handleClick) |
+| `InlineEditor` | inline-editor.js | Swipe-delete, reorder mode (long-press→drag), exercise menu (три точки), повторения/техники |
 | `EquipmentManager` | equipment-manager.js | Привязка оборудования + залы |
 | `AvatarCropper` | cropper.js | Canvas-кроппер аватарок |
 | `ScrollLock` | scroll-lock.js | lockBodyScroll, unlockBodyScroll, blockOverlayScroll для модалок |
@@ -256,6 +263,18 @@ App.route() → UI.renderDay(3, 1)
   → UI._renderSetRow() → HTML с data-attrs из WORKOUT.*
   → innerHTML
 ```
+
+### Pull-to-Refresh рендер (async path)
+
+```
+PullRefresh → App.route(true)
+  → appEl.classList.add('no-animate')
+  → UI.renderDay() sees isPTR=true → offscreen div + img.decode() → swap()
+    → swap() moves DOM nodes → appEl.classList.remove('no-animate')
+    → UI._onPTRSwap() → InlineEditor.attachHandlers() [async, after swap]
+```
+
+**Важно:** `attachHandlers()` в `route()` (синхронный) находит СТАРЫЙ `.day-slide`. Реальное подключение — через `_onPTRSwap` callback ПОСЛЕ async swap.
 
 ### Cloud Sync
 

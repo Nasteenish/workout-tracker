@@ -52,6 +52,7 @@ js/program-utils.js     — (191) Storage-зависимые: resolveWorkout, ex
 js/utils.js             — (251) Чистые утилиты: esc(), даты, миниатюры, getGroupExercises
 js/data-attrs.js        — (121) Реестр data-атрибутов (WORKOUT, BUILDER, EQ, SOCIAL, SETTINGS, ONBOARDING)
 js/workout-ui.js        — (684) Workout + modal click/input/focus handlers (вынесено из app.js)
+js/inline-editor.js     — Day view: swipe-delete, reorder mode (long-press→drag), exercise menu (три точки)
 js/equipment-manager.js — (445) Оборудование + залы (вынесено из app.js)
 js/swipe-nav.js         — (310) Свайп-навигация (вынесено из app.js)
 js/migrations.js        — (300) One-time data fixes (вынесено из app.js init)
@@ -110,6 +111,9 @@ tools/                  — Утилиты разработки: SQL, скрип
 | `Builder._editingDay` | `Builder.renderDayEditor()`, `Builder._autoSave()` |
 | `Builder._snapshotIfChanged()` / `templateSnapshots` | `resolveWorkout()` (program-utils.js), `SupaSync.syncOnLogin()` (merge snapshots), `migrations.js` (_frozenGroups → snapshots) |
 | `EquipmentManager.*` | `UI.showEquipmentModal()`, `WorkoutUI.handleModalClick` (eq handlers) |
+| `UI.renderDay()` (PTR async path) | `UI._onPTRSwap` callback → `InlineEditor.attachHandlers()`. Без этого обработчики не подключатся после pull-to-refresh |
+| `InlineEditor.attachHandlers()` | Вызывается в `route()` (синхронно) + `UI._onPTRSwap` (после async swap). Обе точки нужны |
+| `InlineEditor._initDragReorder()` (reorder mode) | `SwipeNav` touchstart (блок `_reorderMode`), `PullRefresh` (блок `_slotDragging`), `App._handleNavigationClick` (#btn-back перехват) |
 
 ### 3. Где хранится стейт
 
@@ -266,3 +270,14 @@ Data: No storage changes
     - **Застрявшее состояние** — `route()` в app.js сбрасывает все body-стили и флаги при КАЖДОЙ навигации. Это safety net. Также `attachHandlers()` сбрасывает при перерендере дня
     - **history.pushState** для модальных режимов — кнопка "назад" должна закрывать режим, а не уходить на предыдущую страницу. Паттерн: `pushState` при входе, `popstate` listener при выходе
     - **`{ passive: true }` на touchstart** = нельзя `preventDefault`. Это ОК для начала жеста, но `touchmove` ОБЯЗАТЕЛЬНО `{ passive: false }` если нужен `preventDefault`
+
+11. **Pull-to-refresh ломает обработчики (attachHandlers не работает после PTR)**:
+    - `renderDay()` при PTR использует **async offscreen рендер** (проверяет класс `no-animate` на `#app`)
+    - `attachHandlers()` вызванный синхронно после `renderDay()` цепляется к СТАРОМУ `.day-slide` — бесполезно
+    - **Решение**: callback `UI._onPTRSwap` вызывается ПОСЛЕ `swap()` DOM-нодов и переподключает `attachHandlers`
+    - Класс `no-animate` нужно убирать внутри `swap()`, иначе ВСЕ последующие рендеры пойдут через async путь
+    - При выходе из модальных режимов (reorder) убирай `no-animate` ПЕРЕД `renderDay()` чтобы гарантировать синхронный рендер
+
+12. **`this` внутри `var swap = function() {}` в ui.js**: Это обычная функция, `this` НЕ указывает на `UI`. Используй `UI.method()` напрямую, не `this.method()`. Это касается всех callback-ов переданных в `Promise.then()` или `setTimeout()`
+
+13. **SwipeNav срабатывает в модальных режимах**: Добавляй `if (window._reorderMode) { cfg = null; return; }` в начале touchstart swipe-nav.js для блокировки свайп-навигации в модальных режимах
