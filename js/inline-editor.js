@@ -6,6 +6,11 @@ import { INLINE, attr, read, readInt, write } from './data-attrs.js';
 import { esc } from './utils.js';
 import { exName } from './program-utils.js';
 
+// Global reorder-mode touchmove blocker — capture phase, fires before pull-refresh
+document.addEventListener('touchmove', function(e) {
+    if (window._reorderMode) e.preventDefault();
+}, { passive: false, capture: true });
+
 export const InlineEditor = {
     // Callbacks wired in App.init()
     _onAutoSave: null,      // (editingDay) => void — delegates to Builder._autoSave
@@ -26,7 +31,8 @@ export const InlineEditor = {
         document.body.classList.remove('modal-open');
         document.body.style.top = '';
         window._slotDragging = false;
-        // Remove any leftover reorder-mode buttons and touchmove blockers
+        window._reorderMode = false;
+        // Remove any leftover reorder-mode buttons
         var staleBtn = document.querySelector('.reorder-done-btn');
         if (staleBtn) staleBtn.remove();
         this._initSwipeDelete(container);
@@ -209,16 +215,13 @@ export const InlineEditor = {
             }
         }
 
-        // Global touchmove blocker to prevent pull-to-refresh on iOS
-        function _blockTouchMove(e) { e.preventDefault(); }
-
         function enterReorderMode() {
             reorderMode = true;
             window._slotDragging = true;
+            window._reorderMode = true;
             document.body.style.overflow = 'hidden';
             document.body.style.userSelect = 'none';
             document.body.style.webkitUserSelect = 'none';
-            document.addEventListener('touchmove', _blockTouchMove, { passive: false });
             // Collapse all cards
             var allGroups = getGroupElements();
             for (var gi = 0; gi < allGroups.length; gi++) {
@@ -274,7 +277,7 @@ export const InlineEditor = {
             for (var i = 0; i < compacts.length; i++) compacts[i].classList.remove('drag-compact');
             if (doneBtn && doneBtn.parentNode) doneBtn.remove();
             doneBtn = null;
-            document.removeEventListener('touchmove', _blockTouchMove);
+            window._reorderMode = false;
             document.body.style.overflow = '';
             document.body.style.touchAction = '';
             document.body.style.userSelect = '';
