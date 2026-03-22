@@ -1291,8 +1291,8 @@ export const App = {
                 document.body.style.touchAction = '';
                 document.body.style.userSelect = '';
                 document.body.style.webkitUserSelect = '';
-                var staleBtn = document.querySelector('.reorder-done-btn');
-                if (staleBtn) staleBtn.remove();
+                // Force sync render path (no offscreen/async)
+                document.getElementById('app').classList.remove('no-animate');
                 UI.renderDay(this._currentWeek, this._currentDay);
                 var daySlide = document.querySelector('.day-slide');
                 if (daySlide) InlineEditor.attachHandlers(daySlide);
