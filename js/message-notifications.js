@@ -26,6 +26,7 @@ export const MessageNotifications = {
                 }
                 self._lastKnownCount = count;
                 SocialUI._tabBarMsgCount = count;
+                SocialUI._updateTabBadge();
                 if (count > 0) {
                     document.querySelectorAll('.msg-badge').forEach(function(el) { el.textContent = count; });
                     if (!document.querySelector('.msg-badge')) {
@@ -54,6 +55,7 @@ export const MessageNotifications = {
         SocialUI._tabBarMsgCount = (SocialUI._tabBarMsgCount || 0) + 1;
         var count = SocialUI._tabBarMsgCount;
         this._lastKnownCount = count;
+        SocialUI._updateTabBadge();
         document.querySelectorAll('.msg-badge').forEach(function(el) { el.textContent = count; });
         if (!document.querySelector('.msg-badge')) {
             document.querySelectorAll('#btn-messages').forEach(function(btn) {
