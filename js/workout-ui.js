@@ -666,6 +666,7 @@ export const WorkoutUI = {
         setTimeout(function() { btn.classList.add('visible'); }, 50);
         btn.addEventListener('click', function() {
             btn.remove();
+            Storage.setFinishedAt(week, day);
             var elapsed = WorkoutTimer.stop(week, day);
             Celebration.show(elapsed, week, day);
         });

@@ -973,6 +973,9 @@ export const Storage = {
         var data = this._load();
         var w = String(week), d = String(day);
         if (!data.log[w] || !data.log[w][d]) return null;
+        // Prefer explicit finish timestamp (set when "Завершить тренировку" is pressed)
+        if (data.log[w][d]._finishedAt) return data.log[w][d]._finishedAt;
+        // Fallback: max timestamp from completed sets
         var maxTs = 0;
         for (var exId of Object.keys(data.log[w][d])) {
             if (exId.charAt(0) === '_') continue; // skip metadata like _gym
@@ -983,6 +986,15 @@ export const Storage = {
             }
         }
         return maxTs > 0 ? maxTs : null;
+    },
+
+    setFinishedAt(week, day) {
+        var data = this._load();
+        var w = String(week), d = String(day);
+        if (!data.log[w]) data.log[w] = {};
+        if (!data.log[w][d]) data.log[w][d] = {};
+        data.log[w][d]._finishedAt = Date.now();
+        this._save();
     },
 
     exportData() {
