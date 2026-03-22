@@ -1268,19 +1268,37 @@ export const UI = {
         var exInfo;
         if (exEnName || exRuName) {
             // Resolve English name from EXERCISE_DB (custom programs may only have Russian names)
+            // First try exact full name match, then fallback to core name
             var cat = 'all';
             var resolvedEnName = exEnName || '';
+            var fullNameLower = (exEnName || '').toLowerCase();
+            var fullNameRuLower = (exRuName || '').toLowerCase();
             var coreName = (exEnName || '').replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
             var coreNameRu = (exRuName || exEnName || '').replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
+            var coreMatch = null;
             for (var i = 0; i < EXERCISE_DB.length; i++) {
-                var dbCore = (EXERCISE_DB[i].name || '').replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
-                var dbCoreRu = (EXERCISE_DB[i].nameRu || '').replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
-                if ((dbCore && dbCore === coreName) || (dbCoreRu && dbCoreRu === coreNameRu) ||
-                    (dbCore && dbCore === coreNameRu) || (dbCoreRu && dbCoreRu === coreName)) {
+                var dbFull = (EXERCISE_DB[i].name || '').toLowerCase();
+                var dbFullRu = (EXERCISE_DB[i].nameRu || '').toLowerCase();
+                // Exact full name match — best
+                if ((dbFull && dbFull === fullNameLower) || (dbFullRu && dbFullRu === fullNameRuLower)) {
                     cat = EXERCISE_DB[i].category;
                     resolvedEnName = EXERCISE_DB[i].name;
+                    coreMatch = null; // clear any core match
                     break;
                 }
+                // Core name match — fallback (keep first)
+                if (!coreMatch) {
+                    var dbCore = dbFull.replace(/\s*\(.*?\)\s*/g, '').trim();
+                    var dbCoreRu = dbFullRu.replace(/\s*\(.*?\)\s*/g, '').trim();
+                    if ((dbCore && dbCore === coreName) || (dbCoreRu && dbCoreRu === coreNameRu) ||
+                        (dbCore && dbCore === coreNameRu) || (dbCoreRu && dbCoreRu === coreName)) {
+                        coreMatch = EXERCISE_DB[i];
+                    }
+                }
+            }
+            if (coreMatch) {
+                cat = coreMatch.category;
+                resolvedEnName = coreMatch.name;
             }
             exInfo = { name: resolvedEnName, nameRu: exRuName || exEnName || '', category: cat };
         } else {
