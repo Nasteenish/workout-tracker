@@ -306,30 +306,37 @@
     text-align: center;
 }
 
-/* Input row (for reps) */
-.inline-input-row {
+/* Reps range inputs */
+.inline-reps-row {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: var(--spacing-sm);
     padding: var(--spacing-md) 0;
 }
 
-.inline-input-row input {
-    flex: 1;
+.inline-reps-row input {
+    width: 80px;
     height: var(--input-height);
     background: var(--bg-input);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-xl);
     padding: 0 var(--spacing-md);
     text-align: center;
-    font-weight: 600;
+    font-weight: 700;
 }
 
-.inline-input-row input:focus {
+.inline-reps-row input:focus {
     outline: 1px solid var(--accent-primary);
     border-color: var(--accent-primary);
+}
+
+.inline-reps-dash {
+    font-size: var(--font-size-xl);
+    color: var(--text-secondary);
+    font-weight: 600;
 }
 
 /* Rest time presets */

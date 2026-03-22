@@ -557,22 +557,37 @@ export const InlineEditor = {
 
     // --- Reps panel ---
     _buildRepsPanel(exercise) {
+        var reps = exercise.reps || '8-12';
+        var parts = reps.split('-');
+        var from = parts[0] || '';
+        var to = parts[1] || '';
         return '<div class="inline-sub-panel"><div class="inline-sub-title">Диапазон повторений</div>' +
-            '<div class="inline-input-row">' +
-            '<input type="text" id="inline-reps-input" value="' + esc(exercise.reps || '8-12') + '" inputmode="text" autocomplete="off">' +
+            '<div class="inline-reps-row">' +
+            '<input type="text" id="inline-reps-from" value="' + esc(from) + '" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="от">' +
+            '<span class="inline-reps-dash">—</span>' +
+            '<input type="text" id="inline-reps-to" value="' + esc(to) + '" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="до">' +
             '</div>' +
             '<button class="inline-apply-btn" data-apply="reps">Применить</button></div>';
     },
 
     _bindRepsPanel(panel, exercise, groupIdx, subIdx, dayNum, ed) {
         var self = this;
-        var input = panel.querySelector('#inline-reps-input');
-        if (input) {
-            setTimeout(function() { input.focus(); input.select(); }, 100);
+        var fromInput = panel.querySelector('#inline-reps-from');
+        var toInput = panel.querySelector('#inline-reps-to');
+        if (fromInput) {
+            setTimeout(function() { fromInput.focus(); fromInput.select(); }, 100);
         }
         panel.addEventListener('click', function(e) {
             if (e.target.closest('[data-apply="reps"]')) {
-                exercise.reps = input ? input.value.trim() || '8-12' : exercise.reps;
+                var from = fromInput ? fromInput.value.trim() : '';
+                var to = toInput ? toInput.value.trim() : '';
+                if (from && to) {
+                    exercise.reps = from + '-' + to;
+                } else if (from) {
+                    exercise.reps = from;
+                } else {
+                    exercise.reps = exercise.reps || '8-12';
+                }
                 self._saveAndClose(ed);
             }
         });
