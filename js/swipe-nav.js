@@ -217,6 +217,7 @@ export const SwipeNav = {
             if (isTabSwipe) {
                 unlockScroll();
                 if (!dragging || Math.abs(dx) < 60) return;
+                app._isBackSwipe = true;
                 location.hash = tabTarget;
                 return;
             }
