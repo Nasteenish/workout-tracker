@@ -195,14 +195,16 @@ export function getChosenExercise(group, week) {
  * Find the current progress position — first week/day that is not fully completed.
  */
 export function getProgressWeek() {
+    var lastActive = 1;
     for (var week = 1; week <= getTotalWeeks(); week++) {
         for (var day = 1; day <= getTotalDays(); day++) {
             var result = getCompletedSets(week, day);
             if (result.total > 0 && result.completed < result.total) {
                 return { week: week, day: day };
             }
+            if (result.completed > 0) lastActive = week;
         }
     }
-    // Everything done or nothing started
-    return { week: 1, day: 1 };
+    // Everything done — show last active week; nothing started — week 1
+    return { week: lastActive, day: 1 };
 }
