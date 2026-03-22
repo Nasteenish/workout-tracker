@@ -1279,7 +1279,6 @@ export const App = {
     // ===== Delegated navigation click handlers =====
     _handleNavigationClick(target) {
         if (target.closest('#btn-back')) {
-            console.log('[DEBUG] btn-back clicked, _reorderMode:', window._reorderMode);
             // If in reorder mode, exit to day view instead of week
             if (window._reorderMode) {
                 window._reorderMode = false;
