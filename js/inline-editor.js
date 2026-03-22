@@ -315,7 +315,6 @@ export const InlineEditor = {
                 // Already in reorder mode — start dragging this card
                 dragEl = card;
                 activeDrag = true;
-                dragStartY = e.touches[0].clientY;
                 if (dragEl) dragEl.classList.add('drag-active');
                 cacheRects();
             } else {
@@ -326,14 +325,11 @@ export const InlineEditor = {
                     // Also start dragging the pressed card
                     dragEl = card;
                     activeDrag = true;
-                    dragStartY = startY;
                     card.classList.add('drag-active');
                     cacheRects();
                 }, 400);
             }
         }, { passive: true });
-
-        var dragStartY = 0; // Y position when drag started (for translateY)
 
         container.addEventListener('touchmove', function(e) {
             if (!reorderMode && longPressTimer) {
@@ -350,15 +346,11 @@ export const InlineEditor = {
             if (!activeDrag) return;
             var touchY = e.touches[0].clientY;
 
-            // Visual feedback — move element with finger
-            dragEl.style.transform = 'translateY(' + (touchY - dragStartY) + 'px)';
-            dragEl.style.transition = 'none';
-
             if (swapCooldown) return;
             for (var i = 0; i < cachedRects.length; i++) {
                 var cr = cachedRects[i];
                 if (cr.el === dragEl) continue;
-                // Wider hit zone — just need to cross the midpoint
+                // Wide hit zone — just cross the midpoint
                 if (touchY > cr.top && touchY < cr.bottom) {
                     if (touchY < cr.midY) {
                         container.insertBefore(dragEl, cr.el);
@@ -369,9 +361,6 @@ export const InlineEditor = {
                     for (var j = 0; j < allEls.length; j++) write(allEls[j], INLINE.GROUP_IDX, j);
                     swapCooldown = true;
                     cacheRects();
-                    // Reset drag offset after swap
-                    dragStartY = touchY;
-                    dragEl.style.transform = '';
                     if (navigator.vibrate) navigator.vibrate(15);
                     setTimeout(function() { swapCooldown = false; }, 80);
                     break;
@@ -385,8 +374,6 @@ export const InlineEditor = {
             // Release current drag but stay in reorder mode
             if (dragEl) {
                 dragEl.classList.remove('drag-active');
-                dragEl.style.transform = '';
-                dragEl.style.transition = '';
             }
             activeDrag = false;
             dragEl = null;
