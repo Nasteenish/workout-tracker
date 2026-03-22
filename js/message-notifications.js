@@ -17,15 +17,28 @@ export const MessageNotifications = {
             if (SocialUI._chatConvId === msg.conversation_id) return;
             self._onNewMessage(msg.text);
         });
-        Social.getUnreadMessageCount().then(function(c) { self._lastKnownCount = c || 0; });
+        Promise.all([
+            Social.getUnreadMessageCount(),
+            Social.getUnreadNotificationCount()
+        ]).then(function(r) {
+            self._lastKnownCount = r[0] || 0;
+            SocialUI._tabBarMsgCount = r[0] || 0;
+            SocialUI._tabBarNotifCount = r[1] || 0;
+            SocialUI._updateTabBadge();
+        }).catch(function() {});
         this._pollTimer = setInterval(function() {
-            Social.getUnreadMessageCount().then(function(count) {
-                count = count || 0;
+            Promise.all([
+                Social.getUnreadMessageCount(),
+                Social.getUnreadNotificationCount()
+            ]).then(function(r) {
+                var count = r[0] || 0;
+                var notifCount = r[1] || 0;
                 if (count > self._lastKnownCount) {
                     self._onNewMessage(null);
                 }
                 self._lastKnownCount = count;
                 SocialUI._tabBarMsgCount = count;
+                SocialUI._tabBarNotifCount = notifCount;
                 SocialUI._updateTabBadge();
                 if (count > 0) {
                     document.querySelectorAll('.msg-badge').forEach(function(el) { el.textContent = count; });
