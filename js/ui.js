@@ -16,6 +16,7 @@ import { WORKOUT, EQ, SETTINGS, INLINE, attr } from './data-attrs.js';
 export const UI = {
     _onClick: null,
     _onInput: null,
+    _onPTRSwap: null,  // wired in App.init() — re-attach inline editor after PTR DOM swap
 
     // ===== LOGIN SCREEN =====
     renderLogin() {
@@ -721,6 +722,8 @@ export const UI = {
                 markCachedThumbs();
                 this._trimEqBadges();
                 _restoreFocus(focusInfo);
+                // Re-attach inline editor after async DOM swap (PTR path)
+                if (this._onPTRSwap) this._onPTRSwap();
             };
 
             if (decodePromises.length > 0) {

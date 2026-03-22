@@ -106,6 +106,10 @@ export const App = {
         // Wire callbacks for decoupled modules
         UI._onClick = (e) => this.handleClick(e);
         UI._onInput = (e) => this.handleInput(e);
+        UI._onPTRSwap = () => {
+            var daySlide = document.querySelector('.day-slide');
+            if (daySlide) InlineEditor.attachHandlers(daySlide);
+        };
         Celebration._onShareCheckin = (data) => { this._pendingCheckinWorkout = data; };
         SupaSync._onSyncWarning = (msg) => this._showSyncWarning(msg);
         Storage._onSave = () => SupaSync.onLocalSave();
