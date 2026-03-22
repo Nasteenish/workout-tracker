@@ -473,7 +473,7 @@ export const InlineEditor = {
             html += '<div class="tech-card-header"><span class="tech-card-badge ' + tech.cls + '">' + tech.label + '</span>';
             html += '<span class="tech-card-name">' + tech.name + '</span></div>';
             html += '<div class="tech-card-desc">' + tech.desc + '</div>';
-            html += '<div class="tech-card-sets">';
+            html += '<div class="tech-card-sets"><span class="tech-card-sets-label">Добавить в подход:</span>';
             for (var i = 0; i < sets.length; i++) {
                 var setTechs = sets[i].techniques || [];
                 var isActive = setTechs.indexOf(tech.key) >= 0;

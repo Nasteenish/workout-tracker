@@ -224,8 +224,15 @@
 
 .tech-card-sets {
     display: flex;
+    align-items: center;
     gap: var(--spacing-xs);
     flex-wrap: wrap;
+}
+
+.tech-card-sets-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    margin-right: 4px;
 }
 
 .tech-set-chip {
