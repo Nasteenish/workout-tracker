@@ -820,11 +820,10 @@ export const UI = {
         </div>`;
 
         const groupIdxAttr = groupIdx != null ? ` ${attr(INLINE.GROUP_IDX, groupIdx)}` : '';
-        const menuBtn = groupIdx != null ? `<button class="inline-menu-btn" ${attr(INLINE.EX_ID, ex.id)} ${attr(INLINE.GROUP_IDX, groupIdx)} data-ex-display="${esc(displayName)}"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>` : '';
+        const menuBtn = groupIdx != null ? `<button class="inline-menu-btn" ${attr(INLINE.EX_ID, ex.id)} ${attr(INLINE.GROUP_IDX, groupIdx)} data-ex-display="${esc(displayName)}"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2.5"/><circle cx="12" cy="12" r="2.5"/><circle cx="12" cy="19" r="2.5"/></svg></button>` : '';
 
         return `
             <div class="exercise-card ${choiceKey ? 'is-chooser' : ''}"${groupIdxAttr}>
-                ${menuBtn}
                 <div class="exercise-header">
                     <div class="exercise-name-row">
                         ${exThumbHtml(ex.name, ex.nameRu)}
@@ -833,6 +832,7 @@ export const UI = {
                     <div class="exercise-meta">
                         <span>${ex.reps} reps</span>
                         ${restText ? `<span>${restText}</span>` : ''}
+                        ${menuBtn}
                     </div>
                 </div>
                 ${eqHtml}

@@ -2,9 +2,6 @@
 
 /* --- Menu button (⋮) on exercise card --- */
 .inline-menu-btn {
-    position: absolute;
-    top: var(--spacing-sm);
-    right: var(--spacing-sm);
     width: 32px;
     height: 32px;
     display: flex;
@@ -12,25 +9,25 @@
     justify-content: center;
     background: none;
     border: none;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.7);
     cursor: pointer;
-    z-index: 2;
     border-radius: var(--radius-sm);
     -webkit-tap-highlight-color: transparent;
+    margin-left: auto;
+    flex-shrink: 0;
+    padding: 0;
 }
 .inline-menu-btn:active {
     background: var(--bg-card);
     color: var(--text-secondary);
 }
 
-/* Exercise card needs relative for absolute button */
-.exercise-card {
-    position: relative;
-}
-
-/* Make room for the ⋮ button in header */
-.exercise-card .exercise-header {
-    padding-right: calc(var(--spacing-sm) + 36px);
+/* exercise-meta needs flex for inline menu button */
+.exercise-card .exercise-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
 }
 
 /* --- Swipe-to-delete --- */
