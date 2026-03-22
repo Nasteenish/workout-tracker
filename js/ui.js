@@ -720,10 +720,10 @@ export const UI = {
                 if (timerRunning) WorkoutTimer.resume(AppState.currentWeek, AppState.currentDay);
                 RestTimer.reattach();
                 markCachedThumbs();
-                this._trimEqBadges();
+                UI._trimEqBadges();
                 _restoreFocus(focusInfo);
                 // Re-attach inline editor after async DOM swap (PTR path)
-                if (this._onPTRSwap) this._onPTRSwap();
+                if (UI._onPTRSwap) UI._onPTRSwap();
             };
 
             if (decodePromises.length > 0) {
