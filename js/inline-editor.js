@@ -357,8 +357,7 @@ export const InlineEditor = {
                     } else {
                         container.insertBefore(dragEl, cr.el.nextSibling);
                     }
-                    var allEls = getGroupElements();
-                    for (var j = 0; j < allEls.length; j++) write(allEls[j], INLINE.GROUP_IDX, j);
+                    // Don't update data-group-idx — keep original indices for save
                     swapCooldown = true;
                     cacheRects();
                     if (navigator.vibrate) navigator.vibrate(15);
