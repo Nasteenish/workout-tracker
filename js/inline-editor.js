@@ -189,7 +189,13 @@ export const InlineEditor = {
         this._onAutoSave(ed);
         this._clearCurrentWeekSnapshot(dayNum);
         this._onInvalidateCache();
-        this._onRenderDay();
+        // Stay in reorder mode if active — re-render and re-enter
+        if (window._reorderMode) {
+            this._onRenderDay();
+            this._enterReorderAfterRender();
+        } else {
+            this._onRenderDay();
+        }
     },
 
     // ===== FEATURE 2: REORDER MODE (long-press to enter, drag to reorder, "Готово" to exit) =====
@@ -806,8 +812,52 @@ export const InlineEditor = {
 
             self._onAutoSave(ed);
             self._onInvalidateCache();
-            self._onRenderDay();
+            // Stay in reorder mode if active — re-render and re-enter
+            if (window._reorderMode) {
+                self._onRenderDay();
+                self._enterReorderAfterRender();
+            } else {
+                self._onRenderDay();
+            }
         });
+    },
+
+    // Re-enter reorder mode after a re-render (add/delete while in reorder mode)
+    _enterReorderAfterRender() {
+        var self = this;
+        setTimeout(function() {
+            var slide = document.querySelector('.day-slide');
+            if (!slide) return;
+            var groups = slide.querySelectorAll(':scope > [data-group-idx], :scope > .choose-one-group[data-group-idx]');
+            window._reorderMode = true;
+            window._slotDragging = true;
+            document.body.style.overflow = 'hidden';
+            document.body.style.touchAction = 'none';
+            document.body.style.userSelect = 'none';
+            document.body.style.webkitUserSelect = 'none';
+            for (var i = 0; i < groups.length; i++) {
+                groups[i].classList.add('drag-compact');
+            }
+            // Add done button if not present
+            if (!document.querySelector('.reorder-done-btn')) {
+                var btn = document.createElement('button');
+                btn.className = 'reorder-done-btn';
+                btn.textContent = 'Готово';
+                btn.addEventListener('click', function() {
+                    window._reorderMode = false;
+                    window._slotDragging = false;
+                    document.body.style.overflow = '';
+                    document.body.style.touchAction = '';
+                    document.body.style.userSelect = '';
+                    document.body.style.webkitUserSelect = '';
+                    btn.remove();
+                    self._onInvalidateCache();
+                    self._onRenderDay();
+                });
+                slide.parentElement.insertBefore(btn, slide);
+            }
+            window.scrollTo(0, 0);
+        }, 50);
     },
 
     // --- Shared helpers ---
