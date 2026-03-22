@@ -245,7 +245,7 @@ export const InlineEditor = {
                 document.body.style.webkitUserSelect = 'none';
                 card.style.pointerEvents = 'none';
                 var rect = card.getBoundingClientRect();
-                touchOffsetY = 24; // center of compact ghost
+                touchOffsetY = startY - rect.top;
                 // Compact ghost: just exercise name
                 var nameEl = card.querySelector('.exercise-name, h3');
                 var label = card.querySelector('.superset-label');
@@ -253,7 +253,7 @@ export const InlineEditor = {
                 clone = document.createElement('div');
                 clone.className = 'drag-ghost';
                 clone.innerHTML = '<span class="drag-ghost-icon">&#9776;</span><span class="drag-ghost-name">' + exName + '</span>';
-                clone.style.cssText = 'position:fixed;left:' + rect.left + 'px;top:' + (startY - 24) + 'px;width:' + rect.width + 'px;z-index:999;pointer-events:none;will-change:transform;';
+                clone.style.cssText = 'position:fixed;left:' + rect.left + 'px;top:' + rect.top + 'px;width:' + rect.width + 'px;z-index:999;pointer-events:none;will-change:transform;';
                 document.body.appendChild(clone);
                 // Collapse all cards: dragged one to thin bar, others to compact names
                 var allGroups = getGroupElements();
