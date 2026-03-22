@@ -123,6 +123,8 @@ export const SwipeNav = {
         };
 
         document.addEventListener('touchstart', (e) => {
+            // Ignore touches during reorder mode
+            if (window._reorderMode) { cfg = null; return; }
             // Ignore touches inside modal overlays (equipment, gym, etc.)
             if (e.target.closest('.modal-overlay')) { cfg = null; return; }
             cfg = SwipeNav.getConfig(location.hash, app);

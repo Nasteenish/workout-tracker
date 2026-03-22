@@ -1279,6 +1279,21 @@ export const App = {
     // ===== Delegated navigation click handlers =====
     _handleNavigationClick(target) {
         if (target.closest('#btn-back')) {
+            // If in reorder mode, exit to day view instead of week
+            if (window._reorderMode) {
+                window._reorderMode = false;
+                window._slotDragging = false;
+                document.body.style.overflow = '';
+                document.body.style.touchAction = '';
+                document.body.style.userSelect = '';
+                document.body.style.webkitUserSelect = '';
+                var staleBtn = document.querySelector('.reorder-done-btn');
+                if (staleBtn) staleBtn.remove();
+                UI.renderDay(this._currentWeek, this._currentDay);
+                var daySlide = document.querySelector('.day-slide');
+                if (daySlide) InlineEditor.attachHandlers(daySlide);
+                return true;
+            }
             this._navigateBack(`#/week/${this._currentWeek}`);
             return true;
         }
