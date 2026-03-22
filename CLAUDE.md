@@ -257,3 +257,12 @@ Data: No storage changes
 8. **«Верификация пройдена» для визуальных багов**: Скриншот preview-сервера делается после полной отрисовки. Если баг связан с таймингом (миллисекундные рывки, мерцание, flash-of-content) — скриншот не доказывает что баг исправлен. В таких случаях не пиши «верификация пройдена», а скажи: «по коду рывка быть не должно, проверь на телефоне». Для остальных визуальных багов (неправильный цвет, layout, отсутствующий элемент) скриншот — валидная проверка.
 
 9. **Визуальный баг при свайпе — ищи причину в companion, а не в route()**: Свайп-навигация (swipe-nav.js) показывает companion-div **во время жеста**, до вызова route(). Если пользователь видит рывок/мерцание при свайпе — в первую очередь проверь, что companion отображает контент с правильной scroll-позицией (`_scrollCache`), а не с верха страницы. Companion — `position: fixed`, поэтому для смещения нужен `translateY(-savedScroll)` на содержимом. Не трать время на `scrollTo`/`innerHTML`/`opacity` в route() — к моменту route() пользователь уже увидел companion.
+
+10. **Touch/drag на iOS — чеклист для модальных режимов (drag, reorder, picker)**:
+    - **`touchAction: 'none'`** на body на ВЕСЬ режим, не на отдельные жесты. Иначе iOS между жестами перехватывает touch как scroll
+    - **`overflow: hidden`** на body — блокирует нативный скролл, но НЕ блокирует кастомный pull-to-refresh (он на JS)
+    - **Кастомный pull-to-refresh** — блокируй через `window._reorderMode` / `window._slotDragging` флаги. Pull-refresh (pull-refresh.js) проверяет их в touchstart и touchmove
+    - **Capture-phase `touchmove` preventDefault** — единственный надёжный способ заблокировать ВСЁ на iOS. Используй с флагом чтобы не застрять: `document.addEventListener('touchmove', fn, { passive: false, capture: true })`
+    - **Застрявшее состояние** — `route()` в app.js сбрасывает все body-стили и флаги при КАЖДОЙ навигации. Это safety net. Также `attachHandlers()` сбрасывает при перерендере дня
+    - **history.pushState** для модальных режимов — кнопка "назад" должна закрывать режим, а не уходить на предыдущую страницу. Паттерн: `pushState` при входе, `popstate` listener при выходе
+    - **`{ passive: true }` на touchstart** = нельзя `preventDefault`. Это ОК для начала жеста, но `touchmove` ОБЯЗАТЕЛЬНО `{ passive: false }` если нужен `preventDefault`
