@@ -370,14 +370,8 @@ export const InlineEditor = {
         // Techniques
         menuItems += '<div class="inline-menu-item" data-action="techniques"><div class="inline-menu-icon">' + _svgTech() + '</div><div class="inline-menu-label">Техники</div><div class="inline-menu-value">' + _techSummary(exercise) + '</div></div>';
 
-        // Sets count
-        menuItems += '<div class="inline-menu-item" data-action="sets"><div class="inline-menu-icon">' + _svgSets() + '</div><div class="inline-menu-label">Подходы</div><div class="inline-menu-value">' + (exercise.sets ? exercise.sets.length : 0) + '</div></div>';
-
         // Reps
         menuItems += '<div class="inline-menu-item" data-action="reps"><div class="inline-menu-icon">' + _svgReps() + '</div><div class="inline-menu-label">Повторения</div><div class="inline-menu-value">' + esc(exercise.reps || '') + '</div></div>';
-
-        // Rest
-        menuItems += '<div class="inline-menu-item" data-action="rest"><div class="inline-menu-icon">' + _svgRest() + '</div><div class="inline-menu-label">Отдых</div><div class="inline-menu-value">' + _formatRest(exercise.rest) + '</div></div>';
 
         // Superset
         if (isSuperset) {
@@ -395,7 +389,6 @@ export const InlineEditor = {
         overlay.innerHTML = '<div class="inline-sheet">' +
             '<div class="inline-sheet-header"><h3>' + esc(name) + '</h3><button class="inline-sheet-close">\u2715</button></div>' +
             '<div class="inline-menu-list">' + menuItems + '</div>' +
-            '<div id="inline-sub-panel"></div>' +
             '</div>';
 
         document.body.appendChild(overlay);
@@ -415,39 +408,33 @@ export const InlineEditor = {
             var menuItem = e.target.closest('.inline-menu-item');
             if (!menuItem) return;
             var action = menuItem.getAttribute('data-action');
-            self._handleMenuAction(action, exId, groupIdx, subIdx, dayNum, exercise, ed);
+            self._handleMenuAction(action, exId, groupIdx, subIdx, dayNum, exercise, ed, menuItem);
         });
     },
 
-    _handleMenuAction(action, exId, groupIdx, subIdx, dayNum, exercise, ed) {
+    _handleMenuAction(action, exId, groupIdx, subIdx, dayNum, exercise, ed, menuItem) {
         var self = this;
+        // Remove any existing sub-panel
         var oldPanel = document.getElementById('inline-sub-panel');
-        if (!oldPanel) return;
-        // Replace panel to remove stale event listeners from previous sub-panel
-        var panel = oldPanel.cloneNode(false);
-        oldPanel.parentNode.replaceChild(panel, oldPanel);
-        panel.id = 'inline-sub-panel';
+        if (oldPanel) oldPanel.remove();
 
         switch (action) {
-            case 'techniques':
-                panel.innerHTML = this._buildTechPanel(exercise);
-                this._bindTechPanel(panel, exercise, groupIdx, subIdx, dayNum, ed);
-                break;
+            case 'techniques': case 'reps': {
+                // Create panel and insert right after the clicked menu item
+                var panel = document.createElement('div');
+                panel.id = 'inline-sub-panel';
+                menuItem.parentNode.insertBefore(panel, menuItem.nextSibling);
 
-            case 'sets':
-                panel.innerHTML = this._buildSetsPanel(exercise);
-                this._bindSetsPanel(panel, exercise, groupIdx, subIdx, dayNum, ed);
+                if (action === 'techniques') {
+                    panel.innerHTML = this._buildTechPanel(exercise);
+                    this._bindTechPanel(panel, exercise, groupIdx, subIdx, dayNum, ed);
+                } else {
+                    panel.innerHTML = this._buildRepsPanel(exercise);
+                    this._bindRepsPanel(panel, exercise, groupIdx, subIdx, dayNum, ed);
+                }
+                setTimeout(function() { panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 50);
                 break;
-
-            case 'reps':
-                panel.innerHTML = this._buildRepsPanel(exercise);
-                this._bindRepsPanel(panel, exercise, groupIdx, subIdx, dayNum, ed);
-                break;
-
-            case 'rest':
-                panel.innerHTML = this._buildRestPanel(exercise);
-                this._bindRestPanel(panel, exercise, groupIdx, subIdx, dayNum, ed);
-                break;
+            }
 
             case 'merge-superset':
                 this._mergeWithNext(groupIdx, dayNum);
@@ -465,11 +452,6 @@ export const InlineEditor = {
                 this._closeSheet();
                 this._confirmDelete(groupIdx, null, null);
                 break;
-        }
-
-        // Scroll sub-panel into view
-        if (panel.innerHTML) {
-            setTimeout(function() { panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 50);
         }
     },
 
