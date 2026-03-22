@@ -751,6 +751,24 @@ export const App = {
             if (appEl && appEl.innerHTML) this._pageCache[prevHash] = appEl.innerHTML;
             this._scrollCache[prevHash] = window.scrollY;
         }
+        // If navigating away while in reorder mode — save order and redirect to day
+        if (window._reorderMode && this._currentWeek && this._currentDay) {
+            var dayHash = '#/week/' + this._currentWeek + '/day/' + this._currentDay;
+            // Clear reorder state
+            window._reorderMode = false;
+            window._slotDragging = false;
+            document.body.style.overflow = '';
+            document.body.style.touchAction = '';
+            document.body.style.userSelect = '';
+            document.body.style.webkitUserSelect = '';
+            var staleBtn = document.querySelector('.reorder-done-btn');
+            if (staleBtn) staleBtn.remove();
+            // Redirect to day view
+            if (location.hash !== dayHash) {
+                location.hash = dayHash;
+                return;
+            }
+        }
         // Safety: clear any stuck reorder/drag/swipe styles
         window._reorderMode = false;
         window._slotDragging = false;

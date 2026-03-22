@@ -221,12 +221,6 @@ export const InlineEditor = {
             }
         }
 
-        function _onPopState() {
-            if (reorderMode) {
-                exitReorderMode();
-            }
-        }
-
         function enterReorderMode() {
             reorderMode = true;
             window._slotDragging = true;
@@ -235,9 +229,6 @@ export const InlineEditor = {
             document.body.style.touchAction = 'none';
             document.body.style.userSelect = 'none';
             document.body.style.webkitUserSelect = 'none';
-            // Push history entry so "back" exits reorder mode, not the day
-            history.pushState({ reorder: true }, '', location.hash);
-            window.addEventListener('popstate', _onPopState);
             // Collapse all cards
             var allGroups = getGroupElements();
             for (var gi = 0; gi < allGroups.length; gi++) {
@@ -293,7 +284,6 @@ export const InlineEditor = {
             for (var i = 0; i < compacts.length; i++) compacts[i].classList.remove('drag-compact');
             if (doneBtn && doneBtn.parentNode) doneBtn.remove();
             doneBtn = null;
-            window.removeEventListener('popstate', _onPopState);
             window._reorderMode = false;
             document.body.style.overflow = '';
             document.body.style.touchAction = '';
