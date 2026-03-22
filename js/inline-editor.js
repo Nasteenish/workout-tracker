@@ -115,7 +115,8 @@ export const InlineEditor = {
                     // On confirm — remove
                     _cleanupSwipe();
                 }, function() {
-                    // On cancel — animate back
+                    // On cancel — hide red bg immediately, animate card back
+                    if (bg) bg.style.display = 'none';
                     el.classList.add('swipe-animate');
                     el.style.transform = 'translateX(0)';
                     setTimeout(function() {
@@ -123,7 +124,8 @@ export const InlineEditor = {
                     }, 260);
                 });
             } else {
-                // Not far enough — snap back
+                // Not far enough — snap back, hide red bg immediately
+                if (bg) bg.style.display = 'none';
                 el.classList.add('swipe-animate');
                 el.style.transform = 'translateX(0)';
                 setTimeout(function() {
