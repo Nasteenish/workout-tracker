@@ -120,10 +120,13 @@ export const InlineEditor = {
                 swipeEl.classList.remove('swiping', 'swipe-animate');
                 swipeEl.style.transform = '';
                 swipeEl.style.zIndex = '';
+                swipeEl.style.position = '';
             }
             if (deleteBg && deleteBg.parentNode) {
                 deleteBg.parentNode.removeChild(deleteBg);
             }
+            // Safety: remove any stray delete backgrounds
+            container.querySelectorAll('.swipe-delete-bg').forEach(function(bg) { bg.remove(); });
             swipeEl = null;
             deleteBg = null;
             swiping = false;
