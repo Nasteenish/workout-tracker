@@ -315,15 +315,19 @@ export const Social = {
         if (!supa || !userIds.length) return [];
         var userId = this._getSupaUserId();
         if (!userId) return [];
-        var rows = userIds.map(function(uid) {
-            return { checkin_id: checkinId, tagged_user_id: uid, tagged_by: userId };
+        // userIds can be array of strings (legacy) or objects {userId, x, y}
+        var rows = userIds.map(function(item) {
+            if (typeof item === 'string') {
+                return { checkin_id: checkinId, tagged_user_id: item, tagged_by: userId };
+            }
+            return { checkin_id: checkinId, tagged_user_id: item.userId, tagged_by: userId, x: item.x || 0.5, y: item.y || 0.5 };
         });
         var result = await supa.from('photo_tags').insert(rows).select();
         if (result.error) throw new Error(result.error.message);
         // Notify tagged users
         var self = this;
-        userIds.forEach(function(uid) {
-            if (uid !== userId) self.createNotification(uid, 'tag', checkinId, null);
+        rows.forEach(function(row) {
+            if (row.tagged_user_id !== userId) self.createNotification(row.tagged_user_id, 'tag', checkinId, null);
         });
         return result.data;
     },
@@ -340,14 +344,17 @@ export const Social = {
     async getTagsForCheckins(checkinIds) {
         if (!supa || !checkinIds.length) return {};
         var result = await supa.from('photo_tags')
-            .select('checkin_id, tagged_user_id, profiles:tagged_user_id(username, display_name)')
+            .select('checkin_id, tagged_user_id, x, y, profiles:tagged_user_id(username, display_name)')
             .in('checkin_id', checkinIds);
         if (result.error) { this._logError('getTagsForCheckins', result.error); return {}; }
         if (!result.data) return {};
         var tags = {};
         result.data.forEach(function(t) {
             if (!tags[t.checkin_id]) tags[t.checkin_id] = [];
-            tags[t.checkin_id].push(t.profiles);
+            var tag = t.profiles || {};
+            tag.x = t.x != null ? t.x : 0.5;
+            tag.y = t.y != null ? t.y : 0.5;
+            tags[t.checkin_id].push(tag);
         });
         return tags;
     },

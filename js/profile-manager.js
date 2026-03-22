@@ -86,8 +86,10 @@ export const ProfileManager = {
         }).then(function(checkin) {
             var taggedUsers = self.checkinTaggedUsers || [];
             if (taggedUsers.length && checkin && checkin.id) {
-                var tagIds = taggedUsers.map(function(u) { return u.user_id; });
-                Social.tagUsers(checkin.id, tagIds).catch(function() {});
+                var tagItems = taggedUsers.map(function(u) {
+                    return u.x != null ? { userId: u.user_id, x: u.x, y: u.y } : u.user_id;
+                });
+                Social.tagUsers(checkin.id, tagItems).catch(function() {});
             }
             self.checkinPhotos = [];
             self.checkinTaggedUsers = [];

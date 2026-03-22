@@ -790,12 +790,22 @@ export const SocialUI = {
 
             // Photos
             if (c.photos && c.photos.length > 0) {
+                var cTags = tagData[c.id];
                 html += '<div class="checkin-photos' + (c.photos.length > 1 ? ' multi' : '') + '">';
                 c.photos.forEach(function(url) {
+                    html += '<div class="photo-tag-container">';
                     html += SocialUI._mediaTag(url, 'checkin-photo', '');
+                    // Render tag markers (hidden by default, shown on tap)
+                    if (cTags && cTags.length) {
+                        cTags.forEach(function(t) {
+                            var x = (t.x != null ? t.x : 0.5) * 100;
+                            var y = (t.y != null ? t.y : 0.5) * 100;
+                            html += '<div class="photo-tag-marker" style="left:' + x + '%;top:' + y + '%">@' + esc(t.username || t.display_name || '?') + '</div>';
+                        });
+                    }
+                    html += '</div>';
                 });
                 // Photo tags badge
-                var cTags = tagData[c.id];
                 if (cTags && cTags.length) {
                     html += '<div class="photo-tag-badge">с ' + cTags.map(function(t) { return '@' + esc(t.username || t.display_name); }).join(', ') + '</div>';
                 }
@@ -893,7 +903,17 @@ export const SocialUI = {
         if (c.photos && c.photos.length > 0) {
             html += '<div class="checkin-photos' + (c.photos.length > 1 ? ' multi' : '') + '">';
             c.photos.forEach(function(url) {
+                html += '<div class="photo-tag-container">';
                 html += SocialUI._mediaTag(url, 'checkin-photo', '');
+                if (photoTags && photoTags.length) {
+                    photoTags.forEach(function(t) {
+                        var p = t.profiles || t;
+                        var x = (t.x != null ? t.x : (p.x != null ? p.x : 0.5)) * 100;
+                        var y = (t.y != null ? t.y : (p.y != null ? p.y : 0.5)) * 100;
+                        html += '<div class="photo-tag-marker" style="left:' + x + '%;top:' + y + '%">@' + esc(p.username || p.display_name || '?') + '</div>';
+                    });
+                }
+                html += '</div>';
             });
             // Photo tags badge
             if (photoTags && photoTags.length) {
@@ -1443,6 +1463,20 @@ export const SocialUI = {
 
     // ===== Delegated social click handlers =====
     handleClick(target) {
+        // Photo tap — toggle tag markers
+        var photoContainer = target.closest('.photo-tag-container');
+        if (photoContainer) {
+            photoContainer.classList.toggle('show-tags');
+            // Auto-hide after 3 seconds
+            if (photoContainer.classList.contains('show-tags')) {
+                clearTimeout(photoContainer._tagTimer);
+                photoContainer._tagTimer = setTimeout(function() {
+                    photoContainer.classList.remove('show-tags');
+                }, 3000);
+            }
+            return true;
+        }
+
         // Profile edit button
         if (target.closest('#btn-profile-edit')) {
             location.hash = '#/profile/edit';
@@ -1749,20 +1783,71 @@ export const SocialUI = {
         // Tag user button in checkin form
         if (target.closest('#btn-tag-user')) {
             if (!ProfileManager.checkinTaggedUsers) ProfileManager.checkinTaggedUsers = [];
-            SocialUI.renderTagSearch(function(user) {
-                // Check if already tagged
-                var already = ProfileManager.checkinTaggedUsers.some(function(u) { return u.user_id === user.user_id; });
-                if (already) return;
-                ProfileManager.checkinTaggedUsers.push(user);
-                var container = document.getElementById('checkin-tagged-users');
-                if (container) {
-                    var tag = document.createElement('span');
-                    tag.className = 'tagged-user-chip';
-                    tag.setAttribute(SOCIAL.UID, user.user_id);
-                    tag.innerHTML = '@' + esc(user.username) + ' <button class="tagged-user-remove">&times;</button>';
-                    container.appendChild(tag);
+            // Check if there's a photo to tag on
+            var photoPreview = document.querySelector('.checkin-photo-preview img, .checkin-photo-preview video');
+            if (photoPreview) {
+                // Enter tag placement mode — tap on photo first
+                var previewContainer = photoPreview.closest('.checkin-photo-preview');
+                if (previewContainer && !previewContainer.classList.contains('tag-placement-mode')) {
+                    previewContainer.classList.add('tag-placement-mode');
+                    // Add hint overlay
+                    var hint = document.createElement('div');
+                    hint.className = 'tag-placement-hint';
+                    hint.textContent = 'Нажмите на фото для отметки';
+                    previewContainer.appendChild(hint);
+                    // Listen for tap on photo
+                    var onPhotoTap = function(e) {
+                        var rect = photoPreview.getBoundingClientRect();
+                        var x = (e.clientX - rect.left) / rect.width;
+                        var y = (e.clientY - rect.top) / rect.height;
+                        x = Math.max(0.05, Math.min(0.95, x));
+                        y = Math.max(0.05, Math.min(0.95, y));
+                        previewContainer.classList.remove('tag-placement-mode');
+                        hint.remove();
+                        photoPreview.removeEventListener('click', onPhotoTap);
+                        // Now open user search with coordinates
+                        SocialUI.renderTagSearch(function(user) {
+                            var already = ProfileManager.checkinTaggedUsers.some(function(u) { return u.user_id === user.user_id; });
+                            if (already) return;
+                            user.x = x;
+                            user.y = y;
+                            ProfileManager.checkinTaggedUsers.push(user);
+                            var container = document.getElementById('checkin-tagged-users');
+                            if (container) {
+                                var tag = document.createElement('span');
+                                tag.className = 'tagged-user-chip';
+                                tag.setAttribute(SOCIAL.UID, user.user_id);
+                                tag.innerHTML = '@' + esc(user.username) + ' <button class="tagged-user-remove">&times;</button>';
+                                container.appendChild(tag);
+                            }
+                            // Show marker on preview
+                            var marker = document.createElement('div');
+                            marker.className = 'photo-tag-marker show';
+                            marker.style.left = (x * 100) + '%';
+                            marker.style.top = (y * 100) + '%';
+                            marker.textContent = '@' + user.username;
+                            marker.setAttribute(SOCIAL.UID, user.user_id);
+                            previewContainer.appendChild(marker);
+                        });
+                    };
+                    photoPreview.addEventListener('click', onPhotoTap);
                 }
-            });
+            } else {
+                // No photo — just search and tag without coordinates
+                SocialUI.renderTagSearch(function(user) {
+                    var already = ProfileManager.checkinTaggedUsers.some(function(u) { return u.user_id === user.user_id; });
+                    if (already) return;
+                    ProfileManager.checkinTaggedUsers.push(user);
+                    var container = document.getElementById('checkin-tagged-users');
+                    if (container) {
+                        var tag = document.createElement('span');
+                        tag.className = 'tagged-user-chip';
+                        tag.setAttribute(SOCIAL.UID, user.user_id);
+                        tag.innerHTML = '@' + esc(user.username) + ' <button class="tagged-user-remove">&times;</button>';
+                        container.appendChild(tag);
+                    }
+                });
+            }
             return true;
         }
 
