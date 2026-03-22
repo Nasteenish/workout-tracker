@@ -521,3 +521,19 @@
     background: rgba(157, 141, 245, 0.15) !important;
     box-shadow: 0 0 12px rgba(157, 141, 245, 0.3);
 }
+
+/* "Готово" button in reorder mode */
+.reorder-done-btn {
+    display: block;
+    width: 100%;
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    background: var(--accent-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    font-weight: 700;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}

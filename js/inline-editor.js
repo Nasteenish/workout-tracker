@@ -183,16 +183,17 @@ export const InlineEditor = {
         this._onRenderDay();
     },
 
-    // ===== FEATURE 2: LONG-PRESS DRAG REORDER =====
+    // ===== FEATURE 2: REORDER MODE (long-press to enter, drag to reorder, "Готово" to exit) =====
 
     _initDragReorder(container) {
         var self = this;
+        var reorderMode = false;
         var dragEl = null, startY = 0, startX = 0, longPressTimer = null;
-        var dragging = false;
-        var cachedRects = [], swapCooldown = false, rafId = 0;
+        var activeDrag = false;
+        var cachedRects = [], swapCooldown = false;
+        var doneBtn = null;
 
         function getGroupElements() {
-            // Top-level draggable elements: exercise-cards and superset-groups with group-idx
             return container.querySelectorAll(':scope > [' + INLINE.GROUP_IDX + '], :scope > .choose-one-group[' + INLINE.GROUP_IDX + ']');
         }
 
@@ -205,101 +206,27 @@ export const InlineEditor = {
             }
         }
 
-        function cleanup() {
-            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-            if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
-            if (dragEl) {
-                dragEl.classList.remove('drag-active');
+        function enterReorderMode() {
+            reorderMode = true;
+            window._slotDragging = true;
+            // Collapse all cards
+            var allGroups = getGroupElements();
+            for (var gi = 0; gi < allGroups.length; gi++) {
+                allGroups[gi].classList.add('drag-compact');
             }
-            // Restore all compact cards
-            var compacts = container.querySelectorAll('.drag-compact');
-            for (var i = 0; i < compacts.length; i++) compacts[i].classList.remove('drag-compact');
-            document.body.style.overflow = '';
-            document.body.style.touchAction = '';
-            document.body.style.userSelect = '';
-            document.body.style.webkitUserSelect = '';
-            dragging = false;
-            window._slotDragging = false;
-            dragEl = null;
-            cachedRects = [];
+            // Add "Готово" button
+            doneBtn = document.createElement('button');
+            doneBtn.className = 'reorder-done-btn';
+            doneBtn.textContent = 'Готово';
+            doneBtn.addEventListener('click', exitReorderMode);
+            container.parentElement.insertBefore(doneBtn, container);
+            window.scrollTo(0, 0);
+            if (navigator.vibrate) navigator.vibrate(30);
         }
 
-        container.addEventListener('touchstart', function(e) {
-            // Find top-level draggable group element
-            var card = e.target.closest('[' + INLINE.GROUP_IDX + ']');
-            if (!card) return;
-            // Ensure it's a direct child of the day-slide container (not a nested exercise-card inside superset)
-            if (card.parentElement !== container && !card.parentElement.classList.contains('choose-one-group')) {
-                // It's inside a superset-group — find the superset-group parent
-                var supersetParent = card.closest('.superset-group[' + INLINE.GROUP_IDX + ']');
-                if (supersetParent) card = supersetParent;
-                else return;
-            }
-            // Don't start drag on interactive elements
-            if (e.target.closest('input, button, .set-inputs, .set-controls, .equipment-btn, .history-btn, .inline-menu-btn')) return;
-
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-            dragEl = card;
-
-            longPressTimer = setTimeout(function() {
-                dragging = true;
-                window._slotDragging = true;
-                document.body.style.overflow = 'hidden';
-                document.body.style.touchAction = 'none';
-                document.body.style.userSelect = 'none';
-                document.body.style.webkitUserSelect = 'none';
-                // Collapse all cards to compact names; highlight the dragged one
-                var allGroups = getGroupElements();
-                for (var gi = 0; gi < allGroups.length; gi++) {
-                    allGroups[gi].classList.add('drag-compact');
-                }
-                card.classList.add('drag-active');
-                cacheRects();
-                if (navigator.vibrate) navigator.vibrate(30);
-            }, 400);
-        }, { passive: true });
-
-        container.addEventListener('touchmove', function(e) {
-            if (!dragging && longPressTimer) {
-                var dx = e.touches[0].clientX - startX;
-                var dy = e.touches[0].clientY - startY;
-                if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
-                    clearTimeout(longPressTimer);
-                    longPressTimer = null;
-                }
-                return;
-            }
-            if (!dragging) return;
-            e.preventDefault();
-            var touchY = e.touches[0].clientY;
-            if (swapCooldown) return;
-            for (var i = 0; i < cachedRects.length; i++) {
-                var cr = cachedRects[i];
-                if (cr.el === dragEl) continue;
-                if (touchY > cr.top + cr.height * 0.2 && touchY < cr.bottom - cr.height * 0.2) {
-                    if (touchY < cr.midY) {
-                        container.insertBefore(dragEl, cr.el);
-                    } else {
-                        container.insertBefore(dragEl, cr.el.nextSibling);
-                    }
-                    // Re-index
-                    var allEls = getGroupElements();
-                    for (var j = 0; j < allEls.length; j++) write(allEls[j], INLINE.GROUP_IDX, j);
-                    swapCooldown = true;
-                    cacheRects();
-                    if (navigator.vibrate) navigator.vibrate(15);
-                    setTimeout(function() { swapCooldown = false; }, 150);
-                    break;
-                }
-            }
-        }, { passive: false });
-
-        container.addEventListener('touchend', function() {
-            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-            if (!dragging) return;
-
-            // Read new order from DOM
+        function exitReorderMode() {
+            if (!reorderMode) return;
+            // Save current order
             var dayNum = AppState.currentDay;
             if (dayNum) {
                 var allEls = getGroupElements();
@@ -307,7 +234,6 @@ export const InlineEditor = {
                 for (var i = 0; i < allEls.length; i++) {
                     newOrder.push(readInt(allEls[i], INLINE.GROUP_IDX));
                 }
-                // Check if order actually changed
                 var changed = false;
                 for (var i = 0; i < newOrder.length; i++) {
                     if (newOrder[i] !== i) { changed = true; break; }
@@ -322,15 +248,109 @@ export const InlineEditor = {
                         if (reordered.length === ed.items.length) {
                             ed.items = reordered;
                             self._onAutoSave(ed);
-                            cleanup();
-                            self._onInvalidateCache();
-                            self._onRenderDay();
-                            return;
                         }
                     }
                 }
             }
-            cleanup();
+            cleanupReorder();
+            self._onInvalidateCache();
+            self._onRenderDay();
+        }
+
+        function cleanupReorder() {
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+            if (dragEl) dragEl.classList.remove('drag-active');
+            var compacts = container.querySelectorAll('.drag-compact');
+            for (var i = 0; i < compacts.length; i++) compacts[i].classList.remove('drag-compact');
+            if (doneBtn && doneBtn.parentNode) doneBtn.remove();
+            doneBtn = null;
+            document.body.style.touchAction = '';
+            document.body.style.userSelect = '';
+            document.body.style.webkitUserSelect = '';
+            reorderMode = false;
+            activeDrag = false;
+            window._slotDragging = false;
+            dragEl = null;
+            cachedRects = [];
+        }
+
+        container.addEventListener('touchstart', function(e) {
+            var card = e.target.closest('[' + INLINE.GROUP_IDX + ']');
+            if (!card) return;
+            if (card.parentElement !== container && !card.parentElement.classList.contains('choose-one-group')) {
+                var supersetParent = card.closest('.superset-group[' + INLINE.GROUP_IDX + ']');
+                if (supersetParent) card = supersetParent;
+                else return;
+            }
+            if (e.target.closest('input, button, .set-inputs, .set-controls, .equipment-btn, .history-btn, .inline-menu-btn')) return;
+
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+
+            if (reorderMode) {
+                // Already in reorder mode — start dragging this card
+                dragEl = card;
+                activeDrag = true;
+                if (dragEl) dragEl.classList.add('drag-active');
+                document.body.style.touchAction = 'none';
+                cacheRects();
+            } else {
+                // Not in reorder mode — long press to enter
+                dragEl = card;
+                longPressTimer = setTimeout(function() {
+                    enterReorderMode();
+                    // Also start dragging the pressed card
+                    dragEl = card;
+                    activeDrag = true;
+                    card.classList.add('drag-active');
+                    document.body.style.touchAction = 'none';
+                    cacheRects();
+                }, 400);
+            }
+        }, { passive: true });
+
+        container.addEventListener('touchmove', function(e) {
+            if (!reorderMode && longPressTimer) {
+                var dx = e.touches[0].clientX - startX;
+                var dy = e.touches[0].clientY - startY;
+                if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+                return;
+            }
+            if (!activeDrag) return;
+            e.preventDefault();
+            var touchY = e.touches[0].clientY;
+            if (swapCooldown) return;
+            for (var i = 0; i < cachedRects.length; i++) {
+                var cr = cachedRects[i];
+                if (cr.el === dragEl) continue;
+                if (touchY > cr.top + cr.height * 0.2 && touchY < cr.bottom - cr.height * 0.2) {
+                    if (touchY < cr.midY) {
+                        container.insertBefore(dragEl, cr.el);
+                    } else {
+                        container.insertBefore(dragEl, cr.el.nextSibling);
+                    }
+                    var allEls = getGroupElements();
+                    for (var j = 0; j < allEls.length; j++) write(allEls[j], INLINE.GROUP_IDX, j);
+                    swapCooldown = true;
+                    cacheRects();
+                    if (navigator.vibrate) navigator.vibrate(15);
+                    setTimeout(function() { swapCooldown = false; }, 150);
+                    break;
+                }
+            }
+        }, { passive: false });
+
+        container.addEventListener('touchend', function() {
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+            if (!activeDrag) return;
+            // Release current drag but stay in reorder mode
+            if (dragEl) dragEl.classList.remove('drag-active');
+            activeDrag = false;
+            dragEl = null;
+            document.body.style.touchAction = '';
         });
     },
 
