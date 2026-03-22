@@ -318,7 +318,7 @@ export const EquipmentManager = {
         'shoulder press': 'shoulder_press', 'overhead press': 'shoulder_press',
         'lateral raise': 'lateral_raise',
         'rear delt': 'rear_delt', 'rear delt reverse fly': 'rear_delt', 'face pull': 'rear_delt', 'reverse fly': 'rear_delt',
-        'front raise': 'cable_multi', 'upright row': 'cable_multi', 'shrug': 'cable_multi',
+        'front raise': 'cable_multi', 'upright row': 'cable_multi', 'shrug': 'shrug',
         'unilateral low pulley raises': 'lateral_raise',
         'viking press': 'shoulder_press', 'neck press': 'shoulder_press',
         // Arms
