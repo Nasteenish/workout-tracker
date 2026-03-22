@@ -344,7 +344,7 @@ export const Social = {
     async getTagsForCheckins(checkinIds) {
         if (!supa || !checkinIds.length) return {};
         var result = await supa.from('photo_tags')
-            .select('checkin_id, tagged_user_id, x, y, profiles:tagged_user_id(username, display_name)')
+            .select('checkin_id, tagged_user_id, profiles:tagged_user_id(username, display_name), x, y')
             .in('checkin_id', checkinIds);
         if (result.error) { this._logError('getTagsForCheckins', result.error); return {}; }
         if (!result.data) return {};
