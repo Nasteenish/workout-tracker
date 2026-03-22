@@ -458,15 +458,28 @@ export const InlineEditor = {
     // --- Technique panel ---
     _buildTechPanel(exercise) {
         var sets = exercise.sets || [];
-        var html = '<div class="inline-sub-panel"><div class="inline-sub-title">Техники по подходам</div>';
-        for (var i = 0; i < sets.length; i++) {
-            var techs = sets[i].techniques || [];
-            html += '<div class="inline-tech-set">';
-            html += '<span class="inline-tech-set-label">П.' + (i + 1) + '</span>';
-            html += '<button class="inline-tech-btn tech-DROP' + (techs.indexOf('DROP') >= 0 ? ' active' : '') + '" data-set="' + i + '" data-tech="DROP">DROP</button>';
-            html += '<button class="inline-tech-btn tech-REST_PAUSE' + (techs.indexOf('REST_PAUSE') >= 0 ? ' active' : '') + '" data-set="' + i + '" data-tech="REST_PAUSE">R-P</button>';
-            html += '<button class="inline-tech-btn tech-MP' + (techs.indexOf('MP') >= 0 ? ' active' : '') + '" data-set="' + i + '" data-tech="MP">MP</button>';
-            html += '</div>';
+        var techs = [
+            { key: 'DROP', label: 'DROP', name: 'Дроп-сет', cls: 'tech-DROP',
+              desc: 'Снижаешь вес на 20-30% и сразу продолжаешь до отказа' },
+            { key: 'REST_PAUSE', label: 'R-P', name: 'Отдых-пауза', cls: 'tech-REST_PAUSE',
+              desc: 'Отдых 10-15 сек, продолжаешь повторения до отказа' },
+            { key: 'MP', label: 'MP', name: 'Микро-пауза', cls: 'tech-MP',
+              desc: 'Отдых макс 5 сек, ещё 1-3 повторения' }
+        ];
+        var html = '<div class="inline-sub-panel"><div class="inline-sub-title">Добавить техники</div>';
+        for (var t = 0; t < techs.length; t++) {
+            var tech = techs[t];
+            html += '<div class="tech-card">';
+            html += '<div class="tech-card-header"><span class="tech-card-badge ' + tech.cls + '">' + tech.label + '</span>';
+            html += '<span class="tech-card-name">' + tech.name + '</span></div>';
+            html += '<div class="tech-card-desc">' + tech.desc + '</div>';
+            html += '<div class="tech-card-sets">';
+            for (var i = 0; i < sets.length; i++) {
+                var setTechs = sets[i].techniques || [];
+                var isActive = setTechs.indexOf(tech.key) >= 0;
+                html += '<button class="tech-set-chip' + (isActive ? ' active' : '') + '" data-set="' + i + '" data-tech="' + tech.key + '">П.' + (i + 1) + '</button>';
+            }
+            html += '</div></div>';
         }
         html += '<button class="inline-apply-btn" data-apply="techniques">Применить</button></div>';
         return html;
@@ -475,20 +488,20 @@ export const InlineEditor = {
     _bindTechPanel(panel, exercise, groupIdx, subIdx, dayNum, ed) {
         var self = this;
         panel.addEventListener('click', function(e) {
-            var btn = e.target.closest('.inline-tech-btn');
-            if (btn) {
-                var setIdx = parseInt(btn.getAttribute('data-set'));
-                var tech = btn.getAttribute('data-tech');
+            var chip = e.target.closest('.tech-set-chip');
+            if (chip) {
+                var setIdx = parseInt(chip.getAttribute('data-set'));
+                var tech = chip.getAttribute('data-tech');
                 var set = exercise.sets[setIdx];
                 if (!set) return;
                 if (!set.techniques) set.techniques = [];
                 var idx = set.techniques.indexOf(tech);
                 if (idx >= 0) {
                     set.techniques.splice(idx, 1);
-                    btn.classList.remove('active');
+                    chip.classList.remove('active');
                 } else {
                     set.techniques.push(tech);
-                    btn.classList.add('active');
+                    chip.classList.add('active');
                 }
                 return;
             }

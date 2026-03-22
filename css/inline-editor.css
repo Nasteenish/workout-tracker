@@ -182,53 +182,82 @@
     letter-spacing: 0.5px;
 }
 
-/* Technique toggles per set */
-.inline-tech-set {
+/* Technique cards */
+.tech-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+}
+
+.tech-card-header {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-sm);
-    padding: var(--spacing-xs) 0;
+    margin-bottom: 4px;
 }
 
-.inline-tech-set-label {
-    font-size: var(--font-size-sm);
+.tech-card-badge {
+    padding: 2px 10px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    color: #fff;
+}
+.tech-card-badge.tech-DROP { background: var(--tech-drop); }
+.tech-card-badge.tech-REST_PAUSE { background: var(--tech-rp); }
+.tech-card-badge.tech-MP { background: var(--tech-mp); }
+
+.tech-card-name {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.tech-card-desc {
+    font-size: var(--font-size-xs);
     color: var(--text-secondary);
-    min-width: 36px;
+    line-height: 1.4;
+    margin-bottom: var(--spacing-sm);
 }
 
-.inline-tech-btn {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    background: var(--bg-card);
+.tech-card-sets {
+    display: flex;
+    gap: var(--spacing-xs);
+    flex-wrap: wrap;
+}
+
+.tech-set-chip {
+    padding: 4px 12px;
+    background: transparent;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
     font-size: var(--font-size-xs);
     font-weight: 600;
     cursor: pointer;
-    min-height: 32px;
     -webkit-tap-highlight-color: transparent;
 }
 
-.inline-tech-btn.active {
+.tech-set-chip.active {
     border-color: var(--accent-primary);
     color: var(--accent-primary);
     background: rgba(157, 141, 245, 0.12);
 }
 
-.inline-tech-btn.tech-DROP.active {
+/* Color chips by technique type */
+.tech-card:nth-child(1) .tech-set-chip.active {
     border-color: var(--tech-drop);
     color: var(--tech-drop);
     background: rgba(255, 45, 85, 0.12);
 }
-
-.inline-tech-btn.tech-REST_PAUSE.active {
+.tech-card:nth-child(2) .tech-set-chip.active {
     border-color: var(--tech-rp);
     color: var(--tech-rp);
     background: rgba(74, 150, 255, 0.12);
 }
-
-.inline-tech-btn.tech-MP.active {
+.tech-card:nth-child(3) .tech-set-chip.active {
     border-color: var(--tech-mp);
     color: var(--tech-mp);
     background: rgba(181, 242, 42, 0.12);
