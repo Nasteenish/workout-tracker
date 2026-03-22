@@ -1028,7 +1028,7 @@ export const UI = {
         const chosenId = Storage.getChoice(choiceKey, weekNum);
         const options = group.options || [];
         const chosen = chosenId
-            ? options.find(ex => ex.id === chosenId)
+            ? (options.find(ex => ex.id === chosenId) || options[0])
             : options[0];
 
         return {
