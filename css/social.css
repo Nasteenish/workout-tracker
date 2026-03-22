@@ -740,6 +740,8 @@ video.checkin-photo {
 .photo-tag-container.show-tags .photo-tag-marker,
 .photo-tag-marker.show {
     opacity: 1;
+    pointer-events: auto;
+    cursor: pointer;
 }
 
 .checkin-photo-preview {

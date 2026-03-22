@@ -39,7 +39,7 @@ export const SocialUI = {
     // Update profile tab badge in DOM without full re-render
     _updateTabBadge() {
         var total = (this._tabBarMsgCount || 0) + (this._tabBarNotifCount || 0);
-        var profileTab = document.querySelector('.tab-item[href="#/profile"] .tab-icon');
+        var profileTab = document.querySelector('.tab-item[href="#/feed"] .tab-icon');
         if (!profileTab) return;
         var existing = profileTab.querySelector('.tab-badge');
         if (total > 0) {
@@ -61,8 +61,8 @@ export const SocialUI = {
         var profileBadge = msgCount + notifCount;
         var tabs = [
             { id: 'workouts', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="7" width="3" height="10" rx="1"/><rect x="5" y="4" width="3" height="16" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/><rect x="16" y="4" width="3" height="16" rx="1"/><rect x="20" y="7" width="3" height="10" rx="1"/></svg>', label: 'Трени', hash: '', badge: 0 },
-            { id: 'feed', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>', label: 'Лента', hash: '#/feed', badge: 0 },
-            { id: 'profile', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>', label: 'Профиль', hash: '#/profile', badge: profileBadge }
+            { id: 'feed', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>', label: 'Лента', hash: '#/feed', badge: profileBadge },
+            { id: 'profile', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>', label: 'Профиль', hash: '#/profile', badge: 0 }
         ];
         var html = '<nav class="tab-bar">';
         tabs.forEach(function(tab) {
