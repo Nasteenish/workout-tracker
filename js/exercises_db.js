@@ -377,7 +377,7 @@ export const EXERCISE_DB = [
     { nameRu: 'Складка (V-скручивание)', name: 'V Up', category: 'core' },
     { nameRu: 'Складка (в петлях TRX)', name: 'Jack Knife (Suspension)', category: 'core' },
     { nameRu: 'Скручивание', name: 'Crunch', category: 'core' },
-    { nameRu: 'Скручивание (в тренажёре)', name: 'Crunch (Machine)', category: 'core' },
+    { nameRu: 'Скручивание (в тренажёре)', name: 'Abdominal Crunch (Machine)', category: 'core' },
     { nameRu: 'Скручивание (с отягощением)', name: 'Crunch (Weighted)', category: 'core' },
     { nameRu: 'Скручивание на блоке', name: 'Cable Crunch', category: 'core' },
     { nameRu: 'Скручивание на наклонной скамье', name: 'Decline Crunch', category: 'core' },

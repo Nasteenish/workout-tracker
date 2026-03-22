@@ -332,7 +332,7 @@ export const EquipmentManager = {
         'skull crusher': 'tricep_extension',
         'triceps dip': 'tricep_dip', 'seated dip machine': 'chest_dip',
         // Core
-        'crunch': 'crunch', 'sit up': 'crunch',
+        'crunch': 'crunch', 'abdominal crunch': 'crunch', 'sit up': 'crunch',
         'torso rotation': 'torso_rotation', 'cable twist': 'torso_rotation',
         'cable core palloff press': 'cable_multi', 'cable pull through': 'cable_multi',
         'ab swing': 'crunch',
