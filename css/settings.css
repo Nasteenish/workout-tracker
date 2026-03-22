@@ -29,6 +29,28 @@
     letter-spacing: -0.3px;
 }
 
+/* Add day modal options */
+.add-day-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--bg-card);
+    border: var(--glass-border);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-xs);
+    min-height: var(--touch-min);
+    cursor: pointer;
+    color: var(--text-primary);
+}
+.add-day-option:active {
+    background: var(--bg-card-hover, rgba(255,255,255,0.08));
+}
+.add-day-ex-count {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
 /* Settings equipment list */
 .settings-eq-list {
     margin: var(--spacing-sm) 0;

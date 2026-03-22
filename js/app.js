@@ -17,7 +17,7 @@ import { AvatarCropper } from './cropper.js';
 import { Migrations } from './migrations.js';
 import { ACCOUNTS, BUILTIN_PROGRAMS } from './users.js';
 import { lockBodyScroll, unlockBodyScroll } from './scroll-lock.js';
-import { debounce, formatDateISO, validateProgram, esc, parseWeight, parseReps } from './utils.js';
+import { debounce, formatDateISO, validateProgram, esc, parseWeight, parseReps, deepClone } from './utils.js';
 import { getTotalDays, getProgressWeek } from './program-utils.js';
 import { WORKOUT, EQ, SETTINGS, read, readInt } from './data-attrs.js';
 import { AppState } from './app-state.js';
@@ -320,19 +320,96 @@ export const App = {
             alert('Все 7 дней заняты тренировками');
             return;
         }
-        if (!confirm('Убрать день отдыха и добавить тренировку?')) return;
+        this._showAddDayModal(p, numDays);
+    },
+
+    _showAddDayModal(p, numDays) {
+        var self = this;
+        var overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.id = 'add-day-modal';
+
+        var optionsHtml = '<div class="add-day-option" data-source="0"><span>Пустой день</span></div>';
+        for (var d = 1; d <= numDays; d++) {
+            var dt = p.dayTemplates[d];
+            var title = (dt && dt.titleRu) || ('День ' + d);
+            var exCount = (dt && dt.exerciseGroups) ? dt.exerciseGroups.length : 0;
+            optionsHtml += '<div class="add-day-option" data-source="' + d + '">' +
+                '<span>Скопировать: ' + esc(title) + '</span>' +
+                '<span class="add-day-ex-count">' + exCount + ' упр.</span>' +
+                '</div>';
+        }
+
+        overlay.innerHTML =
+            '<div class="equipment-modal" style="max-height:60vh">' +
+                '<div class="modal-header" style="display:flex;justify-content:space-between;align-items:center">' +
+                    '<h3>Добавить день</h3>' +
+                    '<button id="add-day-close"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>' +
+                '</div>' +
+                '<div class="eq-list">' + optionsHtml + '</div>' +
+            '</div>';
+
+        document.body.appendChild(overlay);
+        lockBodyScroll();
+
+        overlay.addEventListener('click', function(e) {
+            var closeBtn = e.target.closest('#add-day-close');
+            if (closeBtn || e.target === overlay) {
+                overlay.remove();
+                unlockBodyScroll();
+                return;
+            }
+            var opt = e.target.closest('.add-day-option');
+            if (!opt) return;
+            var source = parseInt(opt.getAttribute('data-source'), 10);
+            overlay.remove();
+            unlockBodyScroll();
+            self._commitAddDay(p, numDays, source);
+        });
+    },
+
+    _commitAddDay(p, numDays, sourceDayNum) {
         var newDayNum = numDays + 1;
+        var groups = [];
+        if (sourceDayNum > 0 && p.dayTemplates[sourceDayNum]) {
+            groups = this._cloneGroupsWithNewIds(p.dayTemplates[sourceDayNum].exerciseGroups || []);
+        }
         p.dayTemplates[newDayNum] = {
             title: 'Day ' + newDayNum,
             titleRu: 'День ' + newDayNum,
-            exerciseGroups: []
+            exerciseGroups: groups
         };
-        // Regenerate slots for new day count (always 7 total)
         var slots = UI._generateDefaultSlots(newDayNum, 7);
         Storage.saveWeekSlots(slots);
         Storage.saveProgram(p, false);
         this.invalidatePageCache();
         UI.renderWeek(this._currentWeek);
+    },
+
+    _cloneGroupsWithNewIds(groups) {
+        var cloned = deepClone(groups);
+        var ts = Date.now().toString(36);
+        var counter = 0;
+        function newId() {
+            counter++;
+            return 'ex_' + ts + '_' + counter + Math.random().toString(36).slice(2, 5);
+        }
+        for (var i = 0; i < cloned.length; i++) {
+            var g = cloned[i];
+            if (g.type === 'single' || g.type === 'warmup') {
+                if (g.exercise) g.exercise.id = newId();
+            } else if (g.type === 'superset' && g.exercises) {
+                for (var j = 0; j < g.exercises.length; j++) g.exercises[j].id = newId();
+            } else if (g.type === 'choose_one' && g.options) {
+                g.choiceKey = 'c_' + ts + '_' + counter;
+                for (var j = 0; j < g.options.length; j++) g.options[j].id = newId();
+            }
+            // Clear progression — it references week numbers from the source day
+            if (g.exercise && g.exercise.progression) g.exercise.progression = [];
+            if (g.exercises) g.exercises.forEach(function(e) { if (e.progression) e.progression = []; });
+            if (g.options) g.options.forEach(function(e) { if (e.progression) e.progression = []; });
+        }
+        return cloned;
     },
 
     _removeDayFromCustomProgram() {
