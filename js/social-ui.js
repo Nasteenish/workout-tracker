@@ -800,14 +800,15 @@ export const SocialUI = {
                         cTags.forEach(function(t) {
                             var x = (t.x != null ? t.x : 0.5) * 100;
                             var y = (t.y != null ? t.y : 0.5) * 100;
-                            html += '<div class="photo-tag-marker" style="left:' + x + '%;top:' + y + '%">@' + esc(t.username || t.display_name || '?') + '</div>';
+                            var uname = t.username || '';
+                            html += '<div class="photo-tag-marker" data-username="' + esc(uname) + '" style="left:' + x + '%;top:' + y + '%">@' + esc(uname || t.display_name || '?') + '</div>';
                         });
                     }
                     html += '</div>';
                 });
                 // Photo tags badge
                 if (cTags && cTags.length) {
-                    html += '<div class="photo-tag-badge">с ' + cTags.map(function(t) { return '@' + esc(t.username || t.display_name); }).join(', ') + '</div>';
+                    html += '<div class="photo-tag-badge">с ' + cTags.map(function(t) { return '<span class="photo-tag-badge-name" data-username="' + esc(t.username || '') + '">@' + esc(t.username || t.display_name) + '</span>'; }).join(', ') + '</div>';
                 }
                 html += '</div>';
             }
@@ -910,7 +911,8 @@ export const SocialUI = {
                         var p = t.profiles || t;
                         var x = (t.x != null ? t.x : (p.x != null ? p.x : 0.5)) * 100;
                         var y = (t.y != null ? t.y : (p.y != null ? p.y : 0.5)) * 100;
-                        html += '<div class="photo-tag-marker" style="left:' + x + '%;top:' + y + '%">@' + esc(p.username || p.display_name || '?') + '</div>';
+                        var uname = p.username || '';
+                        html += '<div class="photo-tag-marker" data-username="' + esc(uname) + '" style="left:' + x + '%;top:' + y + '%">@' + esc(uname || p.display_name || '?') + '</div>';
                     });
                 }
                 html += '</div>';
@@ -919,7 +921,7 @@ export const SocialUI = {
             if (photoTags && photoTags.length) {
                 html += '<div class="photo-tag-badge">с ' + photoTags.map(function(t) {
                     var p = t.profiles || t;
-                    return '@' + esc(p.username || p.display_name || '?');
+                    return '<span class="photo-tag-badge-name" data-username="' + esc(p.username || '') + '">@' + esc(p.username || p.display_name || '?') + '</span>';
                 }).join(', ') + '</div>';
             }
             html += '</div>';
@@ -1463,6 +1465,13 @@ export const SocialUI = {
 
     // ===== Delegated social click handlers =====
     handleClick(target) {
+        // Photo tag marker or badge name tap — navigate to tagged user's profile
+        var tagEl = target.closest('.photo-tag-marker') || target.closest('.photo-tag-badge-name');
+        if (tagEl && tagEl.dataset.username) {
+            location.hash = '#/u/' + encodeURIComponent(tagEl.dataset.username);
+            return true;
+        }
+
         // Photo tap — toggle tag markers
         var photoContainer = target.closest('.photo-tag-container');
         if (photoContainer) {
