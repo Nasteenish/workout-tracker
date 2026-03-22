@@ -242,10 +242,18 @@ export const InlineEditor = {
                 document.body.style.webkitUserSelect = 'none';
                 card.style.pointerEvents = 'none';
                 var rect = card.getBoundingClientRect();
-                touchOffsetY = startY - rect.top;
-                clone = card.cloneNode(true);
-                clone.style.cssText = 'position:fixed;left:' + rect.left + 'px;top:' + rect.top + 'px;width:' + rect.width + 'px;z-index:999;opacity:0.92;pointer-events:none;will-change:transform;transition:none;transform:scale(1.04);box-shadow:0 8px 24px rgba(0,0,0,0.35);border-radius:16px;';
+                touchOffsetY = 24; // center of compact ghost
+                // Compact ghost: just exercise name
+                var nameEl = card.querySelector('.exercise-name, h3');
+                var label = card.querySelector('.superset-label');
+                var exName = nameEl ? nameEl.textContent.trim() : (label ? 'Суперсет' : 'Упражнение');
+                clone = document.createElement('div');
+                clone.className = 'drag-ghost';
+                clone.innerHTML = '<span class="drag-ghost-icon">&#9776;</span><span class="drag-ghost-name">' + exName + '</span>';
+                clone.style.cssText = 'position:fixed;left:' + rect.left + 'px;top:' + (startY - 24) + 'px;width:' + rect.width + 'px;z-index:999;pointer-events:none;will-change:transform;';
                 document.body.appendChild(clone);
+                // Collapse original to thin bar
+                card._origHeight = card.offsetHeight;
                 card.classList.add('drag-placeholder');
                 cacheRects();
                 if (navigator.vibrate) navigator.vibrate(30);
