@@ -18,6 +18,14 @@ export const InlineEditor = {
 
     attachHandlers(container) {
         if (!container) return;
+        // Reset any stuck drag/swipe state from previous render
+        document.body.style.overflow = '';
+        document.body.style.touchAction = '';
+        document.body.style.userSelect = '';
+        document.body.style.webkitUserSelect = '';
+        document.body.classList.remove('modal-open');
+        document.body.style.top = '';
+        window._slotDragging = false;
         this._initSwipeDelete(container);
         this._initDragReorder(container);
     },
