@@ -717,10 +717,12 @@ export const UI = {
                 while (appEl.firstChild) appEl.removeChild(appEl.firstChild);
                 while (offscreen.firstChild) appEl.appendChild(offscreen.firstChild);
                 offscreen.remove();
+                // Clear no-animate so subsequent renders use normal path
+                appEl.classList.remove('no-animate');
                 if (timerRunning) WorkoutTimer.resume(AppState.currentWeek, AppState.currentDay);
                 RestTimer.reattach();
                 markCachedThumbs();
-                UI._trimEqBadges();
+                try { UI._trimEqBadges(); } catch(e) {}
                 _restoreFocus(focusInfo);
                 // Re-attach inline editor after async DOM swap (PTR path)
                 if (UI._onPTRSwap) UI._onPTRSwap();
