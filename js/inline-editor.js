@@ -209,6 +209,9 @@ export const InlineEditor = {
         function enterReorderMode() {
             reorderMode = true;
             window._slotDragging = true;
+            document.body.style.overflow = 'hidden';
+            document.body.style.userSelect = 'none';
+            document.body.style.webkitUserSelect = 'none';
             // Collapse all cards
             var allGroups = getGroupElements();
             for (var gi = 0; gi < allGroups.length; gi++) {
@@ -264,6 +267,7 @@ export const InlineEditor = {
             for (var i = 0; i < compacts.length; i++) compacts[i].classList.remove('drag-compact');
             if (doneBtn && doneBtn.parentNode) doneBtn.remove();
             doneBtn = null;
+            document.body.style.overflow = '';
             document.body.style.touchAction = '';
             document.body.style.userSelect = '';
             document.body.style.webkitUserSelect = '';
