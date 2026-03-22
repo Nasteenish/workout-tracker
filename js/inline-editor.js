@@ -188,7 +188,7 @@ export const InlineEditor = {
     _initDragReorder(container) {
         var self = this;
         var dragEl = null, startY = 0, startX = 0, longPressTimer = null;
-        var dragging = false, clone = null, touchOffsetY = 0;
+        var dragging = false;
         var cachedRects = [], swapCooldown = false, rafId = 0;
 
         function getGroupElements() {
@@ -208,10 +208,8 @@ export const InlineEditor = {
         function cleanup() {
             if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
             if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
-            if (clone) { clone.remove(); clone = null; }
             if (dragEl) {
-                dragEl.classList.remove('drag-placeholder');
-                dragEl.style.pointerEvents = '';
+                dragEl.classList.remove('drag-active');
             }
             // Restore all compact cards
             var compacts = container.querySelectorAll('.drag-compact');
@@ -251,27 +249,12 @@ export const InlineEditor = {
                 document.body.style.touchAction = 'none';
                 document.body.style.userSelect = 'none';
                 document.body.style.webkitUserSelect = 'none';
-                card.style.pointerEvents = 'none';
-                var rect = card.getBoundingClientRect();
-                touchOffsetY = startY - rect.top;
-                // Compact ghost: just exercise name
-                var nameEl = card.querySelector('.exercise-name, h3');
-                var label = card.querySelector('.superset-label');
-                var exName = nameEl ? nameEl.textContent.trim() : (label ? 'Суперсет' : 'Упражнение');
-                clone = document.createElement('div');
-                clone.className = 'drag-ghost';
-                clone.innerHTML = '<span class="drag-ghost-icon">&#9776;</span><span class="drag-ghost-name">' + exName + '</span>';
-                clone.style.cssText = 'position:fixed;left:' + rect.left + 'px;top:' + rect.top + 'px;width:' + rect.width + 'px;z-index:999;pointer-events:none;will-change:transform;';
-                document.body.appendChild(clone);
-                // Collapse all cards: dragged one to thin bar, others to compact names
+                // Collapse all cards to compact names; highlight the dragged one
                 var allGroups = getGroupElements();
                 for (var gi = 0; gi < allGroups.length; gi++) {
-                    if (allGroups[gi] === card) {
-                        card.classList.add('drag-placeholder');
-                    } else {
-                        allGroups[gi].classList.add('drag-compact');
-                    }
+                    allGroups[gi].classList.add('drag-compact');
                 }
+                card.classList.add('drag-active');
                 cacheRects();
                 if (navigator.vibrate) navigator.vibrate(30);
             }, 400);
@@ -290,10 +273,6 @@ export const InlineEditor = {
             if (!dragging) return;
             e.preventDefault();
             var touchY = e.touches[0].clientY;
-            if (rafId) cancelAnimationFrame(rafId);
-            rafId = requestAnimationFrame(function() {
-                if (clone) clone.style.top = (touchY - touchOffsetY) + 'px';
-            });
             if (swapCooldown) return;
             for (var i = 0; i < cachedRects.length; i++) {
                 var cr = cachedRects[i];
