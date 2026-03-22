@@ -26,6 +26,9 @@ export const InlineEditor = {
         document.body.classList.remove('modal-open');
         document.body.style.top = '';
         window._slotDragging = false;
+        // Remove any leftover reorder-mode buttons and touchmove blockers
+        var staleBtn = document.querySelector('.reorder-done-btn');
+        if (staleBtn) staleBtn.remove();
         this._initSwipeDelete(container);
         this._initDragReorder(container);
     },
@@ -206,12 +209,16 @@ export const InlineEditor = {
             }
         }
 
+        // Global touchmove blocker to prevent pull-to-refresh on iOS
+        function _blockTouchMove(e) { e.preventDefault(); }
+
         function enterReorderMode() {
             reorderMode = true;
             window._slotDragging = true;
             document.body.style.overflow = 'hidden';
             document.body.style.userSelect = 'none';
             document.body.style.webkitUserSelect = 'none';
+            document.addEventListener('touchmove', _blockTouchMove, { passive: false });
             // Collapse all cards
             var allGroups = getGroupElements();
             for (var gi = 0; gi < allGroups.length; gi++) {
@@ -267,6 +274,7 @@ export const InlineEditor = {
             for (var i = 0; i < compacts.length; i++) compacts[i].classList.remove('drag-compact');
             if (doneBtn && doneBtn.parentNode) doneBtn.remove();
             doneBtn = null;
+            document.removeEventListener('touchmove', _blockTouchMove);
             document.body.style.overflow = '';
             document.body.style.touchAction = '';
             document.body.style.userSelect = '';
@@ -323,8 +331,9 @@ export const InlineEditor = {
                 }
                 return;
             }
+            // Block all scrolling/pull-to-refresh while in reorder mode
+            if (reorderMode) e.preventDefault();
             if (!activeDrag) return;
-            e.preventDefault();
             var touchY = e.touches[0].clientY;
             if (swapCooldown) return;
             for (var i = 0; i < cachedRects.length; i++) {
