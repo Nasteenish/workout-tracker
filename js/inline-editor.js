@@ -559,7 +559,7 @@ export const InlineEditor = {
     _buildRepsPanel(exercise) {
         return '<div class="inline-sub-panel"><div class="inline-sub-title">Диапазон повторений</div>' +
             '<div class="inline-input-row">' +
-            '<input type="text" id="inline-reps-input" value="' + esc(exercise.reps || '8-12') + '" inputmode="numeric" autocomplete="off">' +
+            '<input type="text" id="inline-reps-input" value="' + esc(exercise.reps || '8-12') + '" inputmode="text" autocomplete="off">' +
             '</div>' +
             '<button class="inline-apply-btn" data-apply="reps">Применить</button></div>';
     },
