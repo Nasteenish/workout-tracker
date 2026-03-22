@@ -46,9 +46,19 @@
 .add-day-option:active {
     background: var(--bg-card-hover, rgba(255,255,255,0.08));
 }
+.add-day-copy-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.add-day-copy-label svg {
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
 .add-day-ex-count {
     font-size: var(--font-size-sm);
     color: var(--text-secondary);
+    flex-shrink: 0;
 }
 
 /* Settings equipment list */

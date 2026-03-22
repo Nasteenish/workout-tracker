@@ -329,13 +329,14 @@ export const App = {
         overlay.className = 'modal-overlay';
         overlay.id = 'add-day-modal';
 
+        var copyIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
         var optionsHtml = '<div class="add-day-option" data-source="0"><span>Пустой день</span></div>';
         for (var d = 1; d <= numDays; d++) {
             var dt = p.dayTemplates[d];
             var title = (dt && dt.titleRu) || ('День ' + d);
             var exCount = (dt && dt.exerciseGroups) ? dt.exerciseGroups.length : 0;
             optionsHtml += '<div class="add-day-option" data-source="' + d + '">' +
-                '<span>Скопировать: ' + esc(title) + '</span>' +
+                '<span class="add-day-copy-label">' + copyIcon + ' ' + esc(title) + '</span>' +
                 '<span class="add-day-ex-count">' + exCount + ' упр.</span>' +
                 '</div>';
         }
@@ -344,7 +345,7 @@ export const App = {
             '<div class="equipment-modal" style="max-height:60vh">' +
                 '<div class="modal-header" style="display:flex;justify-content:space-between;align-items:center">' +
                     '<h3>Добавить день</h3>' +
-                    '<button id="add-day-close"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>' +
+                    '<button class="sub-close-btn" id="add-day-close"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>' +
                 '</div>' +
                 '<div class="eq-list">' + optionsHtml + '</div>' +
             '</div>';
@@ -371,12 +372,17 @@ export const App = {
     _commitAddDay(p, numDays, sourceDayNum) {
         var newDayNum = numDays + 1;
         var groups = [];
+        var titleEn = 'Day ' + newDayNum;
+        var titleRu = 'День ' + newDayNum;
         if (sourceDayNum > 0 && p.dayTemplates[sourceDayNum]) {
-            groups = this._cloneGroupsWithNewIds(p.dayTemplates[sourceDayNum].exerciseGroups || []);
+            var src = p.dayTemplates[sourceDayNum];
+            groups = this._cloneGroupsWithNewIds(src.exerciseGroups || []);
+            titleEn = src.title || titleEn;
+            titleRu = src.titleRu || titleRu;
         }
         p.dayTemplates[newDayNum] = {
-            title: 'Day ' + newDayNum,
-            titleRu: 'День ' + newDayNum,
+            title: titleEn,
+            titleRu: titleRu,
             exerciseGroups: groups
         };
         var slots = UI._generateDefaultSlots(newDayNum, 7);
