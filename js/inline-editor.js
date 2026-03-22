@@ -220,6 +220,7 @@ export const InlineEditor = {
             window._slotDragging = true;
             window._reorderMode = true;
             document.body.style.overflow = 'hidden';
+            document.body.style.touchAction = 'none';
             document.body.style.userSelect = 'none';
             document.body.style.webkitUserSelect = 'none';
             // Collapse all cards
@@ -307,7 +308,6 @@ export const InlineEditor = {
                 dragEl = card;
                 activeDrag = true;
                 if (dragEl) dragEl.classList.add('drag-active');
-                document.body.style.touchAction = 'none';
                 cacheRects();
             } else {
                 // Not in reorder mode — long press to enter
@@ -318,7 +318,6 @@ export const InlineEditor = {
                     dragEl = card;
                     activeDrag = true;
                     card.classList.add('drag-active');
-                    document.body.style.touchAction = 'none';
                     cacheRects();
                 }, 400);
             }
@@ -366,7 +365,7 @@ export const InlineEditor = {
             if (dragEl) dragEl.classList.remove('drag-active');
             activeDrag = false;
             dragEl = null;
-            document.body.style.touchAction = '';
+            // Keep touchAction: 'none' — cleared only on exitReorderMode
         });
     },
 

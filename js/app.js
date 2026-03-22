@@ -751,7 +751,17 @@ export const App = {
             if (appEl && appEl.innerHTML) this._pageCache[prevHash] = appEl.innerHTML;
             this._scrollCache[prevHash] = window.scrollY;
         }
-        // Safety: clear any stuck swipe/pull styles that break position:fixed for tab bar
+        // Safety: clear any stuck reorder/drag/swipe styles
+        window._reorderMode = false;
+        window._slotDragging = false;
+        document.body.style.overflow = '';
+        document.body.style.touchAction = '';
+        document.body.style.userSelect = '';
+        document.body.style.webkitUserSelect = '';
+        document.body.classList.remove('modal-open');
+        document.body.style.top = '';
+        var staleBtn = document.querySelector('.reorder-done-btn');
+        if (staleBtn) staleBtn.remove();
         var routeAppEl = document.getElementById('app');
         routeAppEl.style.transform = '';
         routeAppEl.style.position = '';

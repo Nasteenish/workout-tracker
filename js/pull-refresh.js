@@ -42,8 +42,8 @@ export const PullRefresh = {
         };
 
         document.addEventListener('touchstart', (e) => {
-            // Ignore touches during slot drag-and-drop
-            if (window._slotDragging) {
+            // Ignore touches during slot drag-and-drop or reorder mode
+            if (window._slotDragging || window._reorderMode) {
                 pullLocked = true;
                 return;
             }
@@ -68,7 +68,7 @@ export const PullRefresh = {
         }, { passive: true });
 
         document.addEventListener('touchmove', (e) => {
-            if (pullLocked || window._slotDragging) return;
+            if (pullLocked || window._slotDragging || window._reorderMode) return;
             if (!pulling && !atBottom()) return;
             const dy = e.touches[0].clientY - startY;
             const dx = e.touches[0].clientX - startX_pull;
