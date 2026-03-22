@@ -488,6 +488,50 @@
     display: none !important;
 }
 
+/* Compact sibling cards during drag — show only exercise name */
+.drag-compact {
+    overflow: hidden !important;
+    padding: var(--spacing-sm) var(--spacing-md) !important;
+    transition: all 0.2s ease;
+}
+
+.drag-compact .set-row,
+.drag-compact .set-controls,
+.drag-compact .equipment-btn,
+.drag-compact .history-btn,
+.drag-compact .inline-menu-btn,
+.drag-compact .set-prev,
+.drag-compact .superset-arrow,
+.drag-compact .superset-label,
+.drag-compact .warmup-section,
+.drag-compact .btn-add-set,
+.drag-compact .btn-remove-set,
+.drag-compact [class*="set-"],
+.drag-compact .exercise-note {
+    display: none !important;
+}
+
+.drag-compact .exercise-name,
+.drag-compact h3 {
+    font-size: var(--font-size-sm) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.drag-compact .exercise-header {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.drag-compact .exercise-thumb {
+    width: 28px !important;
+    height: 28px !important;
+}
+
+.drag-compact .exercise-meta {
+    display: none !important;
+}
+
 /* Compact drag ghost */
 .drag-ghost {
     display: flex;

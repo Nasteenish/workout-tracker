@@ -205,6 +205,9 @@ export const InlineEditor = {
                 dragEl.classList.remove('drag-placeholder');
                 dragEl.style.pointerEvents = '';
             }
+            // Restore all compact cards
+            var compacts = container.querySelectorAll('.drag-compact');
+            for (var i = 0; i < compacts.length; i++) compacts[i].classList.remove('drag-compact');
             document.body.style.overflow = '';
             document.body.style.touchAction = '';
             document.body.style.userSelect = '';
@@ -252,9 +255,15 @@ export const InlineEditor = {
                 clone.innerHTML = '<span class="drag-ghost-icon">&#9776;</span><span class="drag-ghost-name">' + exName + '</span>';
                 clone.style.cssText = 'position:fixed;left:' + rect.left + 'px;top:' + (startY - 24) + 'px;width:' + rect.width + 'px;z-index:999;pointer-events:none;will-change:transform;';
                 document.body.appendChild(clone);
-                // Collapse original to thin bar
-                card._origHeight = card.offsetHeight;
-                card.classList.add('drag-placeholder');
+                // Collapse all cards: dragged one to thin bar, others to compact names
+                var allGroups = getGroupElements();
+                for (var gi = 0; gi < allGroups.length; gi++) {
+                    if (allGroups[gi] === card) {
+                        card.classList.add('drag-placeholder');
+                    } else {
+                        allGroups[gi].classList.add('drag-compact');
+                    }
+                }
                 cacheRects();
                 if (navigator.vibrate) navigator.vibrate(30);
             }, 400);
