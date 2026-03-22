@@ -751,7 +751,7 @@ export const App = {
             if (appEl && appEl.innerHTML) this._pageCache[prevHash] = appEl.innerHTML;
             this._scrollCache[prevHash] = window.scrollY;
         }
-        // If navigating away while in reorder mode — save order and redirect to day
+        // If navigating away while in reorder mode — stay on day, no flash
         if (window._reorderMode && this._currentWeek && this._currentDay) {
             var dayHash = '#/week/' + this._currentWeek + '/day/' + this._currentDay;
             // Clear reorder state
@@ -763,11 +763,16 @@ export const App = {
             document.body.style.webkitUserSelect = '';
             var staleBtn = document.querySelector('.reorder-done-btn');
             if (staleBtn) staleBtn.remove();
-            // Redirect to day view
-            if (location.hash !== dayHash) {
-                location.hash = dayHash;
-                return;
-            }
+            // Silently restore day hash and render directly — no navigation, no flash
+            history.replaceState(null, '', dayHash);
+            this._lastRouteHash = dayHash;
+            this._inDayView = true;
+            AppState.currentWeek = this._currentWeek;
+            AppState.currentDay = this._currentDay;
+            UI.renderDay(this._currentWeek, this._currentDay);
+            var daySlide = document.querySelector('.day-slide');
+            if (daySlide) InlineEditor.attachHandlers(daySlide);
+            return;
         }
         // Safety: clear any stuck reorder/drag/swipe styles
         window._reorderMode = false;
