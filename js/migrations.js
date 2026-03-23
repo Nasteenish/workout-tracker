@@ -384,6 +384,53 @@ export const Migrations = {
                     if (changed) localStorage.setItem(keys[ki], JSON.stringify(dd));
                 }
             }
+        },
+        // v7: Restore warmup group type for D3E0 if it was converted to single by _autoSave bug
+        {
+            key: '_fix_warmup_d3_v1',
+            fn: function() {
+                var keys = Object.keys(localStorage);
+                for (var ki = 0; ki < keys.length; ki++) {
+                    if (keys[ki].indexOf('wt_data_') !== 0) continue;
+                    var dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}');
+                    if (!dd.program || !dd.program.dayTemplates) continue;
+                    var changed = false;
+                    for (var dayNum in dd.program.dayTemplates) {
+                        var groups = dd.program.dayTemplates[dayNum].exerciseGroups;
+                        if (!groups) continue;
+                        for (var g = 0; g < groups.length; g++) {
+                            var gr = groups[g];
+                            if (gr.type === 'single' && gr.exercise && gr.exercise.id &&
+                                gr.exercise.id.match(/E0$/) && gr.exercise.note &&
+                                gr.exercise.note.toLowerCase().indexOf('warm') !== -1) {
+                                gr.type = 'warmup';
+                                gr.exercise.sets = [];
+                                changed = true;
+                            }
+                        }
+                    }
+                    // Also fix snapshots
+                    if (dd.program.templateSnapshots) {
+                        for (var d in dd.program.templateSnapshots) {
+                            var snaps = dd.program.templateSnapshots[d];
+                            for (var si = 0; si < snaps.length; si++) {
+                                var sg = snaps[si].groups;
+                                if (!sg) continue;
+                                for (var g = 0; g < sg.length; g++) {
+                                    if (sg[g].type === 'single' && sg[g].exercise && sg[g].exercise.id &&
+                                        sg[g].exercise.id.match(/E0$/) && sg[g].exercise.note &&
+                                        sg[g].exercise.note.toLowerCase().indexOf('warm') !== -1) {
+                                        sg[g].type = 'warmup';
+                                        sg[g].exercise.sets = [];
+                                        changed = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (changed) localStorage.setItem(keys[ki], JSON.stringify(dd));
+                }
+            }
         }
     ]
 };

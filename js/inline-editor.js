@@ -689,11 +689,29 @@ export const InlineEditor = {
 
     // --- Unilateral toggle ---
     _toggleUnilateral(exercise, groupIdx, subIdx, dayNum, ed, menuItem) {
-        exercise.unilateral = !exercise.unilateral;
+        var newVal = !exercise.unilateral;
+        exercise.unilateral = newVal;
         // Update the menu value text
         var valueEl = menuItem.querySelector('.inline-menu-value');
-        if (valueEl) valueEl.textContent = exercise.unilateral ? 'вкл' : 'выкл';
-        this._onAutoSave(ed);
+        if (valueEl) valueEl.textContent = newVal ? 'вкл' : 'выкл';
+
+        // Save directly to program template (bypass _autoSave to avoid warmup→single conversion)
+        var p = Storage.getProgram();
+        if (p && p.dayTemplates[dayNum]) {
+            var group = p.dayTemplates[dayNum].exerciseGroups[groupIdx];
+            if (group) {
+                var target = null;
+                if (group.type === 'single' || group.type === 'warmup') target = group.exercise;
+                else if (group.type === 'superset' && group.exercises) target = group.exercises[subIdx];
+                else if (group.type === 'choose_one' && group.options) target = group.options[subIdx];
+                if (target) {
+                    if (newVal) target.unilateral = true;
+                    else delete target.unilateral;
+                    Storage.saveProgram(p, false);
+                }
+            }
+        }
+
         this._onInvalidateCache();
         this._closeSheet();
         this._onRenderDay();

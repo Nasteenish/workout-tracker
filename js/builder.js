@@ -344,7 +344,7 @@ export const Builder = {
         for (var i = 0; i < dayTemplate.exerciseGroups.length; i++) {
             var group = dayTemplate.exerciseGroups[i];
             if (group.type === 'single' || group.type === 'warmup') {
-                items.push({ type: 'single', exercise: this._extractExForEdit(group.exercise, dayNum) });
+                items.push({ type: group.type, exercise: this._extractExForEdit(group.exercise, dayNum) });
             } else if (group.type === 'superset' && group.exercises) {
                 var exs = [];
                 for (var j = 0; j < group.exercises.length; j++) {
@@ -383,7 +383,7 @@ export const Builder = {
 
     _extractExForEdit(e, dayNum) {
         if (!e) return { nameRu: '?', name: '?', reps: '8-12', rest: 120, sets: [], _id: '', note: '', noteRu: '', progression: [] };
-        return {
+        var result = {
             nameRu: e.nameRu || e.name, name: e.name || e.nameRu,
             reps: e.reps, rest: e.rest,
             note: e.note || '', noteRu: e.noteRu || '',
@@ -391,6 +391,8 @@ export const Builder = {
             _id: e.id,
             progression: e.progression ? JSON.parse(JSON.stringify(e.progression)) : this._extractProgression(dayNum, e.id)
         };
+        if (e.unilateral) result.unilateral = true;
+        return result;
     },
 
     _extractProgression(dayNum, exerciseId) {
@@ -985,8 +987,8 @@ export const Builder = {
         var groups = [];
         for (var i = 0; i < ed.items.length; i++) {
             var item = ed.items[i];
-            if (item.type === 'single') {
-                groups.push({ type: 'single', exercise: this._serializeExercise(item.exercise, ed.dayNum, i, -1) });
+            if (item.type === 'single' || item.type === 'warmup') {
+                groups.push({ type: item.type, exercise: this._serializeExercise(item.exercise, ed.dayNum, i, -1) });
             } else if (item.type === 'superset') {
                 var exs = [];
                 for (var j = 0; j < item.exercises.length; j++) {
