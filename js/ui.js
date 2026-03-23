@@ -875,8 +875,8 @@ export const UI = {
         return {
             exId: ex.id, setIdx, set,
             isCompleted: !!(log && log.completed),
-            weightVal: log ? log.weight : '',
-            repsVal: log ? log.reps : '',
+            weightVal: log && log.weight ? log.weight : '',
+            repsVal: log && log.reps ? log.reps : '',
             unitLabel,
             prev, prevUnitLabel,
             weightSegCount, segCount, segs
