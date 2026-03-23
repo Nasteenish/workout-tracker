@@ -986,6 +986,12 @@ export const App = {
 
         // Social routes (need user, no program required)
         var _bs = this._isBackSwipe;
+        // Restore cached page + scroll for social screens (back button or back swipe)
+        if (this._pageCache[hash] && (hash === '#/feed' || hash === '#/profile' || hash === '#/discover')) {
+            document.getElementById('app').innerHTML = this._pageCache[hash];
+            this._restoreScroll();
+            return;
+        }
         if (hash === '#/feed') { SocialUI.renderFeed(_bs); return; }
         if (hash === '#/profile') { SocialUI.renderProfile(null, _bs); return; }
         if (hash === '#/profile/edit') { SocialUI.renderProfileEdit(); return; }
