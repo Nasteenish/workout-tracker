@@ -289,12 +289,26 @@ export const SwipeNav = {
                                 app._isBackSwipe = false;
                                 appEl.style.opacity = '0';
                                 unlockScroll();
-                                if (app._pendingSwipeCleanup) {
-                                    app._pendingSwipeCleanup();
-                                    app._pendingSwipeCleanup = null;
-                                }
+                                var fbCleanup = app._pendingSwipeCleanup;
+                                app._pendingSwipeCleanup = null;
                                 app.route(true);
-                                appEl.style.opacity = '';
+                                var pendingImgs = Array.from(appEl.querySelectorAll('img')).filter(function(img) { return !img.complete; });
+                                if (pendingImgs.length > 0 && fbCleanup) {
+                                    var done = false;
+                                    var reveal = function() {
+                                        if (done) return;
+                                        done = true;
+                                        appEl.style.opacity = '';
+                                        fbCleanup();
+                                    };
+                                    Promise.all(pendingImgs.map(function(img) {
+                                        return img.decode().catch(function() {});
+                                    })).then(reveal);
+                                    setTimeout(reveal, 300);
+                                } else {
+                                    appEl.style.opacity = '';
+                                    if (fbCleanup) fbCleanup();
+                                }
                             }
                         }, 100);
                         history.back();

@@ -180,8 +180,24 @@ export const App = {
                 var cleanup = this._pendingSwipeCleanup;
                 this._pendingSwipeCleanup = null;
                 this.route(true);
-                appEl.style.opacity = '';
-                if (cleanup) cleanup();
+                // Wait for images to decode before revealing (companion masks the delay)
+                var pendingImgs = Array.from(appEl.querySelectorAll('img')).filter(function(img) { return !img.complete; });
+                if (pendingImgs.length > 0 && cleanup) {
+                    var done = false;
+                    var reveal = function() {
+                        if (done) return;
+                        done = true;
+                        appEl.style.opacity = '';
+                        cleanup();
+                    };
+                    Promise.all(pendingImgs.map(function(img) {
+                        return img.decode().catch(function() {});
+                    })).then(reveal);
+                    setTimeout(reveal, 300);
+                } else {
+                    appEl.style.opacity = '';
+                    if (cleanup) cleanup();
+                }
                 return;
             }
             this.route();
