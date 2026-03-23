@@ -1093,6 +1093,7 @@ export const Builder = {
             noteRu: ex.noteRu || ''
         };
         if (ex.progression && ex.progression.length > 0) result.progression = ex.progression;
+        if (ex.unilateral) result.unilateral = true;
         return result;
     },
 
@@ -1333,7 +1334,8 @@ export const Builder = {
         var html = '';
         for (var i = 0; i < filtered.length; i++) {
             var ex = filtered[i];
-            html += `<div class="picker-item" ${attr(WORKOUT.EX_NAME_RU, esc(ex.nameRu))} ${attr(WORKOUT.EX_NAME, esc(ex.name))}>${exThumbHtml(ex.name)}${esc(exName(ex))}</div>`;
+            var uniHint = ex.unilateral ? ' <span class="uni-badge">L/R</span>' : '';
+            html += `<div class="picker-item" ${attr(WORKOUT.EX_NAME_RU, esc(ex.nameRu))} ${attr(WORKOUT.EX_NAME, esc(ex.name))}>${exThumbHtml(ex.name)}${esc(exName(ex))}${uniHint}</div>`;
         }
 
         // Add shared exercises (filter out duplicates with EXERCISE_DB)
@@ -1448,7 +1450,9 @@ export const Builder = {
     _configExercise: null,
 
     showExerciseConfig(nameRu, name) {
-        this._configExercise = { nameRu: nameRu, name: name, setsCount: 3, reps: '8-12', rest: 120 };
+        var dbEntry = EXERCISE_DB.find(function(e) { return e.name === name; });
+        var isUni = dbEntry && dbEntry.unilateral;
+        this._configExercise = { nameRu: nameRu, name: name, setsCount: 3, reps: '8-12', rest: 120, unilateral: !!isUni };
 
         var overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
@@ -1467,6 +1471,11 @@ export const Builder = {
                         <span class="config-val" id="cfg-sets-val">3</span>
                         <button class="config-step" id="cfg-sets-plus">+</button>
                     </div>
+                </div>
+
+                <div class="config-field">
+                    <label>Поочерёдно L/R</label>
+                    <label class="config-toggle"><input type="checkbox" id="cfg-unilateral" ${isUni ? 'checked' : ''}><span class="config-toggle-track"></span></label>
                 </div>
 
                 <button class="btn-primary" id="cfg-confirm" style="margin-top:var(--spacing-md)">\u0414\u041E\u0411\u0410\u0412\u0418\u0422\u042C</button>
@@ -1516,12 +1525,15 @@ export const Builder = {
         var setsVal = document.getElementById('cfg-sets-val');
         var numSets = parseInt(setsVal ? setsVal.textContent : '3') || 3;
 
+        var uniCheck = document.getElementById('cfg-unilateral');
+        var isUni = uniCheck && uniCheck.checked;
+
         // Inline editor callback — delegate to caller instead of editing Builder state
         if (this._inlineConfirmCb) {
             var cb = this._inlineConfirmCb;
             this._inlineConfirmCb = null;
             this._closeExerciseConfig();
-            cb({ nameRu: cfg.nameRu, name: cfg.name, numSets: numSets });
+            cb({ nameRu: cfg.nameRu, name: cfg.name, numSets: numSets, unilateral: isUni });
             return;
         }
 
@@ -1531,19 +1543,18 @@ export const Builder = {
         for (var s = 0; s < numSets; s++) {
             setsArr.push({ type: 'H', rpe: '8', techniques: [] });
         }
-        this._editingDay.items.push({
-            type: 'single',
-            exercise: {
-                _id: 'ex_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-                nameRu: cfg.nameRu,
-                name: cfg.name,
-                sets: setsArr,
-                reps: '8-12',
-                rest: 120,
-                note: '',
-                noteRu: ''
-            }
-        });
+        var newEx = {
+            _id: 'ex_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+            nameRu: cfg.nameRu,
+            name: cfg.name,
+            sets: setsArr,
+            reps: '8-12',
+            rest: 120,
+            note: '',
+            noteRu: ''
+        };
+        if (isUni) newEx.unilateral = true;
+        this._editingDay.items.push({ type: 'single', exercise: newEx });
 
         this._closeExerciseConfig();
         this._autoSave();

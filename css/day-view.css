@@ -281,6 +281,17 @@
 .tech-badge.tech-REST_PAUSE { background: var(--tech-rp); }
 .tech-badge.tech-MP { background: var(--tech-mp); color: #000; }
 
+/* Unilateral badge */
+.uni-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: white;
+    flex-shrink: 0;
+}
+
 /* Input row */
 .set-inputs {
     display: flex;
