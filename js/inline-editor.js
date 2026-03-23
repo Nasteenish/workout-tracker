@@ -426,10 +426,6 @@ export const InlineEditor = {
         // Techniques
         menuItems += '<div class="inline-menu-item" data-action="techniques"><div class="inline-menu-icon">' + _svgTech() + '</div><div class="inline-menu-label">Техники</div><div class="inline-menu-value">' + _techSummary(exercise) + '</div></div>';
 
-        // Unilateral toggle
-        var uniLabel = exercise.unilateral ? 'вкл' : 'выкл';
-        menuItems += '<div class="inline-menu-item" data-action="unilateral"><div class="inline-menu-icon">' + _svgUni() + '</div><div class="inline-menu-label">Поочерёдно L/R</div><div class="inline-menu-value">' + uniLabel + '</div></div>';
-
         // Reps
         menuItems += '<div class="inline-menu-item" data-action="reps"><div class="inline-menu-icon">' + _svgReps() + '</div><div class="inline-menu-label">Повторения</div><div class="inline-menu-value">' + esc(exercise.reps || '') + '</div></div>';
 
@@ -502,10 +498,6 @@ export const InlineEditor = {
 
             case 'split-superset':
                 this._splitSuperset(groupIdx, dayNum);
-                break;
-
-            case 'unilateral':
-                this._toggleUnilateral(exercise, groupIdx, subIdx, dayNum, ed, menuItem);
                 break;
 
             case 'replace':
@@ -687,36 +679,6 @@ export const InlineEditor = {
         });
     },
 
-    // --- Unilateral toggle ---
-    _toggleUnilateral(exercise, groupIdx, subIdx, dayNum, ed, menuItem) {
-        var newVal = !exercise.unilateral;
-        exercise.unilateral = newVal;
-        // Update the menu value text
-        var valueEl = menuItem.querySelector('.inline-menu-value');
-        if (valueEl) valueEl.textContent = newVal ? 'вкл' : 'выкл';
-
-        // Save directly to program template (bypass _autoSave to avoid warmup→single conversion)
-        var p = Storage.getProgram();
-        if (p && p.dayTemplates[dayNum]) {
-            var group = p.dayTemplates[dayNum].exerciseGroups[groupIdx];
-            if (group) {
-                var target = null;
-                if (group.type === 'single' || group.type === 'warmup') target = group.exercise;
-                else if (group.type === 'superset' && group.exercises) target = group.exercises[subIdx];
-                else if (group.type === 'choose_one' && group.options) target = group.options[subIdx];
-                if (target) {
-                    if (newVal) target.unilateral = true;
-                    else delete target.unilateral;
-                    Storage.saveProgram(p, false);
-                }
-            }
-        }
-
-        this._onInvalidateCache();
-        this._closeSheet();
-        this._onRenderDay();
-    },
-
     // --- Merge / Split ---
     _mergeWithNext(groupIdx, dayNum) {
         var ed = this._onBuildVM(dayNum);
@@ -786,7 +748,6 @@ export const InlineEditor = {
                 sets: [],
                 progression: []
             };
-            if (result.unilateral) newEx.unilateral = true;
 
             // Copy sets config from old exercise if available
             var oldEx = null;
@@ -832,19 +793,20 @@ export const InlineEditor = {
                 setsArr.push({ type: 'H', rpe: '8', techniques: [] });
             }
 
-            var addEx = {
-                _id: 'ex_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-                nameRu: result.nameRu,
-                name: result.name,
-                sets: setsArr,
-                reps: '8-12',
-                rest: 120,
-                note: '',
-                noteRu: '',
-                progression: []
-            };
-            if (result.unilateral) addEx.unilateral = true;
-            ed.items.push({ type: 'single', exercise: addEx });
+            ed.items.push({
+                type: 'single',
+                exercise: {
+                    _id: 'ex_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+                    nameRu: result.nameRu,
+                    name: result.name,
+                    sets: setsArr,
+                    reps: '8-12',
+                    rest: 120,
+                    note: '',
+                    noteRu: '',
+                    progression: []
+                }
+            });
 
             self._onAutoSave(ed);
             self._onInvalidateCache();
@@ -937,9 +899,6 @@ export const InlineEditor = {
 };
 
 // ===== SVG icons for menu items =====
-function _svgUni() {
-    return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>';
-}
 function _svgTech() {
     return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>';
 }

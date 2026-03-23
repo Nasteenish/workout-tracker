@@ -830,7 +830,6 @@ export const UI = {
                         <div class="${nameClass}" ${nameAttrs}>${nameContent}</div>
                     </div>
                     <div class="exercise-meta">
-                        ${ex.unilateral ? '<span class="uni-badge">L/R</span>' : ''}
                         <span>${ex.reps} reps</span>
                         ${restText ? `<span>${restText}</span>` : ''}
                         ${menuBtn}
