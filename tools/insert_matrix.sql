@@ -1,6 +1,6 @@
 -- Matrix Fitness equipment catalog
 -- Created 2026-03-23
--- 81 records: Ultra (19), Versa Singles (14), Versa Dual (6), Aura (18), Magnum PL (16), Varsity PL (6), Multi-Station (2)
+-- 96 records: Ultra (19), Versa Singles (14), Versa Dual (6), Aura (18), Magnum PL (17), Magnum Benches (9), Varsity PL (6), Cable/Functional (7)
 
 INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_type, exercise_type, image_url) VALUES
 -- Matrix Ultra Series (G7-S) — Premium Selectorized, 19 machines
@@ -88,9 +88,26 @@ INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_t
 (876, 'Matrix', 'VY-402', 'Varsity Prone Leg Curl', 'legs', 'plate-loaded', 'lying_leg_curl', NULL),
 (877, 'Matrix', 'VY-431', 'Varsity Biceps Curl', 'arms', 'plate-loaded', 'bicep_curl', NULL),
 (878, 'Matrix', 'VY-432', 'Varsity Triceps Extension', 'arms', 'plate-loaded', 'tricep_extension', NULL),
--- Matrix Multi-Station / Cable — 2 machines
+-- Matrix Magnum Plate-Loaded (additional)
+(881, 'Matrix', 'MG-405', 'Magnum Reverse Back Extension', 'back', 'plate-loaded', 'back_extension', NULL),
+(882, 'Matrix', 'MG-A417', 'Magnum Incline Bench Press', 'chest', 'plate-loaded', 'incline_press', NULL),
+-- Matrix Cable / Functional — 7 machines
 (879, 'Matrix', 'G3-MSFT3', 'Aura Functional Trainer', 'full_body', 'cable', 'cable_multi', NULL),
-(880, 'Matrix', 'VS-VFT', 'Versa Functional Trainer', 'full_body', 'cable', 'cable_multi', NULL)
+(880, 'Matrix', 'VS-VFT', 'Versa Functional Trainer', 'full_body', 'cable', 'cable_multi', NULL),
+(883, 'Matrix', 'G3-MS20', 'Aura Adjustable Cable Crossover', 'full_body', 'cable', 'cable_multi', NULL),
+(884, 'Matrix', 'G3-MS50', 'Aura 4-Stack Multi-Station', 'full_body', 'cable', 'cable_multi', NULL),
+(885, 'Matrix', 'G3-MS80', 'Aura 8-Stack Multi-Station', 'full_body', 'cable', 'cable_multi', NULL),
+(886, 'Matrix', 'VY-6044', 'Varsity Functional Trainer 2:1', 'full_body', 'cable', 'cable_multi', NULL),
+(887, 'Matrix', 'VY-6047', 'Varsity Functional Trainer 4:1', 'full_body', 'cable', 'cable_multi', NULL),
+-- Matrix Magnum Benches (MG-A series) — 8 machines
+(888, 'Matrix', 'MG-A59', 'Magnum Flat Bench', 'chest', 'bench', 'bench', NULL),
+(889, 'Matrix', 'MG-A62', 'Magnum Preacher Curl', 'arms', 'bench', 'preacher_curl', NULL),
+(890, 'Matrix', 'MG-A77', 'Magnum Adjustable Ab Bench', 'core', 'bench', 'crunch', NULL),
+(891, 'Matrix', 'MG-A78', 'Magnum Olympic Flat Bench', 'chest', 'bench', 'bench', NULL),
+(892, 'Matrix', 'MG-A85', 'Magnum Multi-Adjustable Bench', 'chest', 'bench', 'bench', NULL),
+(893, 'Matrix', 'MG-A86', 'Magnum Multi-Adjustable Bench w/Decline', 'chest', 'bench', 'decline_press', NULL),
+(894, 'Matrix', 'MG-A93', 'Magnum Back Extension Bench', 'back', 'bench', 'back_extension', NULL),
+(895, 'Matrix', 'MG-A695', 'Magnum Flat-to-Incline Bench', 'chest', 'bench', 'bench', NULL)
 ON CONFLICT (id) DO UPDATE SET
   brand = EXCLUDED.brand,
   model = EXCLUDED.model,
