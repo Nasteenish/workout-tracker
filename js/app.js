@@ -987,7 +987,9 @@ export const App = {
         // Social routes (need user, no program required)
         var _bs = this._isBackSwipe;
         // Restore cached page + scroll for social screens (back button or back swipe)
-        if (this._pageCache[hash] && (hash === '#/feed' || hash === '#/profile' || hash === '#/discover')) {
+        if (this._pageCache[hash] && (hash === '#/feed' || hash === '#/profile' || hash === '#/discover' || hash === '#/messages' || hash === '#/notifications')) {
+            // Cleanup subscriptions when returning to messages list
+            if (hash === '#/messages') { Social.unsubscribeMessages(); if (SocialUI._chatViewportCleanup) { SocialUI._chatViewportCleanup(); SocialUI._chatViewportCleanup = null; } }
             document.getElementById('app').innerHTML = this._pageCache[hash];
             this._restoreScroll();
             return;
