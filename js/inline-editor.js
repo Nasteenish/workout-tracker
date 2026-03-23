@@ -695,6 +695,8 @@ export const InlineEditor = {
         if (valueEl) valueEl.textContent = exercise.unilateral ? 'вкл' : 'выкл';
         this._onAutoSave(ed);
         this._onInvalidateCache();
+        this._closeSheet();
+        this._onRenderDay();
     },
 
     // --- Merge / Split ---
