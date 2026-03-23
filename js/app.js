@@ -688,7 +688,7 @@ export const App = {
         if (existing) existing.remove();
         var banner = document.createElement('div');
         banner.id = 'sync-warning';
-        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff6b35;color:#fff;padding:10px 16px;font-size:13px;text-align:center;cursor:pointer;';
+        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff6b35;color:#fff;padding:10px 16px;padding-top:calc(env(safe-area-inset-top, 0px) + 10px);font-size:13px;text-align:center;cursor:pointer;';
         banner.textContent = msg;
         banner.onclick = function() {
             banner.remove();
@@ -705,6 +705,11 @@ export const App = {
 
     logout() {
         this._hideSyncWarning();
+        // Clear sync state to prevent pending timers from re-showing the banner
+        clearTimeout(SupaSync._saveTimer);
+        SupaSync._currentSupaUserId = null;
+        SupaSync._currentStorageKey = null;
+        SupaSync._pushFailCount = 0;
         Storage.logout();
         Storage.setProgram(null);
         this._pendingMigration = null;

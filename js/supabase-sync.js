@@ -77,6 +77,30 @@ export const SupaSync = {
             updated_at: new Date().toISOString()
         }, { onConflict: 'user_id' });
         if (result.error) {
+            // Try refreshing session once before giving up
+            if (!this._retrying) {
+                this._retrying = true;
+                try {
+                    var refresh = await supa.auth.refreshSession();
+                    if (refresh.data && refresh.data.session) {
+                        // Session refreshed — retry the push
+                        var retry = await supa.from('user_data').upsert({
+                            user_id: userId,
+                            login: login || '',
+                            data: dataBlob,
+                            updated_at: new Date().toISOString()
+                        }, { onConflict: 'user_id' });
+                        this._retrying = false;
+                        if (!retry.error) {
+                            this._pushFailCount = 0;
+                            return true;
+                        }
+                    }
+                } catch (e) {
+                    console.error('Session refresh failed:', e);
+                }
+                this._retrying = false;
+            }
             console.error('Supabase push error:', result.error.message);
             this._pushFailCount = (this._pushFailCount || 0) + 1;
             // Show warning after 2 consecutive failures
