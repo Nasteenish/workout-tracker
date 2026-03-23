@@ -905,6 +905,8 @@ export const App = {
         routeAppEl.style.transform = '';
         routeAppEl.style.position = '';
         routeAppEl.style.top = '';
+        routeAppEl.style.bottom = '';
+        routeAppEl.style.minHeight = '';
         routeAppEl.style.left = '';
         routeAppEl.style.right = '';
         routeAppEl.classList.remove('swiping-back');

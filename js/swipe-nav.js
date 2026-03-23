@@ -77,7 +77,7 @@ export const SwipeNav = {
         const unlockScroll = () => { document.documentElement.style.overflow = ''; document.body.style.overflow = ''; };
         const resetApp = (appEl) => {
             appEl.style.transition = 'none'; appEl.style.transform = '';
-            appEl.style.position = ''; appEl.style.top = ''; appEl.style.left = ''; appEl.style.right = '';
+            appEl.style.position = ''; appEl.style.top = ''; appEl.style.bottom = ''; appEl.style.minHeight = ''; appEl.style.left = ''; appEl.style.right = '';
             appEl.classList.remove('swiping-back');
         };
 
@@ -186,6 +186,8 @@ export const SwipeNav = {
                     appEl.style.position = 'fixed';
                     var bodyPad = parseInt(getComputedStyle(document.body).paddingTop) || 0;
                     appEl.style.top = `${bodyPad - savedScrollY}px`;
+                    appEl.style.bottom = '0';
+                    appEl.style.minHeight = '0';
                     appEl.style.left = '0'; appEl.style.right = '0';
                     appEl.classList.add('swiping-back');
                     appEl.style.transition = 'none';
