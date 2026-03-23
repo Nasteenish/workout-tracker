@@ -1,5 +1,6 @@
 /* ===== Rest Timer ===== */
 import { Storage } from './storage.js';
+import { AppState } from './app-state.js';
 
 export const RestTimer = {
     _interval: null,
@@ -12,6 +13,8 @@ export const RestTimer = {
     _bar: null,
     _targetExId: null,
     _targetSetIdx: null,
+    _targetWeek: null,
+    _targetDay: null,
 
     init() {
         const settings = Storage.getSettings();
@@ -105,6 +108,9 @@ export const RestTimer = {
         this._pausedAt = null;
         this._remaining = this._defaultDuration;
         this._endTime = Date.now() + this._remaining * 1000;
+
+        // Prime audio while we have user gesture context (critical for iOS)
+        this._unlockAudio();
         this._updateDisplay();
         this._updatePauseBtn();
 
@@ -239,7 +245,19 @@ export const RestTimer = {
             if (this._audioCtx.state === 'suspended') {
                 this._audioCtx.resume();
             }
-            // Do NOT play the beep for priming — iOS ignores volume=0
+        } catch(e) {}
+        // Prime HTML Audio element so it can play without user gesture later
+        try {
+            var audio = this._ensureAudioEl();
+            if (!this._audioElPrimed) {
+                audio.volume = 0.01;
+                audio.play().then(() => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                    audio.volume = 1;
+                    this._audioElPrimed = true;
+                }).catch(() => {});
+            }
         } catch(e) {}
     },
 
@@ -283,6 +301,7 @@ export const RestTimer = {
     },
 
     _audioEl: null,
+    _audioElPrimed: false,
 
     _ensureAudioEl() {
         if (this._audioEl) return this._audioEl;
@@ -309,7 +328,7 @@ export const RestTimer = {
     },
 
     _playBeep(reason) {
-        var played = false;
+        var webAudioOk = false;
         // Try Web Audio API first
         try {
             if (!this._audioCtx) {
@@ -318,7 +337,6 @@ export const RestTimer = {
             var ctx = this._audioCtx;
 
             var doPlay = () => {
-                played = true;
                 [[880, 0, 0.5], [1100, 0.35, 0.6], [1320, 0.65, 0.8]].forEach(([freq, start, end]) => {
                     var osc = ctx.createOscillator();
                     var gain = ctx.createGain();
@@ -334,13 +352,15 @@ export const RestTimer = {
             };
 
             if (ctx.state === 'suspended') {
+                // Async resume — also fire HTML Audio fallback below
                 ctx.resume().then(doPlay).catch(() => {});
             } else {
                 doPlay();
+                webAudioOk = true;
             }
         } catch(e) {}
-        // Fallback: HTML Audio element ONLY if Web Audio didn't play
-        if (!played) {
+        // Fallback: HTML Audio element if Web Audio was suspended or failed
+        if (!webAudioOk) {
             try {
                 var audio = this._ensureAudioEl();
                 audio.currentTime = 0;
