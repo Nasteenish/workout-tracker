@@ -942,22 +942,28 @@ export const Storage = {
         var p = this._program;
         var totalWeeks = p ? p.totalWeeks : 12;
         var totalDays = p ? Object.keys(p.dayTemplates).length : 5;
+        var sibIds = this._getSiblingIds(exerciseId);
+        var allIds = [exerciseId].concat(sibIds);
         for (var week = 1; week <= totalWeeks; week++) {
             var w = String(week);
             if (!data.log[w]) continue;
             for (var day = 1; day <= totalDays; day++) {
                 var d = String(day);
-                if (!data.log[w][d] || !data.log[w][d][exerciseId]) continue;
+                if (!data.log[w] || !data.log[w][d]) continue;
                 var sets = [];
-                for (var [setIdx, setData] of Object.entries(data.log[w][d][exerciseId])) {
-                    if (setData.completed) {
-                        sets.push({
-                            setIdx: parseInt(setIdx),
-                            weight: setData.weight,
-                            reps: setData.reps,
-                            timestamp: setData.timestamp,
-                            equipmentId: setData.equipmentId || null
-                        });
+                for (var ai = 0; ai < allIds.length; ai++) {
+                    var id = allIds[ai];
+                    if (!data.log[w][d][id]) continue;
+                    for (var [setIdx, setData] of Object.entries(data.log[w][d][id])) {
+                        if (setData.completed) {
+                            sets.push({
+                                setIdx: parseInt(setIdx),
+                                weight: setData.weight,
+                                reps: setData.reps,
+                                timestamp: setData.timestamp,
+                                equipmentId: setData.equipmentId || null
+                            });
+                        }
                     }
                 }
                 if (sets.length > 0) {
