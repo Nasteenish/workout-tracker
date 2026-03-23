@@ -59,6 +59,30 @@ export const App = {
             if (h) self._scrollCache[h] = window.scrollY;
         }, { passive: true });
 
+        // iOS PWA: fix viewport/safe-area after returning from background
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                // Force Safari to recalculate layout (safe-area-insets can get lost)
+                document.body.style.display = 'none';
+                document.body.offsetHeight;
+                document.body.style.display = '';
+                // Restore scroll position (iOS may reset it)
+                var h = self._lastRouteHash;
+                if (h && self._scrollCache[h]) {
+                    requestAnimationFrame(function() {
+                        window.scrollTo(0, self._scrollCache[h]);
+                    });
+                }
+            }
+        });
+        window.addEventListener('pageshow', function(e) {
+            if (e.persisted) {
+                document.body.style.display = 'none';
+                document.body.offsetHeight;
+                document.body.style.display = '';
+            }
+        });
+
         // Wire storage callbacks before any data loading
         Storage._migrateFn = (data) => Migrations.migrateExerciseNames(data);
 
