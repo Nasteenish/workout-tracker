@@ -117,6 +117,8 @@ export const RestTimer = {
         // Save target row identity for reattach after re-render
         this._targetExId = targetRow ? targetRow.getAttribute('data-exercise') : null;
         this._targetSetIdx = targetRow ? targetRow.getAttribute('data-set') : null;
+        this._targetWeek = AppState.currentWeek;
+        this._targetDay = AppState.currentDay;
 
         // Ensure notification permission for background alerts
         if ('Notification' in window && Notification.permission === 'default') {
@@ -185,6 +187,12 @@ export const RestTimer = {
         if (!bar) return;
         // Timer actively running or paused — re-insert at correct position
         if (this._interval) {
+            // Only show timer on the same week/day where it was started
+            if (this._targetWeek != null && this._targetDay != null &&
+                (AppState.currentWeek !== this._targetWeek || AppState.currentDay !== this._targetDay)) {
+                if (bar.isConnected) bar.remove();
+                return;
+            }
             if (!bar.isConnected) {
                 bar.classList.remove('floating');
                 var row = this._findTargetRow();
@@ -204,6 +212,8 @@ export const RestTimer = {
         this._interval = null;
         this._endTime = null;
         this._pausedAt = null;
+        this._targetWeek = null;
+        this._targetDay = null;
         this._swTimer('STOP_TIMER');
         localStorage.removeItem('_wt_timer');
         var bar = this._bar;
@@ -493,7 +503,9 @@ export const RestTimer = {
             pausedAt: this._pausedAt,
             defaultDuration: this._defaultDuration,
             exId: this._targetExId,
-            setIdx: this._targetSetIdx
+            setIdx: this._targetSetIdx,
+            week: this._targetWeek,
+            day: this._targetDay
         }));
     },
 
@@ -525,6 +537,8 @@ export const RestTimer = {
             this._defaultDuration = s.defaultDuration || this._defaultDuration;
             this._targetExId = s.exId || null;
             this._targetSetIdx = s.setIdx != null ? s.setIdx : null;
+            this._targetWeek = s.week != null ? s.week : null;
+            this._targetDay = s.day != null ? s.day : null;
 
             if (this._paused) {
                 const drift = Date.now() - s.pausedAt;
@@ -532,12 +546,17 @@ export const RestTimer = {
                 this._pausedAt = Date.now();
             }
 
-            // Insert at correct position (or floating fallback)
-            var bar = this._bar;
-            bar.classList.remove('floating');
-            var row = this._findTargetRow();
-            this._insertAfterRow(row);
-            bar.classList.add('active');
+            // Only show timer on the same week/day where it was started
+            var onCorrectPage = this._targetWeek == null || this._targetDay == null ||
+                (AppState.currentWeek === this._targetWeek && AppState.currentDay === this._targetDay);
+
+            if (onCorrectPage) {
+                var bar = this._bar;
+                bar.classList.remove('floating');
+                var row = this._findTargetRow();
+                this._insertAfterRow(row);
+                bar.classList.add('active');
+            }
             this._updateDisplay();
             this._updatePauseBtn();
 

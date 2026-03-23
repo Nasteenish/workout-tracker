@@ -231,6 +231,9 @@ export const InlineEditor = {
             document.body.style.touchAction = 'none';
             document.body.style.userSelect = 'none';
             document.body.style.webkitUserSelect = 'none';
+            // Hide rest timer bar during reorder (it will reattach on next renderDay)
+            var timerBar = document.getElementById('rest-timer-bar');
+            if (timerBar && timerBar.parentNode) timerBar.remove();
             // Collapse all cards
             var allGroups = getGroupElements();
             for (var gi = 0; gi < allGroups.length; gi++) {
