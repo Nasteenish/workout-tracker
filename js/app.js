@@ -1110,6 +1110,7 @@ export const App = {
         const historyMatch = hash.match(/^#\/history\/(.+)$/);
         if (historyMatch) {
             UI.renderHistory(decodeURIComponent(historyMatch[1]));
+            window.scrollTo(0, 0);
             return;
         }
 
