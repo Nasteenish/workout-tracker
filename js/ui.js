@@ -765,12 +765,6 @@ export const UI = {
 
     // Data preparation for exercise card — all Storage reads
     _buildExerciseVM(ex, weekNum, dayNum, choiceKey = null) {
-        // Auto-detect unilateral from DB if not explicitly set on exercise
-        if (!ex.unilateral) {
-            const dbEntry = EXERCISE_DB.find(e => e.name === ex.name);
-            if (dbEntry && dbEntry.unilateral) ex.unilateral = true;
-        }
-
         const timerSec = Storage.getSettings().timerDuration || 120;
         const restText = timerSec >= 60
             ? `rest ${Math.floor(timerSec / 60)}min`
