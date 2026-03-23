@@ -258,9 +258,9 @@ export const SwipeNav = {
                         appEl.style.opacity = '0';
                         unlockScroll();
                         resetApp(appEl);
-                        removeCompanion();
                         app.route(true);
                         appEl.style.opacity = '';
+                        removeCompanion();
                         app._isBackSwipe = false;
                         app._swipeLock = false;
                     } else if (cfg.useReplace) {
@@ -271,9 +271,9 @@ export const SwipeNav = {
                         app._swipeLock = false;
                         unlockScroll();
                         resetApp(appEl);
-                        removeCompanion();
                         app.route(true);
                         appEl.style.opacity = '';
+                        removeCompanion();
                     } else {
                         // Pop history entry properly with history.back()
                         app._pendingSwipeCleanup = () => {

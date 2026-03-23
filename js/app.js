@@ -176,12 +176,12 @@ export const App = {
                 // Reset app position/transform, but keep hidden via opacity
                 var appEl = document.getElementById('app');
                 appEl.style.opacity = '0';
-                if (this._pendingSwipeCleanup) {
-                    this._pendingSwipeCleanup();
-                    this._pendingSwipeCleanup = null;
-                }
+                // Route first (fills app with cached content), then remove companion
+                var cleanup = this._pendingSwipeCleanup;
+                this._pendingSwipeCleanup = null;
                 this.route(true);
                 appEl.style.opacity = '';
+                if (cleanup) cleanup();
                 return;
             }
             this.route();
