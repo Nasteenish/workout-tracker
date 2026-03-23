@@ -64,18 +64,20 @@ export const RestTimer = {
         window.addEventListener('focus', () => this._onVisibilityChange());
         window.addEventListener('pageshow', () => this._onVisibilityChange());
 
-        // Kill timer completely on page close/refresh — no stale beeps on reopen
+        // Stop SW timer on page close (prevents stale push notifications)
+        // but keep _wt_timer in localStorage so timer survives app restart
         window.addEventListener('beforeunload', () => {
-            localStorage.removeItem('_wt_timer');
             this._swTimer('STOP_TIMER');
         });
 
         this._updateDisplay();
 
-        // Always stop any lingering SW timer on init (beforeunload doesn't fire on mobile)
-        this._swTimer('STOP_TIMER');
-        // Clean up any stale timer state
-        localStorage.removeItem('_wt_timer');
+        // Try to restore timer from previous session (survives app restart)
+        if (localStorage.getItem('_wt_timer')) {
+            this._restoreState();
+        } else {
+            this._swTimer('STOP_TIMER');
+        }
         // Close any stale push notifications from previous session
         if (navigator.serviceWorker && navigator.serviceWorker.ready) {
             navigator.serviceWorker.ready.then(function(reg) {
@@ -521,9 +523,9 @@ export const RestTimer = {
                 this._remaining = Math.ceil((s.endTime - Date.now()) / 1000);
             }
 
-            if (this._remaining <= 10) {
+            if (this._remaining <= 0) {
                 localStorage.removeItem('_wt_timer');
-                // Timer expired (or nearly expired) while app was closed — just clean up, don't beep
+                // Timer expired while app was closed — just clean up, don't beep
                 this._defaultDuration = s.defaultDuration || this._defaultDuration;
                 this._remaining = 0;
                 // Stop any lingering SW timer
@@ -559,6 +561,11 @@ export const RestTimer = {
             }
             this._updateDisplay();
             this._updatePauseBtn();
+
+            // Re-start SW timer for background notifications
+            if (!this._paused) {
+                this._swTimer('START_TIMER', this._remaining * 1000);
+            }
 
             this._interval = setInterval(() => {
                 if (!this._paused) {
