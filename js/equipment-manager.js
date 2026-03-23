@@ -113,6 +113,7 @@ export const EquipmentManager = {
         var extraTypes = modal._extraTypes;
         if (isCable && exType && exType !== 'cable_multi') extraTypes.push('cable_multi');
         if (exType === 'high_row' || exType === 'low_row') extraTypes.push('seated_row');
+        if (exType === 'lat_pulldown') extraTypes.push('high_row');
         var brandsPromise;
         if (isFreeWeight) {
             brandsPromise = Promise.resolve([]);
