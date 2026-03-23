@@ -125,13 +125,6 @@ export const WorkoutUI = {
                     repsInput.value = reps;
                 }
                 Storage.saveSetLog(week, day, exId, setIdx, weight, reps, eqId);
-
-                // Auto-start workout timer on first completed set
-                if (!WorkoutTimer.isRunning(week, day)) {
-                    WorkoutTimer.start(week, day);
-                    this._updateTimerSection(week, day);
-                }
-
                 var activeGym = EquipmentManager.getActiveGymId(week, day);
                 if (activeGym && eqId) {
                     Storage.setGymExerciseEquipment(activeGym, exId, eqId);
