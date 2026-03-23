@@ -14,16 +14,16 @@ export const WorkoutTimer = {
 
     start(week, day) {
         var key = this._getTimerKey(week, day);
-        if (sessionStorage.getItem(key)) return; // already running
-        sessionStorage.setItem(key, String(Date.now()));
-        sessionStorage.removeItem(this._getPauseKey(week, day));
+        if (localStorage.getItem(key)) return; // already running
+        localStorage.setItem(key, String(Date.now()));
+        localStorage.removeItem(this._getPauseKey(week, day));
         this._startDisplay(week, day);
     },
 
     pause(week, day) {
         var pauseKey = this._getPauseKey(week, day);
-        if (sessionStorage.getItem(pauseKey)) return; // already paused
-        sessionStorage.setItem(pauseKey, String(Date.now()));
+        if (localStorage.getItem(pauseKey)) return; // already paused
+        localStorage.setItem(pauseKey, String(Date.now()));
         if (this._interval) {
             clearInterval(this._interval);
             this._interval = null;
@@ -33,14 +33,14 @@ export const WorkoutTimer = {
     unpause(week, day) {
         var key = this._getTimerKey(week, day);
         var pauseKey = this._getPauseKey(week, day);
-        var pausedAt = parseInt(sessionStorage.getItem(pauseKey));
+        var pausedAt = parseInt(localStorage.getItem(pauseKey));
         if (!pausedAt) return;
-        var startTime = parseInt(sessionStorage.getItem(key));
+        var startTime = parseInt(localStorage.getItem(key));
         if (startTime) {
             var pauseDuration = Date.now() - pausedAt;
-            sessionStorage.setItem(key, String(startTime + pauseDuration));
+            localStorage.setItem(key, String(startTime + pauseDuration));
         }
-        sessionStorage.removeItem(pauseKey);
+        localStorage.removeItem(pauseKey);
         this._startDisplay(week, day);
     },
 
@@ -49,39 +49,39 @@ export const WorkoutTimer = {
             clearInterval(this._interval);
             this._interval = null;
         }
-        sessionStorage.removeItem(this._getTimerKey(week, day));
-        sessionStorage.removeItem(this._getPauseKey(week, day));
+        localStorage.removeItem(this._getTimerKey(week, day));
+        localStorage.removeItem(this._getPauseKey(week, day));
         Storage.saveWorkoutGym(week, day, null);
     },
 
     stop(week, day) {
         var key = this._getTimerKey(week, day);
         var pauseKey = this._getPauseKey(week, day);
-        var startTime = parseInt(sessionStorage.getItem(key));
+        var startTime = parseInt(localStorage.getItem(key));
         if (this._interval) {
             clearInterval(this._interval);
             this._interval = null;
         }
-        var pausedAt = parseInt(sessionStorage.getItem(pauseKey));
-        sessionStorage.removeItem(key);
-        sessionStorage.removeItem(pauseKey);
+        var pausedAt = parseInt(localStorage.getItem(pauseKey));
+        localStorage.removeItem(key);
+        localStorage.removeItem(pauseKey);
         if (!startTime) return null;
         var end = pausedAt || Date.now();
         return Math.floor((end - startTime) / 1000);
     },
 
     isRunning(week, day) {
-        return !!sessionStorage.getItem(this._getTimerKey(week, day));
+        return !!localStorage.getItem(this._getTimerKey(week, day));
     },
 
     isPaused(week, day) {
-        return this.isRunning(week, day) && !!sessionStorage.getItem(this._getPauseKey(week, day));
+        return this.isRunning(week, day) && !!localStorage.getItem(this._getPauseKey(week, day));
     },
 
     getElapsed(week, day) {
-        var startTime = parseInt(sessionStorage.getItem(this._getTimerKey(week, day)));
+        var startTime = parseInt(localStorage.getItem(this._getTimerKey(week, day)));
         if (!startTime) return 0;
-        var pausedAt = parseInt(sessionStorage.getItem(this._getPauseKey(week, day)));
+        var pausedAt = parseInt(localStorage.getItem(this._getPauseKey(week, day)));
         var end = pausedAt || Date.now();
         return Math.floor((end - startTime) / 1000);
     },
@@ -95,7 +95,7 @@ export const WorkoutTimer = {
     _startDisplay(week, day) {
         if (this._interval) clearInterval(this._interval);
         var key = this._getTimerKey(week, day);
-        var startTime = parseInt(sessionStorage.getItem(key));
+        var startTime = parseInt(localStorage.getItem(key));
         if (!startTime) return;
         this._updateUI(startTime);
         var self = this;
