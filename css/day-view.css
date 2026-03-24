@@ -759,7 +759,7 @@ body.modal-open {
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     font-weight: 500;
     max-width: 65%;
 }
@@ -892,7 +892,6 @@ body.modal-open {
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    margin-right: 6px;
     margin-left: -2px;
     object-fit: contain;
     background: #FFFFFF;
