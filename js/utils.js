@@ -232,6 +232,46 @@ export function debounce(fn, ms) {
 }
 
 /**
+ * Extract base exercise name by removing equipment suffix in parentheses.
+ * "Жим лёжа (со штангой)" → "Жим лёжа"
+ * "Bench Press (Barbell)" → "Bench Press"
+ * "Бабочка (пек-дек)" → stays as-is if only 1 exercise in group
+ */
+export function getExerciseBaseName(nameRu) {
+    return nameRu.replace(/\s*\([^)]+\)\s*$/, '').trim();
+}
+
+/**
+ * Group exercises from EXERCISE_DB by base name + category.
+ * Returns array of { baseName, baseNameEn, category, exercises[] }.
+ * Groups with 1 exercise are still returned (caller decides display).
+ */
+export function groupExercisesByBase(exercises) {
+    var groups = {};
+    for (var i = 0; i < exercises.length; i++) {
+        var ex = exercises[i];
+        var baseRu = getExerciseBaseName(ex.nameRu || '');
+        var baseEn = getExerciseBaseName(ex.name || '');
+        var key = (baseRu || baseEn) + '|' + ex.category;
+        if (!groups[key]) {
+            groups[key] = { baseName: baseRu || baseEn, baseNameEn: baseEn, category: ex.category, exercises: [] };
+        }
+        groups[key].exercises.push(ex);
+    }
+    return Object.values(groups);
+}
+
+/**
+ * Get variation label — the part in parentheses, or full name if no parentheses.
+ * "Жим лёжа (со штангой)" → "со штангой"
+ * "Бабочка (пек-дек)" → "пек-дек"
+ */
+export function getVariationLabel(nameRu) {
+    var m = nameRu.match(/\(([^)]+)\)\s*$/);
+    return m ? m[1] : nameRu;
+}
+
+/**
  * Get all exercises from an exercise group, normalizing the data.js structure.
  * Returns an array of exercise objects (resolving _chooseOne inside supersets).
  */

@@ -102,6 +102,7 @@ export const WorkoutUI = {
         {const btn = target.closest('.complete-btn');
         if (btn) {
             const exId = read(btn, WORKOUT.EXERCISE);
+            const logExId = Storage.getLogExerciseId(exId);
             const setIdx = readInt(btn, WORKOUT.SET);
             const eqId = Storage.getExerciseEquipment(exId);
 
@@ -111,9 +112,9 @@ export const WorkoutUI = {
             const weight = parseWeight(weightInput.value) || parseWeight(weightInput.placeholder);
             const reps = parseReps(repsInput.value) || parseReps(repsInput.placeholder);
 
-            const existing = Storage.getSetLog(week, day, exId, setIdx);
+            const existing = Storage.getSetLog(week, day, logExId, setIdx);
             if (existing && existing.completed) {
-                Storage.toggleSetComplete(week, day, exId, setIdx, eqId);
+                Storage.toggleSetComplete(week, day, logExId, setIdx, eqId);
                 btn.classList.remove('completed');
                 row.classList.remove('done');
                 btn.innerHTML = '<svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18.5" stroke="rgba(157,141,245,0.4)" stroke-width="1.5"/></svg>';
@@ -124,7 +125,7 @@ export const WorkoutUI = {
                 if (reps > 0) {
                     repsInput.value = reps;
                 }
-                Storage.saveSetLog(week, day, exId, setIdx, weight, reps, eqId);
+                Storage.saveSetLog(week, day, logExId, setIdx, weight, reps, eqId);
                 var activeGym = EquipmentManager.getActiveGymId(week, day);
                 if (activeGym && eqId) {
                     Storage.setGymExerciseEquipment(activeGym, exId, eqId);
@@ -133,11 +134,11 @@ export const WorkoutUI = {
 
                 row.querySelectorAll('.seg-weight-input[' + WORKOUT.SEG + ']').forEach(inp => {
                     var si = readInt(inp, WORKOUT.SEG);
-                    if (si > 0 && inp.value) Storage.saveSegWeight(week, day, exId, setIdx, si, inp.value);
+                    if (si > 0 && inp.value) Storage.saveSegWeight(week, day, logExId, setIdx, si, inp.value);
                 });
                 row.querySelectorAll('.seg-reps-input[' + WORKOUT.SEG + ']').forEach(inp => {
                     var si = readInt(inp, WORKOUT.SEG);
-                    if (si > 0 && inp.value) Storage.saveSegReps(week, day, exId, setIdx, si, inp.value);
+                    if (si > 0 && inp.value) Storage.saveSegReps(week, day, logExId, setIdx, si, inp.value);
                 });
 
                 btn.classList.add('completed');
@@ -159,16 +160,32 @@ export const WorkoutUI = {
             return true;
         }}
 
-        // Choose one: tap exercise name to open selector
-        {const el = target.closest('.exercise-name-chooser');
-        if (el) {
-            UI.showChoiceModal(read(el, WORKOUT.CHOICE_KEY), week, day);
+        // Unilateral toggle
+        {const toggle = target.closest('.uni-toggle');
+        if (toggle) {
+            const exId = read(toggle, WORKOUT.EXERCISE);
+            if (exId) {
+                const current = Storage.getUnilateral(exId);
+                Storage.setUnilateral(exId, !current);
+                if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week + '/day/' + day);
+                UI.renderDay(week, day);
+            }
             return true;
         }}
 
-        // Choice modal: close on overlay
-        if (target.id === 'choice-modal') {
-            UI.hideChoiceModal();
+        // Variation arrow: tap exercise name to open variation picker
+        {const el = target.closest('.exercise-name-chooser');
+        if (el) {
+            const exId = read(el, WORKOUT.EXERCISE);
+            const exNameVal = read(el, WORKOUT.EX_NAME);
+            const exNameRu = read(el, WORKOUT.EX_NAME_RU);
+            UI.showVariationModal(exId, exNameVal, exNameRu);
+            return true;
+        }}
+
+        // Variation modal: close on overlay
+        if (target.id === 'variation-modal') {
+            UI.hideVariationModal();
             return true;
         }
 
@@ -389,13 +406,16 @@ export const WorkoutUI = {
             return true;
         }
 
-        // Choice modal: select option (must be before eq-option handler)
-        {const opt = target.closest('.eq-option[' + WORKOUT.CHOICE_KEY + ']');
+        // Variation modal: select option (must be before eq-option handler)
+        {const opt = target.closest('.variation-option');
         if (opt) {
-            const choiceKey = read(opt, WORKOUT.CHOICE_KEY);
-            const exerciseId = read(opt, WORKOUT.EXERCISE_ID);
-            Storage.saveChoice(choiceKey, exerciseId, week);
-            UI.hideChoiceModal();
+            const exId = read(opt, WORKOUT.EXERCISE);
+            const nameRu = read(opt, WORKOUT.EX_NAME_RU);
+            // Save as substitution (display name override)
+            if (nameRu) {
+                Storage.setSubstitution(exId, nameRu);
+            }
+            UI.hideVariationModal();
             if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week + '/day/' + day);
             UI.renderDay(week, day);
             return true;
@@ -558,18 +578,20 @@ export const WorkoutUI = {
         // Extra segment reps (seg > 0)
         if (target.matches('.seg-reps-input') && readInt(target, WORKOUT.SEG) > 0) {
             const exId = read(target, WORKOUT.EXERCISE);
+            const logExId = Storage.getLogExerciseId(exId);
             const setIdx = readInt(target, WORKOUT.SET);
             const segIdx = readInt(target, WORKOUT.SEG);
-            Storage.saveSegReps(week, day, exId, setIdx, segIdx, target.value);
+            Storage.saveSegReps(week, day, logExId, setIdx, segIdx, target.value);
             return true;
         }
 
         // Extra segment weight (seg > 0)
         if (target.matches('.seg-weight-input') && readInt(target, WORKOUT.SEG) > 0) {
             const exId = read(target, WORKOUT.EXERCISE);
+            const logExId = Storage.getLogExerciseId(exId);
             const setIdx = readInt(target, WORKOUT.SET);
             const segIdx = readInt(target, WORKOUT.SEG);
-            Storage.saveSegWeight(week, day, exId, setIdx, segIdx, target.value);
+            Storage.saveSegWeight(week, day, logExId, setIdx, segIdx, target.value);
             return true;
         }
 

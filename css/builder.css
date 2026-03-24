@@ -285,6 +285,50 @@
 .picker-item:active {
     background: var(--bg-card);
 }
+/* Grouped exercise picker */
+.picker-group-header {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+    min-height: var(--touch-min);
+    display: flex;
+    align-items: center;
+    color: var(--text-primary);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    gap: 6px;
+}
+.picker-group-header:active {
+    background: var(--bg-card);
+}
+.picker-group-name {
+    flex: 1;
+    min-width: 0;
+}
+.picker-group-count {
+    font-size: var(--font-size-xs);
+    background: rgba(157, 141, 245, 0.2);
+    color: var(--accent-primary);
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.picker-group-arrow {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    flex-shrink: 0;
+    width: 16px;
+    text-align: center;
+}
+.picker-variant {
+    padding-left: calc(var(--spacing-md) + 20px);
+    background: rgba(157, 141, 245, 0.04);
+}
+.picker-variant-label {
+    color: var(--text-secondary);
+}
+
 .picker-empty {
     padding: var(--spacing-xl);
     text-align: center;

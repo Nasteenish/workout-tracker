@@ -122,7 +122,8 @@ export const App = {
         }
 
         this._saveDebounced = debounce((week, day, exId, setIdx, field, value) => {
-            Storage.updateSetValue(week, day, exId, setIdx, field, field === 'reps' ? parseReps(value) : parseWeight(value));
+            var logExId = Storage.getLogExerciseId(exId);
+            Storage.updateSetValue(week, day, logExId, setIdx, field, field === 'reps' ? parseReps(value) : parseWeight(value));
         }, 300);
         AppState.saveDebounced = this._saveDebounced;
         AppState.pageCache = this._pageCache;

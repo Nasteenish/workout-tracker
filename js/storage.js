@@ -67,6 +67,7 @@ export const Storage = {
             if (!this._data.myGymIds) this._data.myGymIds = [];
             if (!this._data.gymLastUsed) this._data.gymLastUsed = {};
             if (!this._data.gymEquipmentMap) this._data.gymEquipmentMap = {};
+            if (!this._data.unilateralMode) this._data.unilateralMode = {};
             if (!this._data.exerciseEquipmentOptions) {
                 this._data.exerciseEquipmentOptions = {};
                 // Auto-migrate: link currently assigned equipment to their exercises
@@ -113,6 +114,7 @@ export const Storage = {
             exerciseUnits: {},
             exerciseChoices: {},
             exerciseSubstitutions: {},
+            unilateralMode: {},
             gyms: [],
             gymEquipmentMap: {},
             log: {}
@@ -753,6 +755,25 @@ export const Storage = {
     removeSubstitution(exerciseId) {
         delete this._load().exerciseSubstitutions[exerciseId];
         this._save();
+    },
+
+    // Unilateral mode (L/R toggle)
+    getUnilateral(exerciseId) {
+        return !!this._load().unilateralMode[exerciseId];
+    },
+
+    setUnilateral(exerciseId, enabled) {
+        if (enabled) {
+            this._load().unilateralMode[exerciseId] = true;
+        } else {
+            delete this._load().unilateralMode[exerciseId];
+        }
+        this._save();
+    },
+
+    // Get the effective exercise ID for logging (adds _uni suffix when unilateral)
+    getLogExerciseId(exerciseId) {
+        return this.getUnilateral(exerciseId) ? exerciseId + '_uni' : exerciseId;
     },
 
     // ===== Set logging =====

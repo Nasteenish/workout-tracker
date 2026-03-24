@@ -8,7 +8,7 @@ import { AppState } from './app-state.js';
 import { EquipmentManager } from './equipment-manager.js';
 import { WorkoutTimer } from './workout-timer.js';
 import { RestTimer } from './timer.js';
-import { formatDateISO, markCachedThumbs, autoTrimImg, esc, exThumbHtml, getGroupExercises, findExerciseInProgram } from './utils.js';
+import { formatDateISO, markCachedThumbs, autoTrimImg, esc, exThumbHtml, getGroupExercises, findExerciseInProgram, getExerciseBaseName, getVariationLabel, groupExercisesByBase } from './utils.js';
 import { getTotalWeeks, getTotalDays, getProgressWeek, getCompletedSets, resolveWorkout, exName } from './program-utils.js';
 import { EXERCISE_DB } from './exercises_db.js';
 import { WORKOUT, EQ, SETTINGS, INLINE, attr } from './data-attrs.js';
@@ -773,6 +773,7 @@ export const UI = {
         const eqId = Storage.getExerciseEquipment(ex.id);
         const eq = eqId ? Storage.getEquipmentById(eqId) : null;
         const displayName = this._getExerciseDisplayName(ex);
+        const isUnilateral = Storage.getUnilateral(ex.id);
 
         const setVMs = [];
         for (let i = 0; i < ex.sets.length; i++) {
@@ -783,7 +784,7 @@ export const UI = {
             ex, choiceKey, restText,
             eqLabel: eq ? esc(eq.name) : 'Оборудование',
             eqImageUrl: eq && eq.imageUrl ? eq.imageUrl : null,
-            displayName, setVMs
+            displayName, setVMs, isUnilateral
         };
     },
 
@@ -793,7 +794,7 @@ export const UI = {
         const vm = exVMorEx.setVMs
             ? exVMorEx
             : this._buildExerciseVM(exVMorEx, weekNumOrUndef, dayNumOrUndef, choiceKeyOrUndef);
-        const { ex, choiceKey, restText, eqLabel, eqImageUrl, displayName, setVMs } = vm;
+        const { ex, choiceKey, restText, eqLabel, eqImageUrl, displayName, setVMs, isUnilateral } = vm;
 
         let setsHtml = '';
         for (const setVM of setVMs) {
@@ -810,9 +811,25 @@ export const UI = {
             </div>
         `;
 
-        const nameClass = `exercise-name exercise-name-editable ${choiceKey ? 'exercise-name-chooser' : ''}`;
-        const nameAttrs = `${attr(WORKOUT.EXERCISE, ex.id)} ${choiceKey ? attr(WORKOUT.CHOICE_KEY, choiceKey) : ''}`;
-        const nameContent = choiceKey ? this._nameWithBadge(displayName) : displayName;
+        // Check if this exercise has variations in EXERCISE_DB
+        const _exBaseName = getExerciseBaseName(ex.nameRu || ex.name || '');
+        // Find category from DB since program exercises don't always have it
+        let _exCat = ex.category || '';
+        if (!_exCat) {
+            for (let _i = 0; _i < EXERCISE_DB.length; _i++) {
+                if (EXERCISE_DB[_i].nameRu === ex.nameRu || EXERCISE_DB[_i].name === ex.name) {
+                    _exCat = EXERCISE_DB[_i].category;
+                    break;
+                }
+            }
+        }
+        const _hasVariations = _exCat && EXERCISE_DB.filter(function(dbEx) {
+            return dbEx.category === _exCat && getExerciseBaseName(dbEx.nameRu || dbEx.name || '') === _exBaseName;
+        }).length > 1;
+
+        const nameClass = `exercise-name exercise-name-editable${_hasVariations ? ' exercise-name-chooser' : ''}`;
+        const nameAttrs = `${attr(WORKOUT.EXERCISE, ex.id)} ${attr(WORKOUT.EX_NAME, esc(ex.name || ''))} ${attr(WORKOUT.EX_NAME_RU, esc(ex.nameRu || ''))}`;
+        const nameContent = _hasVariations ? this._nameWithBadge(displayName) : displayName;
 
         const setControls = `<div class="set-controls">
             <button class="set-ctrl-btn remove-set-btn" ${attr(WORKOUT.EXERCISE, ex.id)}>− подход</button>
@@ -823,7 +840,7 @@ export const UI = {
         const menuBtn = groupIdx != null ? `<button class="inline-menu-btn" ${attr(INLINE.EX_ID, ex.id)} ${attr(INLINE.GROUP_IDX, groupIdx)} data-ex-display="${esc(displayName)}"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2.5"/><circle cx="12" cy="12" r="2.5"/><circle cx="12" cy="19" r="2.5"/></svg></button>` : '';
 
         return `
-            <div class="exercise-card ${choiceKey ? 'is-chooser' : ''}"${groupIdxAttr}>
+            <div class="exercise-card"${groupIdxAttr}>
                 <div class="exercise-header">
                     <div class="exercise-name-row">
                         ${exThumbHtml(ex.name, ex.nameRu)}
@@ -832,6 +849,10 @@ export const UI = {
                     <div class="exercise-meta">
                         <span>${ex.reps} reps</span>
                         ${restText ? `<span>${restText}</span>` : ''}
+                        <label class="uni-toggle" ${attr(WORKOUT.EXERCISE, ex.id)}>
+                            <span class="uni-toggle-label">\u041F\u043E\u043E\u0447\u0435\u0440\u0451\u0434\u043D\u043E</span>
+                            <span class="uni-switch ${isUnilateral ? 'on' : ''}"><span class="uni-knob"></span></span>
+                        </label>
                         ${menuBtn}
                     </div>
                 </div>
@@ -848,10 +869,11 @@ export const UI = {
     // Data preparation for set row — all Storage reads and computations
     _buildSetRowVM(ex, setIdx, weekNum, dayNum) {
         const set = ex.sets[setIdx];
-        const log = Storage.getSetLog(weekNum, dayNum, ex.id, setIdx);
+        const logExId = Storage.getLogExerciseId(ex.id);
+        const log = Storage.getSetLog(weekNum, dayNum, logExId, setIdx);
         const eqId = Storage.getExerciseEquipment(ex.id);
         const siblings = Storage.getSiblingExercises(ex.id);
-        const prev = Storage.getPreviousLog(weekNum, dayNum, ex.id, setIdx, eqId, siblings.length > 0 ? siblings : null);
+        const prev = Storage.getPreviousLog(weekNum, dayNum, logExId, setIdx, eqId, siblings.length > 0 ? siblings : null);
 
         const unitLabels = { kg: 'кг', lbs: 'lbs', plates: 'пл' };
         const unit = Storage.getExerciseUnit(ex.id) || Storage.getWeightUnit();
@@ -1531,75 +1553,56 @@ export const UI = {
         if (!document.querySelector('.modal-overlay')) unlockBodyScroll();
     },
 
-    // ===== CHOICE MODAL (choose one exercise) =====
-    showChoiceModal(choiceKey, week, day) {
-        // Find the group — use snapshot if week is bound to one, else live template
-        var _p3 = Storage.getProgram();
-        let group = null;
-
-        // Determine which exerciseGroups to search for this week/day
-        const _findGroup = (groups) => {
-            for (const g of groups) {
-                if (g.choiceKey === choiceKey) return g;
-                // Also check inside supersets
-                if (g.type === 'superset' && g.exercises) {
-                    for (const item of g.exercises) {
-                        if (item._chooseOne && item.choiceKey === choiceKey) return item;
-                    }
-                }
-            }
-            return null;
-        };
-
-        // If day is known, check snapshot first
-        if (day) {
-            const d = String(day);
-            const version = _p3.weekTemplateVersion && _p3.weekTemplateVersion[week]
-                && _p3.weekTemplateVersion[week][d];
-            if (version && _p3.templateSnapshots && _p3.templateSnapshots[d]) {
-                const snap = _p3.templateSnapshots[d].find(s => s.version === version);
-                if (snap) {
-                    group = _findGroup(snap.groups);
-                }
-            }
-            // Fallback: try live template for this day
-            if (!group && _p3.dayTemplates[day]) {
-                group = _findGroup(_p3.dayTemplates[day].exerciseGroups);
+    // ===== VARIATION MODAL (pick exercise variation from same base group) =====
+    showVariationModal(exerciseId, exerciseName, exerciseNameRu) {
+        // Find base name and all variations from EXERCISE_DB
+        // Use original names from data-attrs (not substituted display name)
+        const currentNameRu = exerciseNameRu || '';
+        const currentNameEn = exerciseName || '';
+        const baseName = getExerciseBaseName(currentNameRu || currentNameEn);
+        // Find category from EXERCISE_DB
+        let category = '';
+        for (var i = 0; i < EXERCISE_DB.length; i++) {
+            if (EXERCISE_DB[i].nameRu === currentNameRu || EXERCISE_DB[i].name === currentNameEn ||
+                getExerciseBaseName(EXERCISE_DB[i].nameRu || '') === baseName) {
+                category = EXERCISE_DB[i].category;
+                break;
             }
         }
 
-        // Final fallback: search all day templates (legacy path)
-        if (!group) {
-            for (let d = 1; d <= getTotalDays(); d++) {
-                const tmpl = _p3.dayTemplates[d];
-                if (!tmpl) continue;
-                group = _findGroup(tmpl.exerciseGroups);
-                if (group) break;
-            }
-        }
-        if (!group) return;
+        // Get all variations with same base name + category
+        const variations = EXERCISE_DB.filter(function(dbEx) {
+            return dbEx.category === category && getExerciseBaseName(dbEx.nameRu || dbEx.name || '') === baseName;
+        });
 
-        const options = group.options || [];
-        const chosenId = Storage.getChoice(choiceKey, week);
+        if (variations.length === 0) return;
+
+        const currentSub = Storage.getSubstitution(exerciseId);
+        const currentDisplay = currentSub || currentNameRu || currentNameEn;
 
         let optionsHtml = '';
-        for (const ex of options) {
-            const isSelected = ex.id === chosenId || (!chosenId && ex === options[0]);
+        for (var v = 0; v < variations.length; v++) {
+            var vex = variations[v];
+            var vName = exName(vex);
+            var vLabel = getVariationLabel(vName);
+            var isSelected = vName === currentDisplay || vex.nameRu === currentDisplay || vex.name === currentDisplay;
             optionsHtml += `
-                <div class="eq-option ${isSelected ? 'selected' : ''}"
-                     ${attr(WORKOUT.CHOICE_KEY, choiceKey)} ${attr(WORKOUT.EXERCISE_ID, ex.id)}>
-                    ${exName(ex)}
+                <div class="eq-option variation-option ${isSelected ? 'selected' : ''}"
+                     ${attr(WORKOUT.EXERCISE, exerciseId)}
+                     ${attr(WORKOUT.EX_NAME_RU, esc(vex.nameRu))}
+                     ${attr(WORKOUT.EX_NAME, esc(vex.name))}>
+                    ${exThumbHtml(vex.name)}${esc(vLabel)}${isSelected ? ' <span class="eq-check">\u2713</span>' : ''}
                 </div>
             `;
         }
 
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
-        overlay.id = 'choice-modal';
+        overlay.id = 'variation-modal';
         overlay.innerHTML = `
             <div class="equipment-modal">
                 <div class="modal-header">
-                    <h3>Выберите упражнение</h3>
+                    <h3>${esc(baseName)}</h3>
                 </div>
                 <div class="eq-list">
                     ${optionsHtml}
@@ -1615,8 +1618,8 @@ export const UI = {
         });
     },
 
-    hideChoiceModal() {
-        const modal = document.getElementById('choice-modal');
+    hideVariationModal() {
+        const modal = document.getElementById('variation-modal');
         if (modal) modal.remove();
         if (!document.querySelector('.modal-overlay')) {
             unlockBodyScroll();
