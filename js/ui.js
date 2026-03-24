@@ -849,12 +849,14 @@ export const UI = {
                     <div class="exercise-meta">
                         <span>${ex.reps} reps</span>
                         ${restText ? `<span>${restText}</span>` : ''}
-                        <label class="uni-toggle" ${attr(WORKOUT.EXERCISE, ex.id)}>
-                            <span class="uni-toggle-label">\u041F\u043E\u043E\u0447\u0435\u0440\u0451\u0434\u043D\u043E</span>
-                            <span class="uni-switch ${isUnilateral ? 'on' : ''}"><span class="uni-knob"></span></span>
-                        </label>
                         ${menuBtn}
                     </div>
+                </div>
+                <div class="exercise-sub-meta">
+                    <label class="uni-toggle" ${attr(WORKOUT.EXERCISE, ex.id)}>
+                        <span class="uni-toggle-label">\u041F\u043E\u043E\u0447\u0435\u0440\u0451\u0434\u043D\u043E</span>
+                        <span class="uni-switch ${isUnilateral ? 'on' : ''}"><span class="uni-knob"></span></span>
+                    </label>
                 </div>
                 ${eqHtml}
                 ${setsHtml}
