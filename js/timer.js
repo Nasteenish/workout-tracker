@@ -51,10 +51,7 @@ export const RestTimer = {
             else if (target.id === 'rtb-pause') this.togglePause();
         });
 
-        // Unlock AudioContext on first user interaction (required on iOS)
-        const unlock = () => this._unlockAudio();
-        document.addEventListener('touchstart', unlock, { passive: true, once: false });
-        document.addEventListener('click', unlock, { once: false });
+        // AudioContext unlocked lazily in start() when user explicitly starts the timer
 
         // Request notification permission early
         this._requestNotificationPermission();
