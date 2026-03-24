@@ -1,6 +1,6 @@
 /* ===== Storage Module ===== */
 import { ACCOUNTS } from './users.js';
-import { parseWeight, parseReps, getAllProgramExercises } from './utils.js';
+import { parseWeight, parseReps, getAllProgramExercises, getGroupExercises } from './utils.js';
 
 // Dynamic storage key per user
 export function _storageKey() {
@@ -41,6 +41,32 @@ export const Storage = {
             var ex = all[i].exercise;
             var n = ex.nameRu || ex.name;
             if (n) { if (!nameToEntries[n]) nameToEntries[n] = []; nameToEntries[n].push({ id: ex.id, day: all[i].day }); }
+        }
+        // Also scan templateSnapshots to include historical exercise IDs
+        // (exercises removed from dayTemplates but used in past weeks still need sibling linking)
+        var snaps = this._program.templateSnapshots;
+        if (snaps) {
+            for (var dNum in snaps) {
+                var daySnaps = snaps[dNum];
+                var snapDay = parseInt(dNum);
+                for (var si = 0; si < daySnaps.length; si++) {
+                    var groups = daySnaps[si].groups || [];
+                    for (var g = 0; g < groups.length; g++) {
+                        var snapExs = getGroupExercises(groups[g]);
+                        for (var j = 0; j < snapExs.length; j++) {
+                            var snapEx = snapExs[j];
+                            var snapName = snapEx.nameRu || snapEx.name;
+                            if (!snapName || !snapEx.id) continue;
+                            if (!nameToEntries[snapName]) nameToEntries[snapName] = [];
+                            var alreadyIn = false;
+                            for (var k = 0; k < nameToEntries[snapName].length; k++) {
+                                if (nameToEntries[snapName][k].id === snapEx.id) { alreadyIn = true; break; }
+                            }
+                            if (!alreadyIn) nameToEntries[snapName].push({ id: snapEx.id, day: snapDay });
+                        }
+                    }
+                }
+            }
         }
         var cache = this._siblingCache;
         for (var name in nameToEntries) {
