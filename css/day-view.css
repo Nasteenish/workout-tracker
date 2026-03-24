@@ -746,7 +746,7 @@ body.modal-open {
     padding: var(--spacing-xs) var(--spacing-md);
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: space-between;
 }
 
 .equipment-btn {
@@ -757,12 +757,11 @@ body.modal-open {
     font-size: var(--font-size-xs);
     padding: 5px 12px;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
     font-weight: 500;
-    flex: 1;
-    min-width: 0;
+    max-width: 65%;
 }
 
 .eq-label-text {
