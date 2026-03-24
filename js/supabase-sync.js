@@ -304,6 +304,16 @@ export const SupaSync = {
                 }
                 // Fix exercise names that remote may have reverted to old values
                 Migrations.migrateExerciseNames(base);
+                // Clean up orphaned exerciseEquipment bindings (point to deleted equipment)
+                if (base.exerciseEquipment && base.equipment) {
+                    var validEqIds = {};
+                    for (var vi = 0; vi < base.equipment.length; vi++) validEqIds[base.equipment[vi].id] = true;
+                    for (var ek3 in base.exerciseEquipment) {
+                        if (base.exerciseEquipment[ek3] && !validEqIds[base.exerciseEquipment[ek3]]) {
+                            delete base.exerciseEquipment[ek3];
+                        }
+                    }
+                }
                 base._lastModified = Date.now();
                 // Save merged result locally and push to cloud
                 localStorage.setItem(localStorageKey, JSON.stringify(base));
