@@ -168,7 +168,9 @@ export function getCompletedSets(week, day) {
         for (const ex of exercises) {
             if (!ex) continue;
             for (let i = 0; i < ex.sets.length; i++) {
-                const log = Storage.getSetLog(week, day, Storage.getLogExerciseId(ex.id), i);
+                const logId = Storage.getLogExerciseId(ex.id);
+                const log = Storage.getSetLog(week, day, logId, i)
+                    || (logId !== ex.id ? Storage.getSetLog(week, day, ex.id, i) : null);
                 if (log && log.completed) completed++;
             }
         }
