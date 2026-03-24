@@ -1,9 +1,9 @@
 -- Impulse equipment catalog
--- Exported on 2026-03-24
 -- 58 records: 30 IT95 (selectorized) + 28 SL (plate-loaded)
+-- Updated on 2026-03-24 with official images from impulsehealthtech.com
 
 INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_type, exercise_type, image_url) VALUES
--- Impulse IT95 Series (Selectorized)
+-- IT95 Series (Selectorized)
 (1154, 'Impulse', 'IT9501', 'Chest Press', 'chest', 'selectorized', 'chest_press', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/impulse/IT9501.jpg'),
 (1155, 'Impulse', 'IT9502', 'Lat Pulldown', 'back', 'selectorized', 'lat_pulldown', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/impulse/IT9502.jpg'),
 (1156, 'Impulse', 'IT9503', 'Arm Curl', 'arms', 'selectorized', 'bicep_curl', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/impulse/IT9503.jpg'),
@@ -34,7 +34,7 @@ INSERT INTO equipment_catalog (id, brand, model, name, muscle_group, equipment_t
 (1181, 'Impulse', 'IT9537', 'Standing Multi Flight Machine', 'full_body', 'cable', 'cable_multi', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/impulse/IT9537.png'),
 (1182, 'Impulse', 'IT9538', 'Hip Thrust', 'glutes', 'selectorized', 'hip_thrust', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/impulse/IT9538.png'),
 (1183, 'Impulse', 'IT9539', 'Horizontal Leg Press', 'legs', 'selectorized', 'leg_press', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/impulse/IT9539.jpg'),
--- Impulse SL Series (Plate-loaded)
+-- SL Series (Plate-loaded)
 (1184, 'Impulse', 'SL7001', 'Chest Press', 'chest', 'plate-loaded', 'chest_press', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/impulse/SL7001.jpg'),
 (1185, 'Impulse', 'SL7002', 'Pulldown', 'back', 'plate-loaded', 'lat_pulldown', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/impulse/SL7002.jpg'),
 (1186, 'Impulse', 'SL7003', 'Shoulder Press', 'shoulders', 'plate-loaded', 'shoulder_press', 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/impulse/SL7003.jpg'),
