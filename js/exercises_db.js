@@ -163,6 +163,7 @@ export const EXERCISE_DB = [
     { nameRu: 'Разгибание ног (в тренажёре)', name: 'Leg Extension (Machine)', category: 'legs' },
     { nameRu: 'Румынская тяга (с гантелями)', name: 'Romanian Deadlift (Dumbbell)', category: 'legs' },
     { nameRu: 'Румынская тяга (в тренажёре)', name: 'Romanian Deadlift (Machine)', category: 'legs' },
+    { nameRu: 'Румынская тяга (в Смите)', name: 'Romanian Deadlift (Smith Machine)', category: 'legs' },
     { nameRu: 'Румынская тяга (со штангой)', name: 'Romanian Deadlift (Barbell)', category: 'legs' },
     { nameRu: 'Сгибание ног лёжа (в тренажёре)', name: 'Lying Leg Curl (Machine)', category: 'legs' },
     { nameRu: 'Сгибание ног сидя (в тренажёре)', name: 'Seated Leg Curl (Machine)', category: 'legs' },
