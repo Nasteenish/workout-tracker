@@ -19,6 +19,11 @@ export const WorkoutUI = {
 
     // ===== Workout day click handlers =====
     handleClick(target, week, day) {
+        // Block all exercise clicks in reorder mode (only allow reorder-done-btn)
+        if (window._reorderMode && !target.closest('.reorder-done-btn') && !target.closest('#btn-add-exercise-inline')) {
+            return true;
+        }
+
         // Unit cycle button
         if (target.matches('.unit-cycle-btn')) {
             const exId = read(target, WORKOUT.EXERCISE);
