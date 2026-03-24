@@ -489,7 +489,9 @@
 .drag-compact .btn-add-set,
 .drag-compact .btn-remove-set,
 .drag-compact [class*="set-"],
-.drag-compact .exercise-note {
+.drag-compact .exercise-note,
+.drag-compact .chooser-badge,
+.drag-compact .exercise-meta {
     display: none !important;
 }
 
@@ -498,20 +500,33 @@
     font-size: var(--font-size-sm) !important;
     margin: 0 !important;
     padding: 0 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .drag-compact .exercise-header {
     margin: 0 !important;
     padding: 0 !important;
+    align-items: center !important;
 }
 
 .drag-compact .exercise-thumb {
     width: 28px !important;
     height: 28px !important;
+    flex-shrink: 0 !important;
 }
 
-.drag-compact .exercise-meta {
-    display: none !important;
+/* Exercise cards inside superset in compact mode — no extra padding/border */
+.drag-compact .exercise-card {
+    padding: 2px 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: none !important;
+}
+
+.drag-compact .exercise-name-row {
+    align-items: center !important;
 }
 
 /* Highlighted dragged card in compact list */
