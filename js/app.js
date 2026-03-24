@@ -62,6 +62,26 @@ export const App = {
         // iOS PWA: fix viewport/safe-area after returning from background
         document.addEventListener('visibilitychange', function() {
             if (document.visibilityState === 'visible') {
+                // Clean up stale swipe-navigation companions left in DOM
+                var staleCompanions = document.querySelectorAll('.back-companion, .nav-companion');
+                if (staleCompanions.length) {
+                    staleCompanions.forEach(function(el) { el.remove(); });
+                    var appEl = document.getElementById('app');
+                    appEl.style.transform = '';
+                    appEl.style.position = '';
+                    appEl.style.top = '';
+                    appEl.style.bottom = '';
+                    appEl.style.left = '';
+                    appEl.style.right = '';
+                    appEl.style.minHeight = '';
+                    appEl.style.opacity = '';
+                    appEl.classList.remove('swiping-back');
+                    document.documentElement.style.overflow = '';
+                    document.body.style.overflow = '';
+                    self._swipeLock = false;
+                    self._isBackSwipe = false;
+                    clearTimeout(self._backSwipeFallbackTimer);
+                }
                 // Force Safari to recalculate layout (safe-area-insets can get lost)
                 document.body.style.display = 'none';
                 document.body.offsetHeight;
@@ -919,6 +939,7 @@ export const App = {
         document.body.style.top = '';
         var staleBtn = document.querySelector('.reorder-done-btn');
         if (staleBtn) staleBtn.remove();
+        document.querySelectorAll('.back-companion, .nav-companion').forEach(function(el) { el.remove(); });
         var routeAppEl = document.getElementById('app');
         routeAppEl.style.transform = '';
         routeAppEl.style.position = '';
