@@ -508,7 +508,7 @@ async function renameGymInDb(id, newName) {
 // ===== SUPABASE API =====
 
 async function loadEquipment() {
-  const r = await fetch(SB + '/rest/v1/equipment_catalog?select=*&order=brand,name', { headers: H });
+  const r = await fetch(SB + '/rest/v1/equipment_catalog?select=*&order=brand,name', { headers: {...H, 'Range': '0-9999'} });
   equipmentData = await r.json();
 }
 
@@ -520,7 +520,7 @@ async function loadExercises() {
 
 async function loadLinkCounts() {
   try {
-    const r = await fetch(SB + '/rest/v1/equipment_exercises?select=equipment_id', { headers: H });
+    const r = await fetch(SB + '/rest/v1/equipment_exercises?select=equipment_id', { headers: {...H, 'Range': '0-9999'} });
     if (!r.ok) return;
     const rows = await r.json();
     linkCounts = {};
