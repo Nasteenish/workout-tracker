@@ -237,6 +237,17 @@ export const SupaSync = {
                         }
                     }
                 }
+                // Merge unilateralMode — union merge, true wins over false/missing
+                if (other.unilateralMode || base.unilateralMode) {
+                    if (!base.unilateralMode) base.unilateralMode = {};
+                    if (other.unilateralMode) {
+                        for (var uk in other.unilateralMode) {
+                            if (!(uk in base.unilateralMode)) {
+                                base.unilateralMode[uk] = other.unilateralMode[uk];
+                            }
+                        }
+                    }
+                }
                 // Merge equipment array — union by id, prefer entries with imageUrl
                 if (other.equipment || base.equipment) {
                     var baseEq = base.equipment || [];
