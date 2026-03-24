@@ -203,7 +203,8 @@ export const WorkoutUI = {
             const exId = read(el, WORKOUT.EXERCISE);
             const exNameVal = read(el, WORKOUT.EX_NAME);
             const exNameRu = read(el, WORKOUT.EX_NAME_RU);
-            UI.showVariationModal(exId, exNameVal, exNameRu);
+            const choiceKey = read(el, WORKOUT.CHOICE_KEY);
+            UI.showVariationModal(exId, exNameVal, exNameRu, choiceKey);
             return true;
         }}
 
@@ -447,11 +448,18 @@ export const WorkoutUI = {
         // Variation modal: select option (must be before eq-option handler)
         {const opt = target.closest('.variation-option');
         if (opt) {
-            const exId = read(opt, WORKOUT.EXERCISE);
-            const nameRu = read(opt, WORKOUT.EX_NAME_RU);
-            // Save as substitution (display name override)
-            if (nameRu) {
-                Storage.setSubstitution(exId, nameRu);
+            const choiceKey = read(opt, WORKOUT.CHOICE_KEY);
+            if (choiceKey) {
+                // Choose-one mode: save choice by exercise ID
+                const optId = read(opt, WORKOUT.EXERCISE);
+                Storage.saveChoice(choiceKey, optId, week);
+            } else {
+                // DB variation mode: save as substitution (display name override)
+                const nameRu = read(opt, WORKOUT.EX_NAME_RU);
+                if (nameRu) {
+                    const exId = read(opt, WORKOUT.EXERCISE);
+                    Storage.setSubstitution(exId, nameRu);
+                }
             }
             UI.hideVariationModal();
             if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week + '/day/' + day);

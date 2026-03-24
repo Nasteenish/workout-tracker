@@ -828,10 +828,12 @@ export const UI = {
         const _hasVariations = _exCat && EXERCISE_DB.filter(function(dbEx) {
             return dbEx.category === _exCat && getExerciseBaseName(dbEx.nameRu || dbEx.name || '') === _exBaseName;
         }).length > 1;
+        const _showChooser = _hasVariations || !!choiceKey;
 
-        const nameClass = `exercise-name exercise-name-editable${_hasVariations ? ' exercise-name-chooser' : ''}`;
-        const nameAttrs = `${attr(WORKOUT.EXERCISE, ex.id)} ${attr(WORKOUT.EX_NAME, esc(ex.name || ''))} ${attr(WORKOUT.EX_NAME_RU, esc(ex.nameRu || ''))}`;
-        const nameContent = _hasVariations ? this._nameWithBadge(displayName) : displayName;
+        const nameClass = `exercise-name exercise-name-editable${_showChooser ? ' exercise-name-chooser' : ''}`;
+        const choiceKeyAttr = choiceKey ? ` ${attr(WORKOUT.CHOICE_KEY, esc(choiceKey))}` : '';
+        const nameAttrs = `${attr(WORKOUT.EXERCISE, ex.id)} ${attr(WORKOUT.EX_NAME, esc(ex.name || ''))} ${attr(WORKOUT.EX_NAME_RU, esc(ex.nameRu || ''))}${choiceKeyAttr}`;
+        const nameContent = _showChooser ? this._nameWithBadge(displayName) : displayName;
 
         const setControls = `<div class="set-controls">
             <button class="set-ctrl-btn remove-set-btn" ${attr(WORKOUT.EXERCISE, ex.id)}>− подход</button>
@@ -1550,46 +1552,71 @@ export const UI = {
     },
 
     // ===== VARIATION MODAL (pick exercise variation from same base group) =====
-    showVariationModal(exerciseId, exerciseName, exerciseNameRu) {
-        // Find base name and all variations from EXERCISE_DB
-        // Use original names from data-attrs (not substituted display name)
+    showVariationModal(exerciseId, exerciseName, exerciseNameRu, choiceKey) {
         const currentNameRu = exerciseNameRu || '';
         const currentNameEn = exerciseName || '';
-        const baseName = getExerciseBaseName(currentNameRu || currentNameEn);
-        // Find category from EXERCISE_DB
-        let category = '';
-        for (var i = 0; i < EXERCISE_DB.length; i++) {
-            if (EXERCISE_DB[i].nameRu === currentNameRu || EXERCISE_DB[i].name === currentNameEn ||
-                getExerciseBaseName(EXERCISE_DB[i].nameRu || '') === baseName) {
-                category = EXERCISE_DB[i].category;
-                break;
-            }
-        }
-
-        // Get all variations with same base name + category
-        const variations = EXERCISE_DB.filter(function(dbEx) {
-            return dbEx.category === category && getExerciseBaseName(dbEx.nameRu || dbEx.name || '') === baseName;
-        });
-
-        if (variations.length === 0) return;
-
-        const currentSub = Storage.getSubstitution(exerciseId);
-        const currentDisplay = currentSub || currentNameRu || currentNameEn;
-
         let optionsHtml = '';
-        for (var v = 0; v < variations.length; v++) {
-            var vex = variations[v];
-            var vName = exName(vex);
-            var vLabel = getVariationLabel(vName);
-            var isSelected = vName === currentDisplay || vex.nameRu === currentDisplay || vex.name === currentDisplay;
-            optionsHtml += `
-                <div class="eq-option variation-option ${isSelected ? 'selected' : ''}"
-                     ${attr(WORKOUT.EXERCISE, exerciseId)}
-                     ${attr(WORKOUT.EX_NAME_RU, esc(vex.nameRu))}
-                     ${attr(WORKOUT.EX_NAME, esc(vex.name))}>
-                    ${exThumbHtml(vex.name)}${esc(vLabel)}${isSelected ? ' <span class="eq-check">\u2713</span>' : ''}
-                </div>
-            `;
+        let title = '';
+
+        if (choiceKey) {
+            // Choose-one mode: show options from program
+            const week = AppState.currentWeek;
+            const day = AppState.currentDay;
+            const workout = resolveWorkout(week, day);
+            if (!workout) return;
+            let group = null;
+            for (var gi = 0; gi < workout.exerciseGroups.length; gi++) {
+                var g = workout.exerciseGroups[gi];
+                if (g.type === 'choose_one' && g.choiceKey === choiceKey) { group = g; break; }
+            }
+            if (!group || !group.options || group.options.length < 2) return;
+            title = group.sectionTitleRu || group.sectionTitle || 'Выбор упражнения';
+            const chosenId = Storage.getChoice(choiceKey, week);
+            const currentId = chosenId || (group.options[0] && group.options[0].id);
+            for (var v = 0; v < group.options.length; v++) {
+                var opt = group.options[v];
+                var optName = exName(opt);
+                var isSelected = opt.id === currentId;
+                optionsHtml += `
+                    <div class="eq-option variation-option ${isSelected ? 'selected' : ''}"
+                         ${attr(WORKOUT.EXERCISE, opt.id)}
+                         ${attr(WORKOUT.CHOICE_KEY, esc(choiceKey))}>
+                        ${exThumbHtml(opt.name)}${esc(optName)}${isSelected ? ' <span class="eq-check">\u2713</span>' : ''}
+                    </div>
+                `;
+            }
+        } else {
+            // DB variation mode: show exercises with same base name
+            const baseName = getExerciseBaseName(currentNameRu || currentNameEn);
+            let category = '';
+            for (var i = 0; i < EXERCISE_DB.length; i++) {
+                if (EXERCISE_DB[i].nameRu === currentNameRu || EXERCISE_DB[i].name === currentNameEn ||
+                    getExerciseBaseName(EXERCISE_DB[i].nameRu || '') === baseName) {
+                    category = EXERCISE_DB[i].category;
+                    break;
+                }
+            }
+            const variations = EXERCISE_DB.filter(function(dbEx) {
+                return dbEx.category === category && getExerciseBaseName(dbEx.nameRu || dbEx.name || '') === baseName;
+            });
+            if (variations.length === 0) return;
+            title = baseName;
+            const currentSub = Storage.getSubstitution(exerciseId);
+            const currentDisplay = currentSub || currentNameRu || currentNameEn;
+            for (var v = 0; v < variations.length; v++) {
+                var vex = variations[v];
+                var vName = exName(vex);
+                var vLabel = getVariationLabel(vName);
+                var isSelected = vName === currentDisplay || vex.nameRu === currentDisplay || vex.name === currentDisplay;
+                optionsHtml += `
+                    <div class="eq-option variation-option ${isSelected ? 'selected' : ''}"
+                         ${attr(WORKOUT.EXERCISE, exerciseId)}
+                         ${attr(WORKOUT.EX_NAME_RU, esc(vex.nameRu))}
+                         ${attr(WORKOUT.EX_NAME, esc(vex.name))}>
+                        ${exThumbHtml(vex.name)}${esc(vLabel)}${isSelected ? ' <span class="eq-check">\u2713</span>' : ''}
+                    </div>
+                `;
+            }
         }
 
         const overlay = document.createElement('div');
@@ -1598,7 +1625,7 @@ export const UI = {
         overlay.innerHTML = `
             <div class="equipment-modal">
                 <div class="modal-header">
-                    <h3>${esc(baseName)}</h3>
+                    <h3>${esc(title)}</h3>
                 </div>
                 <div class="eq-list">
                     ${optionsHtml}
