@@ -254,7 +254,7 @@ export const DEFAULT_PROGRAM = {
           exercise: {
             id: "D2E2",
             name: "Lat Pulldown - Close Grip (Cable)",
-            nameRu: "Тяга верхнего блока узким хватом (на блоке)",
+            nameRu: "Тяга верхнего блока (узкий хват)",
             reps: "12-15",
             rest: 120,
             sets: [
@@ -296,8 +296,8 @@ export const DEFAULT_PROGRAM = {
             },
             {
               id: "D2E3_opt3",
-              name: "Iso-Lateral Low Row",
-              nameRu: "Нижняя тяга раздельная",
+              name: "Seated Cable Row - V Grip (Cable)",
+              nameRu: "Тяга нижнего блока сидя (V-рукоять)",
               reps: "12-15",
               rest: 120,
               sets: [
@@ -316,8 +316,8 @@ export const DEFAULT_PROGRAM = {
           options: [
             {
               id: "D2E4_opt1",
-              name: "Iso-Lateral High Row (Machine)",
-              nameRu: "Верхняя тяга раздельная (в тренажёре)",
+              name: "Lat Pulldown (Machine)",
+              nameRu: "Тяга верхнего блока (в тренажёре)",
               reps: "12-15",
               rest: 120,
               sets: [
@@ -472,8 +472,8 @@ export const DEFAULT_PROGRAM = {
           type: "single",
           exercise: {
             id: "D3E5",
-            name: "Single Leg Press (Machine)",
-            nameRu: "Жим ногой (в тренажёре)",
+            name: "Leg Press (Machine)",
+            nameRu: "Жим ногами (в тренажёре)",
             reps: "15-20",
             rest: 120,
             sets: [
@@ -559,7 +559,7 @@ export const DEFAULT_PROGRAM = {
             {
               id: "D4E2_opt2",
               name: "Seated Lateral Raise (Dumbbell)",
-              nameRu: "Махи в стороны сидя (с гантелями)",
+              nameRu: "Махи в стороны (сидя, с гантелями)",
               reps: "12-15",
               rest: 120,
               sets: [
@@ -612,8 +612,8 @@ export const DEFAULT_PROGRAM = {
               options: [
                 {
                   id: "D4E5_opt1",
-                  name: "Iso-Lateral High Row (Machine)",
-                  nameRu: "Верхняя тяга раздельная (в тренажёре)",
+                  name: "Lat Pulldown (Machine)",
+                  nameRu: "Тяга верхнего блока (в тренажёре)",
                   reps: "8-12",
                   rest: 120,
                   sets: [
@@ -625,7 +625,7 @@ export const DEFAULT_PROGRAM = {
                 {
                   id: "D4E5_opt2",
                   name: "Lat Pulldown - Close Grip (Cable)",
-                  nameRu: "Тяга верхнего блока узким хватом (на блоке)",
+                  nameRu: "Тяга верхнего блока (узкий хват)",
                   reps: "8-12",
                   rest: 120,
                   sets: [
@@ -638,8 +638,8 @@ export const DEFAULT_PROGRAM = {
             },
             {
               id: "D4E6",
-              name: "Iso-Lateral Low Row",
-              nameRu: "Нижняя тяга раздельная",
+              name: "Seated Cable Row - V Grip (Cable)",
+              nameRu: "Тяга нижнего блока сидя (V-рукоять)",
               reps: "12-15",
               rest: 120,
               sets: [
@@ -703,8 +703,8 @@ export const DEFAULT_PROGRAM = {
                 },
                 {
                   id: "D4E8_opt2",
-                  name: "Iso-Lateral Low Row",
-                  nameRu: "Нижняя тяга раздельная",
+                  name: "Seated Cable Row - V Grip (Cable)",
+                  nameRu: "Тяга нижнего блока сидя (V-рукоять)",
                   reps: "12-15",
                   rest: 120,
                   sets: [

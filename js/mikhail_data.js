@@ -401,8 +401,8 @@ export const MIKHAIL_PROGRAM = {
             },
             {
               "id": "D2E2_opt2",
-              "name": "Iso-Lateral Chest Press (Machine)",
-              "nameRu": "Жим от груди раздельный (в тренажёре)",
+              "name": "Chest Press (Machine)",
+              "nameRu": "Жим от груди (в тренажёре)",
               "reps": "8-12",
               "rest": 120,
               "sets": [
@@ -481,7 +481,7 @@ export const MIKHAIL_PROGRAM = {
           "exercise": {
             "id": "D2E4",
             "name": "Chest Dip",
-            "nameRu": "Отжимания на брусьях (на грудь)",
+            "nameRu": "Отжимания на брусьях на грудь",
             "reps": "8-12",
             "rest": 120,
             "sets": [
@@ -590,7 +590,7 @@ export const MIKHAIL_PROGRAM = {
             {
               "id": "D2E7_opt2",
               "name": "Seated Lateral Raise (Dumbbell)",
-              "nameRu": "Махи в стороны сидя (с гантелями)",
+              "nameRu": "Махи в стороны (сидя, с гантелями)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -760,7 +760,7 @@ export const MIKHAIL_PROGRAM = {
           "exercise": {
             "id": "D3E2",
             "name": "Lat Pulldown - Close Grip (Cable)",
-            "nameRu": "Тяга верхнего блока узким хватом (на блоке)",
+            "nameRu": "Тяга верхнего блока (узкий хват)",
             "reps": "12-15",
             "rest": 120,
             "sets": [
@@ -838,8 +838,8 @@ export const MIKHAIL_PROGRAM = {
             },
             {
               "id": "D3E3_opt3",
-              "name": "Iso-Lateral Low Row",
-              "nameRu": "Нижняя тяга раздельная",
+              "name": "Seated Cable Row - V Grip (Cable)",
+              "nameRu": "Тяга нижнего блока сидя (V-рукоять)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -870,8 +870,8 @@ export const MIKHAIL_PROGRAM = {
           "options": [
             {
               "id": "D3E4_opt1",
-              "name": "Iso-Lateral High Row (Machine)",
-              "nameRu": "Верхняя тяга раздельная (в тренажёре)",
+              "name": "Lat Pulldown (Machine)",
+              "nameRu": "Тяга верхнего блока (в тренажёре)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -1491,7 +1491,7 @@ export const MIKHAIL_PROGRAM = {
                 {
                   "id": "D5E3_opt1",
                   "name": "Chest Dip",
-                  "nameRu": "Отжимания на брусьях (на грудь)",
+                  "nameRu": "Отжимания на брусьях на грудь",
                   "reps": "12-15",
                   "rest": 120,
                   "sets": [
@@ -1600,7 +1600,7 @@ export const MIKHAIL_PROGRAM = {
                 {
                   "id": "D5E5_opt2",
                   "name": "Seated Lateral Raise (Dumbbell)",
-                  "nameRu": "Махи в стороны сидя (с гантелями)",
+                  "nameRu": "Махи в стороны (сидя, с гантелями)",
                   "reps": "12-15",
                   "rest": 120,
                   "sets": [
@@ -1745,8 +1745,8 @@ export const MIKHAIL_PROGRAM = {
               "options": [
                 {
                   "id": "D6E1_opt1",
-                  "name": "Iso-Lateral High Row (Machine)",
-                  "nameRu": "Верхняя тяга раздельная (в тренажёре)",
+                  "name": "Lat Pulldown (Machine)",
+                  "nameRu": "Тяга верхнего блока (в тренажёре)",
                   "reps": "8-12",
                   "rest": 120,
                   "sets": [
@@ -1770,7 +1770,7 @@ export const MIKHAIL_PROGRAM = {
                 {
                   "id": "D6E1_opt2",
                   "name": "Lat Pulldown - Close Grip (Cable)",
-                  "nameRu": "Тяга верхнего блока узким хватом (на блоке)",
+                  "nameRu": "Тяга верхнего блока (узкий хват)",
                   "reps": "8-12",
                   "rest": 120,
                   "sets": [
@@ -1795,8 +1795,8 @@ export const MIKHAIL_PROGRAM = {
             },
             {
               "id": "D6E2",
-              "name": "Iso-Lateral Low Row",
-              "nameRu": "Нижняя тяга раздельная",
+              "name": "Seated Cable Row - V Grip (Cable)",
+              "nameRu": "Тяга нижнего блока сидя (V-рукоять)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -1906,8 +1906,8 @@ export const MIKHAIL_PROGRAM = {
                 },
                 {
                   "id": "D6E4_opt2",
-                  "name": "Iso-Lateral Low Row",
-                  "nameRu": "Нижняя тяга раздельная",
+                  "name": "Seated Cable Row - V Grip (Cable)",
+                  "nameRu": "Тяга нижнего блока сидя (V-рукоять)",
                   "reps": "12-15",
                   "rest": 120,
                   "sets": [
