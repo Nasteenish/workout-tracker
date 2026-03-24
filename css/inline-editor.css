@@ -514,19 +514,27 @@
     display: none !important;
 }
 
-/* Flatten choose-one and superset wrappers in reorder mode */
-.choose-one-group.drag-compact,
-.superset-group.drag-compact {
-    border: none !important;
+/* Choose-one and superset wrappers in reorder mode — match standalone cards */
+.choose-one-group.drag-compact {
     padding: 0 !important;
-    margin-bottom: var(--spacing-sm) !important;
+    border: none !important;
     background: none !important;
-    overflow: visible !important;
+    margin-bottom: 0 !important;
 }
+.superset-group.drag-compact {
+    padding: 0 !important;
+    border: none !important;
+    background: none !important;
+    margin-bottom: 0 !important;
+}
+/* Inner exercise cards get their own compact styling */
+.choose-one-group.drag-compact .exercise-card,
 .superset-group.drag-compact .exercise-card {
+    padding: var(--spacing-sm) var(--spacing-md) !important;
+    margin-bottom: var(--spacing-xs) !important;
     border: var(--glass-border) !important;
     border-radius: var(--radius-md) !important;
-    margin-bottom: var(--spacing-xs) !important;
+    overflow: hidden !important;
 }
 
 /* Highlighted dragged card in compact list */
