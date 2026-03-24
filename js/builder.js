@@ -1329,7 +1329,8 @@ export const Builder = {
             var q = query.toLowerCase();
             filtered = filtered.filter(function(ex) {
                 return (ex.nameRu && ex.nameRu.toLowerCase().indexOf(q) !== -1) ||
-                       (ex.name && ex.name.toLowerCase().indexOf(q) !== -1);
+                       (ex.name && ex.name.toLowerCase().indexOf(q) !== -1) ||
+                       (ex.search && ex.search.toLowerCase().indexOf(q) !== -1);
             });
         }
 
