@@ -755,7 +755,7 @@ body.modal-open {
     border-radius: var(--radius-pill);
     color: var(--text-secondary);
     font-size: var(--font-size-xs);
-    padding: 5px 12px;
+    padding: 5px 12px 5px 0;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
@@ -889,11 +889,11 @@ body.modal-open {
 
 /* Equipment button pill — hidden until trimmed */
 .equipment-btn .ex-thumb {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    margin-right: 6px;
-    margin-left: -2px;
+    margin-right: 8px;
+    margin-left: 0;
     object-fit: contain;
     background: #FFFFFF;
 }
