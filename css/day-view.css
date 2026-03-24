@@ -44,12 +44,10 @@
 
 .exercise-card .exercise-header {
     padding: var(--spacing-md);
-    padding-bottom: var(--spacing-xs);
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: var(--spacing-sm);
-    flex-wrap: wrap;
 }
 
 .exercise-card .exercise-name {
@@ -73,11 +71,11 @@
     padding: 3px 8px;
     border-radius: var(--radius-pill);
 }
-/* Unilateral toggle — sits on its own row inside exercise-header via flex-wrap */
-.exercise-header > .uni-toggle {
-    width: 100%;
+/* Unilateral toggle row — between header and equipment */
+.uni-row {
+    display: flex;
     justify-content: flex-end;
-    margin-top: -2px;
+    padding: 0 var(--spacing-md) 2px;
 }
 
 /* Unilateral toggle */
