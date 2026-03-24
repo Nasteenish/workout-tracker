@@ -764,6 +764,11 @@ body.modal-open {
     max-width: 65%;
 }
 
+.eq-label-text {
+    flex: 1;
+    min-width: 0;
+}
+
 .equipment-btn:active {
     background: var(--bg-card-hover);
 }
