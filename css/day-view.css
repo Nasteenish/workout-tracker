@@ -761,6 +761,15 @@ body.modal-open {
     align-items: center;
     gap: 4px;
     font-weight: 500;
+    max-width: 65%;
+    min-width: 0;
+}
+
+.eq-label-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
 }
 
 .equipment-btn:active {

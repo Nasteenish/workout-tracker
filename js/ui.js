@@ -807,7 +807,7 @@ export const UI = {
         const eqHtml = `
             <div class="equipment-row">
                 <button class="equipment-btn" ${attr(WORKOUT.EXERCISE, ex.id)} ${attr(WORKOUT.EX_NAME, esc(ex.name || ''))} ${attr(WORKOUT.EX_NAME_RU, esc(ex.nameRu || ''))}>
-                    ${eqThumb}${eqLabel}${eqTrailing}
+                    ${eqThumb}<span class="eq-label-text">${eqLabel}</span>${eqTrailing}
                 </button>
                 ${uniToggleHtml}
             </div>
