@@ -514,6 +514,21 @@
     display: none !important;
 }
 
+/* Flatten choose-one and superset wrappers in reorder mode */
+.choose-one-group.drag-compact,
+.superset-group.drag-compact {
+    border: none !important;
+    padding: 0 !important;
+    margin-bottom: var(--spacing-sm) !important;
+    background: none !important;
+    overflow: visible !important;
+}
+.superset-group.drag-compact .exercise-card {
+    border: var(--glass-border) !important;
+    border-radius: var(--radius-md) !important;
+    margin-bottom: var(--spacing-xs) !important;
+}
+
 /* Highlighted dragged card in compact list */
 .drag-active {
     border: 2px solid var(--accent-primary) !important;
