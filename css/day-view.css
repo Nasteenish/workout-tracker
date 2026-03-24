@@ -71,12 +71,7 @@
     padding: 3px 8px;
     border-radius: var(--radius-pill);
 }
-/* Unilateral toggle row — between header and equipment */
-.uni-row {
-    display: flex;
-    justify-content: flex-end;
-    padding: 0 var(--spacing-md) 2px;
-}
+/* Equipment row now also holds the unilateral toggle */
 
 /* Unilateral toggle */
 .uni-toggle {
@@ -716,6 +711,9 @@ body.modal-open {
 /* ===== Equipment Row ===== */
 .equipment-row {
     padding: var(--spacing-xs) var(--spacing-md);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .equipment-btn {
