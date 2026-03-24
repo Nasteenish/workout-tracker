@@ -90,8 +90,9 @@
     background: rgba(255, 255, 255, 0.06);
 }
 .uni-toggle-label {
-    font-size: 10px;
-    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    font-weight: 500;
     background: none !important;
     padding: 0 !important;
 }

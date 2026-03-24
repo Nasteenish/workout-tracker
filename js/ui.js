@@ -1175,10 +1175,11 @@ export const UI = {
                     let setsHtml = '';
                     for (const s of entry.sets) {
                         if (s.weight > maxWeight) maxWeight = s.weight;
+                        const uniMark = s.uni ? ' <span style="opacity:0.5;font-size:10px">L/R</span>' : '';
                         setsHtml += `
                             <div class="history-set">
                                 <span>П.${s.setIdx + 1}:</span>
-                                <span class="weight-value">${s.weight}${unitLabel} x ${s.reps}</span>
+                                <span class="weight-value">${s.weight}${unitLabel} x ${s.reps}${uniMark}</span>
                             </div>
                         `;
                     }

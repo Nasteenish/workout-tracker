@@ -160,15 +160,17 @@ export const WorkoutUI = {
             return true;
         }}
 
-        // Unilateral toggle
+        // Unilateral toggle — point update, no full re-render
         {const toggle = target.closest('.uni-toggle');
         if (toggle) {
             const exId = read(toggle, WORKOUT.EXERCISE);
             if (exId) {
                 const current = Storage.getUnilateral(exId);
                 Storage.setUnilateral(exId, !current);
+                // Toggle switch visually without re-render
+                const sw = toggle.querySelector('.uni-switch');
+                if (sw) sw.classList.toggle('on', !current);
                 if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week + '/day/' + day);
-                UI.renderDay(week, day);
             }
             return true;
         }}

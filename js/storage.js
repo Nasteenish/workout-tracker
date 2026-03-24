@@ -964,7 +964,13 @@ export const Storage = {
         var totalWeeks = p ? p.totalWeeks : 12;
         var totalDays = p ? Object.keys(p.dayTemplates).length : 5;
         var sibIds = this._getSiblingIds(exerciseId);
-        var allIds = [exerciseId].concat(sibIds);
+        // Include both bilateral and unilateral log keys
+        var baseIds = [exerciseId].concat(sibIds);
+        var allIds = [];
+        for (var bi = 0; bi < baseIds.length; bi++) {
+            allIds.push(baseIds[bi]);
+            allIds.push(baseIds[bi] + '_uni');
+        }
         for (var week = 1; week <= totalWeeks; week++) {
             var w = String(week);
             if (!data.log[w]) continue;
@@ -975,6 +981,7 @@ export const Storage = {
                 for (var ai = 0; ai < allIds.length; ai++) {
                     var id = allIds[ai];
                     if (!data.log[w][d][id]) continue;
+                    var isUni = id.endsWith('_uni');
                     for (var [setIdx, setData] of Object.entries(data.log[w][d][id])) {
                         if (setData.completed) {
                             sets.push({
@@ -982,7 +989,8 @@ export const Storage = {
                                 weight: setData.weight,
                                 reps: setData.reps,
                                 timestamp: setData.timestamp,
-                                equipmentId: setData.equipmentId || null
+                                equipmentId: setData.equipmentId || null,
+                                uni: isUni
                             });
                         }
                     }
