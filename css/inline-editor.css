@@ -477,7 +477,7 @@
 
 .drag-compact .set-row,
 .drag-compact .set-controls,
-.drag-compact .equipment-btn,
+.drag-compact .equipment-row,
 .drag-compact .history-btn,
 .drag-compact .inline-menu-btn,
 .drag-compact .set-prev,
@@ -487,7 +487,9 @@
 .drag-compact .btn-add-set,
 .drag-compact .btn-remove-set,
 .drag-compact [class*="set-"],
-.drag-compact .exercise-note {
+.drag-compact .exercise-note,
+.drag-compact .uni-toggle,
+.drag-compact .chooser-badge {
     display: none !important;
 }
 
