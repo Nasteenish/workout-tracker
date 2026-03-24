@@ -51,8 +51,6 @@ export const RestTimer = {
             else if (target.id === 'rtb-pause') this.togglePause();
         });
 
-        // AudioContext unlocked lazily in start() when user explicitly starts the timer
-
         // Request notification permission early
         this._requestNotificationPermission();
 
@@ -108,8 +106,6 @@ export const RestTimer = {
         this._remaining = this._defaultDuration;
         this._endTime = Date.now() + this._remaining * 1000;
 
-        // Prime audio while we have user gesture context (critical for iOS)
-        this._unlockAudio();
         this._updateDisplay();
         this._updatePauseBtn();
 
@@ -246,40 +242,6 @@ export const RestTimer = {
         this._saveState();
     },
 
-    _unlockAudio() {
-        try {
-            if (!this._audioCtx) {
-                this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (this._audioCtx.state === 'suspended') {
-                this._audioCtx.resume();
-            }
-        } catch(e) {}
-        // Prime HTML Audio element with a silent buffer (not the beep!)
-        // so iOS allows programmatic playback later
-        try {
-            if (!this._audioElPrimed) {
-                if (!this._silentEl) {
-                    // 1-sample silent WAV
-                    var buf = new ArrayBuffer(46);
-                    var v = new DataView(buf);
-                    var w = function(o, s) { for (var i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
-                    w(0, 'RIFF'); v.setUint32(4, 38, true); w(8, 'WAVEfmt ');
-                    v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
-                    v.setUint32(24, 8000, true); v.setUint32(28, 16000, true);
-                    v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data');
-                    v.setUint32(40, 2, true); v.setInt16(44, 0, true);
-                    this._silentEl = new Audio(URL.createObjectURL(new Blob([buf], { type: 'audio/wav' })));
-                }
-                this._silentEl.play().then(() => {
-                    this._audioElPrimed = true;
-                    // Now pre-load the real beep so it's ready
-                    this._ensureAudioEl();
-                }).catch(() => {});
-            }
-        } catch(e) {}
-    },
-
     _swTimer(type, duration) {
         if (!navigator.serviceWorker) return;
         navigator.serviceWorker.ready.then(reg => {
@@ -320,7 +282,6 @@ export const RestTimer = {
     },
 
     _audioEl: null,
-    _audioElPrimed: false,
 
     _ensureAudioEl() {
         if (this._audioEl) return this._audioEl;
