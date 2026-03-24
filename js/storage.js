@@ -943,11 +943,10 @@ export const Storage = {
             for (var w = week; w >= 1; w--) {
                 for (var si = 0; si < siblings.length; si++) {
                     var sib = siblings[si];
-                    // Skip days in current week that haven't been finished yet
+                    // Skip days in current week that have no completed data yet
                     if (w === week && sib.day >= day) {
-                        var data = this._load();
-                        var dayLog = data.log[String(w)] && data.log[String(w)][String(sib.day)];
-                        if (!dayLog || !dayLog._finishedAt) continue;
+                        var sibSetLog = this.getSetLog(w, sib.day, sib.id, setIdx);
+                        if (!sibSetLog || !sibSetLog.completed) continue;
                     }
                     var log = this.getSetLog(w, sib.day, sib.id, setIdx);
                     if (log && log.completed && log.timestamp > bestTime) {
