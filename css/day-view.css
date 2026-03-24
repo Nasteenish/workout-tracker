@@ -783,19 +783,13 @@ body.modal-open {
     background: var(--bg-card-hover);
 }
 
-/* History equipment grouping */
-.history-equipment-title {
-    font-size: var(--font-size-sm);
-    color: var(--text-secondary);
-    font-weight: 600;
-    margin: var(--spacing-md) 0 var(--spacing-sm);
-    padding-bottom: var(--spacing-xs);
-    border-bottom: 1px solid var(--border-color);
-}
-
-.history-other-eq {
-    margin-top: var(--spacing-lg);
-    opacity: 0.5;
+/* History equipment badge (inline in week title) */
+.history-eq-badge {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-left: 6px;
+    opacity: 0.7;
 }
 
 /* Editable exercise name */

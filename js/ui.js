@@ -1110,23 +1110,24 @@ export const UI = {
         const subName = Storage.getSubstitution(exerciseId);
         if (subName) exerciseName = subName;
 
-        // Filter history by current equipment
-        let history, otherHistory;
-        if (currentEqId) {
-            history = allHistory.map(entry => {
-                const filteredSets = entry.sets.filter(s => s.equipmentId === currentEqId);
-                return filteredSets.length > 0 ? { ...entry, sets: filteredSets } : null;
-            }).filter(Boolean);
-            otherHistory = allHistory.map(entry => {
-                const filteredSets = entry.sets.filter(s => s.equipmentId !== currentEqId);
-                return filteredSets.length > 0 ? { ...entry, sets: filteredSets } : null;
-            }).filter(Boolean);
-        } else {
-            history = allHistory;
-            otherHistory = [];
-        }
+        // Annotate each entry with equipment name for display
+        const _eqCache = {};
+        const _resolveEqName = (eqId) => {
+            if (!eqId) return null;
+            if (_eqCache[eqId] === undefined) {
+                const eq = Storage.getEquipmentById(eqId);
+                _eqCache[eqId] = eq ? eq.name : null;
+            }
+            return _eqCache[eqId];
+        };
 
-        // Compute chart data
+        const history = allHistory.map(entry => {
+            const eqId = entry.sets[0] && entry.sets[0].equipmentId;
+            const eqName = _resolveEqName(eqId);
+            return { ...entry, eqName };
+        });
+
+        // Compute chart data (all entries)
         const weekMap = {};
         for (const e of history) {
             const mw = Math.max(...e.sets.map(s => s.weight || 0));
@@ -1134,17 +1135,6 @@ export const UI = {
         }
         const chartWeeks = Object.keys(weekMap).map(Number).sort((a, b) => a - b);
         const chartValues = chartWeeks.map(w => weekMap[w]);
-
-        // Resolve equipment names for "other" groups
-        const otherByEquipment = {};
-        for (const entry of otherHistory) {
-            const eqKey = (entry.sets[0] && entry.sets[0].equipmentId) || '_none';
-            if (!otherByEquipment[eqKey]) {
-                const eq = eqKey !== '_none' ? Storage.getEquipmentById(eqKey) : null;
-                otherByEquipment[eqKey] = { name: eq ? eq.name : 'Без оборудования', entries: [] };
-            }
-            otherByEquipment[eqKey].entries.push(entry);
-        }
 
         // Check if history contains both uni and non-uni logs
         const _allSets = allHistory.flatMap(e => e.sets);
@@ -1156,7 +1146,7 @@ export const UI = {
             exerciseName, unitLabel,
             currentEqName: currentEq ? currentEq.name : null,
             hasCurrentEq: !!currentEqId,
-            history, otherByEquipment,
+            history,
             chartWeeks, chartValues,
             hasBothModes
         };
@@ -1167,24 +1157,15 @@ export const UI = {
 
     renderHistory(exerciseId) {
         const vm = this._buildHistoryVM(exerciseId);
-        const { exerciseName, unitLabel, currentEqName, hasCurrentEq,
-                history, otherByEquipment, chartWeeks, chartValues, hasBothModes } = vm;
+        const { exerciseName, unitLabel, currentEqName,
+                history, chartWeeks, chartValues, hasBothModes } = vm;
 
         // Apply uni filter to history entries
         const uniFilter = this._historyUniFilter;
-        const filterSets = (entries) => {
-            if (uniFilter === 'all') return entries;
-            return entries.map(entry => {
-                const filtered = entry.sets.filter(s => uniFilter === 'uni' ? s.uni : !s.uni);
-                return filtered.length > 0 ? { ...entry, sets: filtered } : null;
-            }).filter(Boolean);
-        };
-        const filteredHistory = filterSets(history);
-        const filteredOther = {};
-        for (const k of Object.keys(otherByEquipment)) {
-            const fEntries = filterSets(otherByEquipment[k].entries);
-            if (fEntries.length > 0) filteredOther[k] = { ...otherByEquipment[k], entries: fEntries };
-        }
+        const filteredHistory = uniFilter === 'all' ? history : history.map(entry => {
+            const filtered = entry.sets.filter(s => uniFilter === 'uni' ? s.uni : !s.uni);
+            return filtered.length > 0 ? { ...entry, sets: filtered } : null;
+        }).filter(Boolean);
 
         let contentHtml = '';
 
@@ -1197,36 +1178,10 @@ export const UI = {
             </div>`;
         }
 
-        const noHistory = filteredHistory.length === 0 && Object.keys(filteredOther).length === 0;
-
-        if (noHistory) {
+        if (filteredHistory.length === 0) {
             contentHtml = '<p class="history-empty">Нет записей</p>';
         } else {
             let maxWeight = 0;
-
-            const renderEntries = (entries) => {
-                let html = '';
-                for (const entry of entries) {
-                    let setsHtml = '';
-                    for (const s of entry.sets) {
-                        if (s.weight > maxWeight) maxWeight = s.weight;
-                        const uniMark = s.uni ? ' <span style="opacity:0.5;font-size:10px">L/R</span>' : '';
-                        setsHtml += `
-                            <div class="history-set">
-                                <span>П.${s.setIdx + 1}:</span>
-                                <span class="weight-value">${s.weight}${unitLabel} x ${s.reps}${uniMark}</span>
-                            </div>
-                        `;
-                    }
-                    html += `
-                        <div class="history-week">
-                            <div class="history-week-title">Неделя ${entry.week}, День ${entry.day}</div>
-                            ${setsHtml}
-                        </div>
-                    `;
-                }
-                return html;
-            };
 
             // Progress chart — max weight per week, SVG line chart
             if (chartWeeks.length > 1) {
@@ -1263,21 +1218,28 @@ export const UI = {
                 </svg></div>`;
             }
 
-            if (currentEqName) {
-                contentHtml += `<div class="history-equipment-title">${esc(currentEqName)}</div>`;
-            }
-
-            if (filteredHistory.length > 0) {
-                contentHtml += renderEntries(filteredHistory);
-            } else if (hasCurrentEq) {
-                contentHtml += '<p class="history-empty">\u041D\u0435\u0442 \u0437\u0430\u043F\u0438\u0441\u0435\u0439 \u0434\u043B\u044F \u044D\u0442\u043E\u0433\u043E \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u044F</p>';
-            }
-
-            // Other equipment sections
-            for (const eqKey of Object.keys(filteredOther)) {
-                const group = filteredOther[eqKey];
-                contentHtml += `<div class="history-equipment-title history-other-eq">${esc(group.name)}</div>`;
-                contentHtml += renderEntries(group.entries);
+            // Render all entries in chronological order with equipment badges
+            for (const entry of filteredHistory) {
+                let setsHtml = '';
+                for (const s of entry.sets) {
+                    if (s.weight > maxWeight) maxWeight = s.weight;
+                    const uniMark = s.uni ? ' <span style="opacity:0.5;font-size:10px">L/R</span>' : '';
+                    setsHtml += `
+                        <div class="history-set">
+                            <span>П.${s.setIdx + 1}:</span>
+                            <span class="weight-value">${s.weight}${unitLabel} x ${s.reps}${uniMark}</span>
+                        </div>
+                    `;
+                }
+                const eqBadge = entry.eqName
+                    ? `<span class="history-eq-badge">${esc(entry.eqName)}</span>`
+                    : '';
+                contentHtml += `
+                    <div class="history-week">
+                        <div class="history-week-title">Неделя ${entry.week}, День ${entry.day}${eqBadge}</div>
+                        ${setsHtml}
+                    </div>
+                `;
             }
 
             if (maxWeight > 0) {
