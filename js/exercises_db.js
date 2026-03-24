@@ -96,7 +96,6 @@ export const EXERCISE_DB = [
     { nameRu: 'Тяга гантели в наклоне', name: 'Dumbbell Row', category: 'back' },
     { nameRu: 'Тяга каната прямыми руками (на блоке)', name: 'Rope Straight Arm Pulldown', category: 'back' },
     { nameRu: 'Тяга лэндмайн', name: 'Landmine Row', category: 'back' },
-    { nameRu: 'Тяга одной рукой (на блоке)', name: 'Single Arm Cable Row', category: 'back' },
     { nameRu: 'Тяга нижнего блока сидя (V-рукоять)', name: 'Seated Cable Row - V Grip (Cable)', category: 'back' },
     { nameRu: 'Тяга нижнего блока сидя (прямой гриф)', name: 'Seated Cable Row - Bar Grip', category: 'back' },
     { nameRu: 'Тяга нижнего блока сидя (широкий хват)', name: 'Seated Cable Row - Bar Wide Grip', category: 'back' },
