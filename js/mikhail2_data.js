@@ -203,8 +203,8 @@ export const MIKHAIL2_PROGRAM = {
             },
             {
               "id": "D1E5_opt2",
-              "name": "Bulgarian Split Squat",
-              "nameRu": "Болгарские сплит-приседания",
+              "name": "Bulgarian Split Squat (Dumbbell)",
+              "nameRu": "Болгарские сплит-приседания (с гантелями)",
               "reps": "12-15",
               "rest": 120,
               "sets": [
@@ -1175,8 +1175,8 @@ export const MIKHAIL2_PROGRAM = {
           "type": "single",
           "exercise": {
             "id": "D4E3",
-            "name": "Bulgarian Split Squat",
-            "nameRu": "Болгарские сплит-приседания",
+            "name": "Bulgarian Split Squat (Dumbbell)",
+            "nameRu": "Болгарские сплит-приседания (с гантелями)",
             "reps": "12-15",
             "rest": 120,
             "sets": [

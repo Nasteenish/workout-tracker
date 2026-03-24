@@ -126,8 +126,8 @@ export const DEFAULT_PROGRAM = {
           sectionTitleRu: "ЯГОДИЦЫ",
           exercise: {
             id: "D1E4",
-            name: "Bulgarian Split Squat",
-            nameRu: "Болгарские сплит-приседания",
+            name: "Bulgarian Split Squat (Dumbbell)",
+            nameRu: "Болгарские сплит-приседания (с гантелями)",
             reps: "12-15",
             rest: 120,
             sets: [
@@ -425,8 +425,8 @@ export const DEFAULT_PROGRAM = {
           type: "single",
           exercise: {
             id: "D3E2",
-            name: "Bulgarian Split Squat",
-            nameRu: "Болгарские сплит-приседания",
+            name: "Bulgarian Split Squat (Dumbbell)",
+            nameRu: "Болгарские сплит-приседания (с гантелями)",
             reps: "12-15",
             rest: 120,
             sets: [

@@ -13,7 +13,7 @@ var _NAME_MAP = {
     'Romanian deadlift machine': ['Romanian Deadlift (Machine)', 'Румынская тяга (в тренажёре)'],
     'Seated leg curl': ['Seated Leg Curl (Machine)', 'Сгибание ног сидя (в тренажёре)'],
     'Lying leg curl': ['Lying Leg Curl (Machine)', 'Сгибание ног лёжа (в тренажёре)'],
-    'Glute split squat': ['Bulgarian Split Squat', 'Болгарские сплит-приседания'],
+    'Glute split squat': ['Bulgarian Split Squat (Dumbbell)', 'Болгарские сплит-приседания (с гантелями)'],
     'Glute kickback machine': ['Glute Kickback (Machine)', 'Отведение ноги назад (в тренажёре)'],
     'Calf raises machine': ['Standing Calf Raise (Machine)', 'Подъём на носки стоя (в тренажёре)'],
     'Supported row': ['Chest Supported Incline Row (Dumbbell)', 'Тяга гантелей на наклонной скамье с опорой'],
@@ -85,8 +85,8 @@ var _NAME_MAP = {
     'Средняя ягодичная на нижнем блоке': ['Medium Gluteus on Low Pulley', 'Средняя ягодичная (нижний блок)'],
     'Сгибание ног сидя': ['Seated Leg Curl (Machine)', 'Сгибание ног сидя (в тренажёре)'],
     'Сгибание ног лёжа': ['Lying Leg Curl (Machine)', 'Сгибание ног лёжа (в тренажёре)'],
-    'Сплит-присед на ягодицы': ['Bulgarian Split Squat', 'Болгарские сплит-приседания'],
-    'Болгарские выпады': ['Bulgarian Split Squat', 'Болгарские сплит-приседания'],
+    'Сплит-присед на ягодицы': ['Bulgarian Split Squat (Dumbbell)', 'Болгарские сплит-приседания (с гантелями)'],
+    'Болгарские выпады': ['Bulgarian Split Squat (Dumbbell)', 'Болгарские сплит-приседания (с гантелями)'],
     'Подъём на носки (тренажёр)': ['Standing Calf Raise (Machine)', 'Подъём на носки стоя (в тренажёре)'],
     'Жим плечами (тренажёр)': ['Shoulder Press (Machine Plates)', 'Жим плечами (в тренажёре, диски)'],
     'Махи гантелями на наклонной скамье': ['Rear Delt Reverse Fly (Dumbbell)', 'Обратные разведения (с гантелями)'],
@@ -111,7 +111,10 @@ var _NAME_MAP = {
     'Махи в стороны сидя (с гантелями)': ['Seated Lateral Raise (Dumbbell)', 'Махи в стороны (сидя, с гантелями)'],
     'Тяга нижнего блока сидя — V-рукоять (на блоке)': ['Seated Cable Row - V Grip (Cable)', 'Тяга нижнего блока сидя (V-рукоять)'],
     'Тяга нижнего блока сидя — прямой гриф': ['Seated Cable Row - Bar Grip', 'Тяга нижнего блока сидя (прямой гриф)'],
-    'Тяга нижнего блока сидя — широкий хват': ['Seated Cable Row - Bar Wide Grip', 'Тяга нижнего блока сидя (широкий хват)']
+    'Тяга нижнего блока сидя — широкий хват': ['Seated Cable Row - Bar Wide Grip', 'Тяга нижнего блока сидя (широкий хват)'],
+    // Bulgarian Split Squat: bare name → dumbbell variant (removed bare from DB)
+    'Bulgarian Split Squat': ['Bulgarian Split Squat (Dumbbell)', 'Болгарские сплит-приседания (с гантелями)'],
+    'Болгарские сплит-приседания': ['Bulgarian Split Squat (Dumbbell)', 'Болгарские сплит-приседания (с гантелями)']
 };
 
 // Fix specific exercises by ID (for cases where name-based matching is ambiguous)
