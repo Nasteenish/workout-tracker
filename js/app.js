@@ -1133,6 +1133,7 @@ export const App = {
             // Attach inline editor touch handlers to day slide
             var daySlide = document.querySelector('.day-slide');
             if (daySlide) InlineEditor.attachHandlers(daySlide);
+            this._restoreScroll();
             return;
         }
 
