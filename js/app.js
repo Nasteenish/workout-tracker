@@ -911,7 +911,6 @@ export const App = {
         // Safety: clear any stuck reorder/drag/swipe styles
         window._reorderMode = false;
         window._slotDragging = false;
-        window._activeDrag = false;
         document.body.style.overflow = '';
         document.body.style.touchAction = '';
         document.body.style.userSelect = '';
