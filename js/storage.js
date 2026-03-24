@@ -77,9 +77,9 @@ export const Storage = {
                 this._save();
             }
             // v431: migrate exercise names to Hevy DB standard
-            if (!this._data._exerciseNamesMigrated || this._data._exerciseNamesMigrated < 3) {
+            if (!this._data._exerciseNamesMigrated || this._data._exerciseNamesMigrated < 4) {
                 if (this._migrateFn) this._migrateFn(this._data);
-                this._data._exerciseNamesMigrated = 3;
+                this._data._exerciseNamesMigrated = 4;
                 this._save();
             }
         } catch (e) {
