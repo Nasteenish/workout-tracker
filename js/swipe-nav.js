@@ -287,6 +287,7 @@ export const SwipeNav = {
                             if (app._isBackSwipe) {
                                 history.replaceState(null, '', target);
                                 app._isBackSwipe = false;
+                                appEl.classList.remove('no-animate');
                                 appEl.style.opacity = '0';
                                 unlockScroll();
                                 var fbCleanup = app._pendingSwipeCleanup;

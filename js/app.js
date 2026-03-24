@@ -176,6 +176,7 @@ export const App = {
                 document.body.style.overflow = '';
                 // Reset app position/transform, but keep hidden via opacity
                 var appEl = document.getElementById('app');
+                appEl.classList.remove('no-animate');
                 appEl.style.opacity = '0';
                 // Route first (fills app with cached content), then remove companion
                 var cleanup = this._pendingSwipeCleanup;
