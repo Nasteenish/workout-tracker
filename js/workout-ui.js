@@ -165,16 +165,33 @@ export const WorkoutUI = {
             return true;
         }}
 
-        // Unilateral toggle — point update, no full re-render
+        // Unilateral toggle — toggle state + re-render set rows for this exercise
         {const toggle = target.closest('.uni-toggle');
         if (toggle) {
             const exId = read(toggle, WORKOUT.EXERCISE);
             if (exId) {
                 const current = Storage.getUnilateral(exId);
                 Storage.setUnilateral(exId, !current);
-                // Toggle switch visually without re-render
+                // Toggle switch visually
                 const sw = toggle.querySelector('.uni-switch');
                 if (sw) sw.classList.toggle('on', !current);
+                // Re-render set rows for this exercise to update "пред:" and values
+                const card = toggle.closest('.exercise-card');
+                if (card) {
+                    const ex = findExerciseInProgram(Storage.getProgram(), exId);
+                    if (ex) {
+                        const setRows = card.querySelectorAll('.set-row');
+                        for (let i = 0; i < ex.sets.length && i < setRows.length; i++) {
+                            const vm = UI._buildSetRowVM(ex, i, week, day);
+                            const newHtml = UI._renderSetRow(vm);
+                            const temp = document.createElement('div');
+                            temp.innerHTML = newHtml;
+                            if (temp.firstElementChild) {
+                                setRows[i].replaceWith(temp.firstElementChild);
+                            }
+                        }
+                    }
+                }
                 if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week + '/day/' + day);
             }
             return true;
