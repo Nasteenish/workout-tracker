@@ -584,6 +584,37 @@ body.modal-open {
 }
 
 /* ===== History View ===== */
+
+/* Uni/normal segmented filter */
+.history-uni-filter {
+    display: flex;
+    background: var(--bg-card);
+    border-radius: var(--radius-pill);
+    padding: 3px;
+    margin-bottom: var(--spacing-md);
+    gap: 2px;
+}
+.history-filter-btn {
+    flex: 1;
+    padding: 6px 8px;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: none;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+.history-filter-btn.active {
+    background: var(--accent-primary);
+    color: white;
+}
+.history-filter-btn:not(.active):active {
+    background: rgba(255, 255, 255, 0.08);
+}
+
 .history-week {
     background: var(--bg-secondary);
     border: none;

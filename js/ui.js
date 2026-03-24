@@ -1146,23 +1146,58 @@ export const UI = {
             otherByEquipment[eqKey].entries.push(entry);
         }
 
+        // Check if history contains both uni and non-uni logs
+        const _allSets = allHistory.flatMap(e => e.sets);
+        const hasUni = _allSets.some(s => s.uni);
+        const hasNonUni = _allSets.some(s => !s.uni);
+        const hasBothModes = hasUni && hasNonUni;
+
         return {
             exerciseName, unitLabel,
             currentEqName: currentEq ? currentEq.name : null,
             hasCurrentEq: !!currentEqId,
             history, otherByEquipment,
-            chartWeeks, chartValues
+            chartWeeks, chartValues,
+            hasBothModes
         };
     },
 
     // Pure HTML rendering from history view-model
+    _historyUniFilter: 'all', // 'all' | 'normal' | 'uni'
+
     renderHistory(exerciseId) {
         const vm = this._buildHistoryVM(exerciseId);
         const { exerciseName, unitLabel, currentEqName, hasCurrentEq,
-                history, otherByEquipment, chartWeeks, chartValues } = vm;
+                history, otherByEquipment, chartWeeks, chartValues, hasBothModes } = vm;
+
+        // Apply uni filter to history entries
+        const uniFilter = this._historyUniFilter;
+        const filterSets = (entries) => {
+            if (uniFilter === 'all') return entries;
+            return entries.map(entry => {
+                const filtered = entry.sets.filter(s => uniFilter === 'uni' ? s.uni : !s.uni);
+                return filtered.length > 0 ? { ...entry, sets: filtered } : null;
+            }).filter(Boolean);
+        };
+        const filteredHistory = filterSets(history);
+        const filteredOther = {};
+        for (const k of Object.keys(otherByEquipment)) {
+            const fEntries = filterSets(otherByEquipment[k].entries);
+            if (fEntries.length > 0) filteredOther[k] = { ...otherByEquipment[k], entries: fEntries };
+        }
 
         let contentHtml = '';
-        const noHistory = history.length === 0 && Object.keys(otherByEquipment).length === 0;
+
+        // Uni/normal filter — only show when both types exist
+        if (hasBothModes) {
+            contentHtml += `<div class="history-uni-filter" data-history-ex="${esc(exerciseId)}">
+                <button class="history-filter-btn${uniFilter === 'all' ? ' active' : ''}" data-uni-filter="all">\u0412\u0441\u0435</button>
+                <button class="history-filter-btn${uniFilter === 'normal' ? ' active' : ''}" data-uni-filter="normal">\u041E\u0431\u044B\u0447\u043D\u044B\u0435</button>
+                <button class="history-filter-btn${uniFilter === 'uni' ? ' active' : ''}" data-uni-filter="uni">\u041F\u043E\u043E\u0447\u0435\u0440\u0451\u0434\u043D\u043E</button>
+            </div>`;
+        }
+
+        const noHistory = filteredHistory.length === 0 && Object.keys(filteredOther).length === 0;
 
         if (noHistory) {
             contentHtml = '<p class="history-empty">Нет записей</p>';
@@ -1232,15 +1267,15 @@ export const UI = {
                 contentHtml += `<div class="history-equipment-title">${esc(currentEqName)}</div>`;
             }
 
-            if (history.length > 0) {
-                contentHtml += renderEntries(history);
+            if (filteredHistory.length > 0) {
+                contentHtml += renderEntries(filteredHistory);
             } else if (hasCurrentEq) {
-                contentHtml += '<p class="history-empty">Нет записей для этого оборудования</p>';
+                contentHtml += '<p class="history-empty">\u041D\u0435\u0442 \u0437\u0430\u043F\u0438\u0441\u0435\u0439 \u0434\u043B\u044F \u044D\u0442\u043E\u0433\u043E \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u044F</p>';
             }
 
             // Other equipment sections
-            for (const eqKey of Object.keys(otherByEquipment)) {
-                const group = otherByEquipment[eqKey];
+            for (const eqKey of Object.keys(filteredOther)) {
+                const group = filteredOther[eqKey];
                 contentHtml += `<div class="history-equipment-title history-other-eq">${esc(group.name)}</div>`;
                 contentHtml += renderEntries(group.entries);
             }

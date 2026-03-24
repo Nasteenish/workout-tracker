@@ -191,10 +191,24 @@ export const WorkoutUI = {
             return true;
         }
 
+        // History uni filter buttons
+        {const filterBtn = target.closest('.history-filter-btn');
+        if (filterBtn) {
+            const filterVal = filterBtn.getAttribute('data-uni-filter');
+            const container = filterBtn.closest('.history-uni-filter');
+            const exId = container ? container.getAttribute('data-history-ex') : null;
+            if (filterVal && exId) {
+                UI._historyUniFilter = filterVal;
+                UI.renderHistory(exId);
+            }
+            return true;
+        }}
+
         // History button
         {const btn = target.closest('.history-btn');
         if (btn) {
             const exId = read(btn, WORKOUT.EXERCISE);
+            UI._historyUniFilter = 'all'; // reset filter when opening history
             location.hash = `#/history/${encodeURIComponent(exId)}`;
             return true;
         }}
