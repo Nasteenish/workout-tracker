@@ -43,7 +43,7 @@
 }
 
 .exercise-card .exercise-header {
-    padding: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-md) var(--spacing-sm);
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -743,7 +743,7 @@ body.modal-open {
 
 /* ===== Equipment Row ===== */
 .equipment-row {
-    padding: var(--spacing-xs) var(--spacing-md);
+    padding: 0 var(--spacing-md) var(--spacing-xs);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -755,7 +755,7 @@ body.modal-open {
     border-radius: var(--radius-pill);
     color: var(--text-secondary);
     font-size: var(--font-size-xs);
-    padding: 5px 12px;
+    padding: 5px 12px 5px 8px;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
