@@ -6,9 +6,9 @@ import { INLINE, attr, read, readInt, write } from './data-attrs.js';
 import { esc } from './utils.js';
 import { exName } from './program-utils.js';
 
-// Global reorder-mode touchmove blocker — capture phase, fires before pull-refresh
+// Global active-drag touchmove blocker — capture phase, fires before pull-refresh
 document.addEventListener('touchmove', function(e) {
-    if (window._reorderMode) e.preventDefault();
+    if (window._activeDrag) e.preventDefault();
 }, { passive: false, capture: true });
 
 export const InlineEditor = {
@@ -32,6 +32,7 @@ export const InlineEditor = {
         document.body.style.top = '';
         window._slotDragging = false;
         window._reorderMode = false;
+        window._activeDrag = false;
         // Remove any leftover reorder-mode buttons
         var staleBtn = document.querySelector('.reorder-done-btn');
         if (staleBtn) staleBtn.remove();
@@ -227,8 +228,6 @@ export const InlineEditor = {
             reorderMode = true;
             window._slotDragging = true;
             window._reorderMode = true;
-            document.body.style.overflow = 'hidden';
-            document.body.style.touchAction = 'none';
             document.body.style.userSelect = 'none';
             document.body.style.webkitUserSelect = 'none';
             // Hide rest timer bar during reorder (it will reattach on next renderDay)
@@ -290,7 +289,7 @@ export const InlineEditor = {
             if (doneBtn && doneBtn.parentNode) doneBtn.remove();
             doneBtn = null;
             window._reorderMode = false;
-            document.body.style.overflow = '';
+            window._activeDrag = false;
             document.body.style.touchAction = '';
             document.body.style.userSelect = '';
             document.body.style.webkitUserSelect = '';
@@ -318,6 +317,8 @@ export const InlineEditor = {
                 // Already in reorder mode — start dragging this card
                 dragEl = card;
                 activeDrag = true;
+                window._activeDrag = true;
+                document.body.style.touchAction = 'none';
                 if (dragEl) dragEl.classList.add('drag-active');
                 cacheRects();
             } else {
@@ -328,6 +329,8 @@ export const InlineEditor = {
                     // Also start dragging the pressed card
                     dragEl = card;
                     activeDrag = true;
+                    window._activeDrag = true;
+                    document.body.style.touchAction = 'none';
                     card.classList.add('drag-active');
                     cacheRects();
                 }, 400);
@@ -344,9 +347,9 @@ export const InlineEditor = {
                 }
                 return;
             }
-            // Block all scrolling/pull-to-refresh while in reorder mode
-            if (reorderMode) e.preventDefault();
+            // Block scrolling only while actively dragging a card
             if (!activeDrag) return;
+            e.preventDefault();
             var touchY = e.touches[0].clientY;
 
             if (swapCooldown) return;
@@ -378,8 +381,9 @@ export const InlineEditor = {
                 dragEl.classList.remove('drag-active');
             }
             activeDrag = false;
+            window._activeDrag = false;
+            document.body.style.touchAction = '';
             dragEl = null;
-            // Keep touchAction: 'none' — cleared only on exitReorderMode
         });
     },
 
@@ -829,8 +833,6 @@ export const InlineEditor = {
             var groups = slide.querySelectorAll(':scope > [data-group-idx], :scope > .choose-one-group[data-group-idx]');
             window._reorderMode = true;
             window._slotDragging = true;
-            document.body.style.overflow = 'hidden';
-            document.body.style.touchAction = 'none';
             document.body.style.userSelect = 'none';
             document.body.style.webkitUserSelect = 'none';
             for (var i = 0; i < groups.length; i++) {
