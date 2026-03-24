@@ -923,16 +923,19 @@ export const Storage = {
     getPreviousLog(week, day, exerciseId, setIdx, equipmentId, siblings) {
         // 1. Same exerciseId, same day, previous weeks
         var sameDayResult = null;
+        var sameDayFallback = null;
         for (var w = week - 1; w >= 1; w--) {
             var log = this.getSetLog(w, day, exerciseId, setIdx);
             if (log && log.completed) {
                 if (equipmentId) {
                     if (log.equipmentId === equipmentId) { sameDayResult = log; break; }
+                    if (!sameDayFallback) sameDayFallback = log;
                 } else {
                     sameDayResult = log; break;
                 }
             }
         }
+        if (!sameDayResult) sameDayResult = sameDayFallback;
         // 2. Sibling exercises (same name, different day) — find most recent
         var sibResult = null;
         if (siblings && siblings.length > 0) {
