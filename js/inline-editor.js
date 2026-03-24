@@ -234,6 +234,9 @@ export const InlineEditor = {
             // Hide rest timer bar during reorder (it will reattach on next renderDay)
             var timerBar = document.getElementById('rest-timer-bar');
             if (timerBar && timerBar.parentNode) timerBar.remove();
+            // Hide section headers
+            var headers = container.querySelectorAll('.section-header');
+            for (var hi = 0; hi < headers.length; hi++) headers[hi].style.display = 'none';
             // Collapse all cards
             var allGroups = getGroupElements();
             for (var gi = 0; gi < allGroups.length; gi++) {
@@ -833,6 +836,9 @@ export const InlineEditor = {
             document.body.style.touchAction = 'none';
             document.body.style.userSelect = 'none';
             document.body.style.webkitUserSelect = 'none';
+            // Hide section headers
+            var headers = slide.querySelectorAll('.section-header');
+            for (var hi = 0; hi < headers.length; hi++) headers[hi].style.display = 'none';
             for (var i = 0; i < groups.length; i++) {
                 groups[i].classList.add('drag-compact');
             }
