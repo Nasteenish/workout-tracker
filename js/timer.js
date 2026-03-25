@@ -320,9 +320,23 @@ export const RestTimer = {
             if (!this._audioCtx) {
                 this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
-            if (this._audioCtx.state === 'suspended') {
-                this._audioCtx.resume().catch(() => {});
+            var ctx = this._audioCtx;
+            if (ctx.state === 'suspended') {
+                ctx.resume().catch(() => {});
             }
+            // Play silent 1-sample buffer to "unlock" context on iOS
+            var buf = ctx.createBuffer(1, 1, 22050);
+            var src = ctx.createBufferSource();
+            src.buffer = buf;
+            src.connect(ctx.destination);
+            src.start(0);
+        } catch(e) {}
+        // Also unlock HTML Audio fallback element
+        try {
+            var audio = this._ensureAudioEl();
+            audio.volume = 0;
+            var p = audio.play();
+            if (p) p.then(() => { audio.pause(); audio.volume = 1; audio.currentTime = 0; }).catch(() => { audio.volume = 1; });
         } catch(e) {}
     },
 
@@ -581,48 +595,6 @@ export const RestTimer = {
         } catch (e) {
             localStorage.removeItem('_wt_timer');
         }
-    },
-
-    /** Create/resume AudioContext during user gesture so it stays unlocked */
-    _ensureAudioCtx() {
-        try {
-            if (!this._audioCtx) {
-                this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            var ctx = this._audioCtx;
-            if (ctx.state === 'suspended') {
-                ctx.resume().catch(() => {});
-            }
-            // Play silent 1-sample buffer to "unlock" context on iOS
-            var buf = ctx.createBuffer(1, 1, 22050);
-            var src = ctx.createBufferSource();
-            src.buffer = buf;
-            src.connect(ctx.destination);
-            src.start(0);
-        } catch(e) {}
-        // Also unlock HTML Audio fallback element
-        try {
-            var audio = this._ensureAudioEl();
-            audio.volume = 0;
-            var p = audio.play();
-            if (p) p.then(() => { audio.pause(); audio.volume = 1; audio.currentTime = 0; }).catch(() => { audio.volume = 1; });
-        } catch(e) {}
-    },
-
-    /** Periodically play silent buffer to prevent iOS from suspending AudioContext */
-    _keepAudioAlive() {
-        try {
-            var ctx = this._audioCtx;
-            if (!ctx) return;
-            if (ctx.state === 'suspended') {
-                ctx.resume().catch(() => {});
-            }
-            var buf = ctx.createBuffer(1, 1, 22050);
-            var src = ctx.createBufferSource();
-            src.buffer = buf;
-            src.connect(ctx.destination);
-            src.start(0);
-        } catch(e) {}
     },
 
     _updatePauseBtn() {
