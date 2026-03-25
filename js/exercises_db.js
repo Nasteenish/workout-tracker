@@ -215,7 +215,6 @@ export const EXERCISE_DB = [
     { nameRu: 'Вращение гири вокруг тела', name: 'Kettlebell Around the World', category: 'shoulders' },
     { nameRu: 'Жим (с гирей)', name: 'Kettlebell Shoulder Press', category: 'shoulders' },
     { nameRu: 'Жим Арнольда (с гантелями)', name: 'Arnold Press (Dumbbell)', category: 'shoulders' },
-    { nameRu: 'Жим на плечи (в тренажёре, диски)', name: 'Shoulder Press (Machine Plates)', category: 'shoulders' },
     { nameRu: 'Жим на плечи (с гантелями)', name: 'Shoulder Press (Dumbbell)', category: 'shoulders' },
     { nameRu: 'Жим на плечи сидя (в тренажёре)', name: 'Seated Shoulder Press (Machine)', category: 'shoulders' },
     { nameRu: 'Жим над головой (в Смите)', name: 'Overhead Press (Smith Machine)', category: 'shoulders' },
