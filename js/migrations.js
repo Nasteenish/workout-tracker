@@ -415,6 +415,50 @@ export const Migrations = {
                     if (changed) localStorage.setItem(keys[ki], JSON.stringify(dd));
                 }
             }
+        },
+        // v7: Restore warmup group type that was lost due to _buildDayEditorVM bug
+        // The bug converted type:'warmup' → type:'single' when building the editor VM,
+        // so any edit via inline menu permanently changed the group type in saved data.
+        {
+            key: '_restore_warmup_type_v1',
+            fn: function() {
+                var warmupIds = { 'D3E0': true, 'D4W1': true, 'D4W2': true };
+                var keys = Object.keys(localStorage);
+                for (var ki = 0; ki < keys.length; ki++) {
+                    if (keys[ki].indexOf('wt_data_') !== 0) continue;
+                    var dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}');
+                    if (!dd.program || !dd.program.dayTemplates) continue;
+                    var changed = false;
+
+                    var dt = dd.program.dayTemplates;
+                    for (var dayNum in dt) {
+                        var groups = dt[dayNum].exerciseGroups;
+                        if (!groups) continue;
+                        for (var gi = 0; gi < groups.length; gi++) {
+                            if (groups[gi].type === 'single' && groups[gi].exercise && warmupIds[groups[gi].exercise.id]) {
+                                groups[gi].type = 'warmup';
+                                changed = true;
+                            }
+                        }
+                    }
+
+                    var snaps = dd.program.templateSnapshots;
+                    if (snaps) {
+                        for (var ver in snaps) {
+                            var snapGroups = snaps[ver].exerciseGroups;
+                            if (!snapGroups) continue;
+                            for (var si = 0; si < snapGroups.length; si++) {
+                                if (snapGroups[si].type === 'single' && snapGroups[si].exercise && warmupIds[snapGroups[si].exercise.id]) {
+                                    snapGroups[si].type = 'warmup';
+                                    changed = true;
+                                }
+                            }
+                        }
+                    }
+
+                    if (changed) localStorage.setItem(keys[ki], JSON.stringify(dd));
+                }
+            }
         }
     ]
 };
