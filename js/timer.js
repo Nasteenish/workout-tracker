@@ -17,6 +17,7 @@ export const RestTimer = {
     _targetWeek: null,
     _targetDay: null,
     _beepToken: 0,
+    _activeGains: [],
 
     init() {
         const settings = Storage.getSettings();
@@ -122,8 +123,8 @@ export const RestTimer = {
             Notification.requestPermission();
         }
 
-        // Cancel any pending async beep from previous _finish()
-        this._beepToken++;
+        // Cancel any pending/playing beep from previous _finish()
+        this._cancelBeep();
 
         // Init AudioContext while we have user gesture (critical for iOS)
         this._ensureAudioCtx();
@@ -217,7 +218,7 @@ export const RestTimer = {
     stop() {
         if (this._interval) clearInterval(this._interval);
         this._interval = null;
-        this._beepToken++;
+        this._cancelBeep();
         this._endTime = null;
         this._pausedAt = null;
         this._targetWeek = null;
@@ -368,6 +369,20 @@ export const RestTimer = {
         } catch(e) {}
     },
 
+    _cancelBeep() {
+        this._beepToken++;
+        // Immediately silence any Web Audio oscillators already playing
+        this._activeGains.forEach(function(g) {
+            try { g.cancelScheduledValues(0); g.setValueAtTime(0, 0); } catch(e) {}
+        });
+        this._activeGains = [];
+        // Immediately silence HTML Audio fallback if playing
+        try {
+            var audio = this._audioEl;
+            if (audio && !audio.paused) { audio.pause(); audio.currentTime = 0; }
+        } catch(e) {}
+    },
+
     _playBeep(reason) {
         var webAudioOk = false;
         var beepToken = this._beepToken;
@@ -390,7 +405,12 @@ export const RestTimer = {
                     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + end);
                     osc.start(ctx.currentTime + start);
                     osc.stop(ctx.currentTime + end);
+                    self._activeGains.push(gain.gain);
                 });
+                // Clear gain refs after all oscillators finish (auto-cleanup)
+                setTimeout(function() {
+                    if (self._beepToken === beepToken) self._activeGains = [];
+                }, 900);
             };
 
             if (ctx && ctx.state === 'suspended') {
@@ -522,7 +542,7 @@ export const RestTimer = {
     _silentCleanup() {
         clearInterval(this._interval);
         this._interval = null;
-        this._beepToken++;
+        this._cancelBeep();
         this._endTime = null;
         this._remaining = 0;
         this._saveState();
