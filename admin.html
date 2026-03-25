@@ -702,33 +702,6 @@ function renderEquipmentGrid(container, statsEl, query) {
   `).join('') + '</div>';
 }
 
-function renderExerciseCard(item) {
-  const imgs = item.images || [];
-  let imgHtml;
-  if (imgs.length >= 2) {
-    imgHtml = '<div class="card-imgs"><img src="' + esc(imgs[0]) + '" loading="lazy"><img src="' + esc(imgs[1]) + '" loading="lazy"></div>';
-  } else if (imgs.length === 1) {
-    imgHtml = '<img class="card-img" src="' + esc(imgs[0]) + '" loading="lazy">';
-  } else {
-    imgHtml = '<div class="card-img no-img">💪</div>';
-  }
-  return `
-    <div class="card" data-ex-id="${esc(item.id)}">
-      <button class="card-delete" data-delete-ex="${esc(item.id)}" title="Удалить">&times;</button>
-      ${imgHtml}
-      <div class="card-body">
-        <div class="card-name">${esc(item.name_ru || item.name_en)}</div>
-        <div class="card-name-secondary">${esc(item.name_en)}</div>
-        <div class="card-meta">
-          ${(item.primary_muscles || []).map(m => '<span class="tag muscle">' + esc(MUSCLE_RU[m] || m) + '</span>').join('')}
-          ${item.equipment ? '<span class="tag type">' + esc(item.equipment) + '</span>' : ''}
-          ${item.level ? '<span class="tag level">' + esc(item.level) + '</span>' : ''}
-        </div>
-      </div>
-    </div>
-  `;
-}
-
 function renderExerciseGrid(container, statsEl, query) {
   const filtered = exerciseData.filter(item => {
     if (currentFilter !== 'all' && !(item.primary_muscles || []).includes(currentFilter)) return false;
@@ -747,54 +720,32 @@ function renderExerciseGrid(container, statsEl, query) {
     return;
   }
 
-  // Если активен конкретный фильтр или идёт поиск — плоская сетка
-  if (currentFilter !== 'all' || query) {
-    container.innerHTML = '<div class="grid">' + filtered.map(renderExerciseCard).join('') + '</div>';
-    return;
-  }
-
-  // Иначе — группировка по мышцам
-  const MUSCLE_ORDER = [
-    'chest','shoulders','triceps','biceps','forearms',
-    'lats','upper_back','lower_back','traps',
-    'abdominals','quadriceps','hamstrings','glutes','calves',
-    'abductors','adductors','neck','cardio'
-  ];
-
-  const byMuscle = {};
-  const noMuscle = [];
-  for (const item of filtered) {
-    const cat = (item.primary_muscles && item.primary_muscles[0]) || null;
-    if (cat) {
-      if (!byMuscle[cat]) byMuscle[cat] = [];
-      byMuscle[cat].push(item);
+  container.innerHTML = '<div class="grid">' + filtered.map(item => {
+    const imgs = item.images || [];
+    let imgHtml;
+    if (imgs.length >= 2) {
+      imgHtml = '<div class="card-imgs"><img src="' + esc(imgs[0]) + '" loading="lazy"><img src="' + esc(imgs[1]) + '" loading="lazy"></div>';
+    } else if (imgs.length === 1) {
+      imgHtml = '<img class="card-img" src="' + esc(imgs[0]) + '" loading="lazy">';
     } else {
-      noMuscle.push(item);
+      imgHtml = '<div class="card-img no-img">💪</div>';
     }
-  }
-
-  const allMuscles = [...MUSCLE_ORDER.filter(m => byMuscle[m]),
-    ...Object.keys(byMuscle).filter(m => !MUSCLE_ORDER.includes(m)).sort()];
-
-  let html = '';
-  for (const muscle of allMuscles) {
-    const list = byMuscle[muscle];
-    html += `<div style="margin-bottom:32px">
-      <h2 style="font-size:16px;font-weight:700;color:#4a9eff;margin-bottom:12px;padding:0 2px">
-        ${esc(MUSCLE_RU[muscle] || muscle)} <span style="color:#555;font-weight:400;font-size:13px">(${list.length})</span>
-      </h2>
-      <div class="grid">${list.map(renderExerciseCard).join('')}</div>
-    </div>`;
-  }
-  if (noMuscle.length) {
-    html += `<div style="margin-bottom:32px">
-      <h2 style="font-size:16px;font-weight:700;color:#666;margin-bottom:12px;padding:0 2px">
-        Без категории <span style="color:#555;font-weight:400;font-size:13px">(${noMuscle.length})</span>
-      </h2>
-      <div class="grid">${noMuscle.map(renderExerciseCard).join('')}</div>
-    </div>`;
-  }
-  container.innerHTML = html;
+    return `
+      <div class="card" data-ex-id="${esc(item.id)}">
+        <button class="card-delete" data-delete-ex="${esc(item.id)}" title="Удалить">&times;</button>
+        ${imgHtml}
+        <div class="card-body">
+          <div class="card-name">${esc(item.name_ru || item.name_en)}</div>
+          <div class="card-name-secondary">${esc(item.name_en)}</div>
+          <div class="card-meta">
+            ${(item.primary_muscles || []).map(m => '<span class="tag muscle">' + esc(MUSCLE_RU[m] || m) + '</span>').join('')}
+            ${item.equipment ? '<span class="tag type">' + esc(item.equipment) + '</span>' : ''}
+            ${item.level ? '<span class="tag level">' + esc(item.level) + '</span>' : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('') + '</div>';
 }
 
 // ===== ADD FORMS =====
