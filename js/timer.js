@@ -11,6 +11,7 @@ export const RestTimer = {
     _endTime: null,
     _pausedAt: null,
     _bar: null,
+    _tickCount: 0,
     _targetExId: null,
     _targetSetIdx: null,
     _targetWeek: null,
@@ -120,6 +121,10 @@ export const RestTimer = {
             Notification.requestPermission();
         }
 
+        // Init AudioContext while we have user gesture (critical for iOS)
+        this._ensureAudioCtx();
+        this._tickCount = 0;
+
         this._swTimer('START_TIMER', this._remaining * 1000);
 
         // Insert timer inline after completed set/exercise
@@ -144,6 +149,9 @@ export const RestTimer = {
                 this._updateDisplay();
                 if (this._remaining <= 0) {
                     this._finish();
+                } else if (++this._tickCount % 100 === 0) {
+                    // Every ~25s: keep AudioContext alive so iOS doesn't suspend it
+                    this._keepAudioAlive();
                 }
             }
         }, 250);
@@ -307,13 +315,36 @@ export const RestTimer = {
         return this._audioEl;
     },
 
-    _playBeep(reason) {
-        var webAudioOk = false;
-        // Try Web Audio API first
+    _ensureAudioCtx() {
         try {
             if (!this._audioCtx) {
                 this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
+            if (this._audioCtx.state === 'suspended') {
+                this._audioCtx.resume().catch(() => {});
+            }
+        } catch(e) {}
+    },
+
+    _keepAudioAlive() {
+        try {
+            this._ensureAudioCtx();
+            var ctx = this._audioCtx;
+            if (!ctx || ctx.state !== 'running') return;
+            // Play a single silent sample to keep the context active
+            var buf = ctx.createBuffer(1, 1, ctx.sampleRate);
+            var src = ctx.createBufferSource();
+            src.buffer = buf;
+            src.connect(ctx.destination);
+            src.start();
+        } catch(e) {}
+    },
+
+    _playBeep(reason) {
+        var webAudioOk = false;
+        // Try Web Audio API first
+        try {
+            this._ensureAudioCtx();
             var ctx = this._audioCtx;
 
             var doPlay = () => {
@@ -535,16 +566,63 @@ export const RestTimer = {
                 this._swTimer('START_TIMER', this._remaining * 1000);
             }
 
+            this._tickCount = 0;
             this._interval = setInterval(() => {
                 if (!this._paused) {
                     this._remaining = Math.ceil((this._endTime - Date.now()) / 1000);
                     this._updateDisplay();
-                    if (this._remaining <= 0) this._finish();
+                    if (this._remaining <= 0) {
+                        this._finish();
+                    } else if (++this._tickCount % 100 === 0) {
+                        this._keepAudioAlive();
+                    }
                 }
             }, 250);
         } catch (e) {
             localStorage.removeItem('_wt_timer');
         }
+    },
+
+    /** Create/resume AudioContext during user gesture so it stays unlocked */
+    _ensureAudioCtx() {
+        try {
+            if (!this._audioCtx) {
+                this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            var ctx = this._audioCtx;
+            if (ctx.state === 'suspended') {
+                ctx.resume().catch(() => {});
+            }
+            // Play silent 1-sample buffer to "unlock" context on iOS
+            var buf = ctx.createBuffer(1, 1, 22050);
+            var src = ctx.createBufferSource();
+            src.buffer = buf;
+            src.connect(ctx.destination);
+            src.start(0);
+        } catch(e) {}
+        // Also unlock HTML Audio fallback element
+        try {
+            var audio = this._ensureAudioEl();
+            audio.volume = 0;
+            var p = audio.play();
+            if (p) p.then(() => { audio.pause(); audio.volume = 1; audio.currentTime = 0; }).catch(() => { audio.volume = 1; });
+        } catch(e) {}
+    },
+
+    /** Periodically play silent buffer to prevent iOS from suspending AudioContext */
+    _keepAudioAlive() {
+        try {
+            var ctx = this._audioCtx;
+            if (!ctx) return;
+            if (ctx.state === 'suspended') {
+                ctx.resume().catch(() => {});
+            }
+            var buf = ctx.createBuffer(1, 1, 22050);
+            var src = ctx.createBufferSource();
+            src.buffer = buf;
+            src.connect(ctx.destination);
+            src.start(0);
+        } catch(e) {}
     },
 
     _updatePauseBtn() {
