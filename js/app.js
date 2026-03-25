@@ -62,22 +62,27 @@ export const App = {
         // iOS PWA: fix viewport/safe-area after returning from background
         document.addEventListener('visibilitychange', function() {
             if (document.visibilityState === 'visible') {
-                // Clean up stale swipe-navigation companions left in DOM
-                var staleCompanions = document.querySelectorAll('.back-companion, .nav-companion');
-                if (staleCompanions.length) {
-                    staleCompanions.forEach(function(el) { el.remove(); });
-                    var appEl = document.getElementById('app');
-                    appEl.style.transform = '';
-                    appEl.style.position = '';
-                    appEl.style.top = '';
-                    appEl.style.bottom = '';
-                    appEl.style.left = '';
-                    appEl.style.right = '';
-                    appEl.style.minHeight = '';
-                    appEl.style.opacity = '';
-                    appEl.classList.remove('swiping-back');
-                    document.documentElement.style.overflow = '';
-                    document.body.style.overflow = '';
+                // Always remove stale swipe companions (may be left if iOS suspended mid-swipe)
+                document.querySelectorAll('.back-companion, .nav-companion').forEach(function(el) { el.remove(); });
+                // Always reset #app inline styles — could be stuck from mid-swipe or mid-animation
+                var appEl = document.getElementById('app');
+                appEl.style.transform = '';
+                appEl.style.position = '';
+                appEl.style.top = '';
+                appEl.style.bottom = '';
+                appEl.style.left = '';
+                appEl.style.right = '';
+                appEl.style.minHeight = '';
+                appEl.style.opacity = '';
+                appEl.classList.remove('swiping-back');
+                document.documentElement.style.overflow = '';
+                document.body.style.overflow = '';
+                // Fix stuck modal scroll lock (modal was open when app backgrounded)
+                if (document.body.classList.contains('modal-open')) {
+                    document.body.classList.remove('modal-open');
+                    document.body.style.top = '';
+                }
+                if (self._swipeLock || self._isBackSwipe) {
                     self._swipeLock = false;
                     self._isBackSwipe = false;
                     clearTimeout(self._backSwipeFallbackTimer);
