@@ -217,6 +217,7 @@ export const RestTimer = {
     stop() {
         if (this._interval) clearInterval(this._interval);
         this._interval = null;
+        this._beepToken++;
         this._endTime = null;
         this._pausedAt = null;
         this._targetWeek = null;
@@ -405,7 +406,14 @@ export const RestTimer = {
             try {
                 var audio = this._ensureAudioEl();
                 audio.currentTime = 0;
-                audio.play().catch(function() {});
+                audio.play().then(function() {
+                    // If a new timer started (or stop() was called) while audio was pending,
+                    // cancel the sound immediately — it's from a stale _finish()
+                    if (self._beepToken !== beepToken) {
+                        audio.pause();
+                        audio.currentTime = 0;
+                    }
+                }).catch(function() {});
             } catch(e) {}
         }
     },
@@ -514,6 +522,7 @@ export const RestTimer = {
     _silentCleanup() {
         clearInterval(this._interval);
         this._interval = null;
+        this._beepToken++;
         this._endTime = null;
         this._remaining = 0;
         this._saveState();
