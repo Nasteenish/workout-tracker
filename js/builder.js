@@ -1187,6 +1187,13 @@ export const Builder = {
                     <button class="btn-primary picker-custom-btn" id="picker-add-custom">\u0414\u041E\u0411\u0410\u0412\u0418\u0422\u042C</button>
                     <div id="picker-cat-prompt" class="picker-cat-label" style="display:none">\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0433\u0440\u0443\u043F\u043F\u0443 \u043C\u044B\u0448\u0446 \u0441\u0432\u0435\u0440\u0445\u0443 \u2191</div>
                 </div>
+                <div class="picker-variants-panel" id="picker-variants-panel">
+                    <div class="picker-variants-header">
+                        <button class="picker-back-btn" id="picker-back">\u2039 \u041D\u0430\u0437\u0430\u0434</button>
+                        <span class="picker-variants-title" id="picker-variants-title"></span>
+                    </div>
+                    <div class="picker-variants-list" id="picker-variants-list"></div>
+                </div>
             </div>
         `;
 
@@ -1318,7 +1325,24 @@ export const Builder = {
 
     _sharedExercisesCache: [],
 
-    _expandedPickerGroup: null, // currently expanded group base key
+    _buildVariantsList(groupKey) {
+        var groups = groupExercisesByBase(EXERCISE_DB);
+        var group = null;
+        for (var g = 0; g < groups.length; g++) {
+            if (groups[g].baseName + '|' + groups[g].category === groupKey) {
+                group = groups[g];
+                break;
+            }
+        }
+        if (!group) return '<div class="picker-empty">\u041D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E</div>';
+        var html = '';
+        for (var v = 0; v < group.exercises.length; v++) {
+            var vex = group.exercises[v];
+            var varLabel = getVariationLabel(exName(vex));
+            html += `<div class="picker-item" ${attr(WORKOUT.EX_NAME_RU, esc(vex.nameRu))} ${attr(WORKOUT.EX_NAME, esc(vex.name))}>${exThumbHtml(vex.name)}<span>${esc(varLabel)}</span></div>`;
+        }
+        return html;
+    },
 
     _buildPickerList(category, query) {
         var filtered = EXERCISE_DB;
@@ -1337,7 +1361,6 @@ export const Builder = {
         // Group exercises by base name
         var groups = groupExercisesByBase(filtered);
         var html = '';
-        var expandedKey = this._expandedPickerGroup;
 
         for (var g = 0; g < groups.length; g++) {
             var group = groups[g];
@@ -1347,17 +1370,9 @@ export const Builder = {
                 // Single exercise — render flat
                 var ex = group.exercises[0];
                 html += `<div class="picker-item" ${attr(WORKOUT.EX_NAME_RU, esc(ex.nameRu))} ${attr(WORKOUT.EX_NAME, esc(ex.name))}>${exThumbHtml(ex.name)}${esc(exName(ex))}</div>`;
-            } else if (expandedKey === groupKey) {
-                // Expanded group — show header + all variants
-                html += `<div class="picker-group-header picker-group-expanded" data-picker-group="${esc(groupKey)}">${exThumbHtml(group.exercises[0].name)}<span class="picker-group-name">${esc(group.baseName)}</span><span class="picker-group-count">${group.exercises.length}</span><span class="picker-group-arrow">\u25B2</span></div>`;
-                for (var v = 0; v < group.exercises.length; v++) {
-                    var vex = group.exercises[v];
-                    var varLabel = getVariationLabel(exName(vex));
-                    html += `<div class="picker-item picker-variant" ${attr(WORKOUT.EX_NAME_RU, esc(vex.nameRu))} ${attr(WORKOUT.EX_NAME, esc(vex.name))}>${exThumbHtml(vex.name)}<span class="picker-variant-label">${esc(varLabel)}</span></div>`;
-                }
             } else {
-                // Collapsed group — show base name + count
-                html += `<div class="picker-group-header" data-picker-group="${esc(groupKey)}">${exThumbHtml(group.exercises[0].name)}<span class="picker-group-name">${esc(group.baseName)}</span><span class="picker-group-count">${group.exercises.length}</span><span class="picker-group-arrow">\u25BC</span></div>`;
+                // Group — tap to drill into variants panel
+                html += `<div class="picker-group-header" data-picker-group="${esc(groupKey)}">${exThumbHtml(group.exercises[0].name)}<span class="picker-group-name">${esc(group.baseName)}</span><span class="picker-group-count">${group.exercises.length}</span><span class="picker-group-arrow">\u203A</span></div>`;
             }
         }
 
@@ -1404,6 +1419,13 @@ export const Builder = {
             return;
         }
 
+        // Back button — close variants panel
+        if (target.closest('#picker-back')) {
+            var panel = document.getElementById('picker-variants-panel');
+            if (panel) panel.classList.remove('active');
+            return;
+        }
+
         // Category
         if (target.classList.contains('picker-cat')) {
             var buttons = document.querySelectorAll('.picker-cat');
@@ -1411,40 +1433,26 @@ export const Builder = {
             target.classList.add('active');
             var cat = read(target, BUILDER.CAT);
             this._pickerCategory = cat;
-            this._expandedPickerGroup = null;
+            var panel = document.getElementById('picker-variants-panel');
+            if (panel) panel.classList.remove('active');
             var searchInput = document.getElementById('picker-search-input');
             var query = searchInput ? searchInput.value.trim() : '';
             document.getElementById('picker-list').innerHTML = this._buildPickerList(cat, query);
             return;
         }
 
-        // Group header — expand/collapse
+        // Group header — drill into variants panel
         {var groupHeader = target.closest('.picker-group-header');
         if (groupHeader) {
             var groupKey = groupHeader.getAttribute('data-picker-group');
-            if (this._expandedPickerGroup === groupKey) {
-                this._expandedPickerGroup = null;
-            } else {
-                this._expandedPickerGroup = groupKey;
-            }
-            var searchInput = document.getElementById('picker-search-input');
-            var query = searchInput ? searchInput.value.trim() : '';
-            var _expandingKey = this._expandedPickerGroup;
-            document.getElementById('picker-list').innerHTML = this._buildPickerList(this._pickerCategory, query);
-            // Автоскролл к раскрытой группе — показываем первые варианты
-            if (_expandingKey) {
-                var _pickerList = document.getElementById('picker-list');
-                var _headers = _pickerList.querySelectorAll('.picker-group-header');
-                var _targetHeader = null;
-                _headers.forEach(function(h) {
-                    if (h.getAttribute('data-picker-group') === _expandingKey) _targetHeader = h;
-                });
-                if (_targetHeader) {
-                    setTimeout(function() {
-                        _targetHeader.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    }, 30);
-                }
-            }
+            var titleEl = groupHeader.querySelector('.picker-group-name');
+            var groupName = titleEl ? titleEl.textContent : '';
+            var variantsPanel = document.getElementById('picker-variants-panel');
+            var variantsTitleEl = document.getElementById('picker-variants-title');
+            var variantsListEl = document.getElementById('picker-variants-list');
+            if (variantsTitleEl) variantsTitleEl.textContent = groupName;
+            if (variantsListEl) variantsListEl.innerHTML = Builder._buildVariantsList(groupKey);
+            if (variantsPanel) requestAnimationFrame(function() { variantsPanel.classList.add('active'); });
             return;
         }}
 
