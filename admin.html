@@ -841,94 +841,6 @@ function renderExerciseGrid(container, statsEl, query) {
 
   html += '</div>';
   container.innerHTML = html;
-  initExerciseDrag(container);
-}
-
-// ===== DRAG & DROP =====
-let _dragExId = null;
-
-function initExerciseDrag(container) {
-  container.addEventListener('dragstart', e => {
-    const row = e.target.closest('[data-ex-id][draggable]');
-    if (!row) return;
-    _dragExId = row.dataset.exId;
-    setTimeout(() => row.classList.add('ex-dragging'), 0);
-    e.dataTransfer.effectAllowed = 'move';
-  });
-  container.addEventListener('dragend', e => {
-    document.querySelectorAll('.ex-dragging').forEach(el => el.classList.remove('ex-dragging'));
-    document.querySelectorAll('.muscle-drop-zone.drag-over').forEach(el => el.classList.remove('drag-over'));
-  });
-  container.addEventListener('dragover', e => {
-    const zone = e.target.closest('.muscle-drop-zone');
-    if (!zone || !_dragExId) return;
-    e.preventDefault();
-    document.querySelectorAll('.muscle-drop-zone.drag-over').forEach(el => el.classList.remove('drag-over'));
-    zone.classList.add('drag-over');
-  });
-  container.addEventListener('dragleave', e => {
-    const zone = e.target.closest('.muscle-drop-zone');
-    if (zone && !zone.contains(e.relatedTarget)) zone.classList.remove('drag-over');
-  });
-  container.addEventListener('drop', e => {
-    e.preventDefault();
-    const zone = e.target.closest('.muscle-drop-zone');
-    if (!zone || !_dragExId) return;
-    zone.classList.remove('drag-over');
-    const exId = _dragExId; _dragExId = null;
-    const targetMuscle = zone.dataset.dropMuscle;
-    const targetBase = zone.dataset.dropBase || null; // null = раскрепить из группы
-    showMoveExerciseDialog(exId, targetMuscle, targetBase);
-  });
-}
-
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeWZkYmZkZXV3b2pnZXhod3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NzE1OTYsImV4cCI6MjA4NzQ0NzU5Nn0.5okpQM-UffmYatsVjbzjafsHhY3taCqhDYkiyEjiSvg';
-
-function showMoveExerciseDialog(exId, targetMuscle, targetBase) {
-  const ex = exerciseData.find(i => i.id === exId);
-  if (!ex) return;
-  const currentRu = ex.name_ru || '';
-  const currentEn = ex.name_en || '';
-  // Предлагаем имя: если дроп на группу — BaseName (вариация), если на секцию — текущее имя для ручного редактирования
-  const variation = getVariationLabel(currentRu);
-  const suggestedRu = targetBase ? targetBase + ' (' + variation + ')' : currentRu;
-
-  openModal((targetBase ? 'Добавить в группу' : 'Переместить в секцию'), `
-    <div style="margin-bottom:14px;font-size:13px;color:#aaa;line-height:1.5">
-      <b style="color:#e0e0e0">${esc(currentRu)}</b><br>
-      → <b style="color:#4a9eff">${esc(MUSCLE_RU[targetMuscle] || targetMuscle)}${targetBase ? ' / ' + esc(targetBase) : ''}</b>
-    </div>
-    <div class="form-group">
-      <label>Название (RU)</label>
-      <input type="text" id="mv-ru" value="${esc(suggestedRu)}">
-    </div>
-    <div class="form-group">
-      <label>Название (EN)</label>
-      <input type="text" id="mv-en" value="${esc(currentEn)}">
-    </div>
-    <div class="form-actions">
-      <button class="btn btn-secondary" onclick="closeModal()">Отмена</button>
-      <button class="btn btn-primary" id="mv-save">Сохранить</button>
-    </div>
-  `);
-  document.getElementById('mv-ru').focus();
-  document.getElementById('mv-save').onclick = async () => {
-    const newRu = document.getElementById('mv-ru').value.trim();
-    const newEn = document.getElementById('mv-en').value.trim();
-    if (!newRu) return toast('Введите название');
-    closeModal();
-    try {
-      const r = await fetch('https://mqyfdbfdeuwojgexhwpy.supabase.co/rest/v1/exercises?id=eq.' + encodeURIComponent(exId), {
-        method: 'PATCH',
-        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', Prefer: 'return=representation' },
-        body: JSON.stringify({ name_ru: newRu, name_en: newEn || null, primary_muscles: [targetMuscle] })
-      });
-      if (!r.ok) throw new Error(await r.text());
-      ex.name_ru = newRu; ex.name_en = newEn || null; ex.primary_muscles = [targetMuscle];
-      render();
-      toast('✅ Сохранено');
-    } catch (err) { toast('Ошибка: ' + err.message); }
-  };
 }
 
 // ===== ADD FORMS =====
@@ -1519,15 +1431,15 @@ document.getElementById('content').addEventListener('click', e => {
 let _dragExId = null;
 
 document.getElementById('content').addEventListener('dragstart', e => {
-  const row = e.target.closest('[data-drag-ex-id]');
+  const row = e.target.closest('[data-ex-id][draggable]');
   if (!row) return;
-  _dragExId = row.dataset.dragExId;
+  _dragExId = row.dataset.exId;
   e.dataTransfer.effectAllowed = 'move';
   setTimeout(() => row.classList.add('ex-dragging'), 0);
 });
 
 document.getElementById('content').addEventListener('dragend', e => {
-  const row = e.target.closest('[data-drag-ex-id]');
+  const row = e.target.closest('[data-ex-id][draggable]');
   if (row) row.classList.remove('ex-dragging');
   document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
   _dragExId = null;
