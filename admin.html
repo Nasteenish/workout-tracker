@@ -702,13 +702,42 @@ function renderEquipmentGrid(container, statsEl, query) {
   `).join('') + '</div>';
 }
 
+function getExerciseBaseName(nameRu) {
+  return (nameRu || '').replace(/\s*\([^)]+\)\s*$/, '').trim();
+}
+
+function getVariationLabel(nameRu) {
+  const m = (nameRu || '').match(/\(([^)]+)\)\s*$/);
+  return m ? m[1] : nameRu;
+}
+
+function exThumbHtml(item, size) {
+  const imgs = item.images || [];
+  const s = size || 48;
+  if (imgs.length) {
+    return '<img src="' + esc(imgs[0]) + '" style="width:' + s + 'px;height:' + s + 'px;border-radius:50%;object-fit:cover;background:#fff;flex-shrink:0" loading="lazy">';
+  }
+  return '<div style="width:' + s + 'px;height:' + s + 'px;border-radius:50%;background:#222;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">💪</div>';
+}
+
+function renderExerciseRow(item) {
+  return `
+    <div class="ex-option" data-ex-id="${esc(item.id)}" style="gap:12px;padding:10px 0">
+      ${exThumbHtml(item, 48)}
+      <div class="ex-option-name" style="flex:1;min-width:0">
+        <div class="ex-option-name-ru">${esc(item.name_ru || item.name_en)}</div>
+        ${item.name_en ? '<div class="ex-option-name-en">' + esc(item.name_en) + '</div>' : ''}
+      </div>
+      <button class="card-delete" data-delete-ex="${esc(item.id)}" title="Удалить" style="position:static;display:flex;width:28px;height:28px;flex-shrink:0">&times;</button>
+    </div>`;
+}
+
 function renderExerciseGrid(container, statsEl, query) {
   const filtered = exerciseData.filter(item => {
     if (currentFilter !== 'all' && !(item.primary_muscles || []).includes(currentFilter)) return false;
     if (query) {
       const match = (item.name_ru || '').toLowerCase().includes(query) ||
-                    (item.name_en || '').toLowerCase().includes(query) ||
-                    (item.equipment || '').toLowerCase().includes(query);
+                    (item.name_en || '').toLowerCase().includes(query);
       if (!match) return false;
     }
     return true;
@@ -720,32 +749,76 @@ function renderExerciseGrid(container, statsEl, query) {
     return;
   }
 
-  container.innerHTML = '<div class="grid">' + filtered.map(item => {
-    const imgs = item.images || [];
-    let imgHtml;
-    if (imgs.length >= 2) {
-      imgHtml = '<div class="card-imgs"><img src="' + esc(imgs[0]) + '" loading="lazy"><img src="' + esc(imgs[1]) + '" loading="lazy"></div>';
-    } else if (imgs.length === 1) {
-      imgHtml = '<img class="card-img" src="' + esc(imgs[0]) + '" loading="lazy">';
-    } else {
-      imgHtml = '<div class="card-img no-img">💪</div>';
+  // При поиске — плоский список без группировки
+  if (query) {
+    container.innerHTML = '<div style="max-width:600px;margin:0 auto">' + filtered.map(renderExerciseRow).join('') + '</div>';
+    return;
+  }
+
+  // Группируем по базовому имени (как на телефоне)
+  const groups = {};
+  for (const item of filtered) {
+    const base = getExerciseBaseName(item.name_ru || item.name_en || '');
+    const key = base + '|' + (item.primary_muscles && item.primary_muscles[0] || '');
+    if (!groups[key]) groups[key] = { base, items: [] };
+    groups[key].items.push(item);
+  }
+
+  const MUSCLE_ORDER = ['chest','shoulders','triceps','biceps','forearms','lats','upper_back','lower_back','traps','abdominals','quadriceps','hamstrings','glutes','calves','abductors','adductors','neck','cardio'];
+
+  // Сортируем: сначала по мышце, потом по базовому имени
+  const sorted = Object.values(groups).sort((a, b) => {
+    const mA = a.items[0].primary_muscles && a.items[0].primary_muscles[0] || 'zzz';
+    const mB = b.items[0].primary_muscles && b.items[0].primary_muscles[0] || 'zzz';
+    const iA = MUSCLE_ORDER.indexOf(mA);
+    const iB = MUSCLE_ORDER.indexOf(mB);
+    const mi = (iA === -1 ? 99 : iA) - (iB === -1 ? 99 : iB);
+    if (mi !== 0) return mi;
+    return a.base.localeCompare(b.base, 'ru');
+  });
+
+  // Определяем текущую мышцу для заголовков секций
+  let currentMuscle = null;
+  let html = '<div style="max-width:600px;margin:0 auto">';
+
+  for (const g of sorted) {
+    const muscle = g.items[0].primary_muscles && g.items[0].primary_muscles[0] || null;
+    if (muscle !== currentMuscle) {
+      currentMuscle = muscle;
+      html += '<div style="padding:16px 0 8px;font-size:13px;font-weight:700;color:#4a9eff;text-transform:uppercase;letter-spacing:1px">'
+        + esc(MUSCLE_RU[muscle] || muscle || 'Без категории') + '</div>';
     }
-    return `
-      <div class="card" data-ex-id="${esc(item.id)}">
-        <button class="card-delete" data-delete-ex="${esc(item.id)}" title="Удалить">&times;</button>
-        ${imgHtml}
-        <div class="card-body">
-          <div class="card-name">${esc(item.name_ru || item.name_en)}</div>
-          <div class="card-name-secondary">${esc(item.name_en)}</div>
-          <div class="card-meta">
-            ${(item.primary_muscles || []).map(m => '<span class="tag muscle">' + esc(MUSCLE_RU[m] || m) + '</span>').join('')}
-            ${item.equipment ? '<span class="tag type">' + esc(item.equipment) + '</span>' : ''}
-            ${item.level ? '<span class="tag level">' + esc(item.level) + '</span>' : ''}
+
+    if (g.items.length === 1) {
+      // Одно упражнение — просто строка
+      html += renderExerciseRow(g.items[0]);
+    } else {
+      // Несколько вариаций — сворачиваемая группа
+      const firstImg = exThumbHtml(g.items[0], 48);
+      html += `
+        <div class="muscle-group" style="border-bottom:1px solid #1a1a1a;border-radius:0">
+          <div class="muscle-group-header" style="padding:10px 0;gap:12px;display:flex;align-items:center">
+            ${firstImg}
+            <span class="muscle-group-label" style="flex:1">${esc(g.base)}</span>
+            <span class="muscle-group-count">${g.items.length}</span>
+            <span class="muscle-group-arrow">▶</span>
           </div>
-        </div>
-      </div>
-    `;
-  }).join('') + '</div>';
+          <div class="muscle-group-exercises" style="padding-left:60px">
+            ${g.items.map(item => `
+              <div class="ex-option" data-ex-id="${esc(item.id)}" style="gap:12px;padding:8px 0">
+                ${exThumbHtml(item, 36)}
+                <div class="ex-option-name" style="flex:1">
+                  <div class="ex-option-name-ru">${esc(getVariationLabel(item.name_ru || item.name_en || ''))}</div>
+                </div>
+                <button class="card-delete" data-delete-ex="${esc(item.id)}" title="Удалить" style="position:static;display:flex;width:28px;height:28px;flex-shrink:0">&times;</button>
+              </div>`).join('')}
+          </div>
+        </div>`;
+    }
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
 }
 
 // ===== ADD FORMS =====
