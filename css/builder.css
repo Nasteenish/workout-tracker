@@ -149,9 +149,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(18, 18, 32, 0.97);
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
+    background: rgba(18, 18, 32, 0.99);
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     padding: var(--spacing-md);
     padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom, 0px));

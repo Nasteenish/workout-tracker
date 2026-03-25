@@ -840,36 +840,33 @@ body.modal-open {
     opacity: 1;
 }
 
-/* Exercise picker — 40px circle */
+/* Exercise picker — 44px circle, space reserved upfront (no layout shift) */
 .picker-item {
     display: flex;
     align-items: center;
 }
 .picker-item .ex-thumb {
-    width: 0;
-    height: 0;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    margin-right: 0;
-    transition: width 0.15s, height 0.15s, margin 0.15s;
+    margin-right: 12px;
+    flex-shrink: 0;
+    /* opacity: 0 from base .ex-thumb, fades in via base transition */
 }
 .picker-item .ex-thumb.loaded {
-    width: 44px;
-    height: 44px;
-    margin-right: 12px;
+    /* size stays 44px — only opacity changes (base .ex-thumb.loaded rule) */
 }
 
-/* Group header — кружок чуть крупнее picker-item */
+/* Group header — same fixed-size circle, no layout shift */
 .picker-group-header .ex-thumb {
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    margin-right: 0;
-    transition: width 0.15s, height 0.15s, margin 0.15s;
-}
-.picker-group-header .ex-thumb.loaded {
     width: 44px;
     height: 44px;
+    border-radius: 50%;
     margin-right: 10px;
+    flex-shrink: 0;
+}
+.picker-group-header .ex-thumb.loaded {
+    /* opacity:1 from base .ex-thumb.loaded rule */
 }
 
 /* Exercise card header — always visible, no fade */
