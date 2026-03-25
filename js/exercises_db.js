@@ -1,4 +1,4 @@
-// exercises_db.js — Exercise library (364 exercises)
+// exercises_db.js — Exercise library (354 exercises)
 // Автогенерируется скриптом tools/sync_exercises.js — не редактировать вручную
 
 export const EXERCISE_CATEGORIES = [
@@ -23,15 +23,12 @@ export const EXERCISE_CATEGORIES = [
 ];
 
 export const EXERCISE_DB = [
-    // === Пресс (30) ===
-    { nameRu: 'Велосипедные скручивания', name: 'Bicycle Crunch', category: 'abdominals' },
+    // === Пресс (23) ===
     { nameRu: 'Вращение корпуса', name: 'Torso Rotation', category: 'abdominals' },
     { nameRu: 'Вращение корпуса на блоке (сверху вниз)', name: 'Cable Twist (Up to down)', category: 'abdominals' },
     { nameRu: 'Вращение корпуса на блоке (снизу вверх)', name: 'Cable Twist (Down to up)', category: 'abdominals' },
     { nameRu: 'Касание носков', name: 'Toe Touch', category: 'abdominals' },
     { nameRu: 'Косые скручивания', name: 'Oblique Crunch', category: 'abdominals' },
-    { nameRu: 'Локоть к колену', name: 'Elbow to Knee', category: 'abdominals' },
-    { nameRu: 'Лэндмайн 180', name: 'Landmine 180', category: 'abdominals' },
     { nameRu: 'Наклон в сторону', name: 'Side Bend', category: 'abdominals' },
     { nameRu: 'Наклон в сторону (с гантелей)', name: 'Side Bend (Dumbbell)', category: 'abdominals' },
     { nameRu: 'Ножницы на пресс', name: 'Ab Scissors', category: 'abdominals' },
@@ -44,10 +41,6 @@ export const EXERCISE_DB = [
     { nameRu: 'Подъём ног лёжа', name: 'Lying Leg Raise', category: 'abdominals' },
     { nameRu: 'Подъём ног на брусьях', name: 'Leg Raise Parallel Bars', category: 'abdominals' },
     { nameRu: 'Ролик для пресса', name: 'Ab Wheel', category: 'abdominals' },
-    { nameRu: 'Русский твист (без отягощения)', name: 'Russian Twist (Bodyweight)', category: 'abdominals' },
-    { nameRu: 'Русский твист (с отягощением)', name: 'Russian Twist (Weighted)', category: 'abdominals' },
-    { nameRu: 'Складка', name: 'Jackknife Sit Up', category: 'abdominals' },
-    { nameRu: 'Складка (в петлях TRX)', name: 'Jack Knife (Suspension)', category: 'abdominals' },
     { nameRu: 'Скручивание', name: 'Crunch', category: 'abdominals' },
     { nameRu: 'Скручивание (в тренажёре)', name: 'Crunch (Machine)', category: 'abdominals' },
     { nameRu: 'Скручивание (с отягощением)', name: 'Crunch (Weighted)', category: 'abdominals' },
@@ -126,11 +119,8 @@ export const EXERCISE_DB = [
     { nameRu: 'Степпер (этажи)', name: 'Stair Machine (Floors)', category: 'cardio' },
     { nameRu: 'Ходьба', name: 'Walking', category: 'cardio' },
     { nameRu: 'Эллиптический тренажёр', name: 'Elliptical Trainer', category: 'cardio' },
-    // === Грудь (49) ===
+    // === Грудь (44) ===
     { nameRu: 'Бабочка (пек-дек)', name: 'Butterfly (Pec Deck)', category: 'chest' },
-    { nameRu: 'Вокруг света', name: 'Around The World', category: 'chest' },
-    { nameRu: 'Жим гантелей нейтральным хватом (с гантелями)', name: 'Hex Press (Dumbbell)', category: 'chest' },
-    { nameRu: 'Жим гантелей с сжатием', name: 'Dumbbell Squeeze Press', category: 'chest' },
     { nameRu: 'Жим лёжа (в Смите)', name: 'Bench Press (Smith Machine)', category: 'chest' },
     { nameRu: 'Жим лёжа (на блоке)', name: 'Bench Press (Cable)', category: 'chest' },
     { nameRu: 'Жим лёжа (с гантелями)', name: 'Bench Press (Dumbbell)', category: 'chest' },
@@ -142,10 +132,8 @@ export const EXERCISE_DB = [
     { nameRu: 'Жим лёжа на наклонной скамье вниз (в тренажёре)', name: 'Decline Bench Press (Machine)', category: 'chest' },
     { nameRu: 'Жим лёжа на наклонной скамье вниз (с гантелями)', name: 'Decline Bench Press (Dumbbell)', category: 'chest' },
     { nameRu: 'Жим лёжа на наклонной скамье вниз (со штангой)', name: 'Decline Bench Press (Barbell)', category: 'chest' },
-    { nameRu: 'Жим лёжа с поднятыми ногами', name: 'Feet Up Bench Press (Barbell)', category: 'chest' },
     { nameRu: 'Жим лёжа с пола (с гантелями)', name: 'Floor Press (Dumbbell)', category: 'chest' },
     { nameRu: 'Жим лёжа с пола (со штангой)', name: 'Floor Press (Barbell)', category: 'chest' },
-    { nameRu: 'Жим лёжа широким хватом (со штангой)', name: 'Bench Press - Wide Grip (Barbell)', category: 'chest' },
     { nameRu: 'Жим на грудь вниз (в тренажёре)', name: 'Decline Chest Press (Machine)', category: 'chest' },
     { nameRu: 'Жим от груди (в тренажёре)', name: 'Chest Press (Machine)', category: 'chest' },
     { nameRu: 'Жим от груди (с резиной)', name: 'Chest Press (Band)', category: 'chest' },
@@ -255,11 +243,13 @@ export const EXERCISE_DB = [
     { nameRu: 'Разгибание шеи лёжа (с отягощением)', name: 'Lying Neck Extension (Weighted)', category: 'neck' },
     { nameRu: 'Сгибание шеи лёжа', name: 'Lying Neck Curls', category: 'neck' },
     { nameRu: 'Сгибание шеи лёжа (с отягощением)', name: 'Lying Neck Curls (Weighted)', category: 'neck' },
-    // === Квадрицепс (52) ===
+    // === Квадрицепс (54) ===
     { nameRu: 'Боковое приседание', name: 'Lateral Squat', category: 'quadriceps' },
     { nameRu: 'Боковой выпад', name: 'Lateral Lunge', category: 'quadriceps' },
-    { nameRu: 'Боковой прыжок на тумбу', name: 'Lateral Box Jump', category: 'quadriceps' },
     { nameRu: 'Болгарские сплит-приседания', name: 'Bulgarian Split Squat', category: 'quadriceps' },
+    { nameRu: 'Болгарские сплит-приседания (в Смите)', name: 'Bulgarian Split Squat (Smith Machine)', category: 'quadriceps' },
+    { nameRu: 'Болгарские сплит-приседания (в тренажёре)', name: 'Bulgarian Split Squat (Machine)', category: 'quadriceps' },
+    { nameRu: 'Болгарские сплит-приседания (с гантелями)', name: 'Bulgarian Split Squat (Dumbbell)', category: 'quadriceps' },
     { nameRu: 'Выпад', name: 'Lunge', category: 'quadriceps' },
     { nameRu: 'Выпад (с гантелями)', name: 'Lunge (Dumbbell)', category: 'quadriceps' },
     { nameRu: 'Выпад (со штангой)', name: 'Lunge (Barbell)', category: 'quadriceps' },
