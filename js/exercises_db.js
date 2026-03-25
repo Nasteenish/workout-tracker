@@ -1,4 +1,4 @@
-// exercises_db.js — Exercise library (365 exercises)
+// exercises_db.js — Exercise library (364 exercises)
 // Автогенерируется скриптом tools/sync_exercises.js — не редактировать вручную
 
 export const EXERCISE_CATEGORIES = [
@@ -23,12 +23,11 @@ export const EXERCISE_CATEGORIES = [
 ];
 
 export const EXERCISE_DB = [
-    // === Пресс (31) ===
+    // === Пресс (30) ===
     { nameRu: 'Велосипедные скручивания', name: 'Bicycle Crunch', category: 'abdominals' },
     { nameRu: 'Вращение корпуса', name: 'Torso Rotation', category: 'abdominals' },
     { nameRu: 'Вращение корпуса на блоке (сверху вниз)', name: 'Cable Twist (Up to down)', category: 'abdominals' },
     { nameRu: 'Вращение корпуса на блоке (снизу вверх)', name: 'Cable Twist (Down to up)', category: 'abdominals' },
-    { nameRu: 'Жим Палоффа (на блоке)', name: 'Cable Core Palloff Press', category: 'abdominals' },
     { nameRu: 'Касание носков', name: 'Toe Touch', category: 'abdominals' },
     { nameRu: 'Косые скручивания', name: 'Oblique Crunch', category: 'abdominals' },
     { nameRu: 'Локоть к колену', name: 'Elbow to Knee', category: 'abdominals' },
@@ -105,8 +104,7 @@ export const EXERCISE_DB = [
     { nameRu: 'Подъём на носок стоя на одной ноге (в тренажёре)', name: 'Single Leg Standing Calf Raise (Machine)', category: 'calves' },
     { nameRu: 'Подъём на носок стоя на одной ноге (с гантелей)', name: 'Single Leg Standing Calf Raise (Dumbbell)', category: 'calves' },
     { nameRu: 'Подъём на носок стоя на одной ноге (со штангой)', name: 'Single Leg Standing Calf Raise (Barbell)', category: 'calves' },
-    // === Кардио (22) ===
-    { nameRu: 'Аэробика', name: 'Aerobics', category: 'cardio' },
+    // === Кардио (21) ===
     { nameRu: 'Бег', name: 'Running', category: 'cardio' },
     { nameRu: 'Беговая дорожка', name: 'Treadmill', category: 'cardio' },
     { nameRu: 'Бокс', name: 'Boxing', category: 'cardio' },
@@ -128,7 +126,7 @@ export const EXERCISE_DB = [
     { nameRu: 'Степпер (этажи)', name: 'Stair Machine (Floors)', category: 'cardio' },
     { nameRu: 'Ходьба', name: 'Walking', category: 'cardio' },
     { nameRu: 'Эллиптический тренажёр', name: 'Elliptical Trainer', category: 'cardio' },
-    // === Грудь (48) ===
+    // === Грудь (49) ===
     { nameRu: 'Бабочка (пек-дек)', name: 'Butterfly (Pec Deck)', category: 'chest' },
     { nameRu: 'Вокруг света', name: 'Around The World', category: 'chest' },
     { nameRu: 'Жим гантелей нейтральным хватом (с гантелями)', name: 'Hex Press (Dumbbell)', category: 'chest' },
@@ -148,6 +146,7 @@ export const EXERCISE_DB = [
     { nameRu: 'Жим лёжа с пола (с гантелями)', name: 'Floor Press (Dumbbell)', category: 'chest' },
     { nameRu: 'Жим лёжа с пола (со штангой)', name: 'Floor Press (Barbell)', category: 'chest' },
     { nameRu: 'Жим лёжа широким хватом (со штангой)', name: 'Bench Press - Wide Grip (Barbell)', category: 'chest' },
+    { nameRu: 'Жим на грудь вниз (в тренажёре)', name: 'Decline Chest Press (Machine)', category: 'chest' },
     { nameRu: 'Жим от груди (в тренажёре)', name: 'Chest Press (Machine)', category: 'chest' },
     { nameRu: 'Жим от груди (с резиной)', name: 'Chest Press (Band)', category: 'chest' },
     { nameRu: 'Жим от груди на наклонной скамье (в тренажёре)', name: 'Incline Chest Press (Machine)', category: 'chest' },
@@ -161,8 +160,8 @@ export const EXERCISE_DB = [
     { nameRu: 'Отжимания на брусьях (на грудь)', name: 'Chest Dip', category: 'chest' },
     { nameRu: 'Отжимания на брусьях на грудь (с отягощением)', name: 'Chest Dip (Weighted)', category: 'chest' },
     { nameRu: 'Отжимания на брусьях на грудь (с помощью)', name: 'Chest Dip (Assisted)', category: 'chest' },
-    { nameRu: 'Отжимания на кольцах', name: 'Ring Dips', category: 'chest' },
     { nameRu: 'Отжимания на кольцах', name: 'Ring Push Up', category: 'chest' },
+    { nameRu: 'Отжимания на кольцах', name: 'Ring Dips', category: 'chest' },
     { nameRu: 'Отжимания с колен', name: 'Kneeling Push Up', category: 'chest' },
     { nameRu: 'Отжимания с ногами на возвышении', name: 'Decline Push Up', category: 'chest' },
     { nameRu: 'Отжимания с руками на возвышении', name: 'Incline Push Ups', category: 'chest' },
