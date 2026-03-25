@@ -87,7 +87,7 @@ export const EXERCISE_DB = [
     // === Икры (12) ===
     { nameRu: 'Жим носками (в тренажёре)', name: 'Calf Press (Machine)', category: 'calves' },
     { nameRu: 'Подъём на носки (в тренажёре)', name: 'Calf Extension (Machine)', category: 'calves' },
-    { nameRu: 'Подъём на носки сидя (в тренажёре)', name: 'Seated Calf Raise (Machine)', category: 'calves' },
+    { nameRu: 'Подъём на носки сидя (в тренажёре)', name: 'Seated Calf Raise', category: 'calves' },
     { nameRu: 'Подъём на носки стоя', name: 'Standing Calf Raise', category: 'calves' },
     { nameRu: 'Подъём на носки стоя (в Смите)', name: 'Standing Calf Raise (Smith)', category: 'calves' },
     { nameRu: 'Подъём на носки стоя (в тренажёре)', name: 'Standing Calf Raise (Machine)', category: 'calves' },
