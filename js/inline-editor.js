@@ -399,7 +399,7 @@ export const InlineEditor = {
         var exercise = null;
         var subIdx = -1;
         var applyToAll = false; // for choose_one: apply changes to all options
-        if (item.type === 'single') {
+        if (item.type === 'single' || item.type === 'warmup') {
             exercise = item.exercise;
         } else if (item.type === 'superset') {
             for (var i = 0; i < item.exercises.length; i++) {
@@ -692,11 +692,11 @@ export const InlineEditor = {
 
         // Collect exercises from both
         var exercises = [];
-        if (current.type === 'single') exercises.push(current.exercise);
+        if (current.type === 'single' || current.type === 'warmup') exercises.push(current.exercise);
         else if (current.type === 'superset') exercises = exercises.concat(current.exercises);
         else if (current.type === 'choose_one') exercises.push(current.options[0]);
 
-        if (next.type === 'single') exercises.push(next.exercise);
+        if (next.type === 'single' || next.type === 'warmup') exercises.push(next.exercise);
         else if (next.type === 'superset') exercises = exercises.concat(next.exercises);
         else if (next.type === 'choose_one') exercises.push(next.options[0]);
 
@@ -754,7 +754,7 @@ export const InlineEditor = {
 
             // Copy sets config from old exercise if available
             var oldEx = null;
-            if (item.type === 'single') oldEx = item.exercise;
+            if (item.type === 'single' || item.type === 'warmup') oldEx = item.exercise;
             else if (item.type === 'superset' && item.exercises[subIdx]) oldEx = item.exercises[subIdx];
             if (oldEx && oldEx.sets) {
                 newEx.sets = JSON.parse(JSON.stringify(oldEx.sets));
@@ -767,7 +767,7 @@ export const InlineEditor = {
                 }
             }
 
-            if (item.type === 'single') {
+            if (item.type === 'single' || item.type === 'warmup') {
                 item.exercise = newEx;
             } else if (item.type === 'superset' && subIdx >= 0) {
                 item.exercises[subIdx] = newEx;

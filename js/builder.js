@@ -344,7 +344,7 @@ export const Builder = {
         for (var i = 0; i < dayTemplate.exerciseGroups.length; i++) {
             var group = dayTemplate.exerciseGroups[i];
             if (group.type === 'single' || group.type === 'warmup') {
-                items.push({ type: 'single', exercise: this._extractExForEdit(group.exercise, dayNum) });
+                items.push({ type: group.type, exercise: this._extractExForEdit(group.exercise, dayNum) });
             } else if (group.type === 'superset' && group.exercises) {
                 var exs = [];
                 for (var j = 0; j < group.exercises.length; j++) {
@@ -423,7 +423,7 @@ export const Builder = {
     _getExercise(itemIdx, subIdx) {
         var item = this._editingDay && this._editingDay.items[itemIdx];
         if (!item) return null;
-        if (item.type === 'single') return item.exercise;
+        if (item.type === 'single' || item.type === 'warmup') return item.exercise;
         if (item.type === 'superset') return item.exercises && item.exercises[subIdx];
         if (item.type === 'choose_one') return item.options && item.options[subIdx];
         return null;
@@ -528,7 +528,7 @@ export const Builder = {
             // Checkbox for grouping
             listHtml += '<label class="editor-item-check"><input type="checkbox" class="editor-check" ' + attr(BUILDER.CHECK_IDX, i) + '><span class="editor-check-mark"></span></label>';
 
-            if (item.type === 'single') {
+            if (item.type === 'single' || item.type === 'warmup') {
                 listHtml += this._exerciseCardHTML(item.exercise, i, -1, isPremium);
             } else if (item.type === 'superset') {
                 listHtml += '<div class="editor-group-wrapper editor-superset-wrapper">';
@@ -781,7 +781,7 @@ export const Builder = {
         var exercises = [];
         for (var i = 0; i < indices.length; i++) {
             var item = this._editingDay.items[indices[i]];
-            if (item.type === 'single') exercises.push(item.exercise);
+            if (item.type === 'single' || item.type === 'warmup') exercises.push(item.exercise);
             else if (item.type === 'superset') exercises = exercises.concat(item.exercises);
             else if (item.type === 'choose_one') exercises = exercises.concat(item.options);
         }
@@ -985,8 +985,8 @@ export const Builder = {
         var groups = [];
         for (var i = 0; i < ed.items.length; i++) {
             var item = ed.items[i];
-            if (item.type === 'single') {
-                groups.push({ type: 'single', exercise: this._serializeExercise(item.exercise, ed.dayNum, i, -1) });
+            if (item.type === 'single' || item.type === 'warmup') {
+                groups.push({ type: item.type, exercise: this._serializeExercise(item.exercise, ed.dayNum, i, -1) });
             } else if (item.type === 'superset') {
                 var exs = [];
                 for (var j = 0; j < item.exercises.length; j++) {
