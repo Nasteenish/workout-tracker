@@ -1,4 +1,4 @@
-// exercises_db.js — Exercise library (366 exercises)
+// exercises_db.js — Exercise library (365 exercises)
 // Автогенерируется скриптом tools/sync_exercises.js — не редактировать вручную
 
 export const EXERCISE_CATEGORIES = [
@@ -309,7 +309,7 @@ export const EXERCISE_DB = [
     { nameRu: 'Сплит-приседание (с гантелями)', name: 'Split Squat (Dumbbell)', category: 'quadriceps' },
     { nameRu: 'Стульчик у стены', name: 'Wall Sit', category: 'quadriceps' },
     { nameRu: 'Фронтальное приседание', name: 'Front Squat', category: 'quadriceps' },
-    // === Плечи (41) ===
+    // === Плечи (40) ===
     { nameRu: 'Y-подъёмы с упором в скамью (с гантелями)', name: 'Chest Supported Y Raise (Dumbbell)', category: 'shoulders' },
     { nameRu: 'Армейский жим стоя (со штангой)', name: 'Standing Military Press (Barbell)', category: 'shoulders' },
     { nameRu: 'Вращение гири вокруг тела', name: 'Kettlebell Around the World', category: 'shoulders' },
@@ -317,7 +317,6 @@ export const EXERCISE_DB = [
     { nameRu: 'Жим Арнольда (с гантелями)', name: 'Arnold Press (Dumbbell)', category: 'shoulders' },
     { nameRu: 'Жим на плечи (в тренажёре)', name: 'Shoulder Press (Machine)', category: 'shoulders' },
     { nameRu: 'Жим на плечи (с гантелями)', name: 'Shoulder Press (Dumbbell)', category: 'shoulders' },
-    { nameRu: 'Жим на плечи сидя (в тренажёре)', name: 'Seated Shoulder Press (Machine)', category: 'shoulders' },
     { nameRu: 'Жим над головой (в Смите)', name: 'Overhead Press (Smith Machine)', category: 'shoulders' },
     { nameRu: 'Жим над головой (с гантелями)', name: 'Overhead Press (Dumbbell)', category: 'shoulders' },
     { nameRu: 'Жим над головой (со штангой)', name: 'Overhead Press (Barbell)', category: 'shoulders' },
