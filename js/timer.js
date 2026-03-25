@@ -290,6 +290,7 @@ export const RestTimer = {
     },
 
     _audioEl: null,
+    _audioUnlocked: false,
 
     _ensureAudioEl() {
         if (this._audioEl) return this._audioEl;
@@ -331,26 +332,34 @@ export const RestTimer = {
             src.connect(ctx.destination);
             src.start(0);
         } catch(e) {}
-        // Also unlock HTML Audio fallback element
-        try {
-            var audio = this._ensureAudioEl();
-            audio.volume = 0;
-            var p = audio.play();
-            if (p) p.then(() => { audio.pause(); audio.volume = 1; audio.currentTime = 0; }).catch(() => { audio.volume = 1; });
-        } catch(e) {}
+        // Unlock HTML Audio fallback element ONCE (requires user gesture)
+        if (!this._audioUnlocked) {
+            try {
+                var audio = this._ensureAudioEl();
+                audio.volume = 0;
+                var self = this;
+                var p = audio.play();
+                if (p) p.then(function() { audio.pause(); audio.volume = 1; audio.currentTime = 0; self._audioUnlocked = true; }).catch(function() { audio.volume = 1; });
+                else this._audioUnlocked = true;
+            } catch(e) {}
+        }
     },
 
     _keepAudioAlive() {
         try {
-            this._ensureAudioCtx();
             var ctx = this._audioCtx;
-            if (!ctx || ctx.state !== 'running') return;
-            // Play a single silent sample to keep the context active
-            var buf = ctx.createBuffer(1, 1, ctx.sampleRate);
-            var src = ctx.createBufferSource();
-            src.buffer = buf;
-            src.connect(ctx.destination);
-            src.start();
+            if (!ctx) return;
+            if (ctx.state === 'suspended') {
+                ctx.resume().catch(function() {});
+            }
+            if (ctx.state === 'running') {
+                // Play a single silent sample to keep the context active
+                var buf = ctx.createBuffer(1, 1, ctx.sampleRate);
+                var src = ctx.createBufferSource();
+                src.buffer = buf;
+                src.connect(ctx.destination);
+                src.start();
+            }
         } catch(e) {}
     },
 
@@ -358,11 +367,11 @@ export const RestTimer = {
         var webAudioOk = false;
         // Try Web Audio API first
         try {
-            this._ensureAudioCtx();
             var ctx = this._audioCtx;
 
-            var doPlay = () => {
-                [[880, 0, 0.5], [1100, 0.35, 0.6], [1320, 0.65, 0.8]].forEach(([freq, start, end]) => {
+            var doPlay = function() {
+                [[880, 0, 0.5], [1100, 0.35, 0.6], [1320, 0.65, 0.8]].forEach(function(p) {
+                    var freq = p[0], start = p[1], end = p[2];
                     var osc = ctx.createOscillator();
                     var gain = ctx.createGain();
                     osc.connect(gain);
@@ -376,10 +385,10 @@ export const RestTimer = {
                 });
             };
 
-            if (ctx.state === 'suspended') {
-                // Async resume — also fire HTML Audio fallback below
-                ctx.resume().then(doPlay).catch(() => {});
-            } else {
+            if (ctx && ctx.state === 'suspended') {
+                // Async resume — play via Web Audio when ready, HTML Audio fallback below
+                ctx.resume().then(doPlay).catch(function() {});
+            } else if (ctx && ctx.state === 'running') {
                 doPlay();
                 webAudioOk = true;
             }
@@ -389,7 +398,7 @@ export const RestTimer = {
             try {
                 var audio = this._ensureAudioEl();
                 audio.currentTime = 0;
-                audio.play().catch(() => {});
+                audio.play().catch(function() {});
             } catch(e) {}
         }
     },
