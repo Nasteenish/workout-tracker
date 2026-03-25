@@ -1394,6 +1394,15 @@ document.getElementById('content').addEventListener('click', e => {
       return;
     }
   }
+
+  // Exercise group expand/collapse
+  if (currentTab === 'exercises') {
+    const header = e.target.closest('.muscle-group-header');
+    if (header) {
+      header.parentElement.classList.toggle('open');
+      return;
+    }
+  }
 });
 
 // Detail panel: back button
