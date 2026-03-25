@@ -840,17 +840,17 @@ body.modal-open {
     opacity: 1;
 }
 
-/* Exercise picker — 44px circle, no fade, no layout shift */
+/* Exercise picker — 56px circle, no fade, no layout shift */
 .picker-item {
     display: flex;
     align-items: center;
 }
 .picker-item .ex-thumb,
 .picker-group-header .ex-thumb {
-    width: 44px;
-    height: 44px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
-    margin-right: 12px;
+    margin-right: 14px;
     flex-shrink: 0;
     opacity: 1;
     transition: none;
