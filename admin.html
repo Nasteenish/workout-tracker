@@ -777,77 +777,158 @@ function renderExerciseGrid(container, statsEl, query) {
     return;
   }
 
-  // При поиске — плоский список без группировки
   if (query) {
-    container.innerHTML = '<div style="max-width:600px;margin:0 auto">' + filtered.map(renderExerciseRow).join('') + '</div>';
+    container.innerHTML = '<div style="max-width:600px;margin:0 auto">' + filtered.map(item => renderExerciseRow(item, false)).join('') + '</div>';
     return;
   }
 
-  // Группируем по базовому имени (как на телефоне)
+  const MUSCLE_ORDER = ['chest','shoulders','triceps','biceps','forearms','lats','upper_back','lower_back','traps','abdominals','quadriceps','hamstrings','glutes','calves','abductors','adductors','neck','cardio'];
+  const withCat = filtered.filter(i => i.primary_muscles && i.primary_muscles.length > 0);
+  const noCat = exerciseData.filter(i => !i.primary_muscles || i.primary_muscles.length === 0);
+
   const groups = {};
-  for (const item of filtered) {
+  for (const item of withCat) {
     const base = getExerciseBaseName(item.name_ru || item.name_en || '');
-    const key = base + '|' + (item.primary_muscles && item.primary_muscles[0] || '');
-    if (!groups[key]) groups[key] = { base, items: [] };
+    const muscle = item.primary_muscles[0];
+    const key = base + '|' + muscle;
+    if (!groups[key]) groups[key] = { base, muscle, items: [] };
     groups[key].items.push(item);
   }
 
-  const MUSCLE_ORDER = ['chest','shoulders','triceps','biceps','forearms','lats','upper_back','lower_back','traps','abdominals','quadriceps','hamstrings','glutes','calves','abductors','adductors','neck','cardio'];
-
-  // Сортируем: сначала по мышце, потом по базовому имени
   const sorted = Object.values(groups).sort((a, b) => {
-    const mA = a.items[0].primary_muscles && a.items[0].primary_muscles[0] || 'zzz';
-    const mB = b.items[0].primary_muscles && b.items[0].primary_muscles[0] || 'zzz';
-    const iA = MUSCLE_ORDER.indexOf(mA);
-    const iB = MUSCLE_ORDER.indexOf(mB);
-    const mi = (iA === -1 ? 99 : iA) - (iB === -1 ? 99 : iB);
-    if (mi !== 0) return mi;
-    return a.base.localeCompare(b.base, 'ru');
+    const iA = MUSCLE_ORDER.indexOf(a.muscle), iB = MUSCLE_ORDER.indexOf(b.muscle);
+    const mi = (iA < 0 ? 99 : iA) - (iB < 0 ? 99 : iB);
+    return mi !== 0 ? mi : a.base.localeCompare(b.base, 'ru');
   });
 
-  // Определяем текущую мышцу для заголовков секций
   let currentMuscle = null;
   let html = '<div style="max-width:600px;margin:0 auto">';
 
   for (const g of sorted) {
-    const muscle = g.items[0].primary_muscles && g.items[0].primary_muscles[0] || null;
-    if (muscle !== currentMuscle) {
-      currentMuscle = muscle;
-      html += `<div class="muscle-section-title muscle-drop-zone" data-drop-muscle="${esc(muscle || '')}"
+    if (g.muscle !== currentMuscle) {
+      currentMuscle = g.muscle;
+      html += `<div class="muscle-drop-zone" data-drop-muscle="${esc(g.muscle)}"
         style="padding:16px 0 8px;font-size:13px;font-weight:700;color:#4a9eff;text-transform:uppercase;letter-spacing:1px">
-        ${esc(MUSCLE_RU[muscle] || muscle || 'Без категории')}
+        ${esc(MUSCLE_RU[g.muscle] || g.muscle)}
       </div>`;
     }
-
     if (g.items.length === 1) {
-      html += renderExerciseRow(g.items[0]);
+      html += renderExerciseRow(g.items[0], false);
     } else {
-      const firstImg = exThumbHtml(g.items[0], 48);
       html += `
-        <div class="muscle-group" style="border-bottom:1px solid #1a1a1a;border-radius:0">
-          <div class="muscle-group-header muscle-drop-zone" data-drop-muscle="${esc(muscle || '')}" data-drop-base="${esc(g.base)}"
-               style="padding:10px 0;gap:12px;display:flex;align-items:center">
-            ${firstImg}
+        <div class="muscle-group muscle-drop-zone" data-drop-muscle="${esc(g.muscle)}" data-drop-base="${esc(g.base)}" style="border-bottom:1px solid #1a1a1a;border-radius:0">
+          <div class="muscle-group-header" style="padding:10px 0;gap:12px;display:flex;align-items:center">
+            ${exThumbHtml(g.items[0], 48)}
             <span class="muscle-group-label" style="flex:1">${esc(g.base)}</span>
             <span class="muscle-group-count">${g.items.length}</span>
             <span class="muscle-group-arrow">▶</span>
           </div>
           <div class="muscle-group-exercises" style="padding-left:60px">
-            ${g.items.map(item => `
-              <div class="ex-option ex-draggable" data-ex-id="${esc(item.id)}" draggable="true" data-drag-ex-id="${esc(item.id)}" style="gap:12px;padding:8px 0">
-                ${exThumbHtml(item, 36)}
-                <div class="ex-option-name" style="flex:1">
-                  <div class="ex-option-name-ru">${esc(getVariationLabel(item.name_ru || item.name_en || ''))}</div>
-                </div>
-                <button class="card-delete" data-delete-ex="${esc(item.id)}" title="Удалить" style="position:static;display:flex;width:28px;height:28px;flex-shrink:0">&times;</button>
-              </div>`).join('')}
+            ${g.items.map(item => renderExerciseRow(item, true)).join('')}
           </div>
         </div>`;
     }
   }
 
+  if (noCat.length > 0) {
+    html += `<div class="no-cat-section">
+      <div style="padding:8px 0 12px;font-size:13px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px">
+        Без категории (${noCat.length}) — перетащи в нужную группу ↑
+      </div>
+      ${noCat.map(item => renderExerciseRow(item, false)).join('')}
+    </div>`;
+  }
+
   html += '</div>';
   container.innerHTML = html;
+  initExerciseDrag(container);
+}
+
+// ===== DRAG & DROP =====
+let _dragExId = null;
+
+function initExerciseDrag(container) {
+  container.addEventListener('dragstart', e => {
+    const row = e.target.closest('[data-ex-id][draggable]');
+    if (!row) return;
+    _dragExId = row.dataset.exId;
+    setTimeout(() => row.classList.add('ex-dragging'), 0);
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  container.addEventListener('dragend', e => {
+    document.querySelectorAll('.ex-dragging').forEach(el => el.classList.remove('ex-dragging'));
+    document.querySelectorAll('.muscle-drop-zone.drag-over').forEach(el => el.classList.remove('drag-over'));
+  });
+  container.addEventListener('dragover', e => {
+    const zone = e.target.closest('.muscle-drop-zone');
+    if (!zone || !_dragExId) return;
+    e.preventDefault();
+    document.querySelectorAll('.muscle-drop-zone.drag-over').forEach(el => el.classList.remove('drag-over'));
+    zone.classList.add('drag-over');
+  });
+  container.addEventListener('dragleave', e => {
+    const zone = e.target.closest('.muscle-drop-zone');
+    if (zone && !zone.contains(e.relatedTarget)) zone.classList.remove('drag-over');
+  });
+  container.addEventListener('drop', e => {
+    e.preventDefault();
+    const zone = e.target.closest('.muscle-drop-zone');
+    if (!zone || !_dragExId) return;
+    zone.classList.remove('drag-over');
+    const exId = _dragExId; _dragExId = null;
+    const targetMuscle = zone.dataset.dropMuscle;
+    const targetBase = zone.dataset.dropBase || null; // null = раскрепить из группы
+    showMoveExerciseDialog(exId, targetMuscle, targetBase);
+  });
+}
+
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeWZkYmZkZXV3b2pnZXhod3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NzE1OTYsImV4cCI6MjA4NzQ0NzU5Nn0.5okpQM-UffmYatsVjbzjafsHhY3taCqhDYkiyEjiSvg';
+
+function showMoveExerciseDialog(exId, targetMuscle, targetBase) {
+  const ex = exerciseData.find(i => i.id === exId);
+  if (!ex) return;
+  const currentRu = ex.name_ru || '';
+  const currentEn = ex.name_en || '';
+  // Предлагаем имя: если дроп на группу — BaseName (вариация), если на секцию — текущее имя для ручного редактирования
+  const variation = getVariationLabel(currentRu);
+  const suggestedRu = targetBase ? targetBase + ' (' + variation + ')' : currentRu;
+
+  openModal((targetBase ? 'Добавить в группу' : 'Переместить в секцию'), `
+    <div style="margin-bottom:14px;font-size:13px;color:#aaa;line-height:1.5">
+      <b style="color:#e0e0e0">${esc(currentRu)}</b><br>
+      → <b style="color:#4a9eff">${esc(MUSCLE_RU[targetMuscle] || targetMuscle)}${targetBase ? ' / ' + esc(targetBase) : ''}</b>
+    </div>
+    <div class="form-group">
+      <label>Название (RU)</label>
+      <input type="text" id="mv-ru" value="${esc(suggestedRu)}">
+    </div>
+    <div class="form-group">
+      <label>Название (EN)</label>
+      <input type="text" id="mv-en" value="${esc(currentEn)}">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Отмена</button>
+      <button class="btn btn-primary" id="mv-save">Сохранить</button>
+    </div>
+  `);
+  document.getElementById('mv-ru').focus();
+  document.getElementById('mv-save').onclick = async () => {
+    const newRu = document.getElementById('mv-ru').value.trim();
+    const newEn = document.getElementById('mv-en').value.trim();
+    if (!newRu) return toast('Введите название');
+    closeModal();
+    try {
+      const r = await fetch('https://mqyfdbfdeuwojgexhwpy.supabase.co/rest/v1/exercises?id=eq.' + encodeURIComponent(exId), {
+        method: 'PATCH',
+        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+        body: JSON.stringify({ name_ru: newRu, name_en: newEn || null, primary_muscles: [targetMuscle] })
+      });
+      if (!r.ok) throw new Error(await r.text());
+      ex.name_ru = newRu; ex.name_en = newEn || null; ex.primary_muscles = [targetMuscle];
+      render();
+      toast('✅ Сохранено');
+    } catch (err) { toast('Ошибка: ' + err.message); }
+  };
 }
 
 // ===== ADD FORMS =====
