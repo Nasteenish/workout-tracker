@@ -853,9 +853,23 @@ body.modal-open {
     transition: width 0.15s, height 0.15s, margin 0.15s;
 }
 .picker-item .ex-thumb.loaded {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     margin-right: 12px;
+}
+
+/* Group header — кружок чуть крупнее picker-item */
+.picker-group-header .ex-thumb {
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    margin-right: 0;
+    transition: width 0.15s, height 0.15s, margin 0.15s;
+}
+.picker-group-header .ex-thumb.loaded {
+    width: 44px;
+    height: 44px;
+    margin-right: 10px;
 }
 
 /* Exercise card header — always visible, no fade */

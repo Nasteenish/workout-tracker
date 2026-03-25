@@ -1349,7 +1349,7 @@ export const Builder = {
                 html += `<div class="picker-item" ${attr(WORKOUT.EX_NAME_RU, esc(ex.nameRu))} ${attr(WORKOUT.EX_NAME, esc(ex.name))}>${exThumbHtml(ex.name)}${esc(exName(ex))}</div>`;
             } else if (expandedKey === groupKey) {
                 // Expanded group — show header + all variants
-                html += `<div class="picker-group-header picker-group-expanded" data-picker-group="${esc(groupKey)}">${exThumbHtml(group.exercises[0].name)}<span class="picker-group-name">${esc(group.baseName)}</span><span class="picker-group-count">${group.exercises.length}</span><span class="picker-group-arrow">\u25B4</span></div>`;
+                html += `<div class="picker-group-header picker-group-expanded" data-picker-group="${esc(groupKey)}">${exThumbHtml(group.exercises[0].name)}<span class="picker-group-name">${esc(group.baseName)}</span><span class="picker-group-count">${group.exercises.length}</span><span class="picker-group-arrow">\u25B2</span></div>`;
                 for (var v = 0; v < group.exercises.length; v++) {
                     var vex = group.exercises[v];
                     var varLabel = getVariationLabel(exName(vex));
@@ -1357,7 +1357,7 @@ export const Builder = {
                 }
             } else {
                 // Collapsed group — show base name + count
-                html += `<div class="picker-group-header" data-picker-group="${esc(groupKey)}">${exThumbHtml(group.exercises[0].name)}<span class="picker-group-name">${esc(group.baseName)}</span><span class="picker-group-count">${group.exercises.length}</span><span class="picker-group-arrow">\u25BE</span></div>`;
+                html += `<div class="picker-group-header" data-picker-group="${esc(groupKey)}">${exThumbHtml(group.exercises[0].name)}<span class="picker-group-name">${esc(group.baseName)}</span><span class="picker-group-count">${group.exercises.length}</span><span class="picker-group-arrow">\u25BC</span></div>`;
             }
         }
 
@@ -1429,7 +1429,22 @@ export const Builder = {
             }
             var searchInput = document.getElementById('picker-search-input');
             var query = searchInput ? searchInput.value.trim() : '';
+            var _expandingKey = this._expandedPickerGroup;
             document.getElementById('picker-list').innerHTML = this._buildPickerList(this._pickerCategory, query);
+            // Автоскролл к раскрытой группе — показываем первые варианты
+            if (_expandingKey) {
+                var _pickerList = document.getElementById('picker-list');
+                var _headers = _pickerList.querySelectorAll('.picker-group-header');
+                var _targetHeader = null;
+                _headers.forEach(function(h) {
+                    if (h.getAttribute('data-picker-group') === _expandingKey) _targetHeader = h;
+                });
+                if (_targetHeader) {
+                    setTimeout(function() {
+                        _targetHeader.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 30);
+                }
+            }
             return;
         }}
 

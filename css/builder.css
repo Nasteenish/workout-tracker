@@ -315,11 +315,12 @@
     flex-shrink: 0;
 }
 .picker-group-arrow {
-    color: var(--text-muted);
-    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    font-size: 18px;
     flex-shrink: 0;
-    width: 16px;
+    width: 20px;
     text-align: center;
+    line-height: 1;
 }
 .picker-variant {
     padding-left: calc(var(--spacing-md) + 20px);
