@@ -16,6 +16,7 @@ export const RestTimer = {
     _targetSetIdx: null,
     _targetWeek: null,
     _targetDay: null,
+    _beepToken: 0,
 
     init() {
         const settings = Storage.getSettings();
@@ -120,6 +121,9 @@ export const RestTimer = {
         if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission();
         }
+
+        // Cancel any pending async beep from previous _finish()
+        this._beepToken++;
 
         // Init AudioContext while we have user gesture (critical for iOS)
         this._ensureAudioCtx();
@@ -365,11 +369,14 @@ export const RestTimer = {
 
     _playBeep(reason) {
         var webAudioOk = false;
+        var beepToken = this._beepToken;
+        var self = this;
         // Try Web Audio API first
         try {
             var ctx = this._audioCtx;
 
             var doPlay = function() {
+                if (self._beepToken !== beepToken) return;
                 [[880, 0, 0.5], [1100, 0.35, 0.6], [1320, 0.65, 0.8]].forEach(function(p) {
                     var freq = p[0], start = p[1], end = p[2];
                     var osc = ctx.createOscillator();
