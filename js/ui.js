@@ -1588,6 +1588,9 @@ export const UI = {
         } else {
             // DB variation mode: show exercises with same base name
             const baseName = getExerciseBaseName(currentNameRu || currentNameEn);
+            // Broader base: strip position modifiers (стоя/сидя/лёжа) to group e.g. standing + seated calf raises
+            const broaderBase = baseName.replace(/\s+(стоя|сидя|лёжа)$/i, '').trim();
+            const useBroader = broaderBase !== baseName;
             let category = '';
             for (var i = 0; i < EXERCISE_DB.length; i++) {
                 if (EXERCISE_DB[i].nameRu === currentNameRu || EXERCISE_DB[i].name === currentNameEn ||
@@ -1596,17 +1599,38 @@ export const UI = {
                     break;
                 }
             }
-            const variations = EXERCISE_DB.filter(function(dbEx) {
+            let variations = EXERCISE_DB.filter(function(dbEx) {
                 return dbEx.category === category && getExerciseBaseName(dbEx.nameRu || dbEx.name || '') === baseName;
             });
+            // If broader base differs, also include exercises with same broader base (e.g. "стоя" + "сидя")
+            if (useBroader) {
+                const extraVariations = EXERCISE_DB.filter(function(dbEx) {
+                    if (dbEx.category !== category) return false;
+                    var dbBase = getExerciseBaseName(dbEx.nameRu || dbEx.name || '');
+                    var dbBroader = dbBase.replace(/\s+(стоя|сидя|лёжа)$/i, '').trim();
+                    return dbBroader === broaderBase && dbBase !== baseName;
+                });
+                if (extraVariations.length > 0) variations = variations.concat(extraVariations);
+            }
             if (variations.length === 0) return;
-            title = baseName;
+            title = useBroader && variations.length > (EXERCISE_DB.filter(function(dbEx) {
+                return dbEx.category === category && getExerciseBaseName(dbEx.nameRu || dbEx.name || '') === baseName;
+            }).length) ? broaderBase : baseName;
             const currentSub = Storage.getSubstitution(exerciseId);
             const currentDisplay = currentSub || currentNameRu || currentNameEn;
             for (var v = 0; v < variations.length; v++) {
                 var vex = variations[v];
                 var vName = exName(vex);
-                var vLabel = getVariationLabel(vName);
+                // When showing broader group, include position modifier in label
+                var vLabel;
+                if (useBroader) {
+                    var vBase = getExerciseBaseName(vex.nameRu || '');
+                    var suffix = vBase.substring(broaderBase.length).trim(); // "стоя" or "сидя"
+                    var paren = getVariationLabel(vName);
+                    vLabel = paren !== vName ? (suffix ? suffix + ', ' + paren : paren) : (suffix || vName);
+                } else {
+                    vLabel = getVariationLabel(vName);
+                }
                 var isSelected = vName === currentDisplay || vex.nameRu === currentDisplay || vex.name === currentDisplay;
                 optionsHtml += `
                     <div class="eq-option variation-option ${isSelected ? 'selected' : ''}"
