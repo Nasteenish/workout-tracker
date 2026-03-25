@@ -459,6 +459,57 @@ export const Migrations = {
                     if (changed) localStorage.setItem(keys[ki], JSON.stringify(dd));
                 }
             }
+        },
+        // v8: Fix warmup restore in snapshots — v1 migration had a bug:
+        // templateSnapshots is { dayKey: [ {version, groups}, ... ] }
+        // v1 iterated as snaps[ver].exerciseGroups (wrong) instead of snaps[dayKey][i].groups
+        {
+            key: '_restore_warmup_snapshots_v1',
+            fn: function() {
+                var keys = Object.keys(localStorage);
+                for (var ki = 0; ki < keys.length; ki++) {
+                    if (keys[ki].indexOf('wt_data_') !== 0) continue;
+                    var dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}');
+                    if (!dd.program) continue;
+                    var changed = false;
+
+                    // Collect warmup exercise IDs from the live templates (already fixed by v1)
+                    var warmupIds = {};
+                    var dt = dd.program.dayTemplates;
+                    if (dt) {
+                        for (var dayNum in dt) {
+                            var groups = dt[dayNum].exerciseGroups;
+                            if (!groups) continue;
+                            for (var gi = 0; gi < groups.length; gi++) {
+                                if (groups[gi].type === 'warmup' && groups[gi].exercise) {
+                                    warmupIds[groups[gi].exercise.id] = true;
+                                }
+                            }
+                        }
+                    }
+
+                    // Fix snapshots with correct iteration
+                    var snaps = dd.program.templateSnapshots;
+                    if (snaps) {
+                        for (var dayKey in snaps) {
+                            var daySnaps = snaps[dayKey];
+                            if (!Array.isArray(daySnaps)) continue;
+                            for (var si = 0; si < daySnaps.length; si++) {
+                                var snapGroups = daySnaps[si].groups;
+                                if (!snapGroups) continue;
+                                for (var gi = 0; gi < snapGroups.length; gi++) {
+                                    if (snapGroups[gi].type === 'single' && snapGroups[gi].exercise && warmupIds[snapGroups[gi].exercise.id]) {
+                                        snapGroups[gi].type = 'warmup';
+                                        changed = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (changed) localStorage.setItem(keys[ki], JSON.stringify(dd));
+                }
+            }
         }
     ]
 };

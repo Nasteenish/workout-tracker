@@ -344,7 +344,10 @@ export const Builder = {
         for (var i = 0; i < dayTemplate.exerciseGroups.length; i++) {
             var group = dayTemplate.exerciseGroups[i];
             if (group.type === 'single' || group.type === 'warmup') {
-                items.push({ type: group.type, exercise: this._extractExForEdit(group.exercise, dayNum) });
+                var item = { type: group.type, exercise: this._extractExForEdit(group.exercise, dayNum) };
+                if (group.sectionTitle) item.sectionTitle = group.sectionTitle;
+                if (group.sectionTitleRu) item.sectionTitleRu = group.sectionTitleRu;
+                items.push(item);
             } else if (group.type === 'superset' && group.exercises) {
                 var exs = [];
                 for (var j = 0; j < group.exercises.length; j++) {
@@ -357,13 +360,19 @@ export const Builder = {
                         exs.push(this._extractExForEdit(e, dayNum));
                     }
                 }
-                items.push({ type: 'superset', exercises: exs });
+                var ssItem = { type: 'superset', exercises: exs };
+                if (group.sectionTitle) ssItem.sectionTitle = group.sectionTitle;
+                if (group.sectionTitleRu) ssItem.sectionTitleRu = group.sectionTitleRu;
+                items.push(ssItem);
             } else if (group.type === 'choose_one' && group.options) {
                 var opts = [];
                 for (var j = 0; j < group.options.length; j++) {
                     opts.push(this._extractExForEdit(group.options[j], dayNum));
                 }
-                items.push({ type: 'choose_one', choiceKey: group.choiceKey || ('c_' + Date.now()), options: opts });
+                var coItem = { type: 'choose_one', choiceKey: group.choiceKey || ('c_' + Date.now()), options: opts };
+                if (group.sectionTitle) coItem.sectionTitle = group.sectionTitle;
+                if (group.sectionTitleRu) coItem.sectionTitleRu = group.sectionTitleRu;
+                items.push(coItem);
             }
         }
 
@@ -986,19 +995,28 @@ export const Builder = {
         for (var i = 0; i < ed.items.length; i++) {
             var item = ed.items[i];
             if (item.type === 'single' || item.type === 'warmup') {
-                groups.push({ type: item.type, exercise: this._serializeExercise(item.exercise, ed.dayNum, i, -1) });
+                var g = { type: item.type, exercise: this._serializeExercise(item.exercise, ed.dayNum, i, -1) };
+                if (item.sectionTitle) g.sectionTitle = item.sectionTitle;
+                if (item.sectionTitleRu) g.sectionTitleRu = item.sectionTitleRu;
+                groups.push(g);
             } else if (item.type === 'superset') {
                 var exs = [];
                 for (var j = 0; j < item.exercises.length; j++) {
                     exs.push(this._serializeExercise(item.exercises[j], ed.dayNum, i, j));
                 }
-                groups.push({ type: 'superset', exercises: exs });
+                var sg = { type: 'superset', exercises: exs };
+                if (item.sectionTitle) sg.sectionTitle = item.sectionTitle;
+                if (item.sectionTitleRu) sg.sectionTitleRu = item.sectionTitleRu;
+                groups.push(sg);
             } else if (item.type === 'choose_one') {
                 var opts = [];
                 for (var j = 0; j < item.options.length; j++) {
                     opts.push(this._serializeExercise(item.options[j], ed.dayNum, i, j));
                 }
-                groups.push({ type: 'choose_one', choiceKey: item.choiceKey, options: opts });
+                var cg = { type: 'choose_one', choiceKey: item.choiceKey, options: opts };
+                if (item.sectionTitle) cg.sectionTitle = item.sectionTitle;
+                if (item.sectionTitleRu) cg.sectionTitleRu = item.sectionTitleRu;
+                groups.push(cg);
             }
         }
 
