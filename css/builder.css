@@ -351,22 +351,13 @@
     flex-shrink: 0;
 }
 .picker-back-btn {
-    background: rgba(255, 255, 255, 0.08);
+    background: none;
     border: none;
-    color: var(--accent-primary);
-    font-size: var(--font-size-base);
-    font-weight: 600;
-    padding: 0 16px;
-    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 24px;
+    padding: 4px 8px;
     cursor: pointer;
     flex-shrink: 0;
-    height: var(--touch-min);
-    display: flex;
-    align-items: center;
-    gap: 2px;
-}
-.picker-back-btn:active {
-    background: rgba(255, 255, 255, 0.14);
 }
 .picker-variants-title {
     font-size: var(--font-size-lg);

@@ -1189,7 +1189,7 @@ export const Builder = {
                 </div>
                 <div class="picker-variants-panel" id="picker-variants-panel">
                     <div class="picker-variants-header">
-                        <button class="picker-back-btn" id="picker-back">\u2039 \u041D\u0430\u0437\u0430\u0434</button>
+                        <button class="picker-back-btn" id="picker-back">&larr;</button>
                         <span class="picker-variants-title" id="picker-variants-title"></span>
                     </div>
                     <div class="picker-variants-list" id="picker-variants-list"></div>
