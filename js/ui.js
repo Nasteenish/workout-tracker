@@ -1608,7 +1608,7 @@ export const UI = {
                     if (dbEx.category !== category) return false;
                     var dbBase = getExerciseBaseName(dbEx.nameRu || dbEx.name || '');
                     var dbBroader = dbBase.replace(/\s+(стоя|сидя|лёжа)$/i, '').trim();
-                    return dbBroader === broaderBase && dbBase !== baseName;
+                    return dbBroader === broaderBase && dbBase !== baseName && dbBroader !== dbBase;
                 });
                 if (extraVariations.length > 0) variations = variations.concat(extraVariations);
             }
