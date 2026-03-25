@@ -847,7 +847,7 @@ export const UI = {
             <div class="exercise-card"${groupIdxAttr}>
                 <div class="exercise-header">
                     <div class="exercise-name-row">
-                        ${exThumbHtml(ex.name, ex.nameRu)}
+                        ${exThumbHtml(null, displayName)}
                         <div class="${nameClass}" ${nameAttrs}>${nameContent}</div>
                     </div>
                     <div class="exercise-meta">
