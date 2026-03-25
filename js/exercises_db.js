@@ -1,4 +1,4 @@
-// exercises_db.js — Exercise library (355 exercises)
+// exercises_db.js — Exercise library (354 exercises)
 // Автогенерируется скриптом tools/sync_exercises.js — не редактировать вручную
 
 export const EXERCISE_CATEGORIES = [
@@ -84,10 +84,9 @@ export const EXERCISE_DB = [
     { nameRu: 'Сгибание одной рукой (на блоке)', name: 'Single Arm Curl (Cable)', category: 'biceps' },
     { nameRu: 'Сгибание рук за спиной (блок)', name: 'Behind the Back Curl (Cable)', category: 'biceps' },
     { nameRu: 'Сгибание рук официанта (гантель)', name: 'Waiter Curl (Dumbbell)', category: 'biceps' },
-    // === Икры (13) ===
+    // === Икры (12) ===
     { nameRu: 'Жим носками (в тренажёре)', name: 'Calf Press (Machine)', category: 'calves' },
     { nameRu: 'Подъём на носки (в тренажёре)', name: 'Calf Extension (Machine)', category: 'calves' },
-    { nameRu: 'Подъём на носки сидя', name: 'Seated Calf Raise', category: 'calves' },
     { nameRu: 'Подъём на носки сидя (в тренажёре)', name: 'Seated Calf Raise (Machine)', category: 'calves' },
     { nameRu: 'Подъём на носки стоя', name: 'Standing Calf Raise', category: 'calves' },
     { nameRu: 'Подъём на носки стоя (в Смите)', name: 'Standing Calf Raise (Smith)', category: 'calves' },
@@ -149,8 +148,8 @@ export const EXERCISE_DB = [
     { nameRu: 'Отжимания на брусьях (на грудь)', name: 'Chest Dip', category: 'chest' },
     { nameRu: 'Отжимания на брусьях на грудь (с отягощением)', name: 'Chest Dip (Weighted)', category: 'chest' },
     { nameRu: 'Отжимания на брусьях на грудь (с помощью)', name: 'Chest Dip (Assisted)', category: 'chest' },
-    { nameRu: 'Отжимания на кольцах', name: 'Ring Dips', category: 'chest' },
     { nameRu: 'Отжимания на кольцах', name: 'Ring Push Up', category: 'chest' },
+    { nameRu: 'Отжимания на кольцах', name: 'Ring Dips', category: 'chest' },
     { nameRu: 'Отжимания с колен', name: 'Kneeling Push Up', category: 'chest' },
     { nameRu: 'Отжимания с ногами на возвышении', name: 'Decline Push Up', category: 'chest' },
     { nameRu: 'Отжимания с руками на возвышении', name: 'Incline Push Ups', category: 'chest' },
