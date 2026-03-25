@@ -1214,17 +1214,19 @@ export const Builder = {
             });
         }
 
-        // Load shared exercises
+        // Load shared exercises — append section without rebuilding the whole list
         this._sharedExercisesCache = [];
         if (Social) {
             Social.searchSharedExercises('').then(function(exs) {
                 Builder._sharedExercisesCache = exs || [];
-                var activeCat = document.querySelector('.picker-cat.active');
-                var cat = activeCat ? read(activeCat, BUILDER.CAT) : 'all';
-                var searchInput = document.getElementById('picker-search-input');
-                var q = searchInput ? searchInput.value.trim() : '';
                 var listEl = document.getElementById('picker-list');
-                if (listEl) listEl.innerHTML = Builder._buildPickerList(cat, q);
+                if (!listEl) return;
+                var sharedHtml = Builder._buildSharedHtml(Builder._pickerCategory || 'all', '');
+                if (!sharedHtml) return;
+                var section = document.createElement('div');
+                section.id = 'picker-shared-section';
+                section.innerHTML = sharedHtml;
+                listEl.appendChild(section);
             }).catch(function() {});
         }
 
@@ -1325,6 +1327,29 @@ export const Builder = {
 
     _sharedExercisesCache: [],
 
+    _buildSharedHtml(category, query) {
+        var shared = this._sharedExercisesCache || [];
+        if (category && category !== 'all') {
+            shared = shared.filter(function(s) { return s.category === category; });
+        }
+        if (query) {
+            var q = query.toLowerCase();
+            shared = shared.filter(function(s) { return s.name.toLowerCase().indexOf(q) !== -1; });
+        }
+        var dbNames = {};
+        for (var i = 0; i < EXERCISE_DB.length; i++) {
+            dbNames[EXERCISE_DB[i].nameRu.toLowerCase()] = true;
+            if (EXERCISE_DB[i].name) dbNames[EXERCISE_DB[i].name.toLowerCase()] = true;
+        }
+        shared = shared.filter(function(s) { return !dbNames[s.name.toLowerCase()]; });
+        if (shared.length === 0) return '';
+        var html = '<div class="picker-shared-label">\u0418\u0437 \u0431\u0430\u0437\u044B:</div>';
+        for (var i = 0; i < shared.length; i++) {
+            html += `<div class="picker-item picker-shared-item" ${attr(WORKOUT.EX_NAME_RU, esc(shared[i].name))} ${attr(WORKOUT.EX_NAME, esc(shared[i].name))}>${esc(shared[i].name)}</div>`;
+        }
+        return html;
+    },
+
     _buildVariantsList(groupKey) {
         var groups = groupExercisesByBase(EXERCISE_DB);
         var group = null;
@@ -1376,27 +1401,7 @@ export const Builder = {
             }
         }
 
-        // Add shared exercises (filter out duplicates with EXERCISE_DB)
-        var shared = this._sharedExercisesCache || [];
-        if (category && category !== 'all') {
-            shared = shared.filter(function(s) { return s.category === category; });
-        }
-        if (query) {
-            var q = query.toLowerCase();
-            shared = shared.filter(function(s) { return s.name.toLowerCase().indexOf(q) !== -1; });
-        }
-        var dbNames = {};
-        for (var i = 0; i < EXERCISE_DB.length; i++) {
-            dbNames[EXERCISE_DB[i].nameRu.toLowerCase()] = true;
-            if (EXERCISE_DB[i].name) dbNames[EXERCISE_DB[i].name.toLowerCase()] = true;
-        }
-        shared = shared.filter(function(s) { return !dbNames[s.name.toLowerCase()]; });
-        if (shared.length > 0) {
-            html += '<div class="picker-shared-label">\u0418\u0437 \u0431\u0430\u0437\u044B:</div>';
-            for (var i = 0; i < shared.length; i++) {
-                html += `<div class="picker-item picker-shared-item" ${attr(WORKOUT.EX_NAME_RU, esc(shared[i].name))} ${attr(WORKOUT.EX_NAME, esc(shared[i].name))}>${esc(shared[i].name)}</div>`;
-            }
-        }
+        html += this._buildSharedHtml(category, query);
 
         if (!html) {
             return '<div class="picker-empty">\u041D\u0438\u0447\u0435\u0433\u043E \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E</div>';
