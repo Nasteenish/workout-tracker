@@ -783,6 +783,7 @@ export const InlineEditor = {
             }
 
             self._onAutoSave(freshEd);
+            self._clearCurrentWeekSnapshot(dayNum);
             self._onInvalidateCache();
             self._onRenderDay();
         });
@@ -819,6 +820,7 @@ export const InlineEditor = {
             });
 
             self._onAutoSave(ed);
+            self._clearCurrentWeekSnapshot(dayNum);
             self._onInvalidateCache();
             // Stay in reorder mode if active — re-render and re-enter
             if (window._reorderMode) {
