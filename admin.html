@@ -566,7 +566,9 @@ async function loadEquipment() {
 
 async function loadExercises() {
   const r = await fetch(SB + '/rest/v1/exercises?select=*&order=sort_order.asc,name_ru.asc', { headers: H });
-  exerciseData = await r.json();
+  if (!r.ok) { exerciseData = []; return; }
+  const data = await r.json();
+  exerciseData = Array.isArray(data) ? data : [];
   machineExercises = exerciseData.filter(e => e.equipment === 'machine');
 }
 
@@ -2010,10 +2012,15 @@ document.addEventListener('keydown', e => {
 // ===== INIT =====
 async function init() {
   document.getElementById('stats').textContent = 'Загрузка...';
-  await Promise.all([loadProfiles(), loadGyms(), loadEquipment(), loadExercises()]);
-  renderFilters();
-  render();
-  loadLinkCounts().then(() => render());
+  try {
+    await Promise.all([loadProfiles(), loadGyms(), loadEquipment(), loadExercises()]);
+    renderFilters();
+    render();
+    loadLinkCounts().then(() => render());
+  } catch(e) {
+    document.getElementById('content').innerHTML = '<div style="padding:40px;color:#f66;font-size:14px">Ошибка загрузки: ' + e.message + '</div>';
+    console.error('init error:', e);
+  }
 }
 init();
 
