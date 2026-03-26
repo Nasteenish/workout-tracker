@@ -47,10 +47,10 @@ var _NAME_MAP = {
     'Жим ногой (в тренажёре)': ['Leg Press (Machine)', 'Жим ногами (в тренажёре)'],
     'Leg extension': ['Leg Extension (Machine)', 'Разгибание ног (в тренажёре)'],
     'Unilateral leg extension': ['Leg Extension (Machine)', 'Разгибание ног (в тренажёре)'],
-    'Machine shoulder press': ['Shoulder Press (Machine)', 'Жим на плечи (в тренажёре)'],
-    'Shoulder Press (Machine Plates)': ['Shoulder Press (Machine)', 'Жим на плечи (в тренажёре)'],
-    'Жим на плечи (в тренажёре, диски)': ['Shoulder Press (Machine)', 'Жим на плечи (в тренажёре)'],
-    'Жим плечами (в тренажёре, диски)': ['Shoulder Press (Machine)', 'Жим на плечи (в тренажёре)'],
+    'Machine shoulder press': ['Shoulder Press (Machine)', 'Жим на плечи сидя (в тренажёре)'],
+    'Shoulder Press (Machine Plates)': ['Shoulder Press (Machine)', 'Жим на плечи сидя (в тренажёре)'],
+    'Жим на плечи (в тренажёре, диски)': ['Shoulder Press (Machine)', 'Жим на плечи сидя (в тренажёре)'],
+    'Жим плечами (в тренажёре, диски)': ['Shoulder Press (Machine)', 'Жим на плечи сидя (в тренажёре)'],
     'Lateral raise machine': ['Lateral Raise (Machine)', 'Подъём в стороны (в тренажёре)'],
     'Seated dumbell lateral raises': ['Seated Lateral Raise (Dumbbell)', 'Подъём гантелей в стороны сидя'],
     'Standing lateral dumbell raises': ['Lateral Raise (Dumbbell)', 'Подъём гантелей в стороны'],
@@ -96,7 +96,7 @@ var _NAME_MAP = {
     'Сплит-присед на ягодицы': ['Bulgarian Split Squat (Dumbbell)', 'Болгарские сплит-приседания (с гантелями)'],
     'Болгарские выпады': ['Bulgarian Split Squat (Dumbbell)', 'Болгарские сплит-приседания (с гантелями)'],
     'Подъём на носки (тренажёр)': ['Standing Calf Raise (Machine)', 'Подъём на носки стоя (в тренажёре)'],
-    'Жим плечами (тренажёр)': ['Shoulder Press (Machine)', 'Жим на плечи (в тренажёре)'],
+    'Жим плечами (тренажёр)': ['Shoulder Press (Machine)', 'Жим на плечи сидя (в тренажёре)'],
     'Махи гантелями на наклонной скамье': ['Rear Delt Reverse Fly (Dumbbell)', 'Обратные разведения (с гантелями)'],
     'Разведение ног (тренажёр)': ['Hip Abduction (Machine)', 'Разведение ног (в тренажёре)'],
     // v4: Renamed exercises for grouping (classify exercise DB)
@@ -505,6 +505,62 @@ export const Migrations = {
                                         snapGroups[gi].type = 'warmup';
                                         changed = true;
                                     }
+                                }
+                            }
+                        }
+                    }
+
+                    if (changed) localStorage.setItem(keys[ki], JSON.stringify(dd));
+                }
+            }
+        },
+        // v9: Fix shoulder press nameRu — old migration used "Жим на плечи (в тренажёре)" (без "сидя"),
+        // but EXERCISE_DB has "Жим на плечи сидя (в тренажёре)" → вариации не находились.
+        {
+            key: '_fix_shoulder_press_nameRu_v1',
+            fn: function() {
+                var keys = Object.keys(localStorage);
+                for (var ki = 0; ki < keys.length; ki++) {
+                    if (keys[ki].indexOf('wt_data_') !== 0) continue;
+                    var dd;
+                    try { dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}'); } catch(e) { continue; }
+                    if (!dd.program) continue;
+                    var changed = false;
+
+                    function fixEx(ex) {
+                        if (ex && ex.name === 'Shoulder Press (Machine)' && ex.nameRu === 'Жим на плечи (в тренажёре)') {
+                            ex.nameRu = 'Жим на плечи сидя (в тренажёре)';
+                            changed = true;
+                        }
+                    }
+
+                    // Fix dayTemplates
+                    var dt = dd.program.dayTemplates;
+                    if (dt) {
+                        for (var dayNum in dt) {
+                            var groups = dt[dayNum].exerciseGroups || [];
+                            for (var gi = 0; gi < groups.length; gi++) {
+                                var g = groups[gi];
+                                if (g.exercise) fixEx(g.exercise);
+                                if (g.exercises) g.exercises.forEach(fixEx);
+                                if (g.options) g.options.forEach(fixEx);
+                            }
+                        }
+                    }
+
+                    // Fix templateSnapshots
+                    var snaps = dd.program.templateSnapshots;
+                    if (snaps) {
+                        for (var dayKey in snaps) {
+                            var snapArr = snaps[dayKey];
+                            if (!Array.isArray(snapArr)) continue;
+                            for (var si = 0; si < snapArr.length; si++) {
+                                var snapGroups = snapArr[si].groups || [];
+                                for (var sgi = 0; sgi < snapGroups.length; sgi++) {
+                                    var sg = snapGroups[sgi];
+                                    if (sg.exercise) fixEx(sg.exercise);
+                                    if (sg.exercises) sg.exercises.forEach(fixEx);
+                                    if (sg.options) sg.options.forEach(fixEx);
                                 }
                             }
                         }
