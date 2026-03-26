@@ -284,6 +284,7 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
   <div class="exdet-topbar">
     <button class="exdet-topbar-back" id="exdet-back">← Назад</button>
     <div class="exdet-topbar-title" id="exdet-topbar-title"></div>
+    <button class="btn btn-secondary btn-sm" id="exdet-edit-btn" style="margin-left:auto;flex-shrink:0">Изменить</button>
   </div>
   <div id="exdet-content"></div>
 </div>
@@ -304,6 +305,7 @@ let gymsData = [];
 let linkCounts = {};
 let detEquipment = null;
 let detLinkedIds = new Set();
+let detExercise = null;
 let showAllExercises = false;
 
 const FREE_WEIGHT_ONLY = ['barbell', 'dumbbell', 'kettlebell', 'resistance band', 'plate'];
@@ -1191,6 +1193,7 @@ async function toggleExerciseLink(exerciseId) {
 async function openExerciseDetail(exerciseId) {
   const ex = exerciseData.find(e => e.id === exerciseId);
   if (!ex) return;
+  detExercise = ex;
 
   document.getElementById('exdet-topbar-title').textContent = ex.name_ru || ex.name_en;
 
@@ -1287,6 +1290,47 @@ async function openExerciseDetail(exerciseId) {
 function closeExerciseDetail() {
   document.getElementById('exdet-overlay').classList.remove('visible');
   document.body.style.overflow = '';
+}
+
+function showEditExerciseForm() {
+  if (!detExercise) return;
+  const ex = detExercise;
+  openModal('Изменить упражнение', `
+    <div class="form-group">
+      <label>Название (рус)</label>
+      <input type="text" id="f-exedit-name-ru" value="${esc(ex.name_ru || '')}">
+    </div>
+    <div class="form-group">
+      <label>Название (eng)</label>
+      <input type="text" id="f-exedit-name-en" value="${esc(ex.name_en || '')}">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Отмена</button>
+      <button class="btn btn-primary" id="f-exedit-save">Сохранить</button>
+    </div>
+  `);
+  document.getElementById('f-exedit-name-ru').focus();
+  document.getElementById('f-exedit-save').onclick = async () => {
+    const nameRu = document.getElementById('f-exedit-name-ru').value.trim();
+    const nameEn = document.getElementById('f-exedit-name-en').value.trim();
+    if (!nameRu && !nameEn) return;
+    try {
+      const r = await fetch(SB + '/rest/v1/exercises?id=eq.' + encodeURIComponent(ex.id), {
+        method: 'PATCH',
+        headers: { ...H, 'Prefer': 'return=representation' },
+        body: JSON.stringify({ name_ru: nameRu || null, name_en: nameEn || null })
+      });
+      if (!r.ok) throw new Error(await r.text());
+      ex.name_ru = nameRu || null;
+      ex.name_en = nameEn || null;
+      document.getElementById('exdet-topbar-title').textContent = nameRu || nameEn;
+      document.querySelector('.exdet-name').textContent = nameRu || nameEn;
+      document.querySelector('.exdet-name-en').textContent = nameEn || '';
+      closeModal();
+      render();
+      toast('Сохранено');
+    } catch (e) { toast('Ошибка: ' + e.message); }
+  };
 }
 
 // ===== EVENT LISTENERS =====
@@ -1581,6 +1625,7 @@ document.getElementById('det-overlay').addEventListener('click', async e => {
 
 // Exercise detail panel: back button
 document.getElementById('exdet-back').addEventListener('click', closeExerciseDetail);
+document.getElementById('exdet-edit-btn').addEventListener('click', showEditExerciseForm);
 
 // Exercise detail panel: click on linked equipment -> open that equipment
 document.getElementById('exdet-overlay').addEventListener('click', e => {
