@@ -207,6 +207,23 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 .ex-dragging { opacity: 0.4; }
 .drop-zone { transition: background 0.15s, border-color 0.15s; }
 .drop-zone.drag-over { background: rgba(74,158,255,0.12) !important; border-radius: 8px; outline: 2px dashed #4a9eff; }
+/* Image upload zone */
+.img-upload-zone { border: 2px dashed #333; border-radius: 12px; padding: 20px 16px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+.img-upload-zone:hover, .img-upload-zone.drag-over { border-color: #4a9eff; background: rgba(74,158,255,0.05); }
+.img-upload-zone input[type=file] { display: none; }
+.img-upload-hint { color: #666; font-size: 13px; line-height: 1.4; }
+.img-upload-hint span { color: #4a9eff; }
+.img-upload-previews { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; margin-top: 12px; padding: 12px; background: #111; border-radius: 10px; }
+.img-preview-block { display: flex; flex-direction: column; gap: 5px; align-items: center; }
+.img-preview-label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.8px; }
+.img-preview-thumb { width: 48px; height: 48px; object-fit: contain; background: #fff; border-radius: 8px; padding: 2px; display: block; }
+.img-preview-detail { width: 160px; height: 110px; object-fit: contain; background: #fff; border-radius: 8px; padding: 6px; display: block; }
+.img-upload-filename { font-size: 11px; color: #4a9eff; margin-top: 4px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.img-upload-multiple { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.img-upload-thumb-item { position: relative; width: 64px; height: 64px; border-radius: 8px; overflow: hidden; border: 2px solid #333; }
+.img-upload-thumb-item img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+.img-upload-thumb-item .remove-img { position: absolute; top: 1px; right: 1px; background: rgba(0,0,0,0.7); border: none; color: #f66; font-size: 12px; cursor: pointer; border-radius: 4px; padding: 1px 4px; line-height: 1; }
+
 /* Image manager in exercise detail */
 .exdet-img-manager { padding: 12px 0; background: #111; }
 .exdet-img-manager-title { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; padding: 0 16px 8px; }
@@ -310,6 +327,7 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 // ===== CONFIG =====
 const SB = 'https://mqyfdbfdeuwojgexhwpy.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeWZkYmZkZXV3b2pnZXhod3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NzE1OTYsImV4cCI6MjA4NzQ0NzU5Nn0.5okpQM-UffmYatsVjbzjafsHhY3taCqhDYkiyEjiSvg';
+const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeWZkYmZkZXV3b2pnZXhod3B5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTg3MTU5NiwiZXhwIjoyMDg3NDQ3NTk2fQ.epUp4kV83LbUrHHNmx693G1nNjPGos-NGQiOKP-oJQU';
 const H = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json' };
 
 let currentTab = 'gyms';
@@ -967,7 +985,77 @@ function showAddEquipmentForm() {
   };
 }
 
+// ===== IMAGE UPLOAD =====
+
+async function uploadExerciseImage(file, exId) {
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const path = `exercises/${exId}/${Date.now()}.${ext}`;
+  const r = await fetch(`${SB}/storage/v1/object/equipment-images/${path}`, {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + SERVICE_KEY, 'Content-Type': file.type || 'image/jpeg', 'x-upsert': 'true' },
+    body: file
+  });
+  if (!r.ok) throw new Error('Ошибка загрузки: ' + await r.text());
+  return `${SB}/storage/v1/object/public/equipment-images/${path}`;
+}
+
+// Pending upload files (for new exercise form)
+let _pendingUploadFiles = [];
+
+function initUploadZone(zoneId, onFilesChanged) {
+  const zone = document.getElementById(zoneId);
+  if (!zone) return;
+  const input = zone.querySelector('input[type=file]');
+
+  zone.addEventListener('click', () => input.click());
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/'));
+    if (files.length) { _pendingUploadFiles.push(...files); onFilesChanged(); }
+  });
+  input.addEventListener('change', () => {
+    const files = [...input.files].filter(f => f.type.startsWith('image/'));
+    if (files.length) { _pendingUploadFiles.push(...files); onFilesChanged(); }
+    input.value = '';
+  });
+}
+
+function renderUploadPreviews(containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!_pendingUploadFiles.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px">Предпросмотр</div>
+    <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
+      ${_pendingUploadFiles.map((f, i) => {
+        const url = URL.createObjectURL(f);
+        const isFirst = i === 0;
+        return `
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+            ${isFirst ? `
+              <div class="img-preview-block">
+                <div class="img-preview-label">В списке</div>
+                <img class="img-preview-thumb" src="${url}">
+              </div>
+            ` : ''}
+            <div class="img-preview-block">
+              <div class="img-preview-label">${isFirst ? 'Главная' : 'Фото ' + (i+1)}</div>
+              <img class="img-preview-detail" src="${url}">
+              <div style="font-size:11px;color:#4a9eff;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</div>
+            </div>
+            <button onclick="event.stopPropagation();_pendingUploadFiles.splice(${i},1);renderUploadPreviews('${containerId}')" style="background:#2a2a2a;border:none;color:#f66;font-size:11px;border-radius:6px;padding:3px 8px;cursor:pointer">Удалить</button>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
 function showAddExerciseForm() {
+  _pendingUploadFiles = [];
   openModal('Добавить упражнение', `
     <div class="form-group">
       <label>Название (рус) *</label>
@@ -1009,32 +1097,58 @@ function showAddExerciseForm() {
         <option value="expert">Продвинутый</option>
       </select>
     </div>
+    <div class="form-group">
+      <label>Фотографии</label>
+      <div class="img-upload-zone" id="f-ex-upload-zone">
+        <input type="file" accept="image/*" multiple>
+        <div class="img-upload-hint">Перетащи сюда или <span>нажми для выбора</span><br><small style="color:#444">Первое фото — главное (показывается в списке)</small></div>
+      </div>
+      <div id="f-ex-upload-preview" style="margin-top:8px"></div>
+    </div>
     <div class="form-actions">
       <button class="btn btn-secondary" onclick="closeModal()">Отмена</button>
       <button class="btn btn-primary" id="f-ex-save">Сохранить</button>
     </div>
   `);
   document.getElementById('f-ex-name-ru').focus();
+  initUploadZone('f-ex-upload-zone', () => renderUploadPreviews('f-ex-upload-preview'));
+
   document.getElementById('f-ex-save').onclick = async () => {
     const nameRu = document.getElementById('f-ex-name-ru').value.trim();
     if (!nameRu) return toast('Введите название');
     const muscles = document.getElementById('f-ex-muscles').value.trim()
       .split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+    const exId = 'custom_' + Date.now();
+    const btn = document.getElementById('f-ex-save');
+    btn.disabled = true;
+    btn.textContent = _pendingUploadFiles.length ? 'Загрузка...' : 'Сохранение...';
     try {
+      // Upload images first
+      const imageUrls = [];
+      for (const file of _pendingUploadFiles) {
+        const url = await uploadExerciseImage(file, exId);
+        imageUrls.push(url);
+      }
       await addExercise({
-        id: 'custom_' + Date.now(),
+        id: exId,
         name_ru: nameRu,
         name_en: document.getElementById('f-ex-name-en').value.trim() || null,
         primary_muscles: muscles.length ? muscles : null,
         equipment: document.getElementById('f-ex-equipment').value || null,
         category: document.getElementById('f-ex-category').value.trim() || null,
         level: document.getElementById('f-ex-level').value || null,
+        images: imageUrls.length ? imageUrls : null,
       });
+      _pendingUploadFiles = [];
       closeModal();
       await loadExercises();
       render();
-      toast('Упражнение добавлено');
-    } catch (e) { toast('Ошибка: ' + e.message); }
+      toast('Упражнение добавлено' + (imageUrls.length ? ' с ' + imageUrls.length + ' фото' : ''));
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = 'Сохранить';
+      toast('Ошибка: ' + e.message);
+    }
   };
 }
 
@@ -1209,7 +1323,17 @@ async function toggleExerciseLink(exerciseId) {
 // ===== EXERCISE DETAIL PANEL =====
 
 function renderExdetImages(imgs) {
-  if (!imgs.length) return '<div class="exdet-no-img">💪</div>';
+  const uploadBtn = `<div class="exdet-img-card" style="display:flex;align-items:center;justify-content:center;min-width:80px;border:2px dashed #333;cursor:pointer" id="exdet-upload-card">
+    <div style="text-align:center;padding:8px">
+      <div style="font-size:22px;color:#555">+</div>
+      <div style="font-size:10px;color:#555;margin-top:2px">Загрузить</div>
+    </div>
+    <input type="file" accept="image/*" multiple style="display:none" id="exdet-upload-input">
+  </div>`;
+
+  if (!imgs.length) {
+    return `<div class="exdet-img-manager"><div class="exdet-img-manager-title">Изображения (0)</div><div class="exdet-img-cards">${uploadBtn}</div></div>`;
+  }
   const cards = imgs.map((url, i) => `
     <div class="exdet-img-card${i === 0 ? ' is-main' : ''}" data-img-idx="${i}">
       ${i === 0 ? '<div class="exdet-img-badge">Главная</div>' : ''}
@@ -1221,7 +1345,7 @@ function renderExdetImages(imgs) {
       </div>
     </div>
   `).join('');
-  return `<div class="exdet-img-manager"><div class="exdet-img-manager-title">Изображения (${imgs.length})</div><div class="exdet-img-cards">${cards}</div></div>`;
+  return `<div class="exdet-img-manager"><div class="exdet-img-manager-title">Изображения (${imgs.length})</div><div class="exdet-img-cards">${cards}${uploadBtn}</div></div>`;
 }
 
 async function openExerciseDetail(exerciseId) {
@@ -1311,6 +1435,7 @@ async function openExerciseDetail(exerciseId) {
   overlay.classList.add('visible');
   overlay.scrollTop = 0;
   document.body.style.overflow = 'hidden';
+  wireExdetUploadInput();
 }
 
 function closeExerciseDetail() {
@@ -1705,6 +1830,13 @@ document.getElementById('exdet-overlay').addEventListener('click', async e => {
     } catch(err) { alert(err.message); }
     return;
   }
+
+  // Image manager: click upload card → trigger file input
+  const uploadCard = e.target.closest('#exdet-upload-card');
+  if (uploadCard && !e.target.closest('input')) {
+    const inp = uploadCard.querySelector('input[type=file]');
+    if (inp) inp.click();
+  }
 });
 
 function renderExdetImageSection() {
@@ -1719,6 +1851,34 @@ function renderExdetImageSection() {
   } else {
     content.insertAdjacentHTML('afterbegin', newHtml);
   }
+  wireExdetUploadInput();
+}
+
+function wireExdetUploadInput() {
+  const inp = document.getElementById('exdet-upload-input');
+  if (!inp || inp._wired) return;
+  inp._wired = true;
+  inp.addEventListener('change', async () => {
+    const files = [...inp.files].filter(f => f.type.startsWith('image/'));
+    inp.value = '';
+    if (!files.length || !detExercise) return;
+    const card = document.getElementById('exdet-upload-card');
+    if (card) card.style.opacity = '0.4';
+    try {
+      const newUrls = [];
+      for (const file of files) {
+        const url = await uploadExerciseImage(file, detExercise.id);
+        newUrls.push(url);
+      }
+      const imgs = [...(detExercise.images || []), ...newUrls];
+      await patchExercise(detExercise.id, { images: imgs });
+      renderExdetImageSection();
+      toast('Загружено: ' + newUrls.length + ' фото');
+    } catch(err) {
+      if (card) card.style.opacity = '';
+      alert(err.message);
+    }
+  });
 }
 
 // Escape closes detail panels
