@@ -18,10 +18,19 @@ jobs:
       - name: Run sync
         run: node tools/sync_exercises.js
 
+      - name: Bump SW cache version
+        run: |
+          node -e "
+            const fs = require('fs');
+            let sw = fs.readFileSync('sw.js', 'utf8');
+            sw = sw.replace(/(workout-tracker-v)(\d+)/, (_, p, n) => p + (parseInt(n) + 1));
+            fs.writeFileSync('sw.js', sw);
+          "
+
       - name: Commit & push if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add js/exercises_db.js
+          git add js/exercises_db.js sw.js
           git diff --cached --quiet || git commit -m "sync: update exercises from Supabase"
           git push
