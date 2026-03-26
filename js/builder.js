@@ -1205,13 +1205,13 @@ export const Builder = {
                     <button class="btn-primary picker-custom-btn" id="picker-add-custom">\u0414\u041E\u0411\u0410\u0412\u0418\u0422\u042C</button>
                     <div id="picker-cat-prompt" class="picker-cat-label" style="display:none">\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0433\u0440\u0443\u043F\u043F\u0443 \u043C\u044B\u0448\u0446 \u0441\u0432\u0435\u0440\u0445\u0443 \u2191</div>
                 </div>
-                <div class="picker-variants-panel" id="picker-variants-panel">
-                    <div class="picker-variants-header">
-                        <button class="picker-back-btn" id="picker-back">&larr;</button>
-                        <span class="picker-variants-title" id="picker-variants-title"></span>
-                    </div>
-                    <div class="picker-variants-list" id="picker-variants-list"></div>
+            </div>
+            <div class="picker-variants-panel" id="picker-variants-panel">
+                <div class="picker-variants-header">
+                    <button class="picker-back-btn" id="picker-back">&larr;</button>
+                    <span class="picker-variants-title" id="picker-variants-title"></span>
                 </div>
+                <div class="picker-variants-list" id="picker-variants-list"></div>
             </div>
         `;
 
