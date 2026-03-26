@@ -969,12 +969,16 @@ export const Storage = {
             for (var w = week; w >= 1; w--) {
                 for (var si = 0; si < siblings.length; si++) {
                     var sib = siblings[si];
+                    // If main exercise is unilateral, prefer _uni sibling logs
+                    var sibId = exerciseId.endsWith('_uni') ? sib.id + '_uni' : sib.id;
                     // Skip days in current week that have no completed data yet
                     if (w === week && sib.day >= day) {
-                        var sibSetLog = this.getSetLog(w, sib.day, sib.id, setIdx);
+                        var sibSetLog = this.getSetLog(w, sib.day, sibId, setIdx);
                         if (!sibSetLog || !sibSetLog.completed) continue;
                     }
-                    var log = this.getSetLog(w, sib.day, sib.id, setIdx);
+                    var log = this.getSetLog(w, sib.day, sibId, setIdx);
+                    // Fallback to bilateral sibling if no unilateral log found
+                    if (!log && sibId !== sib.id) log = this.getSetLog(w, sib.day, sib.id, setIdx);
                     if (log && log.completed && log.timestamp > bestTime) {
                         sibResult = log;
                         bestTime = log.timestamp;
