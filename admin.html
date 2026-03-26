@@ -858,6 +858,7 @@ function renderExerciseGrid(container, statsEl, query) {
           <div class="muscle-group-header" style="padding:10px 0;gap:12px;display:flex;align-items:center">
             ${exThumbHtml(g.items[0], 48)}
             <span class="muscle-group-label" style="flex:1">${esc(g.base)}</span>
+            <button class="btn btn-secondary btn-sm" data-rename-group="${esc(g.base)}" data-rename-muscle="${esc(g.muscle)}" style="padding:3px 8px;font-size:12px;flex-shrink:0" title="Переименовать группу">✏️</button>
             <span class="muscle-group-count">${g.items.length}</span>
             <span class="muscle-group-arrow">▶</span>
           </div>
@@ -879,6 +880,60 @@ function renderExerciseGrid(container, statsEl, query) {
 
   html += '</div>';
   container.innerHTML = html;
+}
+
+// ===== GROUP RENAME =====
+
+function showRenameGroupForm(oldBase, muscle) {
+  const affected = exerciseData.filter(ex => getExerciseBaseName(ex.name_ru || ex.name_en || '') === oldBase && (ex.primary_muscles || [])[0] === muscle);
+  openModal('Переименовать группу', `
+    <div class="form-group">
+      <label>Текущее название</label>
+      <div style="padding:8px 0;color:#aaa;font-size:15px">${esc(oldBase)}</div>
+    </div>
+    <div class="form-group">
+      <label>Новое название группы *</label>
+      <input type="text" id="f-grp-name" value="${esc(oldBase)}" style="font-size:15px">
+    </div>
+    <div style="font-size:12px;color:#666;margin-bottom:16px">
+      Будет обновлено ${affected.length} упражнени${affected.length === 1 ? 'е' : affected.length < 5 ? 'я' : 'й'}:
+      <ul style="margin:6px 0 0 16px;line-height:1.8">
+        ${affected.map(ex => `<li>${esc(ex.name_ru || ex.name_en)}</li>`).join('')}
+      </ul>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Отмена</button>
+      <button class="btn btn-primary" id="f-grp-save">Переименовать</button>
+    </div>
+  `);
+  const inp = document.getElementById('f-grp-name');
+  inp.focus();
+  inp.select();
+
+  document.getElementById('f-grp-save').onclick = async () => {
+    const newBase = document.getElementById('f-grp-name').value.trim();
+    if (!newBase) return toast('Введите название');
+    if (newBase === oldBase) return closeModal();
+    const btn = document.getElementById('f-grp-save');
+    btn.disabled = true;
+    btn.textContent = 'Сохранение...';
+    try {
+      for (const ex of affected) {
+        const currentName = ex.name_ru || ex.name_en || '';
+        const suffix = currentName.slice(oldBase.length); // " (вариация)" или ""
+        const newName = newBase + suffix;
+        await patchExercise(ex.id, { name_ru: newName });
+      }
+      closeModal();
+      await loadExercises();
+      render();
+      toast('Группа переименована');
+    } catch(e) {
+      btn.disabled = false;
+      btn.textContent = 'Переименовать';
+      toast('Ошибка: ' + e.message);
+    }
+  };
 }
 
 // ===== ADD FORMS =====
@@ -1622,6 +1677,16 @@ document.getElementById('content').addEventListener('click', e => {
     const card = e.target.closest('.card[data-ex-id]');
     if (card) {
       openExerciseDetail(card.dataset.exId);
+      return;
+    }
+  }
+
+  // Exercise group rename button
+  if (currentTab === 'exercises') {
+    const renameBtn = e.target.closest('[data-rename-group]');
+    if (renameBtn) {
+      e.stopPropagation();
+      showRenameGroupForm(renameBtn.dataset.renameGroup, renameBtn.dataset.renameMuscle);
       return;
     }
   }
