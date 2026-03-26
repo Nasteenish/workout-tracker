@@ -410,8 +410,15 @@ export const InlineEditor = {
             // For choose_one, snapshot IDs may differ from live template IDs.
             // Apply structural changes (sets, reps, rest) to ALL options,
             // since options represent the same slot with the same set structure.
-            exercise = item.options[0];
+            // Use the currently selected option, not always options[0].
+            var chosenId_co = Storage.getChoice(item.choiceKey, weekNum);
             subIdx = 0;
+            if (chosenId_co) {
+                for (var k = 0; k < item.options.length; k++) {
+                    if (item.options[k]._id === chosenId_co) { subIdx = k; break; }
+                }
+            }
+            exercise = item.options[subIdx] || item.options[0];
             applyToAll = true;
         }
         if (!exercise) return;
@@ -460,7 +467,7 @@ export const InlineEditor = {
         });
 
         // Store context for choose_one apply-to-all
-        this._menuCtx = { applyToAll: applyToAll, groupItem: item };
+        this._menuCtx = { applyToAll: applyToAll, groupItem: item, primarySubIdx: subIdx };
 
         // Menu item clicks
         overlay.querySelector('.inline-menu-list').addEventListener('click', function(e) {
@@ -870,9 +877,11 @@ export const InlineEditor = {
         // For choose_one: mirror structural changes (sets, reps, rest) to all options
         if (this._menuCtx && this._menuCtx.applyToAll && this._menuCtx.groupItem) {
             var gi = this._menuCtx.groupItem;
-            var primary = gi.options[0];
+            var pidx = this._menuCtx.primarySubIdx || 0;
+            var primary = gi.options[pidx];
             if (primary && gi.options.length > 1) {
-                for (var i = 1; i < gi.options.length; i++) {
+                for (var i = 0; i < gi.options.length; i++) {
+                    if (i === pidx) continue;
                     gi.options[i].sets = JSON.parse(JSON.stringify(primary.sets));
                     gi.options[i].reps = primary.reps;
                     gi.options[i].rest = primary.rest;
