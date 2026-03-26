@@ -154,7 +154,7 @@
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     padding: var(--spacing-md);
     padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom, 0px));
-    max-height: 88vh;
+    height: 88vh;
     display: flex;
     flex-direction: column;
     transform: translateY(100%);
@@ -267,8 +267,7 @@
     flex: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    min-height: 120px;
-    max-height: 40vh;
+    min-height: 0;
 }
 .picker-item {
     padding: var(--spacing-md);
