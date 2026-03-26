@@ -761,6 +761,7 @@ function renderExerciseRow(item, inGroup) {
         <div class="ex-option-name-ru">${esc(item.name_ru || item.name_en)}</div>
         ${item.name_en ? '<div class="ex-option-name-en">' + esc(item.name_en) + '</div>' : ''}
       </div>
+      <button class="btn btn-secondary btn-sm" data-rename-ex="${esc(item.id)}" title="Переименовать" style="flex-shrink:0;padding:4px 8px;font-size:12px">✏️</button>
       <button class="card-delete" data-delete-ex="${esc(item.id)}" title="Удалить" style="position:static;display:flex;width:28px;height:28px;flex-shrink:0">&times;</button>
     </div>`;
 }
@@ -1428,6 +1429,17 @@ document.getElementById('content').addEventListener('click', e => {
       render();
       toast('Тренажёр удалён');
     });
+    return;
+  }
+
+  // Exercise rename
+  const exRename = e.target.closest('[data-rename-ex]');
+  if (exRename) {
+    e.stopPropagation();
+    const ex = exerciseData.find(i => i.id === exRename.dataset.renameEx);
+    if (!ex) return;
+    detExercise = ex;
+    showEditExerciseForm();
     return;
   }
 
