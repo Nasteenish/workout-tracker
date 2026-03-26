@@ -1542,9 +1542,34 @@ function closeExerciseDetail() {
   document.body.style.overflow = '';
 }
 
+let _editRemovedImgs = new Set();
+
 function showEditExerciseForm() {
   if (!detExercise) return;
   const ex = detExercise;
+  _pendingUploadFiles = [];
+  _editRemovedImgs = new Set();
+
+  const existingImgs = ex.images || [];
+  const imgsHtml = existingImgs.length ? `
+    <div class="form-group">
+      <label>Текущие фото</label>
+      <div id="f-exedit-imgs" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+        ${existingImgs.map((url, i) => `
+          <div style="position:relative" id="f-exedit-img-wrap-${i}">
+            <img src="${esc(url)}" style="width:72px;height:72px;object-fit:contain;background:#fff;border-radius:8px;padding:2px;display:block">
+            ${i === 0 ? '<div style="position:absolute;bottom:2px;left:2px;background:#4a9eff;color:#fff;font-size:9px;padding:1px 4px;border-radius:4px">Главная</div>' : ''}
+            <button onclick="
+              _editRemovedImgs.add('${esc(url)}');
+              document.getElementById('f-exedit-img-wrap-${i}').style.opacity='0.25';
+              this.disabled=true;
+            " style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#c55;border:none;color:#fff;font-size:12px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center">&times;</button>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  ` : '';
+
   openModal('Изменить упражнение', `
     <div class="form-group">
       <label>Название (рус)</label>
@@ -1554,35 +1579,63 @@ function showEditExerciseForm() {
       <label>Название (eng)</label>
       <input type="text" id="f-exedit-name-en" value="${esc(ex.name_en || '')}">
     </div>
+    ${imgsHtml}
+    <div class="form-group">
+      <label>Добавить фото</label>
+      <div class="img-upload-zone" id="f-exedit-upload-zone">
+        <input type="file" accept="image/*" multiple>
+        <div class="img-upload-hint">Перетащи или <span>нажми для выбора</span></div>
+      </div>
+      <div id="f-exedit-upload-preview" style="margin-top:8px"></div>
+    </div>
     <div class="form-actions">
       <button class="btn btn-secondary" onclick="closeModal()">Отмена</button>
       <button class="btn btn-primary" id="f-exedit-save">Сохранить</button>
     </div>
   `);
   document.getElementById('f-exedit-name-ru').focus();
+  initUploadZone('f-exedit-upload-zone', () => renderUploadPreviews('f-exedit-upload-preview'));
+
   document.getElementById('f-exedit-save').onclick = async () => {
     const nameRu = document.getElementById('f-exedit-name-ru').value.trim();
     const nameEn = document.getElementById('f-exedit-name-en').value.trim();
-    if (!nameRu && !nameEn) return;
+    const btn = document.getElementById('f-exedit-save');
+    btn.disabled = true;
+    btn.textContent = _pendingUploadFiles.length ? 'Загрузка...' : 'Сохранение...';
     try {
-      const r = await fetch(SB + '/rest/v1/exercises?id=eq.' + encodeURIComponent(ex.id), {
-        method: 'PATCH',
-        headers: { ...H, 'Prefer': 'return=representation' },
-        body: JSON.stringify({ name_ru: nameRu || null, name_en: nameEn || null })
-      });
-      if (!r.ok) throw new Error(await r.text());
-      ex.name_ru = nameRu || null;
-      ex.name_en = nameEn || null;
-      const _titleEl = document.getElementById('exdet-topbar-title');
-      if (_titleEl) _titleEl.textContent = nameRu || nameEn;
-      const _nameEl = document.querySelector('.exdet-name');
-      if (_nameEl) _nameEl.textContent = nameRu || nameEn;
-      const _nameEnEl = document.querySelector('.exdet-name-en');
-      if (_nameEnEl) _nameEnEl.textContent = nameEn || '';
+      // Upload new images
+      const newUrls = [];
+      for (const file of _pendingUploadFiles) {
+        newUrls.push(await uploadExerciseImage(file, ex.id));
+      }
+      // Build final images array: keep existing minus removed, append new
+      const finalImgs = [
+        ...(ex.images || []).filter(u => !_editRemovedImgs.has(u)),
+        ...newUrls
+      ];
+      const updates = {};
+      if (nameRu || nameEn) { updates.name_ru = nameRu || null; updates.name_en = nameEn || null; }
+      updates.images = finalImgs.length ? finalImgs : null;
+
+      await patchExercise(ex.id, updates);
+      if (nameRu || nameEn) {
+        const _titleEl = document.getElementById('exdet-topbar-title');
+        if (_titleEl) _titleEl.textContent = nameRu || nameEn;
+        const _nameEl = document.querySelector('.exdet-name');
+        if (_nameEl) _nameEl.textContent = nameRu || nameEn;
+        const _nameEnEl = document.querySelector('.exdet-name-en');
+        if (_nameEnEl) _nameEnEl.textContent = nameEn || '';
+      }
+      _pendingUploadFiles = [];
       closeModal();
+      renderExdetImageSection();
       render();
       toast('Сохранено');
-    } catch (e) { toast('Ошибка: ' + e.message); }
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = 'Сохранить';
+      toast('Ошибка: ' + e.message);
+    }
   };
 }
 
