@@ -1547,8 +1547,8 @@ export const MIKHAIL_PROGRAM = {
           "exercises": [
             {
               "id": "D5E4",
-              "name": "Shoulder Press (Machine Plates)",
-              "nameRu": "Жим на плечи (в тренажёре, диски)",
+              "name": "Shoulder Press (Machine)",
+              "nameRu": "Жим на плечи сидя (в тренажёре)",
               "reps": "12-15",
               "rest": 120,
               "sets": [

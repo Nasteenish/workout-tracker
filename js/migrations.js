@@ -97,6 +97,7 @@ var _NAME_MAP = {
     'Болгарские выпады': ['Bulgarian Split Squat (Dumbbell)', 'Болгарские сплит-приседания (с гантелями)'],
     'Подъём на носки (тренажёр)': ['Standing Calf Raise (Machine)', 'Подъём на носки стоя (в тренажёре)'],
     'Жим плечами (тренажёр)': ['Shoulder Press (Machine)', 'Жим на плечи сидя (в тренажёре)'],
+    'Жим на плечи (в тренажёре)': ['Shoulder Press (Machine)', 'Жим на плечи сидя (в тренажёре)'],
     'Махи гантелями на наклонной скамье': ['Rear Delt Reverse Fly (Dumbbell)', 'Обратные разведения (с гантелями)'],
     'Разведение ног (тренажёр)': ['Hip Abduction (Machine)', 'Разведение ног (в тренажёре)'],
     // v4: Renamed exercises for grouping (classify exercise DB)
@@ -517,7 +518,7 @@ export const Migrations = {
         // v9: Fix shoulder press nameRu — old migration used "Жим на плечи (в тренажёре)" (без "сидя"),
         // but EXERCISE_DB has "Жим на плечи сидя (в тренажёре)" → вариации не находились.
         {
-            key: '_fix_shoulder_press_nameRu_v1',
+            key: '_fix_shoulder_press_nameRu_v2',
             fn: function() {
                 var keys = Object.keys(localStorage);
                 for (var ki = 0; ki < keys.length; ki++) {
@@ -528,7 +529,11 @@ export const Migrations = {
                     var changed = false;
 
                     function fixEx(ex) {
-                        if (ex && ex.name === 'Shoulder Press (Machine)' && ex.nameRu === 'Жим на плечи (в тренажёре)') {
+                        if (!ex) return;
+                        var needsFix = (ex.name === 'Shoulder Press (Machine)' || ex.name === 'Shoulder Press (Machine Plates)') &&
+                            (ex.nameRu === 'Жим на плечи (в тренажёре)' || ex.nameRu === 'Жим на плечи (в тренажёре, диски)');
+                        if (needsFix) {
+                            ex.name = 'Shoulder Press (Machine)';
                             ex.nameRu = 'Жим на плечи сидя (в тренажёре)';
                             changed = true;
                         }
