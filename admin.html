@@ -207,6 +207,20 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 .ex-dragging { opacity: 0.4; }
 .drop-zone { transition: background 0.15s, border-color 0.15s; }
 .drop-zone.drag-over { background: rgba(74,158,255,0.12) !important; border-radius: 8px; outline: 2px dashed #4a9eff; }
+/* Image manager in exercise detail */
+.exdet-img-manager { padding: 12px 0; background: #111; }
+.exdet-img-manager-title { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; padding: 0 16px 8px; }
+.exdet-img-cards { display: flex; gap: 10px; padding: 0 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.exdet-img-card { flex-shrink: 0; width: 120px; background: #1a1a1a; border-radius: 10px; overflow: hidden; border: 2px solid transparent; position: relative; }
+.exdet-img-card.is-main { border-color: #4a9eff; }
+.exdet-img-card img { width: 100%; height: 90px; object-fit: contain; background: #fff; display: block; }
+.exdet-img-badge { position: absolute; top: 4px; left: 4px; background: #4a9eff; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 6px; }
+.exdet-img-actions { display: flex; gap: 4px; padding: 6px; }
+.exdet-img-btn { flex: 1; background: #2a2a2a; border: none; color: #ccc; font-size: 11px; padding: 5px 2px; border-radius: 6px; cursor: pointer; text-align: center; }
+.exdet-img-btn:hover { background: #333; }
+.exdet-img-btn.primary { background: #1a3a5c; color: #4a9eff; }
+.exdet-img-btn:disabled { opacity: 0.3; cursor: default; }
+
 .no-cat-section { margin-top: 24px; border-top: 1px solid #333; padding-top: 16px; }
 
 /* Mobile fixes */
@@ -1194,6 +1208,22 @@ async function toggleExerciseLink(exerciseId) {
 
 // ===== EXERCISE DETAIL PANEL =====
 
+function renderExdetImages(imgs) {
+  if (!imgs.length) return '<div class="exdet-no-img">💪</div>';
+  const cards = imgs.map((url, i) => `
+    <div class="exdet-img-card${i === 0 ? ' is-main' : ''}" data-img-idx="${i}">
+      ${i === 0 ? '<div class="exdet-img-badge">Главная</div>' : ''}
+      <img src="${esc(url)}" loading="lazy">
+      <div class="exdet-img-actions">
+        ${i > 0 ? `<button class="exdet-img-btn primary" data-img-main="${i}" title="Сделать главной">★ Гл.</button>` : ''}
+        <button class="exdet-img-btn" data-img-move="${i}" data-img-dir="-1" ${i === 0 ? 'disabled' : ''}>←</button>
+        <button class="exdet-img-btn" data-img-move="${i}" data-img-dir="1" ${i === imgs.length - 1 ? 'disabled' : ''}>→</button>
+      </div>
+    </div>
+  `).join('');
+  return `<div class="exdet-img-manager"><div class="exdet-img-manager-title">Изображения (${imgs.length})</div><div class="exdet-img-cards">${cards}</div></div>`;
+}
+
 async function openExerciseDetail(exerciseId) {
   const ex = exerciseData.find(e => e.id === exerciseId);
   if (!ex) return;
@@ -1202,15 +1232,7 @@ async function openExerciseDetail(exerciseId) {
   document.getElementById('exdet-topbar-title').textContent = ex.name_ru || ex.name_en;
 
   // Images
-  const imgs = ex.images || [];
-  let imgHtml;
-  if (imgs.length >= 2) {
-    imgHtml = '<div class="exdet-images"><img src="' + esc(imgs[0]) + '"><img src="' + esc(imgs[1]) + '"></div>';
-  } else if (imgs.length === 1) {
-    imgHtml = '<div class="exdet-images single"><img src="' + esc(imgs[0]) + '"></div>';
-  } else {
-    imgHtml = '<div class="exdet-no-img">💪</div>';
-  }
+  const imgHtml = renderExdetImages(ex.images || []);
 
   // Muscles
   const primary = (ex.primary_muscles || []).map(m => '<span class="tag muscle">' + esc(MUSCLE_RU[m] || m) + '</span>').join('');
@@ -1327,9 +1349,12 @@ function showEditExerciseForm() {
       if (!r.ok) throw new Error(await r.text());
       ex.name_ru = nameRu || null;
       ex.name_en = nameEn || null;
-      document.getElementById('exdet-topbar-title').textContent = nameRu || nameEn;
-      document.querySelector('.exdet-name').textContent = nameRu || nameEn;
-      document.querySelector('.exdet-name-en').textContent = nameEn || '';
+      const _titleEl = document.getElementById('exdet-topbar-title');
+      if (_titleEl) _titleEl.textContent = nameRu || nameEn;
+      const _nameEl = document.querySelector('.exdet-name');
+      if (_nameEl) _nameEl.textContent = nameRu || nameEn;
+      const _nameEnEl = document.querySelector('.exdet-name-en');
+      if (_nameEnEl) _nameEnEl.textContent = nameEn || '';
       closeModal();
       render();
       toast('Сохранено');
@@ -1642,14 +1667,59 @@ document.getElementById('det-overlay').addEventListener('click', async e => {
 document.getElementById('exdet-back').addEventListener('click', closeExerciseDetail);
 document.getElementById('exdet-edit-btn').addEventListener('click', showEditExerciseForm);
 
-// Exercise detail panel: click on linked equipment -> open that equipment
-document.getElementById('exdet-overlay').addEventListener('click', e => {
+// Exercise detail panel: click on linked equipment or image manager buttons
+document.getElementById('exdet-overlay').addEventListener('click', async e => {
   const gotoEq = e.target.closest('[data-goto-eq]');
   if (gotoEq) {
     closeExerciseDetail();
     setTimeout(() => openEquipmentDetail(Number(gotoEq.dataset.gotoEq)), 350);
+    return;
+  }
+
+  // Image manager: make main
+  const mainBtn = e.target.closest('[data-img-main]');
+  if (mainBtn && detExercise) {
+    const idx = parseInt(mainBtn.dataset.imgMain);
+    const imgs = [...(detExercise.images || [])];
+    const [moved] = imgs.splice(idx, 1);
+    imgs.unshift(moved);
+    try {
+      await patchExercise(detExercise.id, { images: imgs });
+      renderExdetImageSection();
+    } catch(err) { alert(err.message); }
+    return;
+  }
+
+  // Image manager: move left/right
+  const moveBtn = e.target.closest('[data-img-move]');
+  if (moveBtn && detExercise) {
+    const idx = parseInt(moveBtn.dataset.imgMove);
+    const dir = parseInt(moveBtn.dataset.imgDir);
+    const imgs = [...(detExercise.images || [])];
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= imgs.length) return;
+    [imgs[idx], imgs[newIdx]] = [imgs[newIdx], imgs[idx]];
+    try {
+      await patchExercise(detExercise.id, { images: imgs });
+      renderExdetImageSection();
+    } catch(err) { alert(err.message); }
+    return;
   }
 });
+
+function renderExdetImageSection() {
+  if (!detExercise) return;
+  const imgs = detExercise.images || [];
+  const content = document.getElementById('exdet-content');
+  if (!content) return;
+  const mgr = content.querySelector('.exdet-img-manager, .exdet-no-img');
+  const newHtml = renderExdetImages(imgs);
+  if (mgr) {
+    mgr.outerHTML = newHtml;
+  } else {
+    content.insertAdjacentHTML('afterbegin', newHtml);
+  }
+}
 
 // Escape closes detail panels
 document.addEventListener('keydown', e => {
