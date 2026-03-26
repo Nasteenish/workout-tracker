@@ -222,7 +222,10 @@ h1 { text-align: center; margin: 16px 0; font-size: 24px; }
 </head>
 <body>
 
-<h1>Админ-панель</h1>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+  <h1 style="margin:0">Админ-панель</h1>
+  <button class="btn btn-primary" id="publish-btn">Опубликовать</button>
+</div>
 <div class="stats" id="stats"></div>
 
 <div class="tabs">
@@ -1656,6 +1659,50 @@ async function init() {
   loadLinkCounts().then(() => render());
 }
 init();
+
+// ===== PUBLISH BUTTON =====
+const GITHUB_REPO = 'Nasteenish/workout-tracker';
+const WORKFLOW_ID = 'sync-exercises.yml';
+
+function getGithubToken() {
+  return localStorage.getItem('admin_gh_token') || '';
+}
+
+document.getElementById('publish-btn').addEventListener('click', async () => {
+  let token = getGithubToken();
+  if (!token) {
+    token = prompt('Введи GitHub Personal Access Token (сохранится в браузере):');
+    if (!token) return;
+    localStorage.setItem('admin_gh_token', token.trim());
+    token = token.trim();
+  }
+  const btn = document.getElementById('publish-btn');
+  btn.disabled = true;
+  btn.textContent = 'Публикую...';
+  try {
+    const r = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/${WORKFLOW_ID}/dispatches`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ref: 'main' })
+    });
+    if (r.status === 204) {
+      toast('Запущено! Через ~1 минуту изменения появятся на телефоне');
+    } else if (r.status === 401) {
+      localStorage.removeItem('admin_gh_token');
+      toast('Токен неверный — введи снова');
+    } else {
+      toast('Ошибка ' + r.status);
+    }
+  } catch(e) {
+    toast('Ошибка: ' + e.message);
+  }
+  btn.disabled = false;
+  btn.textContent = 'Опубликовать';
+});
 </script>
 </body>
 </html>
