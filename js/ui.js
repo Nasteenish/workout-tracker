@@ -819,7 +819,8 @@ export const UI = {
         let _exCat = ex.category || '';
         if (!_exCat) {
             for (let _i = 0; _i < EXERCISE_DB.length; _i++) {
-                if (EXERCISE_DB[_i].nameRu === ex.nameRu || EXERCISE_DB[_i].name === ex.name) {
+                if (EXERCISE_DB[_i].nameRu === ex.nameRu || EXERCISE_DB[_i].name === ex.name ||
+                    getExerciseBaseName(EXERCISE_DB[_i].nameRu || '') === _exBaseName) {
                     _exCat = EXERCISE_DB[_i].category;
                     break;
                 }

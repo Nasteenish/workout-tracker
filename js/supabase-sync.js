@@ -237,6 +237,17 @@ export const SupaSync = {
                         }
                     }
                 }
+                // Merge exerciseSubstitutions — union merge (prevents substitution loss on sync)
+                if (other.exerciseSubstitutions || base.exerciseSubstitutions) {
+                    if (!base.exerciseSubstitutions) base.exerciseSubstitutions = {};
+                    if (other.exerciseSubstitutions) {
+                        for (var sk in other.exerciseSubstitutions) {
+                            if (!(sk in base.exerciseSubstitutions)) {
+                                base.exerciseSubstitutions[sk] = other.exerciseSubstitutions[sk];
+                            }
+                        }
+                    }
+                }
                 // Merge unilateralMode — union merge, true wins over false/missing
                 if (other.unilateralMode || base.unilateralMode) {
                     if (!base.unilateralMode) base.unilateralMode = {};
