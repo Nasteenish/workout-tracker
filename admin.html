@@ -565,7 +565,7 @@ async function loadEquipment() {
 }
 
 async function loadExercises() {
-  const r = await fetch(SB + '/rest/v1/exercises?select=*&order=name_ru', { headers: H });
+  const r = await fetch(SB + '/rest/v1/exercises?select=*&order=sort_order.asc,name_ru.asc', { headers: H });
   exerciseData = await r.json();
   machineExercises = exerciseData.filter(e => e.equipment === 'machine');
 }
@@ -784,7 +784,14 @@ function exThumbHtml(item, size) {
   return '<div style="width:' + s + 'px;height:' + s + 'px;border-radius:50%;background:#222;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">💪</div>';
 }
 
-function renderExerciseRow(item, inGroup) {
+function renderExerciseRow(item, inGroup, groupIdx, groupSize) {
+  const reorderBtns = (inGroup && groupSize > 1) ? `
+    <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
+      <button class="btn btn-secondary btn-sm" data-group-move="${esc(item.id)}" data-group-dir="-1"
+        style="padding:1px 6px;font-size:11px;line-height:1.4" ${groupIdx === 0 ? 'disabled' : ''} title="Выше">↑</button>
+      <button class="btn btn-secondary btn-sm" data-group-move="${esc(item.id)}" data-group-dir="1"
+        style="padding:1px 6px;font-size:11px;line-height:1.4" ${groupIdx === groupSize - 1 ? 'disabled' : ''} title="Ниже">↓</button>
+    </div>` : '';
   return `
     <div class="ex-option ex-draggable drop-zone" data-ex-id="${esc(item.id)}" draggable="true"
          style="gap:12px;padding:${inGroup ? '8px' : '10px'} 0">
@@ -793,6 +800,7 @@ function renderExerciseRow(item, inGroup) {
         <div class="ex-option-name-ru">${esc(item.name_ru || item.name_en)}</div>
         ${item.name_en ? '<div class="ex-option-name-en">' + esc(item.name_en) + '</div>' : ''}
       </div>
+      ${reorderBtns}
       <button class="btn btn-secondary btn-sm" data-rename-ex="${esc(item.id)}" title="Переименовать" style="flex-shrink:0;padding:4px 8px;font-size:12px">✏️</button>
       <button class="card-delete" data-delete-ex="${esc(item.id)}" title="Удалить" style="position:static;display:flex;width:28px;height:28px;flex-shrink:0">&times;</button>
     </div>`;
@@ -863,7 +871,7 @@ function renderExerciseGrid(container, statsEl, query) {
             <span class="muscle-group-arrow">▶</span>
           </div>
           <div class="muscle-group-exercises" style="padding-left:60px">
-            ${g.items.map(item => renderExerciseRow(item, true)).join('')}
+            ${g.items.map((item, idx) => renderExerciseRow(item, true, idx, g.items.length)).join('')}
           </div>
         </div>`;
     }
@@ -880,6 +888,38 @@ function renderExerciseGrid(container, statsEl, query) {
 
   html += '</div>';
   container.innerHTML = html;
+}
+
+// ===== GROUP REORDER =====
+
+async function reorderExerciseInGroup(exId, dir) {
+  const ex = exerciseData.find(i => i.id === exId);
+  if (!ex) return;
+  const base = getExerciseBaseName(ex.name_ru || ex.name_en || '');
+  const muscle = (ex.primary_muscles || [])[0];
+  // Get all siblings in same group, in current display order
+  const group = exerciseData.filter(i =>
+    getExerciseBaseName(i.name_ru || i.name_en || '') === base &&
+    (i.primary_muscles || [])[0] === muscle
+  );
+  const idx = group.findIndex(i => i.id === exId);
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= group.length) return;
+
+  // Swap and reassign sort_orders (multiples of 10 for breathing room)
+  [group[idx], group[newIdx]] = [group[newIdx], group[idx]];
+  try {
+    await Promise.all(group.map((item, i) => {
+      const newOrder = i * 10;
+      if (item.sort_order === newOrder) return Promise.resolve();
+      return patchExercise(item.id, { sort_order: newOrder });
+    }));
+    // Update local cache order
+    group.forEach((item, i) => { item.sort_order = i * 10; });
+    // Re-sort exerciseData
+    exerciseData.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || (a.name_ru || '').localeCompare(b.name_ru || '', 'ru'));
+    render();
+  } catch(e) { toast('Ошибка: ' + e.message); }
 }
 
 // ===== GROUP RENAME =====
@@ -1677,6 +1717,16 @@ document.getElementById('content').addEventListener('click', e => {
     const card = e.target.closest('.card[data-ex-id]');
     if (card) {
       openExerciseDetail(card.dataset.exId);
+      return;
+    }
+  }
+
+  // Exercise reorder within group (↑↓)
+  if (currentTab === 'exercises') {
+    const moveBtn = e.target.closest('[data-group-move]');
+    if (moveBtn) {
+      e.stopPropagation();
+      await reorderExerciseInGroup(moveBtn.dataset.groupMove, parseInt(moveBtn.dataset.groupDir));
       return;
     }
   }
