@@ -1616,7 +1616,7 @@ document.getElementById('fab').addEventListener('click', () => {
 });
 
 // Content clicks (delete, rename)
-document.getElementById('content').addEventListener('click', e => {
+document.getElementById('content').addEventListener('click', async e => {
   // Gym delete
   const gymDel = e.target.closest('.gym-delete');
   if (gymDel) {
