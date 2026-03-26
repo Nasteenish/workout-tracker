@@ -1151,9 +1151,10 @@ function renderUploadPreviews(containerId) {
   `;
 }
 
-function showAddExerciseForm() {
+function showAddExerciseForm(muscle) {
   _pendingUploadFiles = [];
-  openModal('Добавить упражнение', `
+  const muscleLabel = muscle ? (MUSCLE_RU[muscle] || muscle) : null;
+  openModal('Добавить упражнение' + (muscleLabel ? ' · ' + muscleLabel : ''), `
     <div class="form-group">
       <label>Название (рус) *</label>
       <input type="text" id="f-ex-name-ru" placeholder="Жим лёжа">
@@ -1164,7 +1165,7 @@ function showAddExerciseForm() {
     </div>
     <div class="form-group">
       <label>Основные мышцы</label>
-      <input type="text" id="f-ex-muscles" placeholder="chest, triceps (через запятую)">
+      <input type="text" id="f-ex-muscles" value="${muscle || ''}" placeholder="chest, triceps (через запятую)">
     </div>
     <div class="form-group">
       <label>Оборудование</label>
@@ -1183,14 +1184,14 @@ function showAddExerciseForm() {
     </div>
     <div class="form-group">
       <label>Категория</label>
-      <input type="text" id="f-ex-category" placeholder="strength, stretching, cardio...">
+      <input type="text" id="f-ex-category" value="strength" placeholder="strength, stretching, cardio...">
     </div>
     <div class="form-group">
       <label>Уровень</label>
       <select id="f-ex-level">
         <option value="">—</option>
         <option value="beginner">Начинающий</option>
-        <option value="intermediate">Средний</option>
+        <option value="intermediate" selected>Средний</option>
         <option value="expert">Продвинутый</option>
       </select>
     </div>
@@ -1614,7 +1615,7 @@ document.getElementById('search').addEventListener('input', render);
 document.getElementById('fab').addEventListener('click', () => {
   if (currentTab === 'gyms') showAddGymForm();
   else if (currentTab === 'equipment') showAddEquipmentForm();
-  else showAddExerciseForm();
+  else showAddExerciseForm(currentFilter !== 'all' ? currentFilter : null);
 });
 
 // Content clicks (delete, rename)
