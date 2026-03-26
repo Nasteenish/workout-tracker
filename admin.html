@@ -1950,13 +1950,8 @@ document.getElementById('det-back').addEventListener('click', closeEquipmentDeta
 // Detail panel: search
 document.getElementById('det-search').addEventListener('input', e => renderDetSearchResults(e.target.value));
 
-// Detail panel: show all toggle
-document.getElementById('det-show-all').addEventListener('change', e => {
-  showAllExercises = e.target.checked;
-  renderMuscleGroups();
-  const q = document.getElementById('det-search').value;
-  if (q.trim()) renderDetSearchResults(q);
-});
+// Show all exercises in picker (not just machine exercises)
+showAllExercises = true;
 
 // Detail panel: clicks (toggle link, unlink, muscle group expand, exercise_type editor)
 document.getElementById('det-overlay').addEventListener('click', async e => {
