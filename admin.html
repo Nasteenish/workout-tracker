@@ -1309,24 +1309,46 @@ async function loadAndRenderLinked(equipmentId) {
 function renderLinked() {
   const container = document.getElementById('det-linked');
   if (detLinkedIds.size === 0) {
-    container.innerHTML = '<div class="linked-ex-empty">Нет привязанных упражнений</div>';
+    container.innerHTML = '<div class="linked-ex-empty" style="padding:16px 0;color:#555;font-size:14px">Нет привязанных упражнений</div>';
     return;
   }
-  const items = [];
+
+  // Group by muscle
+  const groups = {};
   detLinkedIds.forEach(id => {
     const ex = exerciseData.find(e => e.id === id);
     if (!ex) return;
-    items.push(`
-      <div class="linked-ex-item">
-        <div class="linked-ex-name">
-          <div>${ex.name_ru || ex.name_en}</div>
-          <div class="linked-ex-name-en">${ex.name_en}</div>
-        </div>
-        <button class="linked-ex-remove" data-unlink-ex="${esc(id)}" title="Убрать привязку">×</button>
-      </div>
-    `);
+    const muscle = (ex.primary_muscles && ex.primary_muscles[0]) || 'other';
+    if (!groups[muscle]) groups[muscle] = [];
+    groups[muscle].push(ex);
   });
-  container.innerHTML = items.join('');
+
+  const MUSCLE_ORDER = ['chest','shoulders','triceps','biceps','forearms','lats','upper_back','lower_back','traps','abdominals','quadriceps','hamstrings','glutes','calves','abductors','adductors','neck','cardio'];
+  const sorted = Object.keys(groups).sort((a, b) => {
+    const iA = MUSCLE_ORDER.indexOf(a), iB = MUSCLE_ORDER.indexOf(b);
+    return (iA < 0 ? 99 : iA) - (iB < 0 ? 99 : iB);
+  });
+
+  container.innerHTML = sorted.map(muscle => {
+    const exs = groups[muscle];
+    const label = MUSCLE_RU[muscle] || muscle;
+    const rows = exs.map(ex => `
+      <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #111">
+        ${exThumbHtml(ex, 40)}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:500">${esc(ex.name_ru || ex.name_en)}</div>
+          ${ex.name_en ? '<div style="font-size:12px;color:#555">' + esc(ex.name_en) + '</div>' : ''}
+        </div>
+        <button class="linked-ex-remove" data-unlink-ex="${esc(ex.id)}" title="Убрать привязку" style="flex-shrink:0">×</button>
+      </div>
+    `).join('');
+    return `
+      <div style="margin-bottom:4px">
+        <div style="font-size:11px;font-weight:700;color:#4a9eff;text-transform:uppercase;letter-spacing:1px;padding:12px 0 4px">${esc(label)} <span style="color:#555">(${exs.length})</span></div>
+        ${rows}
+      </div>
+    `;
+  }).join('');
 }
 
 function renderMuscleGroups() {
@@ -1348,8 +1370,9 @@ function renderMuscleGroups() {
     const exHtml = exercises.map(ex => {
       const linked = detLinkedIds.has(ex.id);
       return `
-        <div class="ex-option ${linked ? 'linked' : ''}" data-toggle-ex="${esc(ex.id)}">
-          <div class="ex-option-name">
+        <div class="ex-option ${linked ? 'linked' : ''}" data-toggle-ex="${esc(ex.id)}" style="gap:10px">
+          ${exThumbHtml(ex, 36)}
+          <div class="ex-option-name" style="flex:1;min-width:0">
             <div class="ex-option-name-ru">${ex.name_ru || ex.name_en}</div>
             <div class="ex-option-name-en">${ex.name_en}</div>
           </div>
@@ -1389,8 +1412,9 @@ function renderDetSearchResults(query) {
   resultsEl.innerHTML = matches.map(ex => {
     const linked = detLinkedIds.has(ex.id);
     return `
-      <div class="ex-option ${linked ? 'linked' : ''}" data-toggle-ex="${esc(ex.id)}">
-        <div class="ex-option-name">
+      <div class="ex-option ${linked ? 'linked' : ''}" data-toggle-ex="${esc(ex.id)}" style="gap:10px">
+        ${exThumbHtml(ex, 36)}
+        <div class="ex-option-name" style="flex:1;min-width:0">
           <div class="ex-option-name-ru">${ex.name_ru || ex.name_en}</div>
           <div class="ex-option-name-en">${ex.name_en}</div>
         </div>
