@@ -1174,7 +1174,12 @@ export const UI = {
         const muscleVolume = Analytics.getWeeklyMuscleVolume(weekNum);
         const { tonnage, completedSets } = Analytics.getWeeklyTonnage(weekNum);
         const prevTonnage = weekNum > 1 ? Analytics.getWeeklyTonnage(weekNum - 1).tonnage : 0;
-        const tonnagePct = prevTonnage > 0 ? Math.round(((tonnage - prevTonnage) / prevTonnage) * 100) : 0;
+        // Compare per-workout average so in-progress weeks aren't penalised vs completed weeks
+        const currStats = Analytics.getWeekStats(weekNum);
+        const prevStats = weekNum > 1 ? Analytics.getWeekStats(weekNum - 1) : null;
+        const currPerDay = currStats.trainedDays > 0 ? tonnage / currStats.trainedDays : 0;
+        const prevPerDay = prevStats && prevStats.trainedDays > 0 ? prevTonnage / prevStats.trainedDays : 0;
+        const tonnagePct = prevPerDay > 0 && currPerDay > 0 ? Math.round(((currPerDay - prevPerDay) / prevPerDay) * 100) : 0;
         const tonnageByWeek = Analytics.getTonnageByWeek();
         const stats = Analytics.getWeekStats(weekNum);
         const streak = Analytics.getStreak();
