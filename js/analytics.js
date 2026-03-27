@@ -47,14 +47,19 @@ export const Analytics = {
     },
 
     // ===== PR Detection =====
-    // Filter sets by equipmentId — PR is per-equipment
+    // Filter sets by equipmentId — PR is per-equipment (or per-machine-name if same model)
     _matchesEquipment(setEqId, filterEqId) {
         // Both null/undefined = no equipment = same context
         if (!setEqId && !filterEqId) return true;
         // Legacy: old log entries have no equipmentId recorded — count as match
-        // (equipment tracking wasn't implemented when that session was saved)
         if (!setEqId && filterEqId) return true;
-        return setEqId === filterEqId;
+        // Exact ID match
+        if (setEqId === filterEqId) return true;
+        // Same machine name = same physical machine (user may have duplicate IDs for same model)
+        const eq1 = Storage.getEquipmentById(setEqId);
+        const eq2 = Storage.getEquipmentById(filterEqId);
+        if (eq1 && eq2 && eq1.name === eq2.name) return true;
+        return false;
     },
 
     // Returns PR info if this set is a record, or null
