@@ -51,6 +51,9 @@ export const Analytics = {
     _matchesEquipment(setEqId, filterEqId) {
         // Both null/undefined = no equipment = same context
         if (!setEqId && !filterEqId) return true;
+        // Legacy: old log entries have no equipmentId recorded — count as match
+        // (equipment tracking wasn't implemented when that session was saved)
+        if (!setEqId && filterEqId) return true;
         return setEqId === filterEqId;
     },
 
