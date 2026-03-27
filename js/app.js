@@ -98,6 +98,21 @@ export const App = {
                         window.scrollTo(0, self._scrollCache[h]);
                     });
                 }
+                // Pull fresh data from cloud after returning from background
+                // Debounce: skip if synced less than 30s ago
+                var now = Date.now();
+                if (SupaSync._currentSupaUserId && SupaSync._currentStorageKey &&
+                    (!self._lastVisSync || now - self._lastVisSync > 30000)) {
+                    self._lastVisSync = now;
+                    SupaSync.syncOnLogin(
+                        SupaSync._currentSupaUserId,
+                        SupaSync._currentStorageKey
+                    ).then(function() {
+                        Storage._invalidateCache();
+                        self.invalidatePageCache();
+                        self.route();
+                    }).catch(function() {});
+                }
             }
         });
         window.addEventListener('pageshow', function(e) {
