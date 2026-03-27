@@ -242,11 +242,16 @@ export const Migrations = {
             for (var d in wtv[w]) {
                 // Check if this week/day has any exercise log data
                 var dayLog = (log && log[w] && log[w][d]) || {};
-                var hasExerciseLog = false;
+                var hasRealLog = false;
                 for (var lk in dayLog) {
-                    if (lk.charAt(0) !== '_') { hasExerciseLog = true; break; }
+                    if (lk.charAt(0) === '_') continue;
+                    // Skip empty objects (no actual set data)
+                    var entry = dayLog[lk];
+                    if (entry && typeof entry === 'object' && Object.keys(entry).length > 0) {
+                        hasRealLog = true; break;
+                    }
                 }
-                if (hasExerciseLog) continue; // preserve snapshot for weeks with data
+                if (hasRealLog) continue; // preserve snapshot for weeks with real data
 
                 if (!snaps || !snaps[d]) continue;
                 var version = wtv[w][d];
@@ -973,7 +978,7 @@ export const Migrations = {
         // Fix: for any week/day with no log data, if the snapshot differs from dayTemplates,
         // unbind it so resolveWorkout falls through to dayTemplates (current program).
         {
-            key: '_unbind_stale_snapshots_v1',
+            key: '_unbind_stale_snapshots_v2',
             fn: function() {
                 var keys = Object.keys(localStorage);
                 for (var ki = 0; ki < keys.length; ki++) {
@@ -1010,11 +1015,15 @@ export const Migrations = {
                             var version = wtv[w][d];
                             // Check if this week/day has any exercise log data
                             var dayLog = (log && log[w] && log[w][d]) || {};
-                            var hasExerciseLog = false;
+                            var hasRealLog2 = false;
                             for (var lk in dayLog) {
-                                if (lk.charAt(0) !== '_') { hasExerciseLog = true; break; }
+                                if (lk.charAt(0) === '_') continue;
+                                var entry2 = dayLog[lk];
+                                if (entry2 && typeof entry2 === 'object' && Object.keys(entry2).length > 0) {
+                                    hasRealLog2 = true; break;
+                                }
                             }
-                            if (hasExerciseLog) continue; // preserve snapshot for weeks with data
+                            if (hasRealLog2) continue; // preserve snapshot for weeks with real data
 
                             // Check if snapshot differs from dayTemplates
                             if (!snaps || !snaps[d]) continue;
