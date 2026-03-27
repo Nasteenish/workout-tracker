@@ -177,6 +177,11 @@ export const App = {
         };
         Celebration._onShareCheckin = (data) => { this._pendingCheckinWorkout = data; };
         SupaSync._onSyncWarning = (msg) => this._showSyncWarning(msg);
+        SupaSync._onSyncComplete = () => {
+            this._lastVisSync = Date.now();
+            this.invalidatePageCache();
+            this.route();
+        };
         Storage._onSave = () => SupaSync.onLocalSave();
         EquipmentManager._onRenderDay = (w, d) => UI.renderDay(w, d);
         EquipmentManager._onRenderSettings = () => UI.renderSettings();

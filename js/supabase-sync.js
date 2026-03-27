@@ -397,7 +397,9 @@ export const SupaSync = {
                         }
                     }
                 }
-                base._lastModified = Date.now();
+                // Preserve the max of local/remote timestamps instead of Date.now()
+                // to avoid inflating cloud _lastModified on every sync
+                base._lastModified = Math.max(localTime, remoteTime);
                 // Save merged result locally and push to cloud
                 localStorage.setItem(localStorageKey, JSON.stringify(base));
                 // Invalidate in-memory cache so UI reads fresh data
@@ -433,6 +435,7 @@ export const SupaSync = {
     // Get the current Supabase user ID (if logged in via Supabase)
     _currentSupaUserId: null,
     _currentStorageKey: null,
+    _onSyncComplete: null,  // wired in App.init() → updates UI + _lastVisSync
 
     // Called by Storage._save() to trigger cloud sync
     onLocalSave() {
@@ -449,7 +452,9 @@ window.addEventListener('online', function() {
             SupaSync._currentSupaUserId,
             SupaSync._currentStorageKey
         ).then(function() {
-            if (Storage && Storage._data) Storage._data = null;
+            Storage._invalidateCache();
+            // Notify App to update UI and debounce visibilitychange
+            if (SupaSync._onSyncComplete) SupaSync._onSyncComplete();
         }).catch(function(e) {
             console.error('Online sync error:', e);
         });
