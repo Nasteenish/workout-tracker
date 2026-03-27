@@ -92,7 +92,7 @@ tools/                  — Утилиты разработки: SQL, скрип
 | `js/storage.js` (структура `_defaultData()`) | Схема данных. Переименование полей ломает sync |
 | `js/data-attrs.js` | Контракт между рендерами и обработчиками. Переименование ломает и UI и handlers |
 | `js/exercises_db.js` | Справочник, от которого зависят миниатюры и миграции имён |
-| `sw.js` (CACHE_NAME + ASSETS) | Забыл обновить → пользователи не получат апдейт |
+| `sw.js` (CACHE_NAME + ASSETS) | CACHE_NAME бампится автоматически pre-commit хуком. Но новые файлы → добавить в ASSETS вручную |
 | `index.html` | Минимальный, но порядок `<script>` (Supabase CDN до main.js) критичен |
 
 ### 2. Связанные компоненты (если меняешь A → проверь B)
@@ -113,7 +113,9 @@ tools/                  — Утилиты разработки: SQL, скрип
 | `EquipmentManager.*` | `UI.showEquipmentModal()`, `WorkoutUI.handleModalClick` (eq handlers) |
 | `Storage.removeExerciseEquipment()` | `gymEquipmentMap` (должен записывать null tombstone в map, иначе `applyGymEquipment` воскресит привязку) |
 | `Storage.saveProgram()` | Ставит `_programModified = Date.now()`. Используется sync merge для независимого сравнения program timestamps |
-| `SupaSync.syncOnLogin()` merge | `_programModified` (программа), `_lastModified` (весь blob), tombstone `null` vs `undefined` в exerciseEquipment |
+| `SupaSync.syncOnLogin()` merge | `_programModified` (программа), `_lastModified` = `Math.max(local, remote)` (не Date.now()!), tombstone `null` vs `undefined` в exerciseEquipment |
+| `Storage._load()` callbacks | `_migrateFn` → `Migrations.migrateExerciseNames`, `_unbindFn` → `Migrations._unbindStaleSnapshots`. Оба wired в `App.init()` ДО первого `_load()` |
+| `exercises_db.js` (переименование `nameRu`) | Автоматически: `migrateExerciseNames` сверяет по English name → обновляет `nameRu` в программе, снэпшотах, substitutions |
 | `exerciseSubstitutions` (variation picker) | `UI._buildExerciseVM()` резолвит English имя через EXERCISE_DB. data-attrs `EX_NAME`/`EX_NAME_RU` должны содержать resolved имена, не оригинальные из снэпшота |
 | `UI.renderDay()` (PTR async path) | `UI._onPTRSwap` callback → `InlineEditor.attachHandlers()`. Без этого обработчики не подключатся после pull-to-refresh |
 | `InlineEditor.attachHandlers()` | Вызывается в `route()` (синхронно) + `UI._onPTRSwap` (после async swap). Обе точки нужны |
@@ -224,7 +226,7 @@ Celebration._onShareCheckin = (data) => { this._pendingCheckinWorkout = data; };
 ### 6. После каждого изменения
 
 **Чеклист:**
-1. Если менял `.js`/`.css` — инкрементируй `?v=` в index.html
+1. Если менял `.js`/`.css` — `CACHE_NAME` бампится автоматически pre-commit хуком. Инкрементируй `?v=` в index.html при изменении CSS
 2. Если добавил файл — добавь в `ASSETS` в sw.js
 3. Если менял структуру данных — миграция в `Storage._load()` или `migrations.js`
 4. Если добавил маршрут — `SwipeNav._getSwipeConfig()`
@@ -304,4 +306,12 @@ Data: No storage changes
 
 19. **Tombstone `null` vs `undefined` — критичное различие в merge**: В `exerciseEquipment` и `gymEquipmentMap`: `null` = пользователь явно удалил привязку (tombstone, не трогать). `undefined` = записи нет (можно заполнить из другого источника). Используй `=== undefined` для проверки отсутствия, НЕ `!value` (falsy включает null).
 
-20. **Data repair — НЕ патчить облако напрямую, писать миграцию в коде**: `schedulePush` делает слепой push каждые 3 секунды. Если патчить облако через Supabase API — телефон перезапишет патч своими данными за секунды. Правильный подход: написать миграцию в `migrations.js` (или `Storage._load()`), которая выполнится на самом устройстве при загрузке. Тогда устройство — автор и получатель, гонки нет.
+20. **Data repair — НЕ патчить облако напрямую, писать миграцию в коде**: `schedulePush` делает слепой push каждые 3 секунды. Если патчить облако через Supabase API — телефон перезапишет патч своими данными за секунды. Правильный подход: написать миграцию в `Storage._load()`, которая выполнится на самом устройстве при загрузке. Тогда устройство — автор и получатель, гонки нет.
+
+21. **Инварианты данных — ТОЛЬКО в `Storage._load()`, не после sync**: Если инвариант нужно гарантировать всегда (например "будущие недели не привязаны к устаревшим снэпшотам"), ставь проверку в `_load()` через callback (`_unbindFn`, `_migrateFn`). Одноразовая миграция (`migrations.js`) или post-sync cleanup (`cleanOrphanedLogEntries`) — **ненадёжно**: sync может перезаписать данные облачными ПОСЛЕ миграции, но ДО рендера. `_load()` — единственная точка через которую проходят ВСЕ чтения данных, включая те что после sync.
+
+22. **Sync + миграция — порядок выполнения**: App init → `_load()` (с миграциями) → `syncOnLogin` → `Storage._invalidateCache()` → следующий `_load()` (миграции снова) → рендер. Миграции в `_load()` запускаются **дважды**: до и после sync. Это правильно — после sync данные могут измениться, и инварианты нужно восстановить.
+
+23. **`_lastModified` в sync merge — НИКОГДА `Date.now()`**: После merge ставить `Math.max(localTime, remoteTime)`. Если ставить `Date.now()` — облако всегда будет "новее" локальных данных при следующем sync, и все локальные изменения (settings, choices, substitutions) будут проигрывать.
+
+24. **Переименование упражнений — автоматическая миграция**: `migrateExerciseNames()` шаг 5 сверяет `nameRu` с EXERCISE_DB по стабильному English name. Переименовал `nameRu` в `exercises_db.js` → push → при загрузке программа автообновится. `_NAME_MAP` нужен только при смене English name.
