@@ -7,7 +7,7 @@ import { WorkoutTimer } from './workout-timer.js';
 import { EquipmentManager } from './equipment-manager.js';
 import { Celebration } from './celebration.js';
 import { WORKOUT, EQ, INLINE, read, readInt } from './data-attrs.js';
-import { findExerciseInProgram, parseWeight, parseReps, formatDateISO, esc, markCachedThumbs } from './utils.js';
+import { findExerciseInProgram, parseWeight, parseReps, formatDateISO, esc, markCachedThumbs, showToast } from './utils.js';
 import { getCompletedSets, exName } from './program-utils.js';
 
 export const WorkoutUI = {
@@ -174,8 +174,10 @@ export const WorkoutUI = {
                 const newState = !current;
                 Storage.setUnilateral(exId, newState);
                 // Update button text and style
-                toggle.textContent = newState ? 'Л \u2192 П' : '\u041F\u043E\u043E\u0447\u0435\u0440\u0451\u0434\u043D\u043E';
+                toggle.textContent = newState ? 'На сторону ✓' : 'На сторону';
                 toggle.classList.toggle('on', newState);
+                // Toast feedback
+                showToast(newState ? 'Вес считается на каждую сторону' : 'Вес считается суммарно');
                 // Re-render set rows for this exercise to update "пред:" and values
                 const card = toggle.closest('.exercise-card');
                 if (card) {

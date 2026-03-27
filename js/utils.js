@@ -20,6 +20,15 @@ export function showErrorToast(msg) {
     setTimeout(function() { el.remove(); }, 4000);
 }
 
+// Info toast — brief confirmation message (2s)
+export function showToast(msg) {
+    var el = document.createElement('div');
+    el.className = 'info-toast';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(function() { el.remove(); }, 2000);
+}
+
 // Exercise thumbnail URL from name (matches Supabase storage path)
 export const EX_THUMB_BASE = 'https://mqyfdbfdeuwojgexhwpy.supabase.co/storage/v1/object/public/equipment-images/exercise-thumbs/';
 var _exThumbLookup = null;

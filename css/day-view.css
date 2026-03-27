@@ -97,6 +97,10 @@
     background: var(--accent-primary);
     color: #fff;
 }
+.uni-hint {
+    color: var(--accent-primary, #7c5cbf);
+    font-size: var(--font-size-xs);
+}
 
 .exercise-note {
     font-size: 11px;

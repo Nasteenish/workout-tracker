@@ -824,7 +824,7 @@ export const UI = {
 
         const eqThumb = eqImageUrl ? '<img class="ex-thumb eq-badge-thumb" src="' + esc(eqImageUrl) + '" loading="lazy" onerror="this.style.display=\'none\'">' : '';
         const eqTrailing = `<span class="chooser-badge"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
-        const uniToggleHtml = `<button class="uni-btn${isUnilateral ? ' on' : ''}" ${attr(WORKOUT.EXERCISE, ex.id)}>${isUnilateral ? 'Л \u2192 П' : '\u041F\u043E\u043E\u0447\u0435\u0440\u0451\u0434\u043D\u043E'}</button>`;
+        const uniToggleHtml = `<button class="uni-btn${isUnilateral ? ' on' : ''}" ${attr(WORKOUT.EXERCISE, ex.id)}>На сторону${isUnilateral ? ' ✓' : ''}</button>`;
         const eqHtml = `
             <div class="equipment-row">
                 <button class="equipment-btn" ${attr(WORKOUT.EXERCISE, ex.id)} ${attr(WORKOUT.EX_NAME, esc(_attrName))} ${attr(WORKOUT.EX_NAME_RU, esc(_attrNameRu))}>
@@ -923,16 +923,18 @@ export const UI = {
             repsVal: log && log.reps ? log.reps : '',
             unitLabel,
             prev, prevUnitLabel,
-            weightSegCount, segCount, segs
+            weightSegCount, segCount, segs,
+            isUnilateral: Storage.getUnilateral(ex.id)
         };
     },
 
     // Pure HTML rendering from pre-computed view-model
     _renderSetRow(vm) {
         const { exId, setIdx, set, isCompleted, weightVal, repsVal,
-                unitLabel, prev, prevUnitLabel, weightSegCount, segCount, segs } = vm;
+                unitLabel, prev, prevUnitLabel, weightSegCount, segCount, segs, isUnilateral } = vm;
 
-        const prevText = prev ? `пред: ${prev.weight}<span class="set-prev-unit" ${attr(WORKOUT.EXERCISE, exId)}>${prevUnitLabel}</span> x ${prev.reps}` : '';
+        const uniHint = isUnilateral ? ' <span class="uni-hint">(на сторону)</span>' : '';
+        const prevText = prev ? `пред: ${prev.weight}<span class="set-prev-unit" ${attr(WORKOUT.EXERCISE, exId)}>${prevUnitLabel}</span> x ${prev.reps}${uniHint}` : (isUnilateral ? `<span class="uni-hint">на сторону</span>` : '');
 
         // Type badge
         const typeClass = `type-${set.type}`;
