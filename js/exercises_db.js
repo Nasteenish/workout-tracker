@@ -1,4 +1,4 @@
-// exercises_db.js — Exercise library (289 exercises)
+// exercises_db.js — Exercise library (286 exercises)
 // Автогенерируется скриптом tools/sync_exercises.js — не редактировать вручную
 
 export const EXERCISE_CATEGORIES = [
@@ -23,10 +23,7 @@ export const EXERCISE_CATEGORIES = [
 ];
 
 export const EXERCISE_DB = [
-    // === Пресс (23) ===
-    { nameRu: 'Вращение корпуса', name: 'Torso Rotation', category: 'abdominals' },
-    { nameRu: 'Вращение корпуса на блоке (сверху вниз)', name: 'Cable Twist (Up to down)', category: 'abdominals' },
-    { nameRu: 'Вращение корпуса на блоке (снизу вверх)', name: 'Cable Twist (Down to up)', category: 'abdominals' },
+    // === Пресс (20) ===
     { nameRu: 'Касание носков', name: 'Toe Touch', category: 'abdominals' },
     { nameRu: 'Косые скручивания', name: 'Oblique Crunch', category: 'abdominals' },
     { nameRu: 'Наклон в сторону', name: 'Side Bend', category: 'abdominals' },
@@ -36,15 +33,15 @@ export const EXERCISE_DB = [
     { nameRu: 'Обратные скручивания', name: 'Reverse Crunch', category: 'abdominals' },
     { nameRu: 'Подъём коленей в висе', name: 'Hanging Knee Raise', category: 'abdominals' },
     { nameRu: 'Подъём коленей на брусьях', name: 'Knee Raise Parallel Bars', category: 'abdominals' },
-    { nameRu: 'Подъём корпуса (с отягощением)', name: 'Sit Up (Weighted)', category: 'abdominals' },
-    { nameRu: 'Подъём ног в висе', name: 'Hanging Leg Raise', category: 'abdominals' },
-    { nameRu: 'Подъём ног лёжа', name: 'Lying Leg Raise', category: 'abdominals' },
-    { nameRu: 'Подъём ног на брусьях', name: 'Leg Raise Parallel Bars', category: 'abdominals' },
+    { nameRu: 'Подъём ног (в висе)', name: 'Hanging Leg Raise', category: 'abdominals' },
+    { nameRu: 'Подъём ног (лёжа)', name: 'Lying Leg Raise', category: 'abdominals' },
+    { nameRu: 'Подъём ног (на брусьях)', name: 'Leg Raise Parallel Bars', category: 'abdominals' },
     { nameRu: 'Ролик для пресса', name: 'Ab Wheel', category: 'abdominals' },
-    { nameRu: 'Скручивание', name: 'Crunch', category: 'abdominals' },
     { nameRu: 'Скручивание (в тренажёре)', name: 'Crunch (Machine)', category: 'abdominals' },
+    { nameRu: 'Скручивание (косые в тренажере)', name: 'Torso Rotation', category: 'abdominals' },
+    { nameRu: 'Скручивание (на блоке)', name: 'Cable Crunch', category: 'abdominals' },
     { nameRu: 'Скручивание (с отягощением)', name: 'Crunch (Weighted)', category: 'abdominals' },
-    { nameRu: 'Скручивание на блоке', name: 'Cable Crunch', category: 'abdominals' },
+    { nameRu: 'Скручивание (со своим весом)', name: 'Crunch', category: 'abdominals' },
     { nameRu: 'Скручивание на наклонной скамье', name: 'Decline Crunch', category: 'abdominals' },
     { nameRu: 'Скручивание на наклонной скамье (с отягощением)', name: 'Decline Crunch (Weighted)', category: 'abdominals' },
     // === Отводящие (1) ===
