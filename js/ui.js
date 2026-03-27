@@ -972,7 +972,7 @@ export const UI = {
         const isCompleted = !!(log && log.completed);
         let isPR = false;
         if (isCompleted && log.weight > 0 && log.reps > 0) {
-            isPR = Analytics.isAllTimeBest(Storage.getLogExerciseId(ex.id), log.weight, log.reps, log.equipmentId || null);
+            isPR = Analytics.isAllTimeBest(Storage.getLogExerciseId(ex.id), log.weight, log.reps, log.equipmentId || null, weekNum, dayNum);
         }
 
         return {

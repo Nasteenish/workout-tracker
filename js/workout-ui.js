@@ -165,8 +165,8 @@ export const WorkoutUI = {
                             badge.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="#FFD700"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
                             row.appendChild(badge);
                         }
-                        // Show funny toast
-                        showToast(prResult.toast);
+                        // Show big centered PR notification
+                        this._showPRNotification(prResult.toast);
                     }
                 }
 
@@ -312,6 +312,28 @@ export const WorkoutUI = {
         }
 
         return false;
+    },
+
+    // ===== PR Notification — big centered overlay =====
+    _showPRNotification(message) {
+        if (document.querySelector('.pr-overlay')) return;
+        var overlay = document.createElement('div');
+        overlay.className = 'pr-overlay';
+        overlay.innerHTML = '<div class="pr-overlay-content">' +
+            '<div class="pr-overlay-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="#FFD700"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>' +
+            '<div class="pr-overlay-title">Новый рекорд!</div>' +
+            '<div class="pr-overlay-message">' + message + '</div>' +
+            '</div>';
+        document.body.appendChild(overlay);
+        if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+        setTimeout(function() {
+            overlay.classList.add('pr-overlay-hide');
+            setTimeout(function() { overlay.remove(); }, 400);
+        }, 2500);
+        overlay.addEventListener('click', function() {
+            overlay.classList.add('pr-overlay-hide');
+            setTimeout(function() { overlay.remove(); }, 400);
+        });
     },
 
     // ===== Modal click handlers (substitution, gym, choice, equipment) =====

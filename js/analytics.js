@@ -80,18 +80,6 @@ export const Analytics = {
             }
         }
 
-        // Debug: log PR check details
-        console.log('[PR check]', {
-            exerciseId, weight, reps, currentWeek, currentDay,
-            equipmentId,
-            current1RM,
-            prevBest1RM,
-            historyEntries: history.filter(e => !(e.week === currentWeek && e.day === currentDay)).map(e => ({
-                week: e.week, day: e.day,
-                sets: e.sets.map(s => ({ w: s.weight, r: s.reps, eq: s.equipmentId, match: this._matchesEquipment(s.equipmentId, equipmentId) }))
-            }))
-        });
-
         // Need at least one previous session on same equipment to compare
         if (prevBest1RM === 0) return null;
 
@@ -119,22 +107,27 @@ export const Analytics = {
         return null;
     },
 
-    // Check if a set is currently the all-time best for this exercise
+    // Check if a set is the best compared to PREVIOUS sessions (excludes current week/day)
     // Strictly per-equipment (or no-equipment vs no-equipment)
-    isAllTimeBest(exerciseId, weight, reps, equipmentId) {
+    isAllTimeBest(exerciseId, weight, reps, equipmentId, currentWeek, currentDay) {
         if (!weight || weight <= 0 || !reps || reps <= 0) return false;
         const history = Storage.getExerciseHistory(exerciseId);
         if (!history) return false;
 
         const current1RM = this.estimated1RM(weight, reps);
+        let hasPrev = false;
         for (const entry of history) {
+            // Exclude current session — PR is vs previous weeks
+            if (currentWeek && currentDay && entry.week === currentWeek && entry.day === currentDay) continue;
             for (const s of entry.sets) {
                 if (!s.weight || !s.reps) continue;
                 if (!this._matchesEquipment(s.equipmentId, equipmentId)) continue;
+                hasPrev = true;
                 if (this.estimated1RM(s.weight, s.reps) > current1RM) return false;
             }
         }
-        return true;
+        // Need at least one previous session to compare
+        return hasPrev;
     },
 
     // ===== PR Records Table — best weight at each rep count =====
