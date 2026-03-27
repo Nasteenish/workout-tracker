@@ -101,6 +101,8 @@ export const EquipmentManager = {
         var isFreeWeight = this._isFreeWeightExercise(exName, exNameRu);
         modal._exerciseType = exType;
         modal._extraTypes = [];
+        // Save modifier to filter incompatible equipment (e.g. don't show Smith for Machine exercises)
+        modal._exerciseModifier = this._getEquipmentModifier(exName) || '';
         modal._isFreeWeight = isFreeWeight;
 
         var activeGymId = this.getActiveGymId(AppState.currentWeek, AppState.currentDay);
@@ -226,6 +228,19 @@ export const EquipmentManager = {
             if (!items || !items.length) {
                 div.innerHTML = '<div class="eq-section-label">Нет тренажёров для этого упражнения</div>';
                 return;
+            }
+            // Filter incompatible equipment: Machine exercises shouldn't show Smith, and vice versa
+            var mod = modal._exerciseModifier || '';
+            if (mod === 'machine' || mod === 'в тренажёре') {
+                items = items.filter(function(c) {
+                    var n = (c.name || '').toLowerCase();
+                    return n.indexOf('smith') === -1 && n.indexOf('смит') === -1;
+                });
+            } else if (mod === 'smith machine' || mod === 'в смите') {
+                items = items.filter(function(c) {
+                    var n = (c.name || '').toLowerCase();
+                    return n.indexOf('smith') !== -1 || n.indexOf('смит') !== -1;
+                });
             }
             var seenIds = {};
             var unique = [];
