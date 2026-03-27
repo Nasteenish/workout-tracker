@@ -91,6 +91,11 @@ export const Analytics = {
         // No previous session on same equipment — nothing to compare, not a PR yet
         if (prevBest1RM === 0) return null;
 
+        // Verify via isAllTimeBest to guarantee dynamic badge matches static render
+        if (!this.isAllTimeBest(exerciseId, weight, reps, equipmentId, currentWeek, currentDay)) {
+            return null;
+        }
+
         // Check 1RM PR
         if (current1RM > prevBest1RM) {
             return {

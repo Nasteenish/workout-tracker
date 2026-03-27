@@ -1022,9 +1022,11 @@ export const Storage = {
         var p = this._program;
         var totalWeeks = p ? p.totalWeeks : 12;
         var totalDays = p ? Object.keys(p.dayTemplates).length : 5;
-        var sibIds = this._getSiblingIds(exerciseId);
+        // Strip _uni suffix for sibling lookup — cache only has base IDs
+        var baseExId = exerciseId.endsWith('_uni') ? exerciseId.slice(0, -4) : exerciseId;
+        var sibIds = this._getSiblingIds(baseExId);
         // Include both bilateral and unilateral log keys
-        var baseIds = [exerciseId].concat(sibIds);
+        var baseIds = [baseExId].concat(sibIds);
         var allIds = [];
         for (var bi = 0; bi < baseIds.length; bi++) {
             allIds.push(baseIds[bi]);
