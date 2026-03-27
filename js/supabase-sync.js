@@ -285,15 +285,6 @@ export const SupaSync = {
                             }
                         }
                     }
-                    // Also check base keys: if base has no entry (undefined) but other has a value — take other's.
-                    // null = tombstone (user explicitly removed) — do NOT overwrite.
-                    if (other.exerciseEquipment) {
-                        for (var ek1 in base.exerciseEquipment) {
-                            if (base.exerciseEquipment[ek1] === undefined && other.exerciseEquipment[ek1]) {
-                                base.exerciseEquipment[ek1] = other.exerciseEquipment[ek1];
-                            }
-                        }
-                    }
                 }
                 // Merge exerciseEquipmentOptions — union merge, keep all options from both sides
                 if (other.exerciseEquipmentOptions || base.exerciseEquipmentOptions) {
