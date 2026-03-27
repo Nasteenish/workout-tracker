@@ -156,7 +156,7 @@ export const WorkoutUI = {
 
                 // PR detection — check after saving
                 if (weight > 0 && reps > 0) {
-                    const prResult = Analytics.checkPR(logExId, weight, reps, week, day);
+                    const prResult = Analytics.checkPR(logExId, weight, reps, week, day, eqId || null);
                     if (prResult) {
                         // Add PR badge to the row
                         if (!row.querySelector('.pr-badge')) {

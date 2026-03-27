@@ -196,6 +196,7 @@ export const UI = {
 
         return {
             weekNum,
+            progressWeek: progress.week,
             headerName: currentUser ? currentUser.name : 'Трекер Тренировок',
             totalWeeks: getTotalWeeks(),
             totalDays: numDays,
@@ -241,30 +242,39 @@ export const UI = {
     },
 
     // Returns full week view HTML (for back-swipe companion)
-    _streakHTML(streak) {
+    _streakHTML(streak, weekNum, progressWeek) {
+        // Only show on the current progress week
+        if (weekNum !== progressWeek) return '';
         if (!streak || (streak.current === 0 && streak.best === 0)) return '';
+
         let html = '<div class="streak-bar">';
         if (streak.current > 0) {
-            html += `<span class="streak-current">${streak.current} нед. подряд</span>`;
+            const weeksWord = this._weeksWord(streak.current);
+            html += `<span class="streak-current">\ud83d\udd25 ${streak.current} ${weeksWord} \u043f\u043e\u0434\u0440\u044f\u0434</span>`;
             if (streak.best > streak.current) {
-                html += `<span class="streak-best">лучшая: ${streak.best}</span>`;
+                html += `<span class="streak-best">\u043b\u0443\u0447\u0448\u0430\u044f: ${streak.best}</span>`;
             }
         } else if (streak.broken && streak.brokenMessage) {
             html += `<span class="streak-broken">${streak.brokenMessage}</span>`;
-            if (streak.best > 0) {
-                html += `<span class="streak-best">лучшая серия: ${streak.best} нед.</span>`;
-            }
-        } else if (streak.best > 0) {
-            html += `<span class="streak-best">лучшая серия: ${streak.best} нед.</span>`;
         }
         html += '</div>';
         return html;
     },
 
+    // "1 неделя", "2 недели", "5 недель"
+    _weeksWord(n) {
+        const mod10 = n % 10;
+        const mod100 = n % 100;
+        if (mod100 >= 11 && mod100 <= 19) return '\u043d\u0435\u0434\u0435\u043b\u044c';
+        if (mod10 === 1) return '\u043d\u0435\u0434\u0435\u043b\u044f';
+        if (mod10 >= 2 && mod10 <= 4) return '\u043d\u0435\u0434\u0435\u043b\u0438';
+        return '\u043d\u0435\u0434\u0435\u043b\u044c';
+    },
+
     _weekViewHTML(weekNum) {
         const vm = this._buildWeekVM(weekNum);
         const cardsHtml = this._weekCardsHTML(vm);
-        const streakHtml = this._streakHTML(vm.streak);
+        const streakHtml = this._streakHTML(vm.streak, vm.weekNum, vm.progressWeek);
         return `
             <div class="app-header">
                 <div class="header-title">
@@ -308,7 +318,7 @@ export const UI = {
     renderWeek(weekNum) {
         const vm = this._buildWeekVM(weekNum);
         const cardsHtml = this._weekCardsHTML(vm);
-        const streakHtml = this._streakHTML(vm.streak);
+        const streakHtml = this._streakHTML(vm.streak, vm.weekNum, vm.progressWeek);
 
         document.getElementById('app').innerHTML = `
             <div class="app-header">
@@ -962,7 +972,7 @@ export const UI = {
         const isCompleted = !!(log && log.completed);
         let isPR = false;
         if (isCompleted && log.weight > 0 && log.reps > 0) {
-            isPR = Analytics.isAllTimeBest(Storage.getLogExerciseId(ex.id), log.weight, log.reps);
+            isPR = Analytics.isAllTimeBest(Storage.getLogExerciseId(ex.id), log.weight, log.reps, log.equipmentId || null);
         }
 
         return {
