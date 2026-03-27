@@ -18,7 +18,7 @@ import { Migrations } from './migrations.js';
 import { ACCOUNTS, BUILTIN_PROGRAMS } from './users.js';
 import { lockBodyScroll, unlockBodyScroll } from './scroll-lock.js';
 import { debounce, formatDateISO, validateProgram, esc, parseWeight, parseReps, deepClone } from './utils.js';
-import { getTotalDays, getProgressWeek } from './program-utils.js';
+import { getTotalDays, getTotalWeeks, getProgressWeek } from './program-utils.js';
 import { WORKOUT, EQ, SETTINGS, read, readInt } from './data-attrs.js';
 import { AppState } from './app-state.js';
 import { InlineEditor } from './inline-editor.js';
@@ -1156,6 +1156,15 @@ export const App = {
             return;
         }
 
+        // Analytics dashboard
+        if (hash === '#/analytics' || hash.startsWith('#/analytics/')) {
+            const analyticsWeekMatch = hash.match(/^#\/analytics\/week\/(\d+)$/);
+            const analyticsWeek = analyticsWeekMatch ? parseInt(analyticsWeekMatch[1]) : getProgressWeek().week;
+            this._analyticsWeek = analyticsWeek;
+            UI.renderAnalytics(analyticsWeek);
+            return;
+        }
+
         // History view: #/history/{exerciseId}
         const historyMatch = hash.match(/^#\/history\/(.+)$/);
         if (historyMatch) {
@@ -1339,6 +1348,20 @@ export const App = {
 
     // ===== Delegated settings click handlers =====
     _handleSettingsClick(target) {
+        // Analytics week navigation
+        if (target.closest('#analytics-prev')) {
+            var aw = this._analyticsWeek || 1;
+            var newW = aw <= 1 ? getTotalWeeks() : aw - 1;
+            location.hash = '#/analytics/week/' + newW;
+            return true;
+        }
+        if (target.closest('#analytics-next')) {
+            var aw = this._analyticsWeek || 1;
+            var newW = aw >= getTotalWeeks() ? 1 : aw + 1;
+            location.hash = '#/analytics/week/' + newW;
+            return true;
+        }
+
         // Timer min/sec steppers
         if (['td-min-minus','td-min-plus','td-sec-minus','td-sec-plus'].includes(target.id)) {
             const minEl = document.getElementById('td-min-val');

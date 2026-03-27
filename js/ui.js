@@ -1167,6 +1167,136 @@ export const UI = {
         return `<div class="choose-one-group"${groupIdxAttr}>${exerciseHtml}</div>`;
     },
 
+    // ===== ANALYTICS DASHBOARD =====
+
+    _buildAnalyticsVM(weekNum) {
+        const totalWeeks = getTotalWeeks();
+        const muscleVolume = Analytics.getWeeklyMuscleVolume(weekNum);
+        const { tonnage, completedSets } = Analytics.getWeeklyTonnage(weekNum);
+        const prevTonnage = weekNum > 1 ? Analytics.getWeeklyTonnage(weekNum - 1).tonnage : 0;
+        const tonnagePct = prevTonnage > 0 ? Math.round(((tonnage - prevTonnage) / prevTonnage) * 100) : 0;
+        const tonnageByWeek = Analytics.getTonnageByWeek();
+        const stats = Analytics.getWeekStats(weekNum);
+        const streak = Analytics.getStreak();
+        const comparison = Analytics.getWeekComparison(weekNum);
+        const hasTabBar = SocialUI && Social._hasSupaAuth();
+
+        return {
+            weekNum, totalWeeks, muscleVolume,
+            tonnage, tonnagePct, tonnageByWeek,
+            completedSets, stats, streak, comparison, hasTabBar
+        };
+    },
+
+    renderAnalytics(weekNum) {
+        const vm = this._buildAnalyticsVM(weekNum);
+        const { totalWeeks, muscleVolume, tonnage, tonnagePct, tonnageByWeek,
+                completedSets, stats, streak, comparison, hasTabBar } = vm;
+
+        // Tonnage card with sparkline
+        let sparklineHtml = '';
+        if (tonnageByWeek.length > 1) {
+            const vals = tonnageByWeek.map(d => d.tonnage);
+            const maxV = Math.max(...vals);
+            const minV = Math.min(...vals);
+            const range = maxV - minV || 1;
+            const W = 100, H = 28;
+            const pts = vals.map((v, i) =>
+                `${(i / (vals.length - 1)) * W},${H - ((v - minV) / range) * (H - 4) - 2}`
+            ).join(' ');
+            sparklineHtml = `<svg class="sparkline" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline points="${pts}"/></svg>`;
+        }
+
+        const tonnageFormatted = tonnage >= 1000 ? Math.round(tonnage / 100) / 10 + ' т' : tonnage + ' кг';
+        const trendClass = tonnagePct > 0 ? 'trend-up' : tonnagePct < 0 ? 'trend-down' : 'trend-flat';
+        const trendArrow = tonnagePct > 0 ? '↑' : tonnagePct < 0 ? '↓' : '=';
+        const trendText = tonnagePct !== 0 ? `${trendArrow} ${Math.abs(tonnagePct)}% vs пред. неделя` : '';
+
+        // Muscle volume bars
+        const maxSets = muscleVolume.length > 0 ? Math.max(...muscleVolume.map(m => m.sets)) : 1;
+        let muscleHtml = '';
+        for (const m of muscleVolume) {
+            const pct = Math.round((m.sets / Math.max(maxSets, 20)) * 100);
+            let barClass = 'vol-bar';
+            if (m.sets < 10) barClass += ' vol-low';
+            else if (m.sets > 20) barClass += ' vol-high';
+            muscleHtml += `<div class="vol-row">
+                <span class="vol-name">${m.nameRu}</span>
+                <div class="vol-track"><div class="${barClass}" style="width:${Math.min(pct, 100)}%"></div></div>
+                <span class="vol-count">${m.sets}</span>
+            </div>`;
+        }
+
+        // Stats grid
+        const streakText = streak.current > 0 ? streak.current : '—';
+        const streakBest = streak.best > streak.current ? `лучшая: ${streak.best}` : '';
+
+        // Week comparison
+        let compHtml = '';
+        if (comparison.length > 0) {
+            const top = comparison.slice(0, 6);
+            for (const c of top) {
+                const cls = c.diff > 0 ? 'trend-up' : c.diff < 0 ? 'trend-down' : 'trend-flat';
+                const arrow = c.diff > 0 ? '↑' : c.diff < 0 ? '↓' : '=';
+                compHtml += `<div class="comp-row">
+                    <span class="comp-name">${c.name}</span>
+                    <span class="comp-vals">${c.prev} → ${c.current}</span>
+                    <span class="comp-trend ${cls}">${arrow}</span>
+                </div>`;
+            }
+        }
+
+        // Week nav
+        const weekNavHtml = `<div class="analytics-week-nav">
+            <button id="analytics-prev"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M13 15l-5-5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <span class="analytics-week-label">Неделя ${weekNum} из ${totalWeeks}</span>
+            <button id="analytics-next"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M7 15l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>`;
+
+        const noData = tonnage === 0 && muscleVolume.length === 0;
+
+        document.getElementById('app').innerHTML = `
+            <div class="app-header">
+                <div class="header-title"><h1>Аналитика</h1></div>
+            </div>
+            <div class="app-content">
+                ${weekNavHtml}
+                ${noData ? '<div class="analytics-empty">Нет данных за эту неделю</div>' : `
+                <div class="analytics-card tonnage-card">
+                    <div class="analytics-card-header">ТОННАЖ</div>
+                    <div class="tonnage-row">
+                        <div class="tonnage-value">${tonnageFormatted}</div>
+                        ${sparklineHtml}
+                    </div>
+                    ${trendText ? `<div class="tonnage-trend ${trendClass}">${trendText}</div>` : ''}
+                </div>
+
+                ${muscleHtml ? `<div class="analytics-card">
+                    <div class="analytics-card-header">МЫШЕЧНЫЕ ГРУППЫ <span class="card-header-sub">${completedSets} подходов</span></div>
+                    <div class="vol-list">${muscleHtml}</div>
+                </div>` : ''}
+
+                <div class="analytics-grid">
+                    <div class="analytics-mini-card">
+                        <div class="mini-value">${stats.trainedDays}/${stats.totalTrainingDays}</div>
+                        <div class="mini-label">тренировок</div>
+                    </div>
+                    <div class="analytics-mini-card">
+                        <div class="mini-value">${streakText}</div>
+                        <div class="mini-label">\ud83d\udd25 серия нед.${streakBest ? `<br><span class="mini-sub">${streakBest}</span>` : ''}</div>
+                    </div>
+                </div>
+
+                ${compHtml ? `<div class="analytics-card">
+                    <div class="analytics-card-header">VS ПРОШЛАЯ НЕДЕЛЯ</div>
+                    ${compHtml}
+                </div>` : ''}
+                `}
+            </div>
+            ${hasTabBar ? SocialUI._tabBarHTML('analytics') : ''}
+        `;
+    },
+
     // ===== HISTORY VIEW =====
 
     // Data preparation for history — all Storage reads and data processing

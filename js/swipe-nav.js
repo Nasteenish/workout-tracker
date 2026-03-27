@@ -22,9 +22,12 @@ export const SwipeNav = {
         }
         if (/^#\/history\/.+$/.test(hash))
             return { mode: 'back', target: '#/week/' + app._currentWeek + '/day/' + app._currentDay, companion: 'day', dayNum: app._currentDay };
-        // Social tab carousel (swipe between Лента ↔ Профиль)
+        // Analytics tab + back-swipe for week-specific analytics
+        if (hash === '#/analytics' || /^#\/analytics\/week\/\d+$/.test(hash))
+            return { mode: 'tabs', left: '#/week/' + app._currentWeek, right: '#/feed' };
+        // Social tab carousel (swipe between tabs)
         if (hash === '#/feed')
-            return { mode: 'tabs', left: '#/week/' + app._currentWeek, right: '#/profile' };
+            return { mode: 'tabs', left: '#/analytics', right: '#/profile' };
         if (hash === '#/profile')
             return { mode: 'tabs', left: '#/feed', right: null };
         // Social back-swipe pages

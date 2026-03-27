@@ -1,7 +1,8 @@
 /* ===== Analytics Module — PR detection, streaks, 1RM calculations ===== */
 import { Storage } from './storage.js';
-import { EXERCISE_DB } from './exercises_db.js';
-import { getTotalWeeks, getTotalDays, getCompletedSets } from './program-utils.js';
+import { EXERCISE_DB, EXERCISE_CATEGORIES } from './exercises_db.js';
+import { getTotalWeeks, getTotalDays, getCompletedSets, resolveWorkout, exName } from './program-utils.js';
+import { getGroupExercises } from './utils.js';
 
 // ===== Funny PR toast messages (bodybuilding humor) =====
 const PR_TOASTS = [
@@ -253,6 +254,169 @@ export const Analytics = {
 
     _randomStreakMessage() {
         return STREAK_BROKEN_MESSAGES[Math.floor(Math.random() * STREAK_BROKEN_MESSAGES.length)];
+    },
+
+    // ===== Dashboard: Weekly Volume by Muscle Group =====
+    getWeeklyMuscleVolume(weekNum) {
+        const totalDays = getTotalDays();
+        const result = {}; // { category: { sets: 0, catNameRu: '' } }
+
+        for (let day = 1; day <= totalDays; day++) {
+            const workout = resolveWorkout(weekNum, day);
+            if (!workout || !workout.exerciseGroups) continue;
+
+            for (const group of workout.exerciseGroups) {
+                const exercises = getGroupExercises(group);
+                for (const ex of exercises) {
+                    const cat = this._findCategory(ex);
+                    if (!cat) continue;
+
+                    const logExId = Storage.getLogExerciseId(ex.id);
+                    const numSets = ex.sets ? ex.sets.length : 0;
+                    for (let s = 0; s < numSets; s++) {
+                        const log = Storage.getSetLog(weekNum, day, logExId, s);
+                        if (log && log.completed) {
+                            if (!result[cat]) {
+                                const catObj = EXERCISE_CATEGORIES.find(c => c.id === cat);
+                                result[cat] = { sets: 0, nameRu: catObj ? catObj.nameRu : cat };
+                            }
+                            result[cat].sets++;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Sort by sets descending
+        return Object.entries(result)
+            .map(([id, data]) => ({ id, ...data }))
+            .sort((a, b) => b.sets - a.sets);
+    },
+
+    // ===== Dashboard: Weekly Tonnage =====
+    getWeeklyTonnage(weekNum) {
+        const totalDays = getTotalDays();
+        let tonnage = 0;
+        let completedSets = 0;
+
+        for (let day = 1; day <= totalDays; day++) {
+            const workout = resolveWorkout(weekNum, day);
+            if (!workout || !workout.exerciseGroups) continue;
+
+            for (const group of workout.exerciseGroups) {
+                const exercises = getGroupExercises(group);
+                for (const ex of exercises) {
+                    const logExId = Storage.getLogExerciseId(ex.id);
+                    const numSets = ex.sets ? ex.sets.length : 0;
+                    for (let s = 0; s < numSets; s++) {
+                        const log = Storage.getSetLog(weekNum, day, logExId, s);
+                        if (log && log.completed) {
+                            completedSets++;
+                            if (log.weight > 0 && log.reps > 0) {
+                                tonnage += log.weight * log.reps;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return { tonnage: Math.round(tonnage), completedSets };
+    },
+
+    // ===== Dashboard: Tonnage sparkline across all weeks =====
+    getTonnageByWeek() {
+        const totalWeeks = getTotalWeeks();
+        const data = [];
+        for (let w = 1; w <= totalWeeks; w++) {
+            const { tonnage } = this.getWeeklyTonnage(w);
+            if (tonnage > 0) data.push({ week: w, tonnage });
+        }
+        return data;
+    },
+
+    // ===== Dashboard: Week stats =====
+    getWeekStats(weekNum) {
+        const totalDays = getTotalDays();
+        let trainedDays = 0;
+        let totalTrainingDays = 0;
+        let prCount = 0;
+
+        for (let day = 1; day <= totalDays; day++) {
+            const result = getCompletedSets(weekNum, day);
+            if (result.total === 0) continue;
+            totalTrainingDays++;
+            if (result.completed > 0) trainedDays++;
+        }
+
+        return { trainedDays, totalTrainingDays };
+    },
+
+    // ===== Dashboard: Week-over-week comparison =====
+    getWeekComparison(weekNum) {
+        if (weekNum <= 1) return [];
+        const prevWeek = weekNum - 1;
+        const totalDays = getTotalDays();
+        const exercises = {}; // exId → { name, current: { weight, reps }, prev: { weight, reps } }
+
+        for (const [wk, label] of [[weekNum, 'current'], [prevWeek, 'prev']]) {
+            for (let day = 1; day <= totalDays; day++) {
+                const workout = resolveWorkout(wk, day);
+                if (!workout || !workout.exerciseGroups) continue;
+                for (const group of workout.exerciseGroups) {
+                    const exList = getGroupExercises(group);
+                    for (const ex of exList) {
+                        const logExId = Storage.getLogExerciseId(ex.id);
+                        let bestWeight = 0;
+                        const numSets = ex.sets ? ex.sets.length : 0;
+                        for (let s = 0; s < numSets; s++) {
+                            const log = Storage.getSetLog(wk, day, logExId, s);
+                            if (log && log.completed && log.weight > bestWeight) {
+                                bestWeight = log.weight;
+                            }
+                        }
+                        if (bestWeight > 0) {
+                            if (!exercises[ex.id]) {
+                                exercises[ex.id] = { name: exName(ex), current: 0, prev: 0 };
+                            }
+                            if (label === 'current' && bestWeight > exercises[ex.id].current) {
+                                exercises[ex.id].current = bestWeight;
+                            }
+                            if (label === 'prev' && bestWeight > exercises[ex.id].prev) {
+                                exercises[ex.id].prev = bestWeight;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Filter: only exercises present in both weeks
+        return Object.values(exercises)
+            .filter(e => e.current > 0 && e.prev > 0)
+            .map(e => ({
+                name: e.name,
+                current: e.current,
+                prev: e.prev,
+                diff: e.current - e.prev,
+                pct: Math.round(((e.current - e.prev) / e.prev) * 100)
+            }))
+            .sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct));
+    },
+
+    // Find category for an exercise from EXERCISE_DB
+    _findCategory(ex) {
+        const name = ex.name || '';
+        const nameRu = ex.nameRu || '';
+        // Check substitution
+        const sub = Storage.getSubstitution(ex.id);
+        const searchNameRu = sub || nameRu;
+        for (const dbEx of EXERCISE_DB) {
+            if ((dbEx.name && dbEx.name === name) || (dbEx.nameRu && dbEx.nameRu === searchNameRu)) {
+                return dbEx.category;
+            }
+        }
+        return null;
     },
 
     // Get exercise category from EXERCISE_DB
