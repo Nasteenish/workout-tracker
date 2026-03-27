@@ -775,6 +775,21 @@ export const UI = {
         const displayName = this._getExerciseDisplayName(ex);
         const isUnilateral = Storage.getUnilateral(ex.id);
 
+        // Resolve names accounting for substitution (variation picker override)
+        const sub = Storage.getSubstitution(ex.id);
+        let resolvedName = ex.name || '';
+        let resolvedNameRu = ex.nameRu || '';
+        if (sub) {
+            resolvedNameRu = sub;
+            // Find matching English name from EXERCISE_DB
+            for (let _si = 0; _si < EXERCISE_DB.length; _si++) {
+                if (EXERCISE_DB[_si].nameRu === sub) {
+                    resolvedName = EXERCISE_DB[_si].name || resolvedName;
+                    break;
+                }
+            }
+        }
+
         const setVMs = [];
         for (let i = 0; i < ex.sets.length; i++) {
             setVMs.push(this._buildSetRowVM(ex, i, weekNum, dayNum));
@@ -784,7 +799,8 @@ export const UI = {
             ex, choiceKey, restText,
             eqLabel: eq ? esc(eq.name) : 'Оборудование',
             eqImageUrl: eq && eq.imageUrl ? eq.imageUrl : null,
-            displayName, setVMs, isUnilateral
+            displayName, setVMs, isUnilateral,
+            resolvedName, resolvedNameRu
         };
     },
 
@@ -794,7 +810,12 @@ export const UI = {
         const vm = exVMorEx.setVMs
             ? exVMorEx
             : this._buildExerciseVM(exVMorEx, weekNumOrUndef, dayNumOrUndef, choiceKeyOrUndef);
-        const { ex, choiceKey, restText, eqLabel, eqImageUrl, displayName, setVMs, isUnilateral } = vm;
+        const { ex, choiceKey, restText, eqLabel, eqImageUrl, displayName, setVMs, isUnilateral,
+                resolvedName, resolvedNameRu } = vm;
+        // Use resolved names (with substitution) for data-attrs so equipment modal
+        // gets the correct exercise type (e.g. Machine vs Barbell)
+        const _attrName = resolvedName || ex.name || '';
+        const _attrNameRu = resolvedNameRu || ex.nameRu || '';
 
         let setsHtml = '';
         for (const setVM of setVMs) {
@@ -806,20 +827,20 @@ export const UI = {
         const uniToggleHtml = `<label class="uni-toggle" ${attr(WORKOUT.EXERCISE, ex.id)}><span class="uni-toggle-label">\u041F\u043E\u043E\u0447\u0435\u0440\u0451\u0434\u043D\u043E</span><span class="uni-switch ${isUnilateral ? 'on' : ''}"><span class="uni-knob"></span></span></label>`;
         const eqHtml = `
             <div class="equipment-row">
-                <button class="equipment-btn" ${attr(WORKOUT.EXERCISE, ex.id)} ${attr(WORKOUT.EX_NAME, esc(ex.name || ''))} ${attr(WORKOUT.EX_NAME_RU, esc(ex.nameRu || ''))}>
+                <button class="equipment-btn" ${attr(WORKOUT.EXERCISE, ex.id)} ${attr(WORKOUT.EX_NAME, esc(_attrName))} ${attr(WORKOUT.EX_NAME_RU, esc(_attrNameRu))}>
                     ${eqThumb}<span class="eq-label-text">${eqLabel}</span>${eqTrailing}
                 </button>
                 ${uniToggleHtml}
             </div>
         `;
 
-        // Check if this exercise has variations in EXERCISE_DB
-        const _exBaseName = getExerciseBaseName(ex.nameRu || ex.name || '');
+        // Check if this exercise has variations in EXERCISE_DB (use resolved names)
+        const _exBaseName = getExerciseBaseName(_attrNameRu || _attrName || '');
         // Find category from DB since program exercises don't always have it
         let _exCat = ex.category || '';
         if (!_exCat) {
             for (let _i = 0; _i < EXERCISE_DB.length; _i++) {
-                if (EXERCISE_DB[_i].nameRu === ex.nameRu || EXERCISE_DB[_i].name === ex.name ||
+                if (EXERCISE_DB[_i].nameRu === _attrNameRu || EXERCISE_DB[_i].name === _attrName ||
                     getExerciseBaseName(EXERCISE_DB[_i].nameRu || '') === _exBaseName) {
                     _exCat = EXERCISE_DB[_i].category;
                     break;
@@ -833,7 +854,7 @@ export const UI = {
 
         const nameClass = `exercise-name exercise-name-editable${_showChooser ? ' exercise-name-chooser' : ''}`;
         const choiceKeyAttr = choiceKey ? ` ${attr(WORKOUT.CHOICE_KEY, esc(choiceKey))}` : '';
-        const nameAttrs = `${attr(WORKOUT.EXERCISE, ex.id)} ${attr(WORKOUT.EX_NAME, esc(ex.name || ''))} ${attr(WORKOUT.EX_NAME_RU, esc(ex.nameRu || ''))}${choiceKeyAttr}`;
+        const nameAttrs = `${attr(WORKOUT.EXERCISE, ex.id)} ${attr(WORKOUT.EX_NAME, esc(_attrName))} ${attr(WORKOUT.EX_NAME_RU, esc(_attrNameRu))}${choiceKeyAttr}`;
         const nameContent = _showChooser ? this._nameWithBadge(displayName) : displayName;
 
         const setControls = `<div class="set-controls">
