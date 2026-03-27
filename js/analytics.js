@@ -80,8 +80,15 @@ export const Analytics = {
             }
         }
 
-        // Need at least one previous session on same equipment to compare
-        if (prevBest1RM === 0) return null;
+        // First-ever record on this equipment — always a PR
+        if (prevBest1RM === 0) {
+            return {
+                type: '1rm',
+                old: 0,
+                new: current1RM,
+                toast: this._randomPRToast()
+            };
+        }
 
         // Check 1RM PR
         if (current1RM > prevBest1RM) {
@@ -126,8 +133,8 @@ export const Analytics = {
                 if (this.estimated1RM(s.weight, s.reps) > current1RM) return false;
             }
         }
-        // Need at least one previous session to compare
-        return hasPrev;
+        // If nothing in previous sessions beat us — this IS the best (including first-ever record)
+        return true;
     },
 
     // ===== PR Records Table — best weight at each rep count =====
