@@ -734,6 +734,91 @@ export const Migrations = {
                     }
                 }
             }
+        },
+
+        // v12: Fix v10/v11 regression — templateSnapshots also had choose_one flattened
+        // to opt1 but users had specific options chosen. v11 only fixed dayTemplates.
+        // This migration fixes templateSnapshots using the same logic.
+        {
+            key: '_fix_choose_one_snapshots_v1',
+            fn: function() {
+                // Build lookup: exerciseId → full exercise object, from original program data
+                var optionLookup = {};
+                function indexOptions(program) {
+                    if (!program || !program.dayTemplates) return;
+                    for (var d in program.dayTemplates) {
+                        var groups = (program.dayTemplates[d] && program.dayTemplates[d].exerciseGroups) || [];
+                        for (var gi = 0; gi < groups.length; gi++) {
+                            var g = groups[gi];
+                            if (g.type === 'choose_one' && g.options) {
+                                for (var oi = 0; oi < g.options.length; oi++) {
+                                    if (g.options[oi].id) optionLookup[g.options[oi].id] = g.options[oi];
+                                }
+                            }
+                        }
+                    }
+                }
+                indexOptions(MIKHAIL2_PROGRAM);
+                indexOptions(MIKHAIL_PROGRAM);
+
+                var keys = Object.keys(localStorage);
+                for (var ki = 0; ki < keys.length; ki++) {
+                    if (keys[ki].indexOf('wt_data_') !== 0) continue;
+                    var dd;
+                    try { dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}'); } catch(e) { continue; }
+                    if (!dd.program || !dd.exerciseChoices) continue;
+                    var changed = false;
+
+                    // Collect global choices only (no week prefix) — these apply to snapshots
+                    var globalChoices = {}; // prefix → targetOptId
+                    for (var rawKey in dd.exerciseChoices) {
+                        var chosenId = dd.exerciseChoices[rawKey];
+                        if (!chosenId || chosenId.indexOf('_opt') === -1) continue;
+                        if (rawKey.indexOf(':') !== -1) continue; // skip per-week choices
+                        var prefix = chosenId.substring(0, chosenId.indexOf('_opt'));
+                        // Only use global choice if no later per-week choice overrides it
+                        // (We fix all snapshots with global choice; per-week snap versions
+                        //  are typically set correctly by the user's explicit week actions.)
+                        globalChoices[prefix] = chosenId;
+                    }
+
+                    // Fix templateSnapshots
+                    var snaps = dd.program.templateSnapshots;
+                    if (!snaps) continue;
+                    for (var dayId in snaps) {
+                        var daySnaps = snaps[dayId];
+                        if (!Array.isArray(daySnaps)) continue;
+                        for (var si = 0; si < daySnaps.length; si++) {
+                            var snapGroups = daySnaps[si].groups;
+                            if (!snapGroups) continue;
+                            for (var gi2 = 0; gi2 < snapGroups.length; gi2++) {
+                                var g2 = snapGroups[gi2];
+                                if (g2.type !== 'single' || !g2.exercise || !g2.exercise.id) continue;
+                                var eid = g2.exercise.id;
+                                if (eid.indexOf('_opt') === -1) continue;
+                                var exPrefix = eid.substring(0, eid.indexOf('_opt'));
+                                var targetId = globalChoices[exPrefix];
+                                if (!targetId || targetId === eid) continue;
+                                // Need to replace this exercise with targetId
+                                var chosenEx = optionLookup[targetId];
+                                if (!chosenEx) {
+                                    // Not in original program (user-customized).
+                                    // Create synthetic object: copy current, change ID only.
+                                    chosenEx = JSON.parse(JSON.stringify(g2.exercise));
+                                    chosenEx.id = targetId;
+                                }
+                                g2.exercise = JSON.parse(JSON.stringify(chosenEx));
+                                changed = true;
+                            }
+                        }
+                    }
+
+                    if (changed) {
+                        dd._lastModified = Date.now();
+                        localStorage.setItem(keys[ki], JSON.stringify(dd));
+                    }
+                }
+            }
         }
     ]
 };
