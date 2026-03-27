@@ -252,10 +252,11 @@ export const SupaSync = {
                 var base = remoteTime > localTime ? remoteData : localData;
                 var other = base === remoteData ? localData : remoteData;
                 base.log = mergedLog;
-                // If program was modified independently, use the newer program
-                var progTimeRemote = remoteData._programModified || 0;
-                var progTimeLocal = localData._programModified || 0;
-                if (progTimeRemote && progTimeLocal && progTimeRemote !== progTimeLocal) {
+                // If program was modified independently, use the newer program.
+                // Fall back to _lastModified if _programModified not set on either side.
+                var progTimeRemote = remoteData._programModified || remoteTime;
+                var progTimeLocal = localData._programModified || localTime;
+                if (progTimeRemote !== progTimeLocal) {
                     var progSource = progTimeRemote > progTimeLocal ? remoteData : localData;
                     if (progSource !== base && progSource.program) {
                         base.program = JSON.parse(JSON.stringify(progSource.program));

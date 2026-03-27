@@ -99,10 +99,10 @@ export const App = {
                     });
                 }
                 // Pull fresh data from cloud after returning from background
-                // Debounce: skip if synced less than 30s ago
+                // Debounce: skip if synced less than 60s ago (init sync sets _lastVisSync)
                 var now = Date.now();
                 if (SupaSync._currentSupaUserId && SupaSync._currentStorageKey &&
-                    (!self._lastVisSync || now - self._lastVisSync > 30000)) {
+                    (!self._lastVisSync || now - self._lastVisSync > 60000)) {
                     self._lastVisSync = now;
                     SupaSync.syncOnLogin(
                         SupaSync._currentSupaUserId,
@@ -328,6 +328,7 @@ export const App = {
                 return;
             }
             // Background sync — re-render after merge to avoid stale UI
+            self._lastVisSync = Date.now(); // prevent visibilitychange from re-syncing immediately
             return SupaSync.syncOnLogin(supaUserId, 'wt_data_' + userId);
         }).then(function(result) {
             if (result === undefined) return; // session was expired, skip post-sync
