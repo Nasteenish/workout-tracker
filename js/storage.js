@@ -336,6 +336,7 @@ export const Storage = {
             data.settings.startDate = null;
         }
         data.program = programData;
+        data._programModified = Date.now();
         this._invalidateSiblingCache();
         this._save();
     },
@@ -421,6 +422,16 @@ export const Storage = {
         var sibs = this._getSiblingIds(exerciseId);
         for (var i = 0; i < sibs.length; i++) {
             data.exerciseEquipment[sibs[i]] = null;
+        }
+        // Propagate tombstone to gymEquipmentMap so applyGymEquipment won't resurrect
+        if (data.gymEquipmentMap) {
+            var allIds = [exerciseId].concat(sibs);
+            for (var gymId in data.gymEquipmentMap) {
+                var map = data.gymEquipmentMap[gymId];
+                for (var k = 0; k < allIds.length; k++) {
+                    if (allIds[k] in map) map[allIds[k]] = null;
+                }
+            }
         }
         this._save();
         // Also patch the rollback snapshot so pull-to-refresh doesn't undo this deletion

@@ -338,11 +338,22 @@ export const Builder = {
         var p = Storage.getProgram();
         if (!p || !p.dayTemplates[dayNum]) return null;
 
-        var dayTemplate = p.dayTemplates[dayNum];
+        // Use the same source as resolveWorkout: if current week is bound
+        // to a snapshot, read groups from that snapshot, not from live dayTemplates
+        var groups = p.dayTemplates[dayNum].exerciseGroups;
+        var cw = AppState.currentWeek;
+        var d = String(dayNum);
+        var version = p.weekTemplateVersion && p.weekTemplateVersion[cw]
+            && p.weekTemplateVersion[cw][d];
+        if (version && p.templateSnapshots && p.templateSnapshots[d]) {
+            var snap = p.templateSnapshots[d].find(function(s) { return s.version === version; });
+            if (snap) groups = snap.groups;
+        }
+
         var items = [];
 
-        for (var i = 0; i < dayTemplate.exerciseGroups.length; i++) {
-            var group = dayTemplate.exerciseGroups[i];
+        for (var i = 0; i < groups.length; i++) {
+            var group = groups[i];
             if (group.type === 'single' || group.type === 'warmup') {
                 var item = { type: group.type, exercise: this._extractExForEdit(group.exercise, dayNum) };
                 if (group.sectionTitle) item.sectionTitle = group.sectionTitle;

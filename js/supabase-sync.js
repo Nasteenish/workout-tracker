@@ -8,6 +8,67 @@ export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Initialize Supabase client (global `supabase` from CDN)
 export const supa = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
+// Normalize merged data: flatten any remaining choose_one groups into single exercises.
+// This handles the case where cloud data came from a device that hasn't run migration v10.
+function _flattenChooseOneInData(data) {
+    if (!data || !data.program) return;
+
+    function findBestChoice(choiceKey, choices) {
+        if (!choices || !choiceKey) return null;
+        var best = null, bestWeek = -1;
+        for (var ck in choices) {
+            var colonIdx = ck.indexOf(':');
+            var key = colonIdx !== -1 ? ck.substring(colonIdx + 1) : ck;
+            if (key !== choiceKey) continue;
+            var w = colonIdx !== -1 ? parseInt(ck) : 0;
+            if (w > bestWeek) { bestWeek = w; best = choices[ck]; }
+        }
+        return best;
+    }
+
+    function flattenGroups(groups, choices) {
+        if (!groups) return null;
+        var result = [], changed = false;
+        for (var gi = 0; gi < groups.length; gi++) {
+            var g = groups[gi];
+            if (g.type === 'choose_one' && g.options && g.options.length > 0) {
+                var bestId = findBestChoice(g.choiceKey, choices);
+                var chosen = bestId
+                    ? g.options.find(function(o) { return o.id === bestId; })
+                    : null;
+                if (!chosen) chosen = g.options[0];
+                var ng = { type: 'single', exercise: chosen };
+                if (g.sectionTitle) ng.sectionTitle = g.sectionTitle;
+                if (g.sectionTitleRu) ng.sectionTitleRu = g.sectionTitleRu;
+                result.push(ng);
+                changed = true;
+            } else {
+                result.push(g);
+            }
+        }
+        return changed ? result : null;
+    }
+
+    var dt = data.program.dayTemplates;
+    if (dt) {
+        for (var dayNum in dt) {
+            var ng = flattenGroups(dt[dayNum].exerciseGroups, data.exerciseChoices);
+            if (ng) dt[dayNum].exerciseGroups = ng;
+        }
+    }
+    var snaps = data.program.templateSnapshots;
+    if (snaps) {
+        for (var dayKey in snaps) {
+            var daySnaps = snaps[dayKey];
+            if (!Array.isArray(daySnaps)) continue;
+            for (var si = 0; si < daySnaps.length; si++) {
+                var ng2 = flattenGroups(daySnaps[si].groups, data.exerciseChoices);
+                if (ng2) daySnaps[si].groups = ng2;
+            }
+        }
+    }
+}
+
 export const SupaSync = {
     _saveTimer: null,
     _syncing: false,
@@ -160,6 +221,11 @@ export const SupaSync = {
     async syncOnLogin(supaUserId, localStorageKey) {
         if (!supa || this._syncing) return;
         this._syncing = true;
+        // Safety net: if sync hangs (e.g. TCP timeout), reset flag after 15s
+        var syncTimeout = setTimeout(function() {
+            SupaSync._syncing = false;
+            console.warn('Sync timeout — _syncing flag reset');
+        }, 15000);
         try {
             var remote = await this.pullData(supaUserId);
             var localRaw = localStorage.getItem(localStorageKey);
@@ -186,6 +252,16 @@ export const SupaSync = {
                 var base = remoteTime > localTime ? remoteData : localData;
                 var other = base === remoteData ? localData : remoteData;
                 base.log = mergedLog;
+                // If program was modified independently, use the newer program
+                var progTimeRemote = remoteData._programModified || 0;
+                var progTimeLocal = localData._programModified || 0;
+                if (progTimeRemote && progTimeLocal && progTimeRemote !== progTimeLocal) {
+                    var progSource = progTimeRemote > progTimeLocal ? remoteData : localData;
+                    if (progSource !== base && progSource.program) {
+                        base.program = JSON.parse(JSON.stringify(progSource.program));
+                        base._programModified = Math.max(progTimeRemote, progTimeLocal);
+                    }
+                }
                 // Merge exerciseChoices — keep all from both sides (prevents choice loss on sync)
                 if (other.exerciseChoices) {
                     if (!base.exerciseChoices) base.exerciseChoices = {};
@@ -202,16 +278,18 @@ export const SupaSync = {
                     if (!base.exerciseEquipment) base.exerciseEquipment = {};
                     if (other.exerciseEquipment) {
                         for (var ek in other.exerciseEquipment) {
-                            // If other has a real value and base doesn't — take other's
-                            if (other.exerciseEquipment[ek] && !base.exerciseEquipment[ek]) {
+                            // If other has a real value and base has no entry — take other's.
+                            // null = tombstone (user explicitly removed) — do NOT overwrite.
+                            if (other.exerciseEquipment[ek] && base.exerciseEquipment[ek] === undefined) {
                                 base.exerciseEquipment[ek] = other.exerciseEquipment[ek];
                             }
                         }
                     }
-                    // Also check base keys: if base has null but other has a value — take other's
+                    // Also check base keys: if base has no entry (undefined) but other has a value — take other's.
+                    // null = tombstone (user explicitly removed) — do NOT overwrite.
                     if (other.exerciseEquipment) {
                         for (var ek1 in base.exerciseEquipment) {
-                            if (!base.exerciseEquipment[ek1] && other.exerciseEquipment[ek1]) {
+                            if (base.exerciseEquipment[ek1] === undefined && other.exerciseEquipment[ek1]) {
                                 base.exerciseEquipment[ek1] = other.exerciseEquipment[ek1];
                             }
                         }
@@ -315,6 +393,8 @@ export const SupaSync = {
                 }
                 // Fix exercise names that remote may have reverted to old values
                 Migrations.migrateExerciseNames(base);
+                // Flatten any choose_one groups that came from a pre-v10 device
+                _flattenChooseOneInData(base);
                 // Clean up orphaned exerciseEquipment bindings (point to deleted equipment)
                 if (base.exerciseEquipment && base.equipment) {
                     var validEqIds = {};
@@ -337,6 +417,7 @@ export const SupaSync = {
         } catch (e) {
             console.error('Sync error:', e);
         } finally {
+            clearTimeout(syncTimeout);
             this._syncing = false;
         }
     },
@@ -368,3 +449,17 @@ export const SupaSync = {
         }
     }
 };
+
+// When device comes back online, push any offline changes via full sync
+window.addEventListener('online', function() {
+    if (SupaSync._currentSupaUserId && SupaSync._currentStorageKey) {
+        SupaSync.syncOnLogin(
+            SupaSync._currentSupaUserId,
+            SupaSync._currentStorageKey
+        ).then(function() {
+            if (Storage && Storage._data) Storage._data = null;
+        }).catch(function(e) {
+            console.error('Online sync error:', e);
+        });
+    }
+});
