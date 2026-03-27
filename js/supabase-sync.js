@@ -258,8 +258,19 @@ export const SupaSync = {
                 // Fall back to _lastModified if _programModified not set on either side.
                 // GUARD: never overwrite local program from cloud during active workout
                 // (prevents exercises from disappearing mid-training)
-                var _workoutActive = AppState.currentWeek && AppState.currentDay &&
-                    WorkoutTimer.isRunning(AppState.currentWeek, AppState.currentDay);
+                // Also protect recently finished workouts (timer stopped but still viewing)
+                var _workoutActive = false;
+                if (AppState.currentWeek && AppState.currentDay) {
+                    if (WorkoutTimer.isRunning(AppState.currentWeek, AppState.currentDay)) {
+                        _workoutActive = true;
+                    } else {
+                        // Check if current day has recent log entries (finished < 5 min ago)
+                        var _finTs = localData.log && localData.log[AppState.currentWeek] &&
+                            localData.log[AppState.currentWeek][AppState.currentDay] &&
+                            localData.log[AppState.currentWeek][AppState.currentDay]._finishedAt;
+                        if (_finTs && Date.now() - _finTs < 300000) _workoutActive = true;
+                    }
+                }
                 var progTimeRemote = remoteData._programModified || remoteTime;
                 var progTimeLocal = localData._programModified || localTime;
                 if (progTimeRemote !== progTimeLocal && !_workoutActive) {

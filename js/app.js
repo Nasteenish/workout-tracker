@@ -123,6 +123,20 @@ export const App = {
             }
         });
 
+        // Set AppState from URL hash BEFORE any sync/migrations can fire
+        // (sync and _unbindStaleSnapshots rely on AppState.currentWeek to protect active week)
+        const _initHash = location.hash || '';
+        const _initWeekMatch = _initHash.match(/#\/week\/(\d+)/);
+        if (_initWeekMatch) {
+            this._currentWeek = parseInt(_initWeekMatch[1]);
+            AppState.currentWeek = this._currentWeek;
+        }
+        const _initDayMatch = _initHash.match(/#\/week\/\d+\/day\/(\d+)/);
+        if (_initDayMatch) {
+            this._currentDay = parseInt(_initDayMatch[1]);
+            AppState.currentDay = this._currentDay;
+        }
+
         // Wire storage callbacks before any data loading
         Storage._migrateFn = (data) => Migrations.migrateExerciseNames(data);
         Storage._unbindFn = (data) => Migrations._unbindStaleSnapshots(data);
