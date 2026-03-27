@@ -109,8 +109,12 @@ tools/                  — Утилиты разработки: SQL, скрип
 | Новый маршрут в `App.route()` | `SwipeNav._getSwipeConfig()` |
 | `UI.renderWeek()` | `UI._weekCardsHTML()`, `_weekViewHTML()` — swipe companions |
 | `Builder._editingDay` | `Builder.renderDayEditor()`, `Builder._autoSave()` |
-| `Builder._snapshotIfChanged()` / `templateSnapshots` | `resolveWorkout()` (program-utils.js), `SupaSync.syncOnLogin()` (merge snapshots), `migrations.js` (_frozenGroups → snapshots) |
+| `Builder._snapshotIfChanged()` / `templateSnapshots` | `resolveWorkout()` (program-utils.js), `SupaSync.syncOnLogin()` (merge snapshots), `migrations.js` (_frozenGroups → snapshots), `Builder._buildDayEditorVM()` (должен читать из снэпшота, не из dayTemplates напрямую) |
 | `EquipmentManager.*` | `UI.showEquipmentModal()`, `WorkoutUI.handleModalClick` (eq handlers) |
+| `Storage.removeExerciseEquipment()` | `gymEquipmentMap` (должен записывать null tombstone в map, иначе `applyGymEquipment` воскресит привязку) |
+| `Storage.saveProgram()` | Ставит `_programModified = Date.now()`. Используется sync merge для независимого сравнения program timestamps |
+| `SupaSync.syncOnLogin()` merge | `_programModified` (программа), `_lastModified` (весь blob), tombstone `null` vs `undefined` в exerciseEquipment |
+| `exerciseSubstitutions` (variation picker) | `UI._buildExerciseVM()` резолвит English имя через EXERCISE_DB. data-attrs `EX_NAME`/`EX_NAME_RU` должны содержать resolved имена, не оригинальные из снэпшота |
 | `UI.renderDay()` (PTR async path) | `UI._onPTRSwap` callback → `InlineEditor.attachHandlers()`. Без этого обработчики не подключатся после pull-to-refresh |
 | `InlineEditor.attachHandlers()` | Вызывается в `route()` (синхронно) + `UI._onPTRSwap` (после async swap). Обе точки нужны |
 | `InlineEditor._initDragReorder()` (reorder mode) | `SwipeNav` touchstart (блок `_reorderMode`), `PullRefresh` (блок `_slotDragging`), `App._handleNavigationClick` (#btn-back перехват) |
@@ -254,7 +258,7 @@ Data: No storage changes
 
 5. **Свайп не работает**: Не добавлен конфиг в `SwipeNav._getSwipeConfig()`
 
-6. **Оборудование "воскресает"**: Sync перезаписывает. `null` = tombstone в `exerciseEquipment`
+6. **Оборудование "воскресает"**: Три причины: (a) sync merge использовал `!value` вместо `=== undefined` → tombstone null перезаписывался. (b) `applyGymEquipment` не проверял tombstone. (c) `removeExerciseEquipment` не обновлял `gymEquipmentMap`. Все три исправлены. `null` = tombstone, `undefined` = нет записи
 
 7. **Мерцание миниатюр**: Вызови `markCachedThumbs()` после innerHTML
 
@@ -283,3 +287,13 @@ Data: No storage changes
 13. **SwipeNav срабатывает в модальных режимах**: Добавляй `if (window._reorderMode) { cfg = null; return; }` в начале touchstart swipe-nav.js для блокировки свайп-навигации в модальных режимах
 
 14. **Мерцание картинок в пикере — ищи асинхронный re-render, не CSS**: Если картинки в пикере мигают, CSS (`opacity`, `transition`) — не главная причина. Первый вопрос: **что делает `innerHTML` замену после первого рендера?** Типичный паттерн-ловушка: асинхронный callback (например `Social.searchSharedExercises().then(...)`) заменяет весь `picker-list innerHTML` уже после открытия пикера — все `<img>` теги уничтожаются и пересоздаются. Решение: не делать полный re-render в async callback — вместо этого только добавлять/обновлять нужный DOM-узел через `appendChild` или точечный апдейт. Для пикера упражнений: `_sharedExercisesCache` заполняется асинхронно, shared-секция добавляется как отдельный `<div>` в конец списка, основной список не трогается.
+
+15. **Sync воскрешает удалённые упражнения / данные**: `syncOnLogin` берёт "base" по `_lastModified`. Если облако новее — программа из облака перезаписывает локальные изменения. Решения: (a) `_programModified` — отдельный timestamp для программы (ставится в `saveProgram()`). (b) `visibilitychange` sync не должен срабатывать сразу после init sync — ставь `_lastVisSync = Date.now()` при init. (c) `online` handler использует `syncOnLogin`, а не слепой push.
+
+16. **Substitution ломает оборудование и вариации**: `exerciseSubstitutions` хранит только русское имя. Если рендер передаёт в data-attrs оригинальное английское имя из снэпшота (например "Hip Thrust (Barbell)") — модалка оборудования видит "(Barbell)" → `isFreeWeight = true` → пустой список. **Решение**: `_buildExerciseVM` резолвит substitution через EXERCISE_DB → передаёт resolved `_attrName` / `_attrNameRu` в data-attrs. Все data-attrs `EX_NAME`/`EX_NAME_RU` должны содержать resolved имена.
+
+17. **`_buildDayEditorVM` должен читать из снэпшота, не из dayTemplates**: Inline editor (три точки) должен видеть те же упражнения что `resolveWorkout()`. Если читать из `dayTemplates` напрямую — editor работает с другим набором упражнений, `_snapshotIfChanged` видит разницу → unbind недели → галочки слетают. Всегда проверяй `weekTemplateVersion[week][day]` → `templateSnapshots[day][version].groups`.
+
+18. **Нельзя переназначать снэпшоты на версии с бо́льшим числом упражнений**: При data repair — если пользователь удалил упражнения из программы, orphaned log entries для этих упражнений **нормальны**. Переназначение на старый снэпшот (где упражнения ещё были) **воскрешает** удалённые упражнения. Orphaned логи безопасно игнорировать.
+
+19. **Tombstone `null` vs `undefined` — критичное различие в merge**: В `exerciseEquipment` и `gymEquipmentMap`: `null` = пользователь явно удалил привязку (tombstone, не трогать). `undefined` = записи нет (можно заполнить из другого источника). Используй `=== undefined` для проверки отсутствия, НЕ `!value` (falsy включает null).

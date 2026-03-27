@@ -239,7 +239,9 @@ Storage._data = {
   myGymIds: ["uuid-1"],        // dynamic — не в _defaultData()
   gymLastUsed: { "uuid-1": 1710000000 },  // dynamic
   gymEquipmentMap: { "uuid-1": { "D1E2": "eq_123" } },
-  weekSlots: [{ type: "day", dayNum: 1 }, { type: "rest" }, ...]  // dynamic
+  weekSlots: [{ type: "day", dayNum: 1 }, { type: "rest" }, ...],  // dynamic
+  _lastModified: 1710000000000,      // updated on every _save()
+  _programModified: 1710000000000    // updated only in saveProgram()
 }
 ```
 
@@ -280,11 +282,24 @@ PullRefresh → App.route(true)
 
 ```
 Login: SupaSync.syncOnLogin()
-  → pullData() → _deepMergeLogs(local, remote) [per-set, latest timestamp wins]
-  → merge exerciseChoices, exerciseEquipment (respect null tombstones)
+  → pullData()
+  → _deepMergeLogs(local, remote) [per-set, latest timestamp wins]
+  → merge exerciseChoices (union, no overwrite)
+  → merge exerciseEquipment (null = tombstone, undefined = absent)
+  → merge program (by _programModified, fallback to _lastModified)
+  → _flattenChooseOneInData() — normalize choose_one→single after merge
   → pushData()
 
-Continuous: Storage._save() → SupaSync.schedulePush() [debounced 3s]
+Continuous: Storage._save() → SupaSync.schedulePush() [debounced 3s, blind push]
+
+Background triggers:
+  → window 'online' event → syncOnLogin (reconnect after offline)
+  → visibilitychange 'visible' → syncOnLogin (debounced 60s, skips if init sync recent)
+  → syncOnLogin has _syncing guard + 15s timeout safety net
+
+Timestamps:
+  → _lastModified — updated on every _save(), used for overall blob comparison
+  → _programModified — updated only in saveProgram(), used for independent program merge
 ```
 
 ---
@@ -296,9 +311,15 @@ Continuous: Storage._save() → SupaSync.schedulePush() [debounced 3s]
 ```javascript
 { version, title, coach, athlete, totalWeeks,
   dayTemplates: { 1: { title, titleRu, exerciseGroups: [...] } },
-  weeklyOverrides: { 3: { 1: { "D1E2": { sets: { 0: { rpe: "10" } } } } } }
+  weeklyOverrides: { 3: { 1: { "D1E2": { sets: { 0: { rpe: "10" } } } } } },
+  templateSnapshots: { "1": [{ version: 1, groups: [...] }, { version: 2, groups: [...] }] },
+  weekTemplateVersion: { "1": { "1": 1, "2": 1 }, "5": { "1": 3 } }
 }
 ```
+
+**Инвариант снэпшотов**: `resolveWorkout(week, day)` проверяет `weekTemplateVersion[week][day]`. Если версия есть — берёт `templateSnapshots[day][version].groups`. Если нет — берёт `dayTemplates[day].exerciseGroups`. Все модули (UI, Builder, InlineEditor) должны читать из **того же источника** что resolveWorkout.
+
+**`_snapshotIfChanged()`** (builder.js): создаёт новый снэпшот при изменении fingerprint (структуры упражнений). Мелкие правки (сеты, повторения) не меняют fingerprint → `_clearCurrentWeekSnapshot` отвязывает неделю чтобы она пошла в dayTemplates с обновлёнными данными.
 
 ### ExerciseGroup (4 типа)
 
