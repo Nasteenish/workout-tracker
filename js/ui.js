@@ -826,7 +826,7 @@ export const UI = {
         const eqTrailing = `<span class="chooser-badge"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
         // Determine leg vs arm exercise for unilateral label; hide for abs/cardio
         const _legCategories = { glutes:1, hamstrings:1, quadriceps:1, calves:1, abductors:1, adductors:1 };
-        const _hideUniCategories = { abdominals:1, cardio:1, lower_back:1 };
+        const _hideUniCategories = { abdominals:1, cardio:1, lower_back:1, chest:1 };
         let _uniCat = ex.category || '';
         if (!_uniCat) {
             for (let _ci = 0; _ci < EXERCISE_DB.length; _ci++) {
