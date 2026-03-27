@@ -255,6 +255,18 @@ export const Migrations = {
             }
         });
 
+        // Also migrate exerciseSubstitutions — they store nameRu values
+        // that may reference old names, breaking the variation picker
+        var subs = data.exerciseSubstitutions;
+        if (subs) {
+            for (var subKey in subs) {
+                var oldVal = subs[subKey];
+                if (!oldVal) continue;
+                var mapped = _NAME_MAP[oldVal];
+                if (mapped) { subs[subKey] = mapped[1]; count++; }
+            }
+        }
+
         if (count > 0) console.log('Migrated ' + count + ' exercise names to Hevy DB standard');
         return count;
     },
@@ -589,6 +601,33 @@ export const Migrations = {
                         }
                     }
 
+                    if (changed) localStorage.setItem(keys[ki], JSON.stringify(dd));
+                }
+            }
+        },
+        // v9b: Fix exerciseSubstitutions — old substitution values may contain
+        // pre-migration names (e.g. "Жим на плечи (в тренажёре)") that don't match
+        // EXERCISE_DB → variation picker can't find variations → no chooser arrow.
+        {
+            key: '_fix_substitution_names_v1',
+            fn: function() {
+                var keys = Object.keys(localStorage);
+                for (var ki = 0; ki < keys.length; ki++) {
+                    if (keys[ki].indexOf('wt_data_') !== 0) continue;
+                    var dd;
+                    try { dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}'); } catch(e) { continue; }
+                    var subs = dd.exerciseSubstitutions;
+                    if (!subs) continue;
+                    var changed = false;
+                    for (var exId in subs) {
+                        var oldNameRu = subs[exId];
+                        if (!oldNameRu) continue;
+                        // Check if substitution nameRu matches a known old name in _NAME_MAP
+                        if (_NAME_MAP[oldNameRu]) {
+                            subs[exId] = _NAME_MAP[oldNameRu][1]; // new nameRu
+                            changed = true;
+                        }
+                    }
                     if (changed) localStorage.setItem(keys[ki], JSON.stringify(dd));
                 }
             }
