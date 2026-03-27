@@ -1,7 +1,7 @@
 /* ===== Data Migrations ===== */
 import { Storage } from './storage.js';
 import { EXERCISE_DB } from './exercises_db.js';
-import { getAllProgramExercises } from './utils.js';
+import { getAllProgramExercises, getGroupExercises } from './utils.js';
 import { MIKHAIL2_PROGRAM } from './mikhail2_data.js';
 import { MIKHAIL_PROGRAM } from './mikhail_data.js';
 
@@ -215,6 +215,22 @@ export const Migrations = {
         if (!data || !data.program) return 0;
         var count = 0;
         var allExercises = getAllProgramExercises(data.program).map(function(entry) { return entry.exercise; });
+        // Also collect exercises from templateSnapshots (not covered by getAllProgramExercises)
+        var snaps = data.program.templateSnapshots;
+        if (snaps) {
+            for (var dk in snaps) {
+                var daySnaps = snaps[dk];
+                if (!Array.isArray(daySnaps)) continue;
+                for (var si = 0; si < daySnaps.length; si++) {
+                    var sg = daySnaps[si].groups;
+                    if (!sg) continue;
+                    for (var gi = 0; gi < sg.length; gi++) {
+                        var sexs = getGroupExercises(sg[gi]);
+                        for (var ei = 0; ei < sexs.length; ei++) allExercises.push(sexs[ei]);
+                    }
+                }
+            }
+        }
         var dbRu = _getDbRuMap();
 
         allExercises.forEach(function(ex) {
