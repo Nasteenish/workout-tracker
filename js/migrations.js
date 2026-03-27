@@ -199,8 +199,100 @@ export const Migrations = {
                 }
             }
             if (changed) Storage._save();
+
+            // Also unbind stale snapshots for weeks without logs.
+            // This runs after every sync to prevent cloud from restoring old bindings.
+            this._unbindStaleSnapshots(d);
         } catch (e) {
             console.error('Log cleanup error:', e);
+        }
+    },
+
+    /**
+     * Unbind snapshot bindings that differ from dayTemplates for weeks without log data.
+     * Called after sync and during one-time migration.
+     */
+    _unbindStaleSnapshots(data) {
+        if (!data || !data.program) return;
+        var wtv = data.program.weekTemplateVersion;
+        var snaps = data.program.templateSnapshots;
+        var dt = data.program.dayTemplates;
+        var log = data.log;
+        if (!wtv || !dt) return;
+        var changed = false;
+
+        // Build dayTemplates exercise IDs per day
+        var dtIds = {};
+        for (var dayNum in dt) {
+            var ids = {};
+            var groups = (dt[dayNum] && dt[dayNum].exerciseGroups) || [];
+            for (var gi = 0; gi < groups.length; gi++) {
+                var g = groups[gi];
+                if (g.exercise && g.exercise.id) ids[g.exercise.id] = 1;
+                if (g.exercises) {
+                    for (var ei = 0; ei < g.exercises.length; ei++) {
+                        if (g.exercises[ei].id) ids[g.exercises[ei].id] = 1;
+                    }
+                }
+            }
+            dtIds[dayNum] = ids;
+        }
+
+        for (var w in wtv) {
+            for (var d in wtv[w]) {
+                // Check if this week/day has any exercise log data
+                var dayLog = (log && log[w] && log[w][d]) || {};
+                var hasExerciseLog = false;
+                for (var lk in dayLog) {
+                    if (lk.charAt(0) !== '_') { hasExerciseLog = true; break; }
+                }
+                if (hasExerciseLog) continue; // preserve snapshot for weeks with data
+
+                if (!snaps || !snaps[d]) continue;
+                var version = wtv[w][d];
+                var snap = null;
+                var snapArr = snaps[d];
+                if (Array.isArray(snapArr)) {
+                    for (var si = 0; si < snapArr.length; si++) {
+                        if (snapArr[si].version === version) { snap = snapArr[si]; break; }
+                    }
+                }
+                if (!snap) continue;
+
+                var snapIds = {};
+                var sg = snap.groups || [];
+                for (var sgi = 0; sgi < sg.length; sgi++) {
+                    var sg2 = sg[sgi];
+                    if (sg2.exercise && sg2.exercise.id) snapIds[sg2.exercise.id] = 1;
+                    if (sg2.exercises) {
+                        for (var sei = 0; sei < sg2.exercises.length; sei++) {
+                            if (sg2.exercises[sei].id) snapIds[sg2.exercises[sei].id] = 1;
+                        }
+                    }
+                }
+
+                var dtDay = dtIds[d] || {};
+                var needsUnbind = false;
+                for (var sid in snapIds) {
+                    if (!dtDay[sid]) { needsUnbind = true; break; }
+                }
+                if (!needsUnbind) {
+                    for (var did in dtDay) {
+                        if (!snapIds[did]) { needsUnbind = true; break; }
+                    }
+                }
+
+                if (needsUnbind) {
+                    delete wtv[w][d];
+                    changed = true;
+                    if (Object.keys(wtv[w]).length === 0) delete wtv[w];
+                }
+            }
+        }
+
+        if (changed) {
+            data._programModified = Date.now();
+            Storage._save();
         }
     },
 
