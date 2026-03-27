@@ -1135,6 +1135,107 @@ export const Migrations = {
                     }
                 }
             }
+        },
+        // v14: Deduplicate equipment — merge items with identical names into one canonical ID.
+        // Updates all references: equipment array, exerciseEquipment, exerciseEquipmentOptions,
+        // gymEquipmentMap, and log entries (equipmentId in saved sets).
+        {
+            key: '_dedup_equipment_v1',
+            fn: function() {
+                var keys = Object.keys(localStorage);
+                for (var ki = 0; ki < keys.length; ki++) {
+                    if (keys[ki].indexOf('wt_data_') !== 0) continue;
+                    var dd;
+                    try { dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}'); } catch(e) { continue; }
+                    var eqs = dd.equipment;
+                    if (!eqs || eqs.length === 0) continue;
+
+                    // Build name → canonical (first occurrence) + dupeIds
+                    var nameMap = {}; // name → { canonical: eq, dupeIds: [id, ...] }
+                    for (var i = 0; i < eqs.length; i++) {
+                        var n = eqs[i].name;
+                        if (!n) continue;
+                        if (!nameMap[n]) {
+                            nameMap[n] = { canonical: eqs[i], dupeIds: [] };
+                        } else {
+                            nameMap[n].dupeIds.push(eqs[i].id);
+                        }
+                    }
+
+                    // Build oldId → canonicalId remap
+                    var remap = {};
+                    var hasDupes = false;
+                    for (var name in nameMap) {
+                        var entry = nameMap[name];
+                        if (entry.dupeIds.length === 0) continue;
+                        hasDupes = true;
+                        for (var di = 0; di < entry.dupeIds.length; di++) {
+                            remap[entry.dupeIds[di]] = entry.canonical.id;
+                        }
+                    }
+                    if (!hasDupes) continue;
+
+                    // 1. Remove duplicate entries from equipment array
+                    dd.equipment = eqs.filter(function(e) { return !remap[e.id]; });
+
+                    // 2. Fix exerciseEquipment
+                    if (dd.exerciseEquipment) {
+                        for (var exId in dd.exerciseEquipment) {
+                            var v = dd.exerciseEquipment[exId];
+                            if (v && remap[v]) dd.exerciseEquipment[exId] = remap[v];
+                        }
+                    }
+
+                    // 3. Fix exerciseEquipmentOptions (arrays of IDs, deduplicate after remap)
+                    if (dd.exerciseEquipmentOptions) {
+                        for (var exId2 in dd.exerciseEquipmentOptions) {
+                            var opts = dd.exerciseEquipmentOptions[exId2];
+                            if (!opts || !opts.length) continue;
+                            var seen = {};
+                            var newOpts = [];
+                            for (var oi = 0; oi < opts.length; oi++) {
+                                var mapped = remap[opts[oi]] || opts[oi];
+                                if (!seen[mapped]) { seen[mapped] = true; newOpts.push(mapped); }
+                            }
+                            dd.exerciseEquipmentOptions[exId2] = newOpts;
+                        }
+                    }
+
+                    // 4. Fix gymEquipmentMap
+                    if (dd.gymEquipmentMap) {
+                        for (var gymId in dd.gymEquipmentMap) {
+                            var map = dd.gymEquipmentMap[gymId];
+                            for (var mk in map) {
+                                if (map[mk] && remap[map[mk]]) map[mk] = remap[map[mk]];
+                            }
+                        }
+                    }
+
+                    // 5. Fix equipmentId in log entries
+                    if (dd.log) {
+                        for (var w in dd.log) {
+                            for (var d in dd.log[w]) {
+                                var dayLog = dd.log[w][d];
+                                for (var ek in dayLog) {
+                                    if (ek.charAt(0) === '_') continue;
+                                    var exLog = dayLog[ek];
+                                    if (typeof exLog !== 'object' || exLog === null) continue;
+                                    for (var si in exLog) {
+                                        var setData = exLog[si];
+                                        if (setData && setData.equipmentId && remap[setData.equipmentId]) {
+                                            setData.equipmentId = remap[setData.equipmentId];
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    dd._lastModified = Date.now();
+                    localStorage.setItem(keys[ki], JSON.stringify(dd));
+                    console.log('Equipment dedup: remapped', Object.keys(remap).length, 'duplicate IDs');
+                }
+            }
         }
     ]
 };
