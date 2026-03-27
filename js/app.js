@@ -125,6 +125,7 @@ export const App = {
 
         // Wire storage callbacks before any data loading
         Storage._migrateFn = (data) => Migrations.migrateExerciseNames(data);
+        Storage._unbindFn = (data) => Migrations._unbindStaleSnapshots(data);
 
         // Run one-time data migrations (see js/migrations.js)
         Migrations.run();

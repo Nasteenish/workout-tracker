@@ -114,6 +114,11 @@ export const Storage = {
                 var migrated = this._migrateFn(this._data);
                 if (migrated > 0) this._save();
             }
+            // Unbind stale snapshots on every load — prevents sync from
+            // restoring deleted exercises via old snapshot bindings.
+            if (this._unbindFn) {
+                this._unbindFn(this._data);
+            }
         } catch (e) {
             console.error('Storage load error:', e);
             this._data = this._defaultData();
