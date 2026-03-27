@@ -80,6 +80,18 @@ export const Analytics = {
             }
         }
 
+        // Debug: log PR check details
+        console.log('[PR check]', {
+            exerciseId, weight, reps, currentWeek, currentDay,
+            equipmentId,
+            current1RM,
+            prevBest1RM,
+            historyEntries: history.filter(e => !(e.week === currentWeek && e.day === currentDay)).map(e => ({
+                week: e.week, day: e.day,
+                sets: e.sets.map(s => ({ w: s.weight, r: s.reps, eq: s.equipmentId, match: this._matchesEquipment(s.equipmentId, equipmentId) }))
+            }))
+        });
+
         // Need at least one previous session on same equipment to compare
         if (prevBest1RM === 0) return null;
 
