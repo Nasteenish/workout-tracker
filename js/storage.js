@@ -999,8 +999,6 @@ export const Storage = {
                         if (!sibSetLog || !sibSetLog.completed) continue;
                     }
                     var log = this.getSetLog(w, sib.day, sibId, setIdx);
-                    // Fallback to bilateral sibling if no unilateral log found
-                    if (!log && sibId !== sib.id) log = this.getSetLog(w, sib.day, sib.id, setIdx);
                     if (log && log.completed && log.timestamp > bestTime) {
                         sibResult = log;
                         bestTime = log.timestamp;
