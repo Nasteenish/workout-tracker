@@ -2,6 +2,8 @@
 import { Storage } from './storage.js';
 import { EXERCISE_DB } from './exercises_db.js';
 import { getAllProgramExercises } from './utils.js';
+import { MIKHAIL2_PROGRAM } from './mikhail2_data.js';
+import { MIKHAIL_PROGRAM } from './mikhail_data.js';
 
 // Consolidated name migration map: oldName → [newName, newNameRu]
 // Merged from MAP (English old names) + RU_MAP (Russian old names)
@@ -640,6 +642,88 @@ export const Migrations = {
                             for (var si = 0; si < daySnaps.length; si++) {
                                 var ng2 = flattenGroups(daySnaps[si].groups);
                                 if (ng2) { daySnaps[si].groups = ng2; changed = true; }
+                            }
+                        }
+                    }
+
+                    if (changed) {
+                        dd._lastModified = Date.now();
+                        localStorage.setItem(keys[ki], JSON.stringify(dd));
+                    }
+                }
+            }
+        },
+        // v11: Fix v10 regression — v10 always picked opt1 but users had specific options chosen.
+        // Restore the correct exercise in each template slot using exerciseChoices.
+        {
+            key: '_fix_choose_one_selection_v1',
+            fn: function() {
+                // Build lookup: exerciseId → full exercise object, from original program data
+                var optionLookup = {};
+                function indexOptions(program) {
+                    if (!program || !program.dayTemplates) return;
+                    for (var d in program.dayTemplates) {
+                        var groups = (program.dayTemplates[d] && program.dayTemplates[d].exerciseGroups) || [];
+                        for (var gi = 0; gi < groups.length; gi++) {
+                            var g = groups[gi];
+                            if (g.type === 'choose_one' && g.options) {
+                                for (var oi = 0; oi < g.options.length; oi++) {
+                                    if (g.options[oi].id) optionLookup[g.options[oi].id] = g.options[oi];
+                                }
+                            }
+                        }
+                    }
+                }
+                indexOptions(MIKHAIL2_PROGRAM);
+                indexOptions(MIKHAIL_PROGRAM);
+
+                var keys = Object.keys(localStorage);
+                for (var ki = 0; ki < keys.length; ki++) {
+                    if (keys[ki].indexOf('wt_data_') !== 0) continue;
+                    var dd;
+                    try { dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}'); } catch(e) { continue; }
+                    if (!dd.program || !dd.exerciseChoices) continue;
+                    var changed = false;
+
+                    // For each choiceKey, find the most recently chosen option:
+                    // prefer highest per-week choice (week:key) over global (key).
+                    var bestChoice = {}; // choiceKey → chosen exerciseId
+                    for (var rawKey in dd.exerciseChoices) {
+                        var chosenId = dd.exerciseChoices[rawKey];
+                        if (!chosenId || chosenId.indexOf('_opt') === -1) continue;
+                        var colonIdx = rawKey.indexOf(':');
+                        if (colonIdx !== -1) {
+                            // Per-week choice: "week:choiceKey"
+                            var week = parseInt(rawKey.substring(0, colonIdx), 10);
+                            var ck = rawKey.substring(colonIdx + 1);
+                            if (!bestChoice[ck] || (bestChoice[ck].week !== undefined && week > bestChoice[ck].week)) {
+                                bestChoice[ck] = { id: chosenId, week: week };
+                            }
+                        } else {
+                            // Global choice
+                            if (!bestChoice[rawKey]) bestChoice[rawKey] = { id: chosenId };
+                        }
+                    }
+
+                    // For each best choice, fix the dayTemplates slot
+                    for (var ck2 in bestChoice) {
+                        var targetId = bestChoice[ck2].id;
+                        var chosenEx = optionLookup[targetId];
+                        if (!chosenEx) continue;
+                        // Find the prefix (e.g. "D3E4" from "D3E4_opt2")
+                        var prefix = targetId.substring(0, targetId.indexOf('_opt'));
+                        var dt = dd.program.dayTemplates;
+                        if (!dt) continue;
+                        for (var dayNum in dt) {
+                            var groups = dt[dayNum].exerciseGroups || [];
+                            for (var gi2 = 0; gi2 < groups.length; gi2++) {
+                                var g2 = groups[gi2];
+                                if (g2.type === 'single' && g2.exercise && g2.exercise.id &&
+                                    g2.exercise.id !== targetId &&
+                                    g2.exercise.id.indexOf(prefix + '_opt') === 0) {
+                                    g2.exercise = JSON.parse(JSON.stringify(chosenEx));
+                                    changed = true;
+                                }
                             }
                         }
                     }
