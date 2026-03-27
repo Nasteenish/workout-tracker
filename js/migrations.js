@@ -574,6 +574,79 @@ export const Migrations = {
                     if (changed) localStorage.setItem(keys[ki], JSON.stringify(dd));
                 }
             }
+        },
+        // v10: Flatten choose_one groups → individual single exercises.
+        // choose_one is redundant — the DB-based variation picker (showVariationModal) already
+        // handles switching between exercise variants. Each choose_one slot becomes one single
+        // exercise: the first option that is NOT a single-arm variation.
+        {
+            key: '_flatten_choose_one_v1',
+            fn: function() {
+                function isSingleArm(ex) {
+                    var n = (ex.nameRu || '') + ' ' + (ex.name || '');
+                    return /одной рукой|single arm/i.test(n);
+                }
+
+                function pickOption(options) {
+                    if (!options || !options.length) return null;
+                    for (var i = 0; i < options.length; i++) {
+                        if (!isSingleArm(options[i])) return options[i];
+                    }
+                    return options[0]; // fallback — all are single-arm
+                }
+
+                function flattenGroups(groups) {
+                    if (!groups) return null;
+                    var result = [];
+                    var changed = false;
+                    for (var gi = 0; gi < groups.length; gi++) {
+                        var g = groups[gi];
+                        if (g.type === 'choose_one' && g.options && g.options.length > 0) {
+                            var chosen = pickOption(g.options);
+                            if (!chosen) { result.push(g); continue; }
+                            var ng = { type: 'single', exercise: chosen };
+                            if (g.sectionTitle) ng.sectionTitle = g.sectionTitle;
+                            if (g.sectionTitleRu) ng.sectionTitleRu = g.sectionTitleRu;
+                            result.push(ng);
+                            changed = true;
+                        } else {
+                            result.push(g);
+                        }
+                    }
+                    return changed ? result : null;
+                }
+
+                var keys = Object.keys(localStorage);
+                for (var ki = 0; ki < keys.length; ki++) {
+                    if (keys[ki].indexOf('wt_data_') !== 0) continue;
+                    var dd;
+                    try { dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}'); } catch(e) { continue; }
+                    if (!dd.program) continue;
+                    var changed = false;
+
+                    var dt = dd.program.dayTemplates;
+                    if (dt) {
+                        for (var dayNum in dt) {
+                            var ng = flattenGroups(dt[dayNum].exerciseGroups);
+                            if (ng) { dt[dayNum].exerciseGroups = ng; changed = true; }
+                        }
+                    }
+
+                    var snaps = dd.program.templateSnapshots;
+                    if (snaps) {
+                        for (var dayKey in snaps) {
+                            var daySnaps = snaps[dayKey];
+                            if (!Array.isArray(daySnaps)) continue;
+                            for (var si = 0; si < daySnaps.length; si++) {
+                                var ng2 = flattenGroups(daySnaps[si].groups);
+                                if (ng2) { daySnaps[si].groups = ng2; changed = true; }
+                            }
+                        }
+                    }
+
+                    if (changed) localStorage.setItem(keys[ki], JSON.stringify(dd));
+                }
+            }
         }
     ]
 };
