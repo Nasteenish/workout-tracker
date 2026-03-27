@@ -1116,6 +1116,25 @@ export const Migrations = {
                     }
                 }
             }
+        },
+        // v14: Clear false unilateral flags.
+        // Some exercises had unilateralMode=true from corrupted data/sync.
+        // User never set them manually. Reset all to start fresh.
+        {
+            key: '_clear_false_unilateral_v1',
+            fn: function() {
+                var keys = Object.keys(localStorage);
+                for (var ki = 0; ki < keys.length; ki++) {
+                    if (keys[ki].indexOf('wt_data_') !== 0) continue;
+                    var dd;
+                    try { dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}'); } catch(e) { continue; }
+                    if (dd.unilateralMode && Object.keys(dd.unilateralMode).length > 0) {
+                        dd.unilateralMode = {};
+                        dd._lastModified = Date.now();
+                        localStorage.setItem(keys[ki], JSON.stringify(dd));
+                    }
+                }
+            }
         }
     ]
 };

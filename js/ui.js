@@ -824,8 +824,9 @@ export const UI = {
 
         const eqThumb = eqImageUrl ? '<img class="ex-thumb eq-badge-thumb" src="' + esc(eqImageUrl) + '" loading="lazy" onerror="this.style.display=\'none\'">' : '';
         const eqTrailing = `<span class="chooser-badge"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
-        // Determine leg vs arm exercise for unilateral label
+        // Determine leg vs arm exercise for unilateral label; hide for abs/cardio
         const _legCategories = { glutes:1, hamstrings:1, quadriceps:1, calves:1, abductors:1, adductors:1 };
+        const _hideUniCategories = { abdominals:1, cardio:1, lower_back:1 };
         let _uniCat = ex.category || '';
         if (!_uniCat) {
             for (let _ci = 0; _ci < EXERCISE_DB.length; _ci++) {
@@ -835,8 +836,9 @@ export const UI = {
             }
         }
         const _isLeg = !!_legCategories[_uniCat];
+        const _hideUni = !!_hideUniCategories[_uniCat];
         const _uniLabel = _isLeg ? 'По одной ноге' : 'По одной руке';
-        const uniToggleHtml = `<button class="uni-btn${isUnilateral ? ' on' : ''}" ${attr(WORKOUT.EXERCISE, ex.id)} data-uni-leg="${_isLeg ? '1' : '0'}">${_uniLabel}${isUnilateral ? ' ✓' : ''}</button>`;
+        const uniToggleHtml = _hideUni ? '' : `<button class="uni-btn${isUnilateral ? ' on' : ''}" ${attr(WORKOUT.EXERCISE, ex.id)} data-uni-leg="${_isLeg ? '1' : '0'}">${_uniLabel}${isUnilateral ? ' ✓' : ''}</button>`;
         const eqHtml = `
             <div class="equipment-row">
                 <button class="equipment-btn" ${attr(WORKOUT.EXERCISE, ex.id)} ${attr(WORKOUT.EX_NAME, esc(_attrName))} ${attr(WORKOUT.EX_NAME_RU, esc(_attrNameRu))}>
@@ -935,16 +937,18 @@ export const UI = {
             repsVal: log && log.reps ? log.reps : '',
             unitLabel,
             prev, prevUnitLabel,
-            weightSegCount, segCount, segs
+            weightSegCount, segCount, segs,
+            isUnilateral: Storage.getUnilateral(ex.id)
         };
     },
 
     // Pure HTML rendering from pre-computed view-model
     _renderSetRow(vm) {
         const { exId, setIdx, set, isCompleted, weightVal, repsVal,
-                unitLabel, prev, prevUnitLabel, weightSegCount, segCount, segs } = vm;
+                unitLabel, prev, prevUnitLabel, weightSegCount, segCount, segs, isUnilateral } = vm;
 
-        const prevText = prev ? `пред: ${prev.weight}<span class="set-prev-unit" ${attr(WORKOUT.EXERCISE, exId)}>${prevUnitLabel}</span> x ${prev.reps}` : '';
+        const uniHint = isUnilateral ? ' <span class="uni-hint">(на сторону)</span>' : '';
+        const prevText = prev ? `пред: ${prev.weight}<span class="set-prev-unit" ${attr(WORKOUT.EXERCISE, exId)}>${prevUnitLabel}</span> x ${prev.reps}${uniHint}` : '';
 
         // Type badge
         const typeClass = `type-${set.type}`;
