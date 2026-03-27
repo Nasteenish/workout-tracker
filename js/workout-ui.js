@@ -174,10 +174,13 @@ export const WorkoutUI = {
                 const newState = !current;
                 Storage.setUnilateral(exId, newState);
                 // Update button text and style
-                toggle.textContent = newState ? 'На сторону ✓' : 'На сторону';
+                const isLeg = toggle.getAttribute('data-uni-leg') === '1';
+                const label = isLeg ? 'По одной ноге' : 'По одной руке';
+                toggle.textContent = newState ? label + ' ✓' : label;
                 toggle.classList.toggle('on', newState);
                 // Toast feedback
-                showToast(newState ? 'Вес считается на каждую сторону' : 'Вес считается суммарно');
+                const part = isLeg ? 'ногу' : 'руку';
+                showToast(newState ? 'Вес на каждую ' + part + ' отдельно' : 'Вес считается суммарно');
                 // Re-render set rows for this exercise to update "пред:" and values
                 const card = toggle.closest('.exercise-card');
                 if (card) {
