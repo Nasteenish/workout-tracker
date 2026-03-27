@@ -367,6 +367,9 @@ export const Storage = {
 
     addEquipment(name, type, imageUrl) {
         var data = this._load();
+        // Prevent duplicates — return existing ID if same name already exists
+        var existing = data.equipment.find(function(e) { return e.name === name; });
+        if (existing) return existing.id;
         var id = 'eq_' + Date.now();
         var eq = { id: id, name: name, type: type || 'other' };
         if (imageUrl) eq.imageUrl = imageUrl;
