@@ -212,8 +212,14 @@ Celebration._onShareCheckin = (data) => { this._pendingCheckinWorkout = data; };
 
 **Версионирование:**
 - `css/styles.css?v=NNN` в index.html — инкрементировать при изменении CSS/JS
-- `CACHE_NAME` в sw.js — инкрементировать при любом изменении файлов
+- `CACHE_NAME` в sw.js — **автоматически** бампится pre-commit хуком при изменении .js/.css файлов
 - Новые файлы → добавить в `ASSETS` массив sw.js
+
+**Автоматическая миграция имён упражнений:**
+- При переименовании `nameRu` в `exercises_db.js` — программа автоматически обновляется при загрузке
+- Механизм: `migrateExerciseNames()` сверяет English name (стабильный) → если `nameRu` отличается от DB → обновляет
+- **НЕ нужно** добавлять в `_NAME_MAP` вручную, если English name не менялся
+- `_NAME_MAP` нужен только когда меняется **English name** (редко)
 
 ### 6. После каждого изменения
 

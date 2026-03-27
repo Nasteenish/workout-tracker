@@ -824,7 +824,7 @@ export const UI = {
 
         const eqThumb = eqImageUrl ? '<img class="ex-thumb eq-badge-thumb" src="' + esc(eqImageUrl) + '" loading="lazy" onerror="this.style.display=\'none\'">' : '';
         const eqTrailing = `<span class="chooser-badge"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
-        const uniToggleHtml = `<label class="uni-toggle" ${attr(WORKOUT.EXERCISE, ex.id)}><span class="uni-toggle-label">\u041F\u043E\u043E\u0447\u0435\u0440\u0451\u0434\u043D\u043E</span><span class="uni-switch ${isUnilateral ? 'on' : ''}"><span class="uni-knob"></span></span></label>`;
+        const uniToggleHtml = `<button class="uni-btn${isUnilateral ? ' on' : ''}" ${attr(WORKOUT.EXERCISE, ex.id)}>${isUnilateral ? 'Л \u2192 П' : '\u041F\u043E\u043E\u0447\u0435\u0440\u0451\u0434\u043D\u043E'}</button>`;
         const eqHtml = `
             <div class="equipment-row">
                 <button class="equipment-btn" ${attr(WORKOUT.EXERCISE, ex.id)} ${attr(WORKOUT.EX_NAME, esc(_attrName))} ${attr(WORKOUT.EX_NAME_RU, esc(_attrNameRu))}>

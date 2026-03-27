@@ -488,7 +488,7 @@
 .drag-compact .btn-remove-set,
 .drag-compact [class*="set-"],
 .drag-compact .exercise-note,
-.drag-compact .uni-toggle,
+.drag-compact .uni-btn,
 .drag-compact .chooser-badge {
     display: none !important;
 }

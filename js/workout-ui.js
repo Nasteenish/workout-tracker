@@ -165,16 +165,17 @@ export const WorkoutUI = {
             return true;
         }}
 
-        // Unilateral toggle — toggle state + re-render set rows for this exercise
-        {const toggle = target.closest('.uni-toggle');
+        // Unilateral button-badge — toggle state + re-render set rows
+        {const toggle = target.closest('.uni-btn');
         if (toggle) {
             const exId = read(toggle, WORKOUT.EXERCISE);
             if (exId) {
                 const current = Storage.getUnilateral(exId);
-                Storage.setUnilateral(exId, !current);
-                // Toggle switch visually
-                const sw = toggle.querySelector('.uni-switch');
-                if (sw) sw.classList.toggle('on', !current);
+                const newState = !current;
+                Storage.setUnilateral(exId, newState);
+                // Update button text and style
+                toggle.textContent = newState ? 'Л \u2192 П' : '\u041F\u043E\u043E\u0447\u0435\u0440\u0451\u0434\u043D\u043E';
+                toggle.classList.toggle('on', newState);
                 // Re-render set rows for this exercise to update "пред:" and values
                 const card = toggle.closest('.exercise-card');
                 if (card) {
