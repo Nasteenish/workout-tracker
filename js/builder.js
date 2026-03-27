@@ -350,12 +350,16 @@ export const Builder = {
             if (snap) groups = snap.groups;
         }
 
+        // Apply weeklyOverrides (same as resolveWorkout) so editor sees DROP/R-P/etc.
+        var dayOverrides = p.weeklyOverrides && p.weeklyOverrides[cw]
+            && p.weeklyOverrides[cw][d];
+
         var items = [];
 
         for (var i = 0; i < groups.length; i++) {
             var group = groups[i];
             if (group.type === 'single' || group.type === 'warmup') {
-                var item = { type: group.type, exercise: this._extractExForEdit(group.exercise, dayNum) };
+                var item = { type: group.type, exercise: this._extractExForEdit(group.exercise, dayNum, dayOverrides) };
                 if (group.sectionTitle) item.sectionTitle = group.sectionTitle;
                 if (group.sectionTitleRu) item.sectionTitleRu = group.sectionTitleRu;
                 items.push(item);
@@ -366,9 +370,9 @@ export const Builder = {
                     if (e._chooseOne && e.options) {
                         var chosenId = Storage.getChoice(e.choiceKey);
                         var chosen = chosenId ? e.options.find(function(o) { return o.id === chosenId; }) : null;
-                        exs.push(this._extractExForEdit(chosen || e.options[0], dayNum));
+                        exs.push(this._extractExForEdit(chosen || e.options[0], dayNum, dayOverrides));
                     } else {
-                        exs.push(this._extractExForEdit(e, dayNum));
+                        exs.push(this._extractExForEdit(e, dayNum, dayOverrides));
                     }
                 }
                 var ssItem = { type: 'superset', exercises: exs };
@@ -378,7 +382,7 @@ export const Builder = {
             } else if (group.type === 'choose_one' && group.options) {
                 var opts = [];
                 for (var j = 0; j < group.options.length; j++) {
-                    opts.push(this._extractExForEdit(group.options[j], dayNum));
+                    opts.push(this._extractExForEdit(group.options[j], dayNum, dayOverrides));
                 }
                 var coItem = { type: 'choose_one', choiceKey: group.choiceKey || ('c_' + Date.now()), options: opts };
                 if (group.sectionTitle) coItem.sectionTitle = group.sectionTitle;
@@ -401,13 +405,22 @@ export const Builder = {
         this._renderDayEditorHTML();
     },
 
-    _extractExForEdit(e, dayNum) {
+    _extractExForEdit(e, dayNum, dayOverrides) {
         if (!e) return { nameRu: '?', name: '?', reps: '8-12', rest: 120, sets: [], _id: '', note: '', noteRu: '', progression: [] };
+        var sets = JSON.parse(JSON.stringify(e.sets || []));
+        // Apply weeklyOverrides for current week so editor sees DROP/R-P/etc.
+        if (dayOverrides && e.id && dayOverrides[e.id] && dayOverrides[e.id].sets) {
+            var setsOver = dayOverrides[e.id].sets;
+            for (var si in setsOver) {
+                var idx = parseInt(si);
+                if (sets[idx]) Object.assign(sets[idx], setsOver[si]);
+            }
+        }
         return {
             nameRu: e.nameRu || e.name, name: e.name || e.nameRu,
             reps: e.reps, rest: e.rest,
             note: e.note || '', noteRu: e.noteRu || '',
-            sets: JSON.parse(JSON.stringify(e.sets || [])),
+            sets: sets,
             _id: e.id,
             progression: e.progression ? JSON.parse(JSON.stringify(e.progression)) : this._extractProgression(dayNum, e.id)
         };

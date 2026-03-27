@@ -893,9 +893,25 @@ export const InlineEditor = {
         this._menuCtx = null;
         this._onAutoSave(ed);
         this._clearCurrentWeekSnapshot(ed.dayNum);
+        // Clear weeklyOverrides for current week/day so edited techniques
+        // (DROP/R-P/MP) take effect from dayTemplates, not from stale overrides
+        this._clearWeeklyOverrides(ed.dayNum);
         this._closeSheet();
         this._onInvalidateCache();
         this._onRenderDay();
+    },
+
+    _clearWeeklyOverrides(dayNum) {
+        var p = Storage.getProgram();
+        var cw = AppState.currentWeek;
+        var dayStr = String(dayNum);
+        if (p && p.weeklyOverrides && p.weeklyOverrides[cw] && p.weeklyOverrides[cw][dayStr]) {
+            delete p.weeklyOverrides[cw][dayStr];
+            if (Object.keys(p.weeklyOverrides[cw]).length === 0) {
+                delete p.weeklyOverrides[cw];
+            }
+            Storage.saveProgram(p, false);
+        }
     },
 
     _clearCurrentWeekSnapshot(dayNum) {
