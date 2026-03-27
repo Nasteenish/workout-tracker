@@ -461,7 +461,7 @@ export const SupaSync = {
 
 // When device comes back online, push any offline changes via full sync
 window.addEventListener('online', function() {
-    if (SupaSync._currentSupaUserId && SupaSync._currentStorageKey) {
+    if (SupaSync._currentSupaUserId && SupaSync._currentStorageKey && !SupaSync._syncing) {
         SupaSync.syncOnLogin(
             SupaSync._currentSupaUserId,
             SupaSync._currentStorageKey

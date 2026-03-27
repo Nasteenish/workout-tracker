@@ -4,6 +4,7 @@ import { EXERCISE_DB } from './exercises_db.js';
 import { getAllProgramExercises, getGroupExercises } from './utils.js';
 import { MIKHAIL2_PROGRAM } from './mikhail2_data.js';
 import { MIKHAIL_PROGRAM } from './mikhail_data.js';
+import { AppState } from './app-state.js';
 
 // Consolidated name migration map: oldName → [newName, newNameRu]
 // Merged from MAP (English old names) + RU_MAP (Russian old names)
@@ -226,6 +227,8 @@ export const Migrations = {
         var log = data.log;
         if (!wtv || !dt) return;
         var changed = false;
+        // Never touch current week — it always uses live template
+        var _currentWeek = (typeof AppState !== 'undefined' && AppState.currentWeek) ? String(AppState.currentWeek) : null;
 
         // Build dayTemplates exercise IDs per day
         var dtIds = {};
@@ -245,6 +248,8 @@ export const Migrations = {
         }
 
         for (var w in wtv) {
+            // Skip current week — always uses live template
+            if (_currentWeek && w === _currentWeek) continue;
             for (var d in wtv[w]) {
                 // Check if this week/day has any exercise log data
                 var dayLog = (log && log[w] && log[w][d]) || {};
