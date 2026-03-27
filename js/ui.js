@@ -1179,19 +1179,20 @@ export const UI = {
         const stats = Analytics.getWeekStats(weekNum);
         const streak = Analytics.getStreak();
         const comparison = Analytics.getWeekComparison(weekNum);
+        const duration = Analytics.getAvgWorkoutDuration(weekNum);
         const hasTabBar = SocialUI && Social._hasSupaAuth();
 
         return {
             weekNum, totalWeeks, muscleVolume,
             tonnage, tonnagePct, tonnageByWeek,
-            completedSets, stats, streak, comparison, hasTabBar
+            completedSets, stats, streak, comparison, duration, hasTabBar
         };
     },
 
     renderAnalytics(weekNum) {
         const vm = this._buildAnalyticsVM(weekNum);
         const { totalWeeks, muscleVolume, tonnage, tonnagePct, tonnageByWeek,
-                completedSets, stats, streak, comparison, hasTabBar } = vm;
+                completedSets, stats, streak, comparison, duration, hasTabBar } = vm;
 
         // Tonnage card with sparkline
         let sparklineHtml = '';
@@ -1282,8 +1283,16 @@ export const UI = {
                         <div class="mini-label">тренировок</div>
                     </div>
                     <div class="analytics-mini-card">
+                        <div class="mini-value">${duration ? duration.avg + ' мин' : '—'}</div>
+                        <div class="mini-label">среднее время${duration ? `<br><span class="mini-sub">${duration.count} тренир.</span>` : ''}</div>
+                    </div>
+                    <div class="analytics-mini-card">
                         <div class="mini-value">${streakText}</div>
                         <div class="mini-label">\ud83d\udd25 серия нед.${streakBest ? `<br><span class="mini-sub">${streakBest}</span>` : ''}</div>
+                    </div>
+                    <div class="analytics-mini-card">
+                        <div class="mini-value">${completedSets}</div>
+                        <div class="mini-label">подходов</div>
                     </div>
                 </div>
 

@@ -404,6 +404,45 @@ export const Analytics = {
             .sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct));
     },
 
+    // ===== Dashboard: Average workout duration for a week =====
+    getAvgWorkoutDuration(weekNum) {
+        const totalDays = getTotalDays();
+        const durations = [];
+
+        for (let day = 1; day <= totalDays; day++) {
+            const data = Storage._load();
+            const w = String(weekNum), d = String(day);
+            if (!data.log[w] || !data.log[w][d]) continue;
+
+            const finishedAt = data.log[w][d]._finishedAt;
+            if (!finishedAt) continue;
+
+            // Find earliest completed set timestamp
+            let minTs = Infinity;
+            for (const exId of Object.keys(data.log[w][d])) {
+                if (exId.charAt(0) === '_') continue;
+                const exData = data.log[w][d][exId];
+                if (typeof exData !== 'object' || exData === null) continue;
+                for (const setData of Object.values(exData)) {
+                    if (setData && setData.completed && setData.timestamp && setData.timestamp < minTs) {
+                        minTs = setData.timestamp;
+                    }
+                }
+            }
+
+            if (minTs < Infinity && finishedAt > minTs) {
+                const durationMin = Math.round((finishedAt - minTs) / 60000);
+                if (durationMin > 0 && durationMin < 300) { // sanity: < 5 hours
+                    durations.push(durationMin);
+                }
+            }
+        }
+
+        if (durations.length === 0) return null;
+        const avg = Math.round(durations.reduce((a, b) => a + b, 0) / durations.length);
+        return { avg, count: durations.length };
+    },
+
     // Find category for an exercise from EXERCISE_DB
     _findCategory(ex) {
         const name = ex.name || '';
