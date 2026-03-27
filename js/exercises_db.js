@@ -1,4 +1,4 @@
-// exercises_db.js — Exercise library (296 exercises)
+// exercises_db.js — Exercise library (289 exercises)
 // Автогенерируется скриптом tools/sync_exercises.js — не редактировать вручную
 
 export const EXERCISE_CATEGORIES = [
@@ -114,26 +114,25 @@ export const EXERCISE_DB = [
     { nameRu: 'Степпер (этажи)', name: 'Stair Machine (Floors)', category: 'cardio' },
     { nameRu: 'Ходьба', name: 'Walking', category: 'cardio' },
     { nameRu: 'Эллиптический тренажёр', name: 'Elliptical Trainer', category: 'cardio' },
-    // === Грудь (44) ===
+    // === Грудь (43) ===
     { nameRu: 'Бабочка (пек-дек)', name: 'Butterfly (Pec Deck)', category: 'chest' },
     { nameRu: 'Жим лёжа (в Смите)', name: 'Bench Press (Smith Machine)', category: 'chest' },
     { nameRu: 'Жим лёжа (на блоке)', name: 'Bench Press (Cable)', category: 'chest' },
     { nameRu: 'Жим лёжа (с гантелями)', name: 'Bench Press (Dumbbell)', category: 'chest' },
     { nameRu: 'Жим лёжа (со штангой)', name: 'Bench Press (Barbell)', category: 'chest' },
     { nameRu: 'Жим лёжа на наклонной скамье (в Смите)', name: 'Incline Bench Press (Smith Machine)', category: 'chest' },
+    { nameRu: 'Жим лёжа на наклонной скамье (в тренажёре)', name: 'Incline Chest Press (Machine)', category: 'chest' },
     { nameRu: 'Жим лёжа на наклонной скамье (с гантелями)', name: 'Incline Bench Press (Dumbbell)', category: 'chest' },
     { nameRu: 'Жим лёжа на наклонной скамье (со штангой)', name: 'Incline Bench Press (Barbell)', category: 'chest' },
     { nameRu: 'Жим лёжа на наклонной скамье вниз (в Смите)', name: 'Decline Bench Press (Smith Machine)', category: 'chest' },
+    { nameRu: 'Жим лёжа на наклонной скамье вниз (в тренажёре V2)', name: 'Decline Chest Press (Machine V2)', category: 'chest' },
     { nameRu: 'Жим лёжа на наклонной скамье вниз (в тренажёре)', name: 'Decline Bench Press (Machine)', category: 'chest' },
     { nameRu: 'Жим лёжа на наклонной скамье вниз (с гантелями)', name: 'Decline Bench Press (Dumbbell)', category: 'chest' },
     { nameRu: 'Жим лёжа на наклонной скамье вниз (со штангой)', name: 'Decline Bench Press (Barbell)', category: 'chest' },
     { nameRu: 'Жим лёжа с пола (с гантелями)', name: 'Floor Press (Dumbbell)', category: 'chest' },
     { nameRu: 'Жим лёжа с пола (со штангой)', name: 'Floor Press (Barbell)', category: 'chest' },
-    { nameRu: 'Жим на грудь вниз (в тренажёре)', name: 'Decline Chest Press (Machine)', category: 'chest' },
     { nameRu: 'Жим от груди (в тренажёре)', name: 'Chest Press (Machine)', category: 'chest' },
     { nameRu: 'Жим от груди (с резиной)', name: 'Chest Press (Band)', category: 'chest' },
-    { nameRu: 'Жим от груди на наклонной скамье (в тренажёре)', name: 'Incline Chest Press (Machine)', category: 'chest' },
-    { nameRu: 'Жим от груди раздельный (в тренажёре)', name: 'Iso-Lateral Chest Press (Machine)', category: 'chest' },
     { nameRu: 'Жим с диском', name: 'Plate Press', category: 'chest' },
     { nameRu: 'Отжимание', name: 'Push Up', category: 'chest' },
     { nameRu: 'Отжимание (с отягощением)', name: 'Push Up (Weighted)', category: 'chest' },
@@ -213,7 +212,7 @@ export const EXERCISE_DB = [
     { nameRu: 'Гиперэкстензия', name: 'Back Extension (Hyperextension)', category: 'lower_back' },
     { nameRu: 'Гиперэкстензия (с отягощением)', name: 'Back Extension (Weighted Hyperextension)', category: 'lower_back' },
     { nameRu: 'Разгибание спины (в тренажёре)', name: 'Back Extension (Machine)', category: 'lower_back' },
-    // === Квадрицепс (45) ===
+    // === Квадрицепс (44) ===
     { nameRu: 'Боковое приседание', name: 'Lateral Squat', category: 'quadriceps' },
     { nameRu: 'Боковой выпад', name: 'Lateral Lunge', category: 'quadriceps' },
     { nameRu: 'Болгарские сплит-приседания (в Смите)', name: 'Bulgarian Split Squat (Smith Machine)', category: 'quadriceps' },
@@ -235,7 +234,6 @@ export const EXERCISE_DB = [
     { nameRu: 'Обратный выпад (с гантелями)', name: 'Reverse Lunge (Dumbbell)', category: 'quadriceps' },
     { nameRu: 'Обратный выпад (со штангой)', name: 'Reverse Lunge (Barbell)', category: 'quadriceps' },
     { nameRu: 'Перекрёстный выпад (с гантелями)', name: 'Curtsy Lunge (Dumbbell)', category: 'quadriceps' },
-    { nameRu: 'Полное приседание', name: 'Full Squat', category: 'quadriceps' },
     { nameRu: 'Присед на ящик', name: 'Box Squat', category: 'quadriceps' },
     { nameRu: 'Присед на ящик (со штангой)', name: 'Box Squat (Barbell)', category: 'quadriceps' },
     { nameRu: 'Присед с поясом (тренажёр)', name: 'Belt Squat (Machine)', category: 'quadriceps' },
@@ -268,8 +266,8 @@ export const EXERCISE_DB = [
     { nameRu: 'Жим на плечи стоя (в Смите)', name: 'Overhead Press (Smith Machine)', category: 'shoulders' },
     { nameRu: 'Жим на плечи стоя (с гантелями)', name: 'Overhead Press (Dumbbell)', category: 'shoulders' },
     { nameRu: 'Жим на плечи стоя (с гирей)', name: 'Kettlebell Shoulder Press', category: 'shoulders' },
-    { nameRu: 'Жим на плечи стоя (со штангой)', name: 'Single Arm Landmine Press (Barbell)', category: 'shoulders' },
     { nameRu: 'Жим на плечи стоя (со штангой)', name: 'Overhead Press (Barbell)', category: 'shoulders' },
+    { nameRu: 'Жим на плечи стоя (со штангой)', name: 'Single Arm Landmine Press (Barbell)', category: 'shoulders' },
     { nameRu: 'Махи в стороны (в тренажёре)', name: 'Lateral Raise (Machine)', category: 'shoulders' },
     { nameRu: 'Махи в стороны (на блоке)', name: 'Lateral Raise (Cable)', category: 'shoulders' },
     { nameRu: 'Махи в стороны (с резинкой)', name: 'Lateral Raise (Band)', category: 'shoulders' },
@@ -319,21 +317,16 @@ export const EXERCISE_DB = [
     { nameRu: 'Разгибание рук над головой (блок)', name: 'Overhead Triceps Extension (Cable)', category: 'triceps' },
     { nameRu: 'Французский жим лёжа (с гантелями)', name: 'Skullcrusher (Dumbbell)', category: 'triceps' },
     { nameRu: 'Французский жим лёжа (со штангой)', name: 'Skullcrusher (Barbell)', category: 'triceps' },
-    // === Верхняя спина (16) ===
-    { nameRu: 'Австралийские подтягивания (горизонтальная тяга)', name: 'Inverted Row', category: 'upper_back' },
-    { nameRu: 'Горизонтальная тяга (V-рукоять)', name: 'Seated Cable Row - V Grip (Cable)', category: 'upper_back' },
-    { nameRu: 'Горизонтальная тяга (прямой гриф)', name: 'Seated Cable Row - Bar Grip', category: 'upper_back' },
-    { nameRu: 'Горизонтальная тяга (широкий хват)', name: 'Seated Cable Row - Bar Wide Grip', category: 'upper_back' },
-    { nameRu: 'Низкая тяга (в петлях TRX)', name: 'Low Row (Suspension)', category: 'upper_back' },
-    { nameRu: 'Тяга «горилла» (с гирей)', name: 'Gorilla Row (Kettlebell)', category: 'upper_back' },
+    // === Верхняя спина (11) ===
+    { nameRu: 'Австралийские подтягивания', name: 'Inverted Row', category: 'upper_back' },
+    { nameRu: 'Горизонтальная тяга (в блоке средний хват)', name: 'Seated Cable Row - Bar Grip', category: 'upper_back' },
+    { nameRu: 'Горизонтальная тяга (в блоке узкий хват)', name: 'Seated Cable Row - V Grip (Cable)', category: 'upper_back' },
+    { nameRu: 'Горизонтальная тяга (в блоке широкий хват)', name: 'Seated Cable Row - Bar Wide Grip', category: 'upper_back' },
+    { nameRu: 'Горизонтальная тяга (в тренажёре)', name: 'Seated Row (Machine)', category: 'upper_back' },
     { nameRu: 'Тяга в наклоне (с гантелями)', name: 'Bent Over Row (Dumbbell)', category: 'upper_back' },
     { nameRu: 'Тяга в наклоне (с резинкой)', name: 'Bent Over Row (Band)', category: 'upper_back' },
     { nameRu: 'Тяга в наклоне (со штангой)', name: 'Bent Over Row (Barbell)', category: 'upper_back' },
     { nameRu: 'Тяга в наклоне (тяга лэндмайн)', name: 'Landmine Row', category: 'upper_back' },
-    { nameRu: 'Тяга Пендли (со штангой)', name: 'Pendlay Row (Barbell)', category: 'upper_back' },
-    { nameRu: 'Тяга ренегата (с гантелями)', name: 'Renegade Row (Dumbbell)', category: 'upper_back' },
-    { nameRu: 'Тяга с плинтов (рэк-пулл)', name: 'Rack Pull', category: 'upper_back' },
     { nameRu: 'Тяга с упором в наклонную скамью (с гантелями)', name: 'Chest Supported Incline Row (Dumbbell)', category: 'upper_back' },
-    { nameRu: 'Тяга сидя (в тренажёре)', name: 'Seated Row (Machine)', category: 'upper_back' },
     { nameRu: 'Тяга Т-грифа', name: 'T Bar Row', category: 'upper_back' },
 ];
