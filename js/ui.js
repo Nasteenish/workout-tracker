@@ -12,6 +12,7 @@ import { formatDateISO, markCachedThumbs, autoTrimImg, esc, exThumbHtml, getGrou
 import { getTotalWeeks, getTotalDays, getProgressWeek, getCompletedSets, resolveWorkout, exName } from './program-utils.js';
 import { EXERCISE_DB } from './exercises_db.js';
 import { WORKOUT, EQ, SETTINGS, INLINE, attr } from './data-attrs.js';
+import { Analytics } from './analytics.js';
 
 export const UI = {
     _onClick: null,
@@ -191,13 +192,16 @@ export const UI = {
         });
 
         const currentUser = Storage.getCurrentUser();
+        const streak = Analytics.getStreak();
+
         return {
             weekNum,
             headerName: currentUser ? currentUser.name : 'Трекер Тренировок',
             totalWeeks: getTotalWeeks(),
             totalDays: numDays,
             hasTabBar: SocialUI && Social._hasSupaAuth(),
-            slots
+            slots,
+            streak
         };
     },
 
@@ -237,9 +241,30 @@ export const UI = {
     },
 
     // Returns full week view HTML (for back-swipe companion)
+    _streakHTML(streak) {
+        if (!streak || (streak.current === 0 && streak.best === 0)) return '';
+        let html = '<div class="streak-bar">';
+        if (streak.current > 0) {
+            html += `<span class="streak-current">${streak.current} нед. подряд</span>`;
+            if (streak.best > streak.current) {
+                html += `<span class="streak-best">лучшая: ${streak.best}</span>`;
+            }
+        } else if (streak.broken && streak.brokenMessage) {
+            html += `<span class="streak-broken">${streak.brokenMessage}</span>`;
+            if (streak.best > 0) {
+                html += `<span class="streak-best">лучшая серия: ${streak.best} нед.</span>`;
+            }
+        } else if (streak.best > 0) {
+            html += `<span class="streak-best">лучшая серия: ${streak.best} нед.</span>`;
+        }
+        html += '</div>';
+        return html;
+    },
+
     _weekViewHTML(weekNum) {
         const vm = this._buildWeekVM(weekNum);
         const cardsHtml = this._weekCardsHTML(vm);
+        const streakHtml = this._streakHTML(vm.streak);
         return `
             <div class="app-header">
                 <div class="header-title">
@@ -266,6 +291,7 @@ export const UI = {
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 15l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                 </div>
+                ${streakHtml}
                 <div class="slide-container">
                     <div class="week-slide">
                     ${cardsHtml}
@@ -282,6 +308,7 @@ export const UI = {
     renderWeek(weekNum) {
         const vm = this._buildWeekVM(weekNum);
         const cardsHtml = this._weekCardsHTML(vm);
+        const streakHtml = this._streakHTML(vm.streak);
 
         document.getElementById('app').innerHTML = `
             <div class="app-header">
@@ -309,6 +336,7 @@ export const UI = {
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 15l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                 </div>
+                ${streakHtml}
                 <div class="slide-container">
                     <div class="week-slide">
                     ${cardsHtml}
@@ -930,22 +958,30 @@ export const UI = {
             else { segs[i] = { weight: '', reps: raw }; }
         }
 
+        // PR detection for completed sets
+        const isCompleted = !!(log && log.completed);
+        let isPR = false;
+        if (isCompleted && log.weight > 0 && log.reps > 0) {
+            isPR = Analytics.isAllTimeBest(Storage.getLogExerciseId(ex.id), log.weight, log.reps);
+        }
+
         return {
             exId: ex.id, setIdx, set,
-            isCompleted: !!(log && log.completed),
+            isCompleted,
             weightVal: log && log.weight ? log.weight : '',
             repsVal: log && log.reps ? log.reps : '',
             unitLabel,
             prev, prevUnitLabel,
             weightSegCount, segCount, segs,
-            isUnilateral: Storage.getUnilateral(ex.id)
+            isUnilateral: Storage.getUnilateral(ex.id),
+            isPR
         };
     },
 
     // Pure HTML rendering from pre-computed view-model
     _renderSetRow(vm) {
         const { exId, setIdx, set, isCompleted, weightVal, repsVal,
-                unitLabel, prev, prevUnitLabel, weightSegCount, segCount, segs, isUnilateral } = vm;
+                unitLabel, prev, prevUnitLabel, weightSegCount, segCount, segs, isUnilateral, isPR } = vm;
 
         const uniHint = isUnilateral ? ' <span class="uni-hint">(на сторону)</span>' : '';
         const prevText = prev ? `пред: ${prev.weight}<span class="set-prev-unit" ${attr(WORKOUT.EXERCISE, exId)}>${prevUnitLabel}</span> x ${prev.reps}${uniHint}` : '';
@@ -1048,6 +1084,7 @@ export const UI = {
                     <div role="button" class="complete-btn ${isCompleted ? 'completed' : ''}"
                         ${attr(WORKOUT.EXERCISE, exId)} ${attr(WORKOUT.SET, setIdx)}>${completeSvg}</div>
                 </div>
+                ${isPR ? '<div class="pr-badge" title="Личный рекорд"><svg width="14" height="14" viewBox="0 0 24 24" fill="#FFD700"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>' : ''}
                 ${prevText ? `<div class="set-prev">${prevText}</div>` : ''}
             </div>
         `;
@@ -1182,13 +1219,18 @@ export const UI = {
         const hasNonUni = _allSets.some(s => !s.uni);
         const hasBothModes = hasUni && hasNonUni;
 
+        // PR records table and 1RM progression
+        const prTable = Analytics.getPRTable(exerciseId);
+        const e1rmProgression = Analytics.get1RMProgression(exerciseId);
+
         return {
             exerciseName, unitLabel,
             currentEqName: currentEq ? currentEq.name : null,
             hasCurrentEq: !!currentEqId,
             history,
             chartWeeks, chartValues,
-            hasBothModes
+            hasBothModes,
+            prTable, e1rmProgression
         };
     },
 
@@ -1198,7 +1240,8 @@ export const UI = {
     renderHistory(exerciseId) {
         const vm = this._buildHistoryVM(exerciseId);
         const { exerciseName, unitLabel, currentEqName,
-                history, chartWeeks, chartValues, hasBothModes } = vm;
+                history, chartWeeks, chartValues, hasBothModes,
+                prTable, e1rmProgression } = vm;
 
         // Apply uni filter to history entries
         const uniFilter = this._historyUniFilter;
@@ -1256,6 +1299,62 @@ export const UI = {
                     <polyline points="${pts}" class="chart-line"/>
                     ${circles}
                 </svg></div>`;
+            }
+
+            // 1RM Progression chart
+            if (e1rmProgression.length > 1) {
+                const e1rmValues = e1rmProgression.map(p => p.e1rm);
+                const e1rmWeeks = e1rmProgression.map(p => p.week);
+                const minE = Math.min(...e1rmValues);
+                const maxE = Math.max(...e1rmValues);
+                const padE = { top: 22, right: 12, bottom: 24, left: 38 };
+                const WE = 320, HE = 130;
+                const cWE = WE - padE.left - padE.right, cHE = HE - padE.top - padE.bottom;
+                const rangeE = maxE - minE || 1;
+                const xE = (i) => padE.left + (i / (e1rmWeeks.length - 1)) * cWE;
+                const yE = (v) => padE.top + cHE - ((v - minE) / rangeE) * cHE;
+                let gridE = '';
+                for (const gv of [minE, minE + rangeE / 2, maxE]) {
+                    const gy = yE(gv);
+                    gridE += `<line x1="${padE.left}" y1="${gy}" x2="${WE - padE.right}" y2="${gy}" class="chart-grid"/>`;
+                    gridE += `<text x="${padE.left - 5}" y="${gy + 3}" class="chart-y-label">${Math.round(gv)}</text>`;
+                }
+                let xLabelsE = '';
+                const stepE = e1rmWeeks.length <= 12 ? 1 : Math.ceil(e1rmWeeks.length / 8);
+                for (let i = 0; i < e1rmWeeks.length; i += stepE) {
+                    xLabelsE += `<text x="${xE(i)}" y="${HE - 4}" class="chart-x-label">W${e1rmWeeks[i]}</text>`;
+                }
+                const ptsE = e1rmValues.map((v, i) => `${xE(i)},${yE(v)}`).join(' ');
+                let circlesE = '';
+                for (let i = 0; i < e1rmValues.length; i++) {
+                    const isLast = i === e1rmValues.length - 1;
+                    circlesE += `<circle cx="${xE(i)}" cy="${yE(e1rmValues[i])}" r="${isLast ? 4 : 3}" class="chart-point e1rm-point${isLast ? ' last' : ''}"><title>W${e1rmWeeks[i]}: ${e1rmValues[i]}${unitLabel}</title></circle>`;
+                }
+                contentHtml += `<div class="history-section-title">Расчётный 1RM</div>`;
+                contentHtml += `<div class="progress-chart e1rm-chart"><svg viewBox="0 0 ${WE} ${HE}" preserveAspectRatio="xMidYMid meet">
+                    ${gridE}${xLabelsE}
+                    <polyline points="${ptsE}" class="chart-line e1rm-line"/>
+                    ${circlesE}
+                </svg></div>`;
+            }
+
+            // PR Records Table
+            if (prTable.length > 0) {
+                let prRows = '';
+                for (const pr of prTable) {
+                    const e1rm = Analytics.estimated1RM(pr.weight, pr.reps);
+                    prRows += `<tr>
+                        <td>${pr.reps}</td>
+                        <td>${pr.weight} ${unitLabel}</td>
+                        <td class="pr-table-e1rm">${e1rm}</td>
+                        <td class="pr-table-week">нед. ${pr.week}</td>
+                    </tr>`;
+                }
+                contentHtml += `<div class="history-section-title">Рекорды</div>
+                    <table class="pr-records-table">
+                        <thead><tr><th>Повт.</th><th>Вес</th><th>1RM</th><th>Когда</th></tr></thead>
+                        <tbody>${prRows}</tbody>
+                    </table>`;
             }
 
             // Render all entries in chronological order with equipment badges

@@ -9,6 +9,7 @@ import { Celebration } from './celebration.js';
 import { WORKOUT, EQ, INLINE, read, readInt } from './data-attrs.js';
 import { findExerciseInProgram, parseWeight, parseReps, formatDateISO, esc, markCachedThumbs, showToast } from './utils.js';
 import { getCompletedSets, exName } from './program-utils.js';
+import { Analytics } from './analytics.js';
 
 export const WorkoutUI = {
     // Callbacks — wired in App.init()
@@ -152,6 +153,22 @@ export const WorkoutUI = {
                 btn.classList.add('pop');
                 btn.addEventListener('animationend', () => btn.classList.remove('pop'), { once: true });
                 row.classList.add('done');
+
+                // PR detection — check after saving
+                if (weight > 0 && reps > 0) {
+                    const prResult = Analytics.checkPR(logExId, weight, reps, week, day);
+                    if (prResult) {
+                        // Add PR badge to the row
+                        if (!row.querySelector('.pr-badge')) {
+                            const badge = document.createElement('div');
+                            badge.className = 'pr-badge pr-badge-new';
+                            badge.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="#FFD700"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
+                            row.appendChild(badge);
+                        }
+                        // Show funny toast
+                        showToast(prResult.toast);
+                    }
+                }
 
                 var progress = getCompletedSets(week, day);
                 if (progress.total > 0 && progress.completed >= progress.total) {

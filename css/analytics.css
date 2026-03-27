@@ -1,0 +1,130 @@
+/* ===== Analytics: PR badges, streaks, records table, 1RM chart ===== */
+
+/* PR Badge on set row */
+.pr-badge {
+    position: absolute;
+    right: 4px;
+    top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.pr-badge svg {
+    filter: drop-shadow(0 1px 2px rgba(255, 215, 0, 0.5));
+}
+
+.pr-badge-new {
+    animation: pr-pop 0.5s ease-out;
+}
+
+@keyframes pr-pop {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.4); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Set row needs relative positioning for PR badge */
+.set-row {
+    position: relative;
+}
+
+/* ===== Streak bar on week view ===== */
+.streak-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 6px 16px;
+    margin: 0 var(--spacing-md);
+    border-radius: 10px;
+    background: rgba(157, 141, 245, 0.08);
+    font-size: 13px;
+}
+
+.streak-current {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.streak-best {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 12px;
+}
+
+.streak-broken {
+    color: rgba(255, 165, 0, 0.8);
+    font-size: 12px;
+}
+
+/* ===== PR Records Table in History ===== */
+.history-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 16px 0 8px;
+    padding: 0 4px;
+}
+
+.pr-records-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-bottom: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.pr-records-table thead th {
+    text-align: left;
+    padding: 8px 10px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pr-records-table tbody td {
+    padding: 7px 10px;
+    color: rgba(255, 255, 255, 0.85);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.pr-records-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.pr-table-e1rm {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.pr-table-week {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 12px;
+}
+
+/* ===== 1RM Chart ===== */
+.e1rm-chart .chart-line,
+.e1rm-line {
+    stroke: var(--accent);
+    stroke-width: 2;
+    fill: none;
+}
+
+.e1rm-point {
+    fill: var(--accent);
+}
+
+.e1rm-point.last {
+    fill: var(--accent);
+    stroke: rgba(157, 141, 245, 0.3);
+    stroke-width: 3;
+}
