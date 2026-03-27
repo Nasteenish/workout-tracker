@@ -644,7 +644,10 @@ export const Migrations = {
                         }
                     }
 
-                    if (changed) localStorage.setItem(keys[ki], JSON.stringify(dd));
+                    if (changed) {
+                        dd._lastModified = Date.now();
+                        localStorage.setItem(keys[ki], JSON.stringify(dd));
+                    }
                 }
             }
         }
