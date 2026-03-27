@@ -107,11 +107,12 @@ export const Storage = {
             if (!this._data._programModified && this._data._lastModified && this._data.program) {
                 this._data._programModified = this._data._lastModified;
             }
-            // v431: migrate exercise names to Hevy DB standard
-            if (!this._data._exerciseNamesMigrated || this._data._exerciseNamesMigrated < 8) {
-                if (this._migrateFn) this._migrateFn(this._data);
-                this._data._exerciseNamesMigrated = 8;
-                this._save();
+            // Migrate exercise names to match current EXERCISE_DB.
+            // Runs every load (idempotent, fast — just string comparisons).
+            // Auto-syncs nameRu from DB by English name, so no manual version bumps needed.
+            if (this._migrateFn) {
+                var migrated = this._migrateFn(this._data);
+                if (migrated > 0) this._save();
             }
         } catch (e) {
             console.error('Storage load error:', e);

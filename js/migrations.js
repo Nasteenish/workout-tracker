@@ -336,6 +336,12 @@ export const Migrations = {
         }
         var dbRu = _getDbRuMap();
 
+        // Build English name → DB entry lookup for auto-sync
+        var dbByEnName = {};
+        for (var dbi = 0; dbi < EXERCISE_DB.length; dbi++) {
+            if (EXERCISE_DB[dbi].name) dbByEnName[EXERCISE_DB[dbi].name] = EXERCISE_DB[dbi];
+        }
+
         allExercises.forEach(function(ex) {
             if (!ex) return;
             // 1. Check by exercise ID (highest priority — unambiguous)
@@ -356,17 +362,50 @@ export const Migrations = {
                 var mr2 = _NAME_MAP[ex.name];
                 if (mr2) { ex.name = mr2[0]; ex.nameRu = mr2[1]; count++; return; }
             }
+            // 5. Auto-sync nameRu from EXERCISE_DB by English name.
+            // English names are stable (Hevy DB standard), nameRu may change.
+            // This eliminates the need for manual _NAME_MAP entries when
+            // only the Russian name is updated in exercises_db.js.
+            if (ex.name) {
+                var dbEntry = dbByEnName[ex.name];
+                if (dbEntry && dbEntry.nameRu && ex.nameRu !== dbEntry.nameRu) {
+                    ex.nameRu = dbEntry.nameRu;
+                    count++;
+                }
+            }
         });
 
         // Also migrate exerciseSubstitutions — they store nameRu values
         // that may reference old names, breaking the variation picker
         var subs = data.exerciseSubstitutions;
         if (subs) {
+            // Build reverse lookup: old nameRu → new nameRu from DB
+            var dbByRuName = {};
+            for (var dbi2 = 0; dbi2 < EXERCISE_DB.length; dbi2++) {
+                var dbe = EXERCISE_DB[dbi2];
+                if (dbe.nameRu && dbe.name) dbByRuName[dbe.name] = dbe.nameRu;
+            }
             for (var subKey in subs) {
                 var oldVal = subs[subKey];
                 if (!oldVal) continue;
+                // 1. Check _NAME_MAP
                 var mapped = _NAME_MAP[oldVal];
-                if (mapped) { subs[subKey] = mapped[1]; count++; }
+                if (mapped) { subs[subKey] = mapped[1]; count++; continue; }
+                // 2. Auto-sync: find by matching against DB nameRu values
+                // If substitution nameRu doesn't exist in DB, try to find
+                // the exercise by English name from the program and update
+                var found = false;
+                for (var dbi3 = 0; dbi3 < EXERCISE_DB.length; dbi3++) {
+                    if (EXERCISE_DB[dbi3].nameRu === oldVal) { found = true; break; }
+                }
+                if (!found) {
+                    // Try to find exercise in program to get English name
+                    var progEx = allExercises.find(function(e) { return e && e.id === subKey; });
+                    if (progEx && progEx.name && dbByEnName[progEx.name]) {
+                        subs[subKey] = dbByEnName[progEx.name].nameRu;
+                        count++;
+                    }
+                }
             }
         }
 
