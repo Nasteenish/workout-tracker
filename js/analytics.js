@@ -55,7 +55,7 @@ export const Analytics = {
     },
 
     // Returns PR info if this set is a record, or null
-    // equipmentId: compare only with sets done on the same equipment
+    // equipmentId: prefer comparing with same equipment, fallback to all history
     checkPR(exerciseId, weight, reps, currentWeek, currentDay, equipmentId) {
         if (!weight || weight <= 0 || !reps || reps <= 0) return null;
 
@@ -64,21 +64,37 @@ export const Analytics = {
 
         const current1RM = this.estimated1RM(weight, reps);
 
-        // Collect all previous completed sets (excluding current week/day, same equipment)
+        // First try: same equipment only
         let prevBest1RM = 0;
         let prevBestWeightAtReps = 0;
+        // Also collect ALL history regardless of equipment (fallback)
+        let prevBest1RMAll = 0;
+        let prevBestWeightAtRepsAll = 0;
 
         for (const entry of history) {
             if (entry.week === currentWeek && entry.day === currentDay) continue;
             for (const s of entry.sets) {
                 if (!s.weight || !s.reps) continue;
-                if (!this._matchesEquipment(s.equipmentId, equipmentId)) continue;
                 const e1rm = this.estimated1RM(s.weight, s.reps);
-                if (e1rm > prevBest1RM) prevBest1RM = e1rm;
-                if (s.reps === reps && s.weight > prevBestWeightAtReps) {
-                    prevBestWeightAtReps = s.weight;
+                // All equipment
+                if (e1rm > prevBest1RMAll) prevBest1RMAll = e1rm;
+                if (s.reps === reps && s.weight > prevBestWeightAtRepsAll) {
+                    prevBestWeightAtRepsAll = s.weight;
+                }
+                // Same equipment
+                if (this._matchesEquipment(s.equipmentId, equipmentId)) {
+                    if (e1rm > prevBest1RM) prevBest1RM = e1rm;
+                    if (s.reps === reps && s.weight > prevBestWeightAtReps) {
+                        prevBestWeightAtReps = s.weight;
+                    }
                 }
             }
+        }
+
+        // Fallback: if no history for this equipment, use all history
+        if (prevBest1RM === 0) {
+            prevBest1RM = prevBest1RMAll;
+            prevBestWeightAtReps = prevBestWeightAtRepsAll;
         }
 
         // Need at least one previous session to compare
@@ -108,18 +124,33 @@ export const Analytics = {
         return null;
     },
 
-    // Check if a set is currently the all-time best for this exercise (same equipment)
+    // Check if a set is currently the all-time best for this exercise
+    // Prefer same equipment; fallback to all history if no data for this equipment
     isAllTimeBest(exerciseId, weight, reps, equipmentId) {
         if (!weight || weight <= 0 || !reps || reps <= 0) return false;
         const history = Storage.getExerciseHistory(exerciseId);
         if (!history) return false;
 
         const current1RM = this.estimated1RM(weight, reps);
+        let hasMatchingEquipment = false;
+
         for (const entry of history) {
             for (const s of entry.sets) {
                 if (!s.weight || !s.reps) continue;
-                if (!this._matchesEquipment(s.equipmentId, equipmentId)) continue;
-                if (this.estimated1RM(s.weight, s.reps) > current1RM) return false;
+                if (this._matchesEquipment(s.equipmentId, equipmentId)) {
+                    hasMatchingEquipment = true;
+                    if (this.estimated1RM(s.weight, s.reps) > current1RM) return false;
+                }
+            }
+        }
+
+        // If no history on same equipment, compare against all
+        if (!hasMatchingEquipment) {
+            for (const entry of history) {
+                for (const s of entry.sets) {
+                    if (!s.weight || !s.reps) continue;
+                    if (this.estimated1RM(s.weight, s.reps) > current1RM) return false;
+                }
             }
         }
         return true;
