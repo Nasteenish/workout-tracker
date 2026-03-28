@@ -108,7 +108,7 @@ export const Storage = {
                 this._data._programModified = this._data._lastModified;
             }
             // Run migrations only when version changes (not every load)
-            var MIGRATION_VERSION = 17;
+            var MIGRATION_VERSION = 18;
             if ((this._data._migrationVersion || 0) < MIGRATION_VERSION) {
                 if (this._migrateFn) {
                     this._migrateFn(this._data);

@@ -1413,6 +1413,62 @@ export const Migrations = {
                     }
                 }
             }
+        },
+        // v18: Remove corrupted _template entries (cross-day exercise contamination)
+        // Old snapshots (from bug 1 — ID-only fingerprint) could contain exercises
+        // from other days (e.g. D2E* in day 3). Migration v17 faithfully copied them.
+        // This migration detects and removes such _template entries.
+        {
+            key: 'wt_migration_v18',
+            fn: function() {
+                var keys = Object.keys(localStorage);
+                for (var ki = 0; ki < keys.length; ki++) {
+                    if (keys[ki].indexOf('wt_data_') !== 0) continue;
+                    var dd;
+                    try { dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}'); } catch(e) { continue; }
+                    if (!dd.log) continue;
+
+                    var changed = false;
+                    for (var w in dd.log) {
+                        for (var d in dd.log[w]) {
+                            var dayLog = dd.log[w][d];
+                            if (!dayLog._template) continue;
+
+                            // Check for cross-day contamination:
+                            // exercises with DxE pattern where x != current day
+                            var dayPrefix = 'D' + d + 'E';
+                            var hasContamination = false;
+                            var tmpl = dayLog._template;
+                            for (var gi = 0; gi < tmpl.length; gi++) {
+                                var g = tmpl[gi];
+                                var checkExs = [];
+                                if (g.exercise) checkExs.push(g.exercise);
+                                if (g.exercises) checkExs = checkExs.concat(g.exercises);
+                                if (g.options) checkExs = checkExs.concat(g.options);
+                                for (var ei = 0; ei < checkExs.length; ei++) {
+                                    var id = checkExs[ei].id || '';
+                                    // D{num}E pattern but NOT matching this day
+                                    if (/^D\d+E/.test(id) && id.indexOf(dayPrefix) !== 0) {
+                                        hasContamination = true;
+                                        break;
+                                    }
+                                }
+                                if (hasContamination) break;
+                            }
+
+                            if (hasContamination) {
+                                delete dayLog._template;
+                                changed = true;
+                            }
+                        }
+                    }
+
+                    if (changed) {
+                        dd._lastModified = Date.now();
+                        localStorage.setItem(keys[ki], JSON.stringify(dd));
+                    }
+                }
+            }
         }
     ]
 };
