@@ -317,6 +317,34 @@ export const WorkoutUI = {
     },
 
     // ===== PR Notification — big centered overlay =====
+    _playPRSound() {
+        try {
+            var ctx = RestTimer._audioCtx;
+            if (!ctx) {
+                ctx = new (window.AudioContext || window.webkitAudioContext)();
+                RestTimer._audioCtx = ctx;
+            }
+            if (ctx.state === 'suspended') {
+                ctx.resume().catch(function() {});
+            }
+            // Triumphant ascending arpeggio (C5-E5-G5-C6) — distinct from timer beep
+            var notes = [[523, 0, 0.22], [659, 0.15, 0.35], [784, 0.28, 0.50], [1047, 0.40, 0.70]];
+            notes.forEach(function(n) {
+                var freq = n[0], start = n[1], end = n[2];
+                var osc = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = freq;
+                osc.type = 'triangle';
+                gain.gain.setValueAtTime(0.3, ctx.currentTime + start);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + end);
+                osc.start(ctx.currentTime + start);
+                osc.stop(ctx.currentTime + end);
+            });
+        } catch(e) {}
+    },
+
     _showPRNotification(message) {
         if (document.querySelector('.pr-overlay')) return;
         var overlay = document.createElement('div');
@@ -328,6 +356,7 @@ export const WorkoutUI = {
             '</div>';
         document.body.appendChild(overlay);
         if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+        this._playPRSound();
         setTimeout(function() {
             overlay.classList.add('pr-overlay-hide');
             setTimeout(function() { overlay.remove(); }, 400);

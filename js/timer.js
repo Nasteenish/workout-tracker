@@ -298,6 +298,7 @@ export const RestTimer = {
 
     _audioEl: null,
     _audioUnlocked: false,
+    _silentAudioEl: null,
 
     _ensureAudioEl() {
         if (this._audioEl) return this._audioEl;
@@ -323,6 +324,25 @@ export const RestTimer = {
         return this._audioEl;
     },
 
+    // Truly silent WAV for iOS audio unlock (iOS ignores audio.volume = 0)
+    _ensureSilentAudioEl() {
+        if (this._silentAudioEl) return this._silentAudioEl;
+        var sr = 22050, samples = 1;
+        var buf = new ArrayBuffer(44 + samples * 2);
+        var v = new DataView(buf);
+        var w = function(o, s) { for (var i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+        w(0, 'RIFF'); v.setUint32(4, 36 + samples * 2, true); w(8, 'WAVEfmt ');
+        v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+        v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true);
+        v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data');
+        v.setUint32(40, samples * 2, true);
+        v.setInt16(44, 0, true);
+        var blob = new Blob([buf], { type: 'audio/wav' });
+        this._silentAudioEl = new Audio(URL.createObjectURL(blob));
+        this._silentAudioEl.preload = 'auto';
+        return this._silentAudioEl;
+    },
+
     _ensureAudioCtx() {
         try {
             if (!this._audioCtx) {
@@ -339,14 +359,14 @@ export const RestTimer = {
             src.connect(ctx.destination);
             src.start(0);
         } catch(e) {}
-        // Unlock HTML Audio fallback element ONCE (requires user gesture)
+        // Unlock HTML Audio fallback ONCE using a silent WAV (not the beep!)
+        // iOS ignores audio.volume=0, so we must use a genuinely silent file
         if (!this._audioUnlocked) {
             try {
-                var audio = this._ensureAudioEl();
-                audio.volume = 0;
+                var silent = this._ensureSilentAudioEl();
                 var self = this;
-                var p = audio.play();
-                if (p) p.then(function() { audio.pause(); audio.volume = 1; audio.currentTime = 0; self._audioUnlocked = true; }).catch(function() { audio.volume = 1; });
+                var p = silent.play();
+                if (p) p.then(function() { silent.pause(); silent.currentTime = 0; self._audioUnlocked = true; }).catch(function() {});
                 else this._audioUnlocked = true;
             } catch(e) {}
         }
