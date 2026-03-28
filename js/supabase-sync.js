@@ -357,6 +357,9 @@ export const SupaSync = {
                 // Preserve the max of local/remote timestamps instead of Date.now()
                 // to avoid inflating cloud _lastModified on every sync
                 base._lastModified = Math.max(localTime, remoteTime);
+                // Normalize equipment IDs: convert any eq_TIMESTAMP back to stable IDs
+                // This fixes data that sync brought back from cloud with old format
+                this._normalizeEquipmentIds(base);
                 // Save merged result locally and push to cloud
                 localStorage.setItem(localStorageKey, JSON.stringify(base));
                 // Invalidate in-memory cache so UI reads fresh data
@@ -394,6 +397,83 @@ export const SupaSync = {
     _currentStorageKey: null,
     _onSyncComplete: null,  // wired in App.init() → updates UI + _lastVisSync
     _isWorkoutActiveFn: null,  // wired in App.init() → checks if workout is in progress
+
+    // Normalize equipment IDs: convert eq_TIMESTAMP → catalog:{N} / custom:{slug}
+    // Runs after every sync merge to fix old-format IDs that cloud may reintroduce
+    _normalizeEquipmentIds(data) {
+        if (!data || !data.equipment) return;
+        var eqs = data.equipment;
+        var remap = {};
+        var seen = {};
+        var cleaned = [];
+        for (var i = 0; i < eqs.length; i++) {
+            var eq = eqs[i];
+            var stableId;
+            if (eq.catalogId) {
+                stableId = 'catalog:' + eq.catalogId;
+            } else {
+                stableId = 'custom:' + (eq.name || 'unknown').toLowerCase()
+                    .replace(/[^a-zа-яё0-9]/gi, '_').replace(/_+/g, '_').slice(0, 40);
+            }
+            if (seen[stableId]) {
+                remap[eq.id] = seen[stableId];
+                continue;
+            }
+            seen[stableId] = stableId;
+            if (eq.id !== stableId) remap[eq.id] = stableId;
+            eq.id = stableId;
+            cleaned.push(eq);
+        }
+        if (Object.keys(remap).length === 0) return; // nothing to fix
+        data.equipment = cleaned;
+        function r(id) { return (id && remap[id]) || id; }
+        // Remap exerciseEquipment
+        if (data.exerciseEquipment) {
+            for (var ek in data.exerciseEquipment) {
+                var v = data.exerciseEquipment[ek];
+                if (v && remap[v]) data.exerciseEquipment[ek] = remap[v];
+            }
+        }
+        // Remap exerciseEquipmentOptions
+        if (data.exerciseEquipmentOptions) {
+            for (var ek2 in data.exerciseEquipmentOptions) {
+                var opts = data.exerciseEquipmentOptions[ek2] || [];
+                var newOpts = [], s2 = {};
+                for (var oi = 0; oi < opts.length; oi++) {
+                    var m = r(opts[oi]);
+                    if (!s2[m]) { s2[m] = true; newOpts.push(m); }
+                }
+                data.exerciseEquipmentOptions[ek2] = newOpts;
+            }
+        }
+        // Remap gymEquipmentMap
+        if (data.gymEquipmentMap) {
+            for (var gid in data.gymEquipmentMap) {
+                var gmap = data.gymEquipmentMap[gid];
+                for (var mk in gmap) {
+                    if (gmap[mk] && remap[gmap[mk]]) gmap[mk] = remap[gmap[mk]];
+                }
+            }
+        }
+        // Remap log entries equipmentId
+        if (data.log) {
+            for (var w in data.log) {
+                for (var d in data.log[w]) {
+                    var dayLog = data.log[w][d];
+                    for (var exK in dayLog) {
+                        if (exK.charAt(0) === '_' || typeof dayLog[exK] !== 'object' || dayLog[exK] === null) continue;
+                        for (var si in dayLog[exK]) {
+                            var sd = dayLog[exK][si];
+                            if (sd && sd.equipmentId && remap[sd.equipmentId]) {
+                                sd.equipmentId = remap[sd.equipmentId];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        console.log('Post-sync eq normalize: remapped', Object.keys(remap).length, 'IDs');
+    },
 
     // Called by Storage._save() to trigger cloud sync
     onLocalSave() {
