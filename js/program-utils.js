@@ -97,8 +97,11 @@ export function resolveWorkout(week, day) {
         && p.weekTemplateVersion[week][d];
     if (version && p.templateSnapshots && p.templateSnapshots[d]) {
         const snap = p.templateSnapshots[d].find(s => s.version === version);
-        if (snap) {
+        if (snap && _isSnapshotClean(snap.groups, d)) {
             template.exerciseGroups = deepClone(snap.groups);
+        } else if (snap) {
+            console.warn('resolveWorkout: snapshot v' + version + ' for day', d,
+                'has cross-day contamination — falling back to live template');
         } else {
             console.error('resolveWorkout: snapshot version', version,
                 'not found for day', d, 'week', week,
@@ -116,6 +119,18 @@ export function resolveWorkout(week, day) {
     // FALLBACK — live dayTemplates (current week without logs)
     _applyOverrides(template, p, week, day);
     return template;
+}
+
+function _isSnapshotClean(groups, dayStr) {
+    const prefix = 'D' + dayStr + 'E';
+    for (const g of groups) {
+        const exs = [g.exercise, ...(g.exercises || []), ...(g.options || [])];
+        for (const ex of exs) {
+            if (!ex || !ex.id) continue;
+            if (/^D\d+E/.test(ex.id) && !ex.id.startsWith(prefix)) return false;
+        }
+    }
+    return true;
 }
 
 function _applyOverrides(template, p, week, day) {
