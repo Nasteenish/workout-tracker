@@ -216,6 +216,7 @@ export const RestTimer = {
     },
 
     stop() {
+        this._finishing = false;
         if (this._interval) clearInterval(this._interval);
         this._interval = null;
         this._cancelBeep();

@@ -174,7 +174,7 @@ export const WorkoutUI = {
                 var progress = getCompletedSets(week, day);
                 if (progress.total > 0 && progress.completed >= progress.total) {
                     this._showFinishButton(week, day);
-                } else {
+                } else if (progress.total > 0) {
                     RestTimer.start(row);
                 }
             }
