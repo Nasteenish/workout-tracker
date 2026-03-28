@@ -1616,5 +1616,107 @@ export const Migrations = {
                 }
             }
         }
+        // v22: Re-normalize equipment IDs after sync may have reintroduced eq_TIMESTAMP IDs.
+        // Same logic as v19 step 1, but runs again to fix sync-overwritten data.
+        {
+            key: '_renormalize_eq_ids_v1',
+            fn: function() {
+                var keys = Object.keys(localStorage);
+                for (var ki = 0; ki < keys.length; ki++) {
+                    if (keys[ki].indexOf('wt_data_') !== 0) continue;
+                    var dd;
+                    try { dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}'); } catch(e) { continue; }
+                    var changed = false;
+
+                    // Build remap: eq_TIMESTAMP → catalog:{N} / custom:{slug}
+                    var eqRemap = {};
+                    var seenEqIds = {};
+                    var newEquipment = [];
+                    var eqs = dd.equipment || [];
+                    for (var i = 0; i < eqs.length; i++) {
+                        var eq = eqs[i];
+                        var newEqId;
+                        if (eq.catalogId) {
+                            newEqId = 'catalog:' + eq.catalogId;
+                        } else {
+                            newEqId = 'custom:' + (eq.name || 'unknown').toLowerCase()
+                                .replace(/[^a-zа-яё0-9]/gi, '_').replace(/_+/g, '_').slice(0, 40);
+                        }
+                        if (seenEqIds[newEqId]) {
+                            eqRemap[eq.id] = seenEqIds[newEqId];
+                            changed = true;
+                            continue;
+                        }
+                        seenEqIds[newEqId] = newEqId;
+                        if (eq.id !== newEqId) {
+                            eqRemap[eq.id] = newEqId;
+                            changed = true;
+                        }
+                        eq.id = newEqId;
+                        newEquipment.push(eq);
+                    }
+                    if (Object.keys(eqRemap).length > 0) dd.equipment = newEquipment;
+
+                    function remapEq(id) { return (id && eqRemap[id]) || id; }
+
+                    // Remap exerciseEquipment
+                    if (dd.exerciseEquipment) {
+                        for (var ek in dd.exerciseEquipment) {
+                            var v = dd.exerciseEquipment[ek];
+                            if (v && eqRemap[v]) { dd.exerciseEquipment[ek] = eqRemap[v]; changed = true; }
+                        }
+                    }
+                    // Remap exerciseEquipmentOptions
+                    if (dd.exerciseEquipmentOptions) {
+                        for (var ek2 in dd.exerciseEquipmentOptions) {
+                            var opts = dd.exerciseEquipmentOptions[ek2] || [];
+                            var newOpts = [], seenOpt = {};
+                            for (var oi = 0; oi < opts.length; oi++) {
+                                var mapped = remapEq(opts[oi]);
+                                if (!seenOpt[mapped]) { seenOpt[mapped] = true; newOpts.push(mapped); }
+                            }
+                            dd.exerciseEquipmentOptions[ek2] = newOpts;
+                        }
+                    }
+                    // Remap gymEquipmentMap
+                    if (dd.gymEquipmentMap) {
+                        for (var gid in dd.gymEquipmentMap) {
+                            var gmap = dd.gymEquipmentMap[gid];
+                            for (var mk in gmap) {
+                                if (gmap[mk] && eqRemap[gmap[mk]]) { gmap[mk] = remapEq(gmap[mk]); changed = true; }
+                            }
+                        }
+                    }
+                    // Remap log entries equipmentId
+                    if (dd.log) {
+                        for (var w in dd.log) {
+                            for (var d in dd.log[w]) {
+                                var dayLog = dd.log[w][d];
+                                for (var exK in dayLog) {
+                                    if (exK.charAt(0) === '_' || typeof dayLog[exK] !== 'object' || dayLog[exK] === null) continue;
+                                    for (var si in dayLog[exK]) {
+                                        var setData = dayLog[exK][si];
+                                        if (setData && setData.equipmentId && eqRemap[setData.equipmentId]) {
+                                            setData.equipmentId = remapEq(setData.equipmentId);
+                                            changed = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (changed) {
+                        dd._lastModified = Date.now();
+                        try {
+                            localStorage.setItem(keys[ki], JSON.stringify(dd));
+                            console.log('v22 eq renormalize:', keys[ki], 'remapped:', Object.keys(eqRemap).length);
+                        } catch(e) {
+                            console.error('v22 migration failed:', keys[ki], e);
+                        }
+                    }
+                }
+            }
+        }
     ]
 };
