@@ -1017,6 +1017,8 @@ export const Storage = {
 
         var bestResult = null;
         var bestTime = 0;
+        var bestAnyResult = null;  // fallback: best without equipment filter
+        var bestAnyTime = 0;
 
         // Single pass: all weeks × all entries, find most recent by timestamp
         for (var w = week; w >= 1; w--) {
@@ -1030,9 +1032,15 @@ export const Storage = {
                 var logId = isUni ? entry.id + '_uni' : entry.id;
                 var log = this.getSetLog(w, entry.day, logId, setIdx);
                 if (!log || !log.completed) continue;
-                if (equipmentId && log.equipmentId !== equipmentId) continue;
 
                 var ts = log.timestamp || 0;
+                // Track best match WITHOUT equipment filter (fallback)
+                if (ts > bestAnyTime) {
+                    bestAnyResult = log;
+                    bestAnyTime = ts;
+                }
+                // Track best match WITH equipment filter
+                if (equipmentId && log.equipmentId !== equipmentId) continue;
                 if (ts > bestTime) {
                     bestResult = log;
                     bestTime = ts;
@@ -1040,7 +1048,8 @@ export const Storage = {
             }
         }
 
-        return bestResult;
+        // If equipment filter found nothing, fall back to most recent regardless of equipment
+        return bestResult || bestAnyResult;
     },
 
     getExerciseHistory(exerciseId) {
