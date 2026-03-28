@@ -107,15 +107,16 @@ export const Storage = {
             if (!this._data._programModified && this._data._lastModified && this._data.program) {
                 this._data._programModified = this._data._lastModified;
             }
-            // Migrate exercise names to match current EXERCISE_DB.
-            // Runs every load (idempotent, fast — just string comparisons).
-            // Auto-syncs nameRu from DB by English name, so no manual version bumps needed.
-            if (this._migrateFn) {
-                var migrated = this._migrateFn(this._data);
-                if (migrated > 0) this._save();
+            // Run migrations only when version changes (not every load)
+            var MIGRATION_VERSION = 17;
+            if ((this._data._migrationVersion || 0) < MIGRATION_VERSION) {
+                if (this._migrateFn) {
+                    this._migrateFn(this._data);
+                }
+                this._data._migrationVersion = MIGRATION_VERSION;
+                this._save();
             }
-            // Unbind stale snapshots on every load — prevents sync from
-            // restoring deleted exercises via old snapshot bindings.
+            // _unbindFn (stale snapshot unbinding) — disabled, see app.js
             if (this._unbindFn) {
                 this._unbindFn(this._data);
             }

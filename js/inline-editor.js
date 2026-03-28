@@ -189,7 +189,6 @@ export const InlineEditor = {
         if (!ed || !ed.items[groupIdx]) return;
         ed.items.splice(groupIdx, 1);
         this._onAutoSave(ed);
-        this._clearCurrentWeekSnapshot(dayNum);
         this._onInvalidateCache();
         // Stay in reorder mode if active — re-render and re-enter
         if (window._reorderMode) {
@@ -712,7 +711,6 @@ export const InlineEditor = {
 
         this._closeSheet();
         this._onAutoSave(ed);
-        this._clearCurrentWeekSnapshot(dayNum);
         this._onInvalidateCache();
         this._onRenderDay();
     },
@@ -729,7 +727,6 @@ export const InlineEditor = {
 
         this._closeSheet();
         this._onAutoSave(ed);
-        this._clearCurrentWeekSnapshot(dayNum);
         this._onInvalidateCache();
         this._onRenderDay();
     },
@@ -783,7 +780,6 @@ export const InlineEditor = {
             }
 
             self._onAutoSave(freshEd);
-            self._clearCurrentWeekSnapshot(dayNum);
             self._onInvalidateCache();
             self._onRenderDay();
         });
@@ -820,7 +816,6 @@ export const InlineEditor = {
             });
 
             self._onAutoSave(ed);
-            self._clearCurrentWeekSnapshot(dayNum);
             self._onInvalidateCache();
             // Stay in reorder mode if active — re-render and re-enter
             if (window._reorderMode) {
@@ -892,10 +887,6 @@ export const InlineEditor = {
         }
         this._menuCtx = null;
         this._onAutoSave(ed);
-        this._clearCurrentWeekSnapshot(ed.dayNum);
-        // Clear weeklyOverrides for current week/day so edited techniques
-        // (DROP/R-P/MP) take effect from dayTemplates, not from stale overrides
-        this._clearWeeklyOverrides(ed.dayNum);
         this._closeSheet();
         this._onInvalidateCache();
         this._onRenderDay();

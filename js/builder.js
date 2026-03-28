@@ -1011,6 +1011,7 @@ export const Builder = {
     },
 
     _autoSave() {
+        if (SupaSync._syncing) return; // don't write while sync merge is in progress
         var ed = this._editingDay;
         var p = Storage.getProgram();
         if (!ed || !p) return;
@@ -1052,16 +1053,18 @@ export const Builder = {
         Storage.saveProgram(p, false);
     },
 
-    // Build a fingerprint of exercise IDs + order to detect template changes
+    // Strip UI-only fields so opening Builder without real changes doesn't create a snapshot
+    _stripUiFields(groups) {
+        var UI_KEYS = { '_uiState': 1, 'collapsed': 1, '_editing': 1, '_expanded': 1, '_selected': 1 };
+        return JSON.parse(JSON.stringify(groups, function(key, value) {
+            if (UI_KEYS[key]) return undefined;
+            return value;
+        }));
+    },
+
+    // Full content fingerprint to detect any template change (sets, techniques, names, etc.)
     _templateFingerprint(groups) {
-        var ids = [];
-        for (var g = 0; g < groups.length; g++) {
-            var exs = getGroupExercises(groups[g]);
-            for (var e = 0; e < exs.length; e++) {
-                if (exs[e].id) ids.push(exs[e].id);
-            }
-        }
-        return ids.join(',');
+        return JSON.stringify(this._stripUiFields(groups));
     },
 
     // Create a snapshot of the old template if it changed, and bind past weeks to the old version
@@ -1096,13 +1099,6 @@ export const Builder = {
             if (!p.weekTemplateVersion[w][d]) {
                 p.weekTemplateVersion[w][d] = nextVersion;
             }
-        }
-        // Current week always uses the live template — don't bind it to the old snapshot.
-        // This ensures that exercise additions/removals take effect immediately,
-        // even if the user already has logs for this week.
-        // Clear any previous binding (from earlier edits this same week).
-        if (p.weekTemplateVersion[currentWeek]) {
-            delete p.weekTemplateVersion[currentWeek][d];
         }
     },
 
@@ -1160,8 +1156,9 @@ export const Builder = {
         // If no rules at all, don't touch existing overrides
         if (allRules.length === 0) return;
 
-        // Clear this day's overrides across all weeks
-        for (var w = 1; w <= p.totalWeeks; w++) {
+        // Clear this day's overrides for current + future weeks only (preserve history)
+        var currentWeek = AppState.currentWeek || 1;
+        for (var w = currentWeek; w <= p.totalWeeks; w++) {
             if (p.weeklyOverrides[w] && p.weeklyOverrides[w][dayNum]) {
                 delete p.weeklyOverrides[w][dayNum];
             }
@@ -1171,7 +1168,7 @@ export const Builder = {
         for (var i = 0; i < allRules.length; i++) {
             var exId = allRules[i].exerciseId;
             var rule = allRules[i].rule;
-            for (var w = rule.startWeek; w <= p.totalWeeks; w++) {
+            for (var w = Math.max(rule.startWeek, currentWeek); w <= p.totalWeeks; w++) {
                 if (!p.weeklyOverrides[w]) p.weeklyOverrides[w] = {};
                 if (!p.weeklyOverrides[w][dayNum]) p.weeklyOverrides[w][dayNum] = {};
                 if (!p.weeklyOverrides[w][dayNum][exId]) p.weeklyOverrides[w][dayNum][exId] = { sets: {} };

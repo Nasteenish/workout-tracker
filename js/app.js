@@ -22,6 +22,7 @@ import { getTotalDays, getTotalWeeks, getProgressWeek } from './program-utils.js
 import { WORKOUT, EQ, SETTINGS, read, readInt } from './data-attrs.js';
 import { AppState } from './app-state.js';
 import { InlineEditor } from './inline-editor.js';
+import { WorkoutTimer } from './workout-timer.js';
 
 export const App = {
     _currentWeek: 1,
@@ -109,6 +110,7 @@ export const App = {
                         SupaSync._currentStorageKey
                     ).then(function() {
                         Storage._invalidateCache();
+                        Storage.setProgram(Storage.getStoredProgram());
                         self.invalidatePageCache();
                         self.route();
                     }).catch(function() {});
@@ -139,7 +141,7 @@ export const App = {
 
         // Wire storage callbacks before any data loading
         Storage._migrateFn = (data) => Migrations.migrateExerciseNames(data);
-        Storage._unbindFn = (data) => Migrations._unbindStaleSnapshots(data);
+        Storage._unbindFn = null; // disabled — snapshots protected by full fingerprint
 
         // Run one-time data migrations (see js/migrations.js)
         Migrations.run();
@@ -192,7 +194,11 @@ export const App = {
         };
         Celebration._onShareCheckin = (data) => { this._pendingCheckinWorkout = data; };
         SupaSync._onSyncWarning = (msg) => this._showSyncWarning(msg);
+        SupaSync._isWorkoutActiveFn = () =>
+            AppState.currentWeek && AppState.currentDay
+            && WorkoutTimer.isRunning(AppState.currentWeek, AppState.currentDay);
         SupaSync._onSyncComplete = () => {
+            Storage.setProgram(Storage.getStoredProgram());
             this._lastVisSync = Date.now();
             this.invalidatePageCache();
             this.route();
@@ -352,6 +358,7 @@ export const App = {
             return SupaSync.syncOnLogin(supaUserId, 'wt_data_' + userId);
         }).then(function(result) {
             if (result === undefined) return; // session was expired, skip post-sync
+            Storage.setProgram(Storage.getStoredProgram());
             localStorage.removeItem('_wt_eq_snapshot');
             // Remove stuck Precor equipment — only local, no immediate push
             try {

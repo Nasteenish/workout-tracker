@@ -256,7 +256,8 @@ export const SupaSync = {
                 // If program was modified independently, use the newer program.
                 var progTimeRemote = remoteData._programModified || remoteTime;
                 var progTimeLocal = localData._programModified || localTime;
-                if (progTimeRemote !== progTimeLocal) {
+                var _isWorkoutActive = this._isWorkoutActiveFn && this._isWorkoutActiveFn();
+                if (!_isWorkoutActive && progTimeRemote !== progTimeLocal) {
                     var progSource = progTimeRemote > progTimeLocal ? remoteData : localData;
                     if (progSource !== base && progSource.program) {
                         base.program = JSON.parse(JSON.stringify(progSource.program));
@@ -383,8 +384,7 @@ export const SupaSync = {
                     }
                     base.program.weekTemplateVersion = baseWTV;
                 }
-                // Fix exercise names that remote may have reverted to old values
-                Migrations.migrateExerciseNames(base);
+                // migrateExerciseNames removed from sync — runs in Storage._load() instead
                 // Flatten any choose_one groups that came from a pre-v10 device
                 _flattenChooseOneInData(base);
                 // Clean up orphaned exerciseEquipment bindings (point to deleted equipment)
@@ -436,9 +436,11 @@ export const SupaSync = {
     _currentSupaUserId: null,
     _currentStorageKey: null,
     _onSyncComplete: null,  // wired in App.init() → updates UI + _lastVisSync
+    _isWorkoutActiveFn: null,  // wired in App.init() → checks if workout is in progress
 
     // Called by Storage._save() to trigger cloud sync
     onLocalSave() {
+        if (this._syncing) return; // don't push partially-merged data
         if (this._currentSupaUserId && this._currentStorageKey) {
             this.schedulePush(this._currentSupaUserId, this._currentStorageKey);
         }

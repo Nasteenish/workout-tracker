@@ -91,6 +91,10 @@ export function resolveWorkout(week, day) {
         const snap = p.templateSnapshots[d].find(s => s.version === version);
         if (snap) {
             template.exerciseGroups = deepClone(snap.groups);
+        } else {
+            console.error('resolveWorkout: snapshot version', version,
+                'not found for day', d, 'week', week,
+                '— falling back to live template');
         }
     }
 

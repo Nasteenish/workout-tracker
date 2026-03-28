@@ -207,9 +207,7 @@ export const Migrations = {
             }
             if (changed) Storage._save();
 
-            // Also unbind stale snapshots for weeks without logs.
-            // This runs after every sync to prevent cloud from restoring old bindings.
-            this._unbindStaleSnapshots(d);
+            // _unbindStaleSnapshots disabled — snapshots are now protected by full fingerprint
         } catch (e) {
             console.error('Log cleanup error:', e);
         }
@@ -308,7 +306,7 @@ export const Migrations = {
 
         if (changed) {
             data._programModified = Date.now();
-            Storage._save();
+            // No _save() here — caller (_load) will save if needed
         }
     },
 
