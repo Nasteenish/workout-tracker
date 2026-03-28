@@ -143,8 +143,8 @@ export const Analytics = {
         return hasPrev;
     },
 
-    // ===== PR Records Table — best weight at each rep count =====
-    getPRTable(exerciseId) {
+    // ===== PR Records Table — best weight at each rep count (per-equipment) =====
+    getPRTable(exerciseId, equipmentId) {
         const history = Storage.getExerciseHistory(exerciseId);
         if (!history || history.length === 0) return [];
 
@@ -153,6 +153,7 @@ export const Analytics = {
         for (const entry of history) {
             for (const s of entry.sets) {
                 if (!s.weight || s.weight <= 0 || !s.reps || s.reps <= 0) continue;
+                if (equipmentId && !this._matchesEquipment(s.equipmentId, equipmentId)) continue;
                 const key = s.reps;
                 if (!bestByReps[key] || s.weight > bestByReps[key].weight) {
                     bestByReps[key] = { weight: s.weight, reps: s.reps, week: entry.week, day: entry.day };
@@ -164,8 +165,8 @@ export const Analytics = {
         return Object.values(bestByReps).sort((a, b) => a.reps - b.reps);
     },
 
-    // ===== 1RM Progression over weeks =====
-    get1RMProgression(exerciseId) {
+    // ===== 1RM Progression over weeks (per-equipment) =====
+    get1RMProgression(exerciseId, equipmentId) {
         const history = Storage.getExerciseHistory(exerciseId);
         if (!history) return [];
 
@@ -173,6 +174,7 @@ export const Analytics = {
         for (const entry of history) {
             for (const s of entry.sets) {
                 if (!s.weight || !s.reps) continue;
+                if (equipmentId && !this._matchesEquipment(s.equipmentId, equipmentId)) continue;
                 const e1rm = this.estimated1RM(s.weight, s.reps);
                 if (!weekMap[entry.week] || e1rm > weekMap[entry.week].e1rm) {
                     weekMap[entry.week] = { e1rm, weight: s.weight, reps: s.reps };

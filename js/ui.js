@@ -1374,8 +1374,8 @@ export const UI = {
         const hasBothModes = hasUni && hasNonUni;
 
         // PR records table and 1RM progression
-        const prTable = Analytics.getPRTable(exerciseId);
-        const e1rmProgression = Analytics.get1RMProgression(exerciseId);
+        const prTable = Analytics.getPRTable(exerciseId, currentEqId || null);
+        const e1rmProgression = Analytics.get1RMProgression(exerciseId, currentEqId || null);
 
         return {
             exerciseName, unitLabel,
