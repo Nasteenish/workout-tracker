@@ -1244,57 +1244,109 @@ export const Migrations = {
         },
         // v15: DISABLED — was buggy. Key preserved so it never re-runs.
         { key: '_restore_orphaned_exercises_v1', fn: function() {} },
-        // v16: Clean up v15 damage — remove snapshots with exercises from wrong days
+        // v16: Full repair — remove cross-day snapshots + re-bind each week to best match
         {
-            key: '_undo_v15_cross_day_snapshots',
+            key: '_fix_snapshots_full_repair_v1',
             fn: function() {
                 var keys = Object.keys(localStorage);
                 for (var ki = 0; ki < keys.length; ki++) {
                     if (keys[ki].indexOf('wt_data_') !== 0) continue;
                     var dd;
                     try { dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}'); } catch(e) { continue; }
-                    if (!dd.program) continue;
+                    if (!dd.program || !dd.log) continue;
                     var p = dd.program;
-                    var snaps = p.templateSnapshots;
-                    var wtv = p.weekTemplateVersion;
-                    if (!snaps) continue;
-                    if (!wtv) wtv = p.weekTemplateVersion = {};
-                    var changed = false;
+                    var snaps = p.templateSnapshots || {};
+                    var dt = p.dayTemplates;
+                    if (!dt) continue;
+
+                    // Step 1: Remove all cross-day snapshots
                     for (var dStr in snaps) {
                         var daySnaps = snaps[dStr];
                         if (!Array.isArray(daySnaps)) continue;
-                        var bad = {};
-                        for (var si = 0; si < daySnaps.length; si++) {
-                            var groups = daySnaps[si].groups || [];
+                        snaps[dStr] = daySnaps.filter(function(s) {
+                            var groups = s.groups || [];
                             for (var gi = 0; gi < groups.length; gi++) {
                                 var exs = [];
                                 if (groups[gi].exercise) exs.push(groups[gi].exercise);
                                 if (groups[gi].exercises) exs = exs.concat(groups[gi].exercises);
-                                var found = false;
                                 for (var ei = 0; ei < exs.length; ei++) {
                                     var eid = exs[ei] && exs[ei].id;
                                     if (!eid) continue;
                                     var m = eid.match(/^D(\d+)E/);
-                                    if (m && m[1] !== dStr) { found = true; break; }
+                                    if (m && m[1] !== dStr) return false; // cross-day = remove
                                 }
-                                if (found) { bad[daySnaps[si].version] = true; break; }
+                            }
+                            return true; // clean
+                        });
+                    }
+
+                    // Step 2: Clear all weekTemplateVersion
+                    p.weekTemplateVersion = {};
+
+                    // Step 3: For each week/day with completed log data, find best clean snapshot
+                    var totalWeeks = p.totalWeeks || 12;
+                    var totalDays = Object.keys(dt).length;
+                    for (var w = 1; w <= totalWeeks; w++) {
+                        var wStr = String(w);
+                        if (!dd.log[wStr]) continue;
+                        for (var d = 1; d <= totalDays; d++) {
+                            var dStr2 = String(d);
+                            var dayLog = dd.log[wStr][dStr2];
+                            if (!dayLog) continue;
+                            // Get completed exercise IDs
+                            var logEx = {};
+                            for (var lk in dayLog) {
+                                if (lk.charAt(0) === '_') continue;
+                                var base = lk.replace(/_uni$/, '');
+                                for (var sk in dayLog[lk]) {
+                                    if (dayLog[lk][sk] && dayLog[lk][sk].completed) { logEx[base] = true; break; }
+                                }
+                            }
+                            var logIds = Object.keys(logEx);
+                            if (!logIds.length) continue;
+
+                            // Count template matches
+                            var tmplIds = {};
+                            var tGroups = (dt[dStr2] && dt[dStr2].exerciseGroups) || [];
+                            for (var tgi = 0; tgi < tGroups.length; tgi++) {
+                                if (tGroups[tgi].exercise && tGroups[tgi].exercise.id) tmplIds[tGroups[tgi].exercise.id] = 1;
+                                if (tGroups[tgi].exercises) {
+                                    for (var tei = 0; tei < tGroups[tgi].exercises.length; tei++) {
+                                        if (tGroups[tgi].exercises[tei].id) tmplIds[tGroups[tgi].exercises[tei].id] = 1;
+                                    }
+                                }
+                            }
+                            var tmplMatch = 0;
+                            for (var li = 0; li < logIds.length; li++) { if (tmplIds[logIds[li]]) tmplMatch++; }
+
+                            // Find best clean snapshot
+                            var bestVer = null, bestMatch = tmplMatch;
+                            var daySnaps2 = snaps[dStr2] || [];
+                            for (var si2 = 0; si2 < daySnaps2.length; si2++) {
+                                var sIds = {};
+                                var sg = daySnaps2[si2].groups || [];
+                                for (var sgi = 0; sgi < sg.length; sgi++) {
+                                    if (sg[sgi].exercise && sg[sgi].exercise.id) sIds[sg[sgi].exercise.id] = 1;
+                                    if (sg[sgi].exercises) {
+                                        for (var sei = 0; sei < sg[sgi].exercises.length; sei++) {
+                                            if (sg[sgi].exercises[sei].id) sIds[sg[sgi].exercises[sei].id] = 1;
+                                        }
+                                    }
+                                }
+                                var match = 0;
+                                for (var li2 = 0; li2 < logIds.length; li2++) { if (sIds[logIds[li2]]) match++; }
+                                if (match > bestMatch) { bestMatch = match; bestVer = daySnaps2[si2].version; }
+                            }
+
+                            if (bestVer) {
+                                if (!p.weekTemplateVersion[wStr]) p.weekTemplateVersion[wStr] = {};
+                                p.weekTemplateVersion[wStr][dStr2] = bestVer;
                             }
                         }
-                        if (!Object.keys(bad).length) continue;
-                        for (var wk in wtv) {
-                            if (wtv[wk][dStr] && bad[wtv[wk][dStr]]) {
-                                delete wtv[wk][dStr];
-                                if (!Object.keys(wtv[wk]).length) delete wtv[wk];
-                                changed = true;
-                            }
-                        }
-                        snaps[dStr] = daySnaps.filter(function(s) { return !bad[s.version]; });
-                        changed = true;
                     }
-                    if (changed) {
-                        dd._lastModified = Date.now();
-                        localStorage.setItem(keys[ki], JSON.stringify(dd));
-                    }
+
+                    dd._lastModified = Date.now();
+                    localStorage.setItem(keys[ki], JSON.stringify(dd));
                 }
             }
         }
