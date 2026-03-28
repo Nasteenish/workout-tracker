@@ -1402,6 +1402,20 @@ export const Migrations = {
 
                             if (!groups) continue;
 
+                            // Validate: all exercise IDs must belong to this day
+                            var isClean = groups.every(function(g) {
+                                var exs = [];
+                                if (g.exercise) exs.push(g.exercise);
+                                if (g.exercises) exs = exs.concat(g.exercises);
+                                if (g.options) exs = exs.concat(g.options);
+                                return exs.every(function(ex) {
+                                    if (!ex || !ex.id) return true;
+                                    var match = ex.id.match(/^D(\d+)E/);
+                                    return !match || match[1] === d;
+                                });
+                            });
+                            if (!isClean) continue; // corrupted snapshot — skip, use live template
+
                             dayLog._template = JSON.parse(JSON.stringify(groups));
                             changed = true;
                         }
