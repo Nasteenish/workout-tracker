@@ -1,4 +1,4 @@
-// exercises_db.js — Exercise library (285 exercises)
+// exercises_db.js — Exercise library (284 exercises)
 // Автогенерируется скриптом tools/sync_exercises.js — не редактировать вручную
 
 export const EXERCISE_CATEGORIES = [
@@ -23,13 +23,12 @@ export const EXERCISE_CATEGORIES = [
 ];
 
 export const EXERCISE_DB = [
-    // === Пресс (20) ===
+    // === Пресс (19) ===
     { nameRu: 'Касание носков', name: 'Toe Touch', category: 'abdominals' },
     { nameRu: 'Косые скручивания', name: 'Oblique Crunch', category: 'abdominals' },
     { nameRu: 'Наклон в сторону', name: 'Side Bend', category: 'abdominals' },
     { nameRu: 'Наклон в сторону (с гантелей)', name: 'Side Bend (Dumbbell)', category: 'abdominals' },
     { nameRu: 'Ножницы на пресс', name: 'Ab Scissors', category: 'abdominals' },
-    { nameRu: 'Носки к перекладине', name: 'Toes to Bar', category: 'abdominals' },
     { nameRu: 'Обратные скручивания', name: 'Reverse Crunch', category: 'abdominals' },
     { nameRu: 'Подъём коленей в висе', name: 'Hanging Knee Raise', category: 'abdominals' },
     { nameRu: 'Подъём коленей на брусьях', name: 'Knee Raise Parallel Bars', category: 'abdominals' },
@@ -81,14 +80,13 @@ export const EXERCISE_DB = [
     { nameRu: 'Сгибание одной рукой (на блоке)', name: 'Single Arm Curl (Cable)', category: 'biceps' },
     { nameRu: 'Сгибание рук за спиной (блок)', name: 'Behind the Back Curl (Cable)', category: 'biceps' },
     { nameRu: 'Сгибание рук официанта (гантель)', name: 'Waiter Curl (Dumbbell)', category: 'biceps' },
-    // === Икры (7) ===
+    // === Икры (6) ===
     { nameRu: 'Жим носками (в тренажёре)', name: 'Calf Press (Machine)', category: 'calves' },
     { nameRu: 'Подъём на носки (в тренажёре)', name: 'Calf Extension (Machine)', category: 'calves' },
     { nameRu: 'Подъём на носки сидя (в тренажёре)', name: 'Seated Calf Raise', category: 'calves' },
     { nameRu: 'Подъём на носки стоя (в Смите)', name: 'Standing Calf Raise (Smith)', category: 'calves' },
     { nameRu: 'Подъём на носки стоя (в тренажёре)', name: 'Standing Calf Raise (Machine)', category: 'calves' },
     { nameRu: 'Подъём на носки стоя (с гантелями)', name: 'Standing Calf Raise (Dumbbell)', category: 'calves' },
-    { nameRu: 'Подъём на носки стоя (со штангой)', name: 'Standing Calf Raise (Barbell)', category: 'calves' },
     // === Кардио (21) ===
     { nameRu: 'Бег', name: 'Running', category: 'cardio' },
     { nameRu: 'Беговая дорожка', name: 'Treadmill', category: 'cardio' },
@@ -160,7 +158,7 @@ export const EXERCISE_DB = [
     { nameRu: 'Роллер для запястий', name: 'Wrist Roller', category: 'forearms' },
     { nameRu: 'Сгибание запястий за спиной (со штангой)', name: 'Behind the Back Bicep Wrist Curl (Barbell)', category: 'forearms' },
     { nameRu: 'Сгибание запястий сидя ладонями вверх', name: 'Seated Palms Up Wrist Curl', category: 'forearms' },
-    // === Ягодицы (17) ===
+    // === Ягодицы (16) ===
     { nameRu: 'Обратная гиперэкстензия', name: 'Reverse Hyperextension', category: 'glutes' },
     { nameRu: 'Отведение ноги назад (в тренажёре)', name: 'Glute Kickback (Machine)', category: 'glutes' },
     { nameRu: 'Отведение ноги назад (на блоке)', name: 'Standing Cable Glute Kickbacks', category: 'glutes' },
@@ -177,8 +175,8 @@ export const EXERCISE_DB = [
     { nameRu: 'Ягодичный мост (в тренажёре)', name: 'Hip Thrust (Machine)', category: 'glutes' },
     { nameRu: 'Ягодичный мост (с гантелью)', name: 'Frog Pumps (Dumbbell)', category: 'glutes' },
     { nameRu: 'Ягодичный мост (со штангой)', name: 'Hip Thrust (Barbell)', category: 'glutes' },
-    { nameRu: 'Ягодичный мост (частичный)', name: 'Partial Glute Bridge (Barbell)', category: 'glutes' },
-    // === Бицепс бедра (8) ===
+    // === Бицепс бедра (9) ===
+    { nameRu: 'Гуд морнинг (в смите)', name: 'Good Morning (Smith Machine)', category: 'hamstrings' },
     { nameRu: 'Гуд морнинг (со штангой)', name: 'Good Morning (Barbell)', category: 'hamstrings' },
     { nameRu: 'Румынская тяга (в смите)', name: 'Romanian Deadlift (Smith Machine)', category: 'hamstrings' },
     { nameRu: 'Румынская тяга (в тренажере)', name: 'Romanian Deadlift (Machine)', category: 'hamstrings' },
@@ -253,7 +251,7 @@ export const EXERCISE_DB = [
     { nameRu: 'Сплит-приседание (с гантелями)', name: 'Split Squat (Dumbbell)', category: 'quadriceps' },
     { nameRu: 'Стульчик у стены', name: 'Wall Sit', category: 'quadriceps' },
     { nameRu: 'Фронтальное приседание', name: 'Front Squat', category: 'quadriceps' },
-    // === Плечи (30) ===
+    // === Плечи (31) ===
     { nameRu: 'Жим на плечи сидя (Арнольда)', name: 'Arnold Press (Dumbbell)', category: 'shoulders' },
     { nameRu: 'Жим на плечи сидя (в смите)', name: 'Shoulder Press (Smith machine)', category: 'shoulders' },
     { nameRu: 'Жим на плечи сидя (в тренажёре)', name: 'Shoulder Press (Machine)', category: 'shoulders' },
@@ -265,6 +263,7 @@ export const EXERCISE_DB = [
     { nameRu: 'Жим на плечи стоя (со штангой)', name: 'Overhead Press (Barbell)', category: 'shoulders' },
     { nameRu: 'Жим на плечи стоя (со штангой)', name: 'Single Arm Landmine Press (Barbell)', category: 'shoulders' },
     { nameRu: 'Махи в стороны (в тренажёре)', name: 'Lateral Raise (Machine)', category: 'shoulders' },
+    { nameRu: 'Махи в стороны (лежа на боку на лавке)', name: 'Lateral Raise (Bench)', category: 'shoulders' },
     { nameRu: 'Махи в стороны (на блоке)', name: 'Lateral Raise (Cable)', category: 'shoulders' },
     { nameRu: 'Махи в стороны (с резинкой)', name: 'Lateral Raise (Band)', category: 'shoulders' },
     { nameRu: 'Махи в стороны (сидя с гантелями)', name: 'Seated Lateral Raise (Dumbbell)', category: 'shoulders' },
