@@ -239,6 +239,20 @@ export const Migrations = {
                 }
             }
         }
+        // Also collect exercises from log._template snapshots (active/past workouts)
+        if (data.log) {
+            for (var lw in data.log) {
+                for (var ld in data.log[lw]) {
+                    var tpl = data.log[lw][ld]._template;
+                    if (tpl && tpl.exerciseGroups) {
+                        for (var tg = 0; tg < tpl.exerciseGroups.length; tg++) {
+                            var texs = getGroupExercises(tpl.exerciseGroups[tg]);
+                            for (var te = 0; te < texs.length; te++) allExercises.push(texs[te]);
+                        }
+                    }
+                }
+            }
+        }
         var dbRu = _getDbRuMap();
 
         // Build English name → DB entry lookup for auto-sync
