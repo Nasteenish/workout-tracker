@@ -1,4 +1,4 @@
-// exercises_db.js — Exercise library (286 exercises)
+// exercises_db.js — Exercise library (285 exercises)
 // Автогенерируется скриптом tools/sync_exercises.js — не редактировать вручную
 
 export const EXERCISE_CATEGORIES = [
@@ -139,8 +139,8 @@ export const EXERCISE_DB = [
     { nameRu: 'Отжимания на брусьях (на грудь)', name: 'Chest Dip', category: 'chest' },
     { nameRu: 'Отжимания на брусьях на грудь (с отягощением)', name: 'Chest Dip (Weighted)', category: 'chest' },
     { nameRu: 'Отжимания на брусьях на грудь (с помощью)', name: 'Chest Dip (Assisted)', category: 'chest' },
-    { nameRu: 'Отжимания на кольцах', name: 'Ring Dips', category: 'chest' },
     { nameRu: 'Отжимания на кольцах', name: 'Ring Push Up', category: 'chest' },
+    { nameRu: 'Отжимания на кольцах', name: 'Ring Dips', category: 'chest' },
     { nameRu: 'Отжимания с колен', name: 'Kneeling Push Up', category: 'chest' },
     { nameRu: 'Отжимания с ногами на возвышении', name: 'Decline Push Up', category: 'chest' },
     { nameRu: 'Отжимания с руками на возвышении', name: 'Incline Push Ups', category: 'chest' },
@@ -160,11 +160,10 @@ export const EXERCISE_DB = [
     { nameRu: 'Роллер для запястий', name: 'Wrist Roller', category: 'forearms' },
     { nameRu: 'Сгибание запястий за спиной (со штангой)', name: 'Behind the Back Bicep Wrist Curl (Barbell)', category: 'forearms' },
     { nameRu: 'Сгибание запястий сидя ладонями вверх', name: 'Seated Palms Up Wrist Curl', category: 'forearms' },
-    // === Ягодицы (18) ===
+    // === Ягодицы (17) ===
     { nameRu: 'Обратная гиперэкстензия', name: 'Reverse Hyperextension', category: 'glutes' },
     { nameRu: 'Отведение ноги назад (в тренажёре)', name: 'Glute Kickback (Machine)', category: 'glutes' },
     { nameRu: 'Отведение ноги назад (на блоке)', name: 'Standing Cable Glute Kickbacks', category: 'glutes' },
-    { nameRu: 'Отведение ноги назад (тренажёр)', name: 'Rear Kick (Machine)', category: 'glutes' },
     { nameRu: 'Отведение ноги назад на полу', name: 'Glute Kickback on Floor', category: 'glutes' },
     { nameRu: 'Протяжка на блоке между ног', name: 'Cable Pull Through', category: 'glutes' },
     { nameRu: 'Становая тяга (в Смите)', name: 'Deadlift (Smith Machine)', category: 'glutes' },
@@ -179,14 +178,15 @@ export const EXERCISE_DB = [
     { nameRu: 'Ягодичный мост (с гантелью)', name: 'Frog Pumps (Dumbbell)', category: 'glutes' },
     { nameRu: 'Ягодичный мост (со штангой)', name: 'Hip Thrust (Barbell)', category: 'glutes' },
     { nameRu: 'Ягодичный мост (частичный)', name: 'Partial Glute Bridge (Barbell)', category: 'glutes' },
-    // === Бицепс бедра (7) ===
+    // === Бицепс бедра (8) ===
     { nameRu: 'Гуд морнинг (со штангой)', name: 'Good Morning (Barbell)', category: 'hamstrings' },
+    { nameRu: 'Румынская тяга (в смите)', name: 'Romanian Deadlift (Smith Machine)', category: 'hamstrings' },
+    { nameRu: 'Румынская тяга (в тренажере)', name: 'Romanian Deadlift (Machine)', category: 'hamstrings' },
     { nameRu: 'Румынская тяга (с гантелями)', name: 'Romanian Deadlift (Dumbbell)', category: 'hamstrings' },
     { nameRu: 'Румынская тяга (со штангой)', name: 'Romanian Deadlift (Barbell)', category: 'hamstrings' },
     { nameRu: 'Сгибание ног лёжа (в тренажёре)', name: 'Lying Leg Curl (Machine)', category: 'hamstrings' },
     { nameRu: 'Сгибание ног сидя (в тренажёре)', name: 'Seated Leg Curl (Machine)', category: 'hamstrings' },
     { nameRu: 'Сгибание ног стоя', name: 'Standing Leg Curls', category: 'hamstrings' },
-    { nameRu: 'Становая тяга на прямых ногах', name: 'Straight Leg Deadlift', category: 'hamstrings' },
     // === Широчайшие (17) ===
     { nameRu: 'Вертикальная тяга (в тренажёре)', name: 'Lat Pulldown (Machine)', category: 'lats' },
     { nameRu: 'Вертикальная тяга (на блоке)', name: 'Lat Pulldown (Cable)', category: 'lats' },
@@ -209,7 +209,7 @@ export const EXERCISE_DB = [
     { nameRu: 'Гиперэкстензия', name: 'Back Extension (Hyperextension)', category: 'lower_back' },
     { nameRu: 'Гиперэкстензия (с отягощением)', name: 'Back Extension (Weighted Hyperextension)', category: 'lower_back' },
     { nameRu: 'Разгибание спины (в тренажёре)', name: 'Back Extension (Machine)', category: 'lower_back' },
-    // === Квадрицепс (44) ===
+    // === Квадрицепс (43) ===
     { nameRu: 'Боковое приседание', name: 'Lateral Squat', category: 'quadriceps' },
     { nameRu: 'Боковой выпад', name: 'Lateral Lunge', category: 'quadriceps' },
     { nameRu: 'Болгарские сплит-приседания (в Смите)', name: 'Bulgarian Split Squat (Smith Machine)', category: 'quadriceps' },
@@ -218,7 +218,6 @@ export const EXERCISE_DB = [
     { nameRu: 'Выпад (в движении с гантелями)', name: 'Walking Lunge (Dumbbell)', category: 'quadriceps' },
     { nameRu: 'Выпад (с гантелями)', name: 'Lunge (Dumbbell)', category: 'quadriceps' },
     { nameRu: 'Выпад (со штангой)', name: 'Lunge (Barbell)', category: 'quadriceps' },
-    { nameRu: 'Выпад с гантелей над головой', name: 'Overhead Dumbbell Lunge', category: 'quadriceps' },
     { nameRu: 'Выпады с прыжком', name: 'Jumping Lunge', category: 'quadriceps' },
     { nameRu: 'Гакк-присед (в тренажёре)', name: 'Hack Squat (Machine)', category: 'quadriceps' },
     { nameRu: 'Гоблет-присед (кубковый присед)', name: 'Goblet Squat', category: 'quadriceps' },
@@ -239,7 +238,7 @@ export const EXERCISE_DB = [
     { nameRu: 'Приседание (в Смите)', name: 'Squat (Smith Machine)', category: 'quadriceps' },
     { nameRu: 'Приседание (в тренажёре)', name: 'Squat (Machine)', category: 'quadriceps' },
     { nameRu: 'Приседание (с гантелями)', name: 'Squat (Dumbbell)', category: 'quadriceps' },
-    { nameRu: 'Приседание (с резиной)', name: 'Squat (Band)', category: 'quadriceps' },
+    { nameRu: 'Приседание (с резинкой)', name: 'Squat (Band)', category: 'quadriceps' },
     { nameRu: 'Приседание (с собственным весом)', name: 'Squat (Bodyweight)', category: 'quadriceps' },
     { nameRu: 'Приседание (со штангой)', name: 'Squat (Barbell)', category: 'quadriceps' },
     { nameRu: 'Приседание Зерхера', name: 'Zercher Squat', category: 'quadriceps' },
