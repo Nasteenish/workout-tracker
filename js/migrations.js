@@ -1347,6 +1347,72 @@ export const Migrations = {
                     localStorage.setItem(keys[ki], JSON.stringify(dd));
                 }
             }
+        },
+        // v17: Backfill _template in log for all historical workouts
+        {
+            key: 'wt_migration_v17',
+            fn: function() {
+                var keys = Object.keys(localStorage);
+                for (var ki = 0; ki < keys.length; ki++) {
+                    if (keys[ki].indexOf('wt_data_') !== 0) continue;
+                    var dd;
+                    try { dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}'); } catch(e) { continue; }
+                    if (!dd.log || !dd.program) continue;
+
+                    var p = dd.program;
+                    var snaps = p.templateSnapshots || {};
+                    var wtv = p.weekTemplateVersion || {};
+                    var dt = p.dayTemplates;
+                    if (!dt) continue;
+
+                    var changed = false;
+                    for (var w in dd.log) {
+                        for (var d in dd.log[w]) {
+                            var dayLog = dd.log[w][d];
+                            if (dayLog._template) continue; // idempotent
+
+                            // Check for real logged sets
+                            var hasRealSets = false;
+                            for (var k in dayLog) {
+                                if (k.charAt(0) === '_') continue;
+                                if (typeof dayLog[k] === 'object' && dayLog[k] !== null
+                                    && Object.keys(dayLog[k]).length > 0) {
+                                    hasRealSets = true;
+                                    break;
+                                }
+                            }
+                            if (!hasRealSets) continue;
+
+                            // Priority 1: snapshot by existing binding
+                            var groups = null;
+                            var version = wtv[w] && wtv[w][d];
+                            if (version && snaps[d] && Array.isArray(snaps[d])) {
+                                for (var si = 0; si < snaps[d].length; si++) {
+                                    if (snaps[d][si].version === version && snaps[d][si].groups) {
+                                        groups = snaps[d][si].groups;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            // Priority 2: live dayTemplates
+                            if (!groups && dt[d] && dt[d].exerciseGroups) {
+                                groups = dt[d].exerciseGroups;
+                            }
+
+                            if (!groups) continue;
+
+                            dayLog._template = JSON.parse(JSON.stringify(groups));
+                            changed = true;
+                        }
+                    }
+
+                    if (changed) {
+                        dd._lastModified = Date.now();
+                        localStorage.setItem(keys[ki], JSON.stringify(dd));
+                    }
+                }
+            }
         }
     ]
 };

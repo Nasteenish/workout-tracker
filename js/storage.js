@@ -844,9 +844,56 @@ export const Storage = {
         this._save();
     },
 
-    saveSetLog(week, day, exerciseId, setIdx, weight, reps, equipmentId) {
+    getLogDay(week, day) {
         var data = this._load();
+        var w = String(week), d = String(day);
+        if (!data.log[w]) data.log[w] = {};
+        if (!data.log[w][d]) data.log[w][d] = {};
+        return data.log[w][d];
+    },
+
+    snapshotTemplateInLog(week, day) {
+        var p = this.getProgram();
+        if (!p) return;
+
+        var data = this._load();
+        var w = String(week), d = String(day);
+        if (!data.log[w]) data.log[w] = {};
+        if (!data.log[w][d]) data.log[w][d] = {};
+        if (data.log[w][d]._template) return; // idempotent — don't overwrite
+
+        // Priority 1: legacy binding → snapshot
+        var groups = null;
+        var version = p.weekTemplateVersion && p.weekTemplateVersion[week]
+            && p.weekTemplateVersion[week][String(day)];
+        if (version && p.templateSnapshots && p.templateSnapshots[String(day)]) {
+            var snaps = p.templateSnapshots[String(day)];
+            for (var i = 0; i < snaps.length; i++) {
+                if (snaps[i].version === version && snaps[i].groups) {
+                    groups = snaps[i].groups;
+                    break;
+                }
+            }
+        }
+        // Priority 2: live dayTemplates
+        if (!groups && p.dayTemplates && p.dayTemplates[day]) {
+            groups = p.dayTemplates[day].exerciseGroups;
+        }
+        if (!groups) return;
+
+        data.log[w][d]._template = JSON.parse(JSON.stringify(groups));
+        this._save();
+    },
+
+    saveSetLog(week, day, exerciseId, setIdx, weight, reps, equipmentId) {
+        // Safety net: snapshot template before first set if not yet done
         var w = String(week), d = String(day), s = String(setIdx);
+        var data = this._load();
+        if (!data.log[w] || !data.log[w][d] || !data.log[w][d]._template) {
+            this.snapshotTemplateInLog(week, day);
+            this._data = null; // invalidate cache — snapshotTemplateInLog called _save()
+            data = this._load();
+        }
         if (!data.log[w]) data.log[w] = {};
         if (!data.log[w][d]) data.log[w][d] = {};
         if (!data.log[w][d][exerciseId]) data.log[w][d][exerciseId] = {};

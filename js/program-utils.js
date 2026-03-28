@@ -84,7 +84,15 @@ export function resolveWorkout(week, day) {
 
     const d = String(day);
 
-    // Check if this week is bound to a snapshot version
+    // PRIORITY 1 — snapshot from log (created at workout start, sync-safe)
+    const logDay = Storage.getLogDay(week, day);
+    if (logDay && logDay._template) {
+        template.exerciseGroups = deepClone(logDay._template);
+        _applyOverrides(template, p, week, day);
+        return template;
+    }
+
+    // PRIORITY 2 — legacy: weekTemplateVersion → templateSnapshots (backward compat)
     const version = p.weekTemplateVersion && p.weekTemplateVersion[week]
         && p.weekTemplateVersion[week][d];
     if (version && p.templateSnapshots && p.templateSnapshots[d]) {
@@ -98,30 +106,33 @@ export function resolveWorkout(week, day) {
         }
     }
 
-    // Legacy fallback: support _frozenGroups from old data (before migration runs)
+    // PRIORITY 3 — legacy: _frozenGroups in weeklyOverrides
     const weekOverrides = p.weeklyOverrides && p.weeklyOverrides[week];
     const dayOverrides = weekOverrides && weekOverrides[day];
     if (dayOverrides && dayOverrides._frozenGroups && !version) {
         template.exerciseGroups = deepClone(dayOverrides._frozenGroups);
     }
 
-    // Apply set-level overrides
-    if (dayOverrides) {
-        for (const [exerciseId, exOverride] of Object.entries(dayOverrides)) {
-            if (exerciseId === '_frozenGroups') continue;
-            const exercise = findExerciseInTemplate(template, exerciseId);
-            if (!exercise || !exOverride.sets) continue;
+    // FALLBACK — live dayTemplates (current week without logs)
+    _applyOverrides(template, p, week, day);
+    return template;
+}
 
-            for (const [setIdx, setOverride] of Object.entries(exOverride.sets)) {
-                const idx = parseInt(setIdx);
-                if (exercise.sets[idx]) {
-                    Object.assign(exercise.sets[idx], setOverride);
-                }
+function _applyOverrides(template, p, week, day) {
+    const weekOverrides = p.weeklyOverrides && p.weeklyOverrides[week];
+    const dayOverrides = weekOverrides && weekOverrides[day];
+    if (!dayOverrides) return;
+    for (const [exerciseId, exOverride] of Object.entries(dayOverrides)) {
+        if (exerciseId === '_frozenGroups') continue;
+        const exercise = findExerciseInTemplate(template, exerciseId);
+        if (!exercise || !exOverride.sets) continue;
+        for (const [setIdx, setOverride] of Object.entries(exOverride.sets)) {
+            const idx = parseInt(setIdx);
+            if (exercise.sets[idx]) {
+                Object.assign(exercise.sets[idx], setOverride);
             }
         }
     }
-
-    return template;
 }
 
 /**

@@ -1067,39 +1067,10 @@ export const Builder = {
         return JSON.stringify(this._stripUiFields(groups));
     },
 
-    // Create a snapshot of the old template if it changed, and bind past weeks to the old version
+    // Legacy no-op: snapshots are now created in log at workout start (Phase 2).
+    // Remove together with _templateFingerprint and _stripUiFields in Phase 3.
     _snapshotIfChanged(p, dayNum, newGroups) {
-        var oldGroups = p.dayTemplates[dayNum].exerciseGroups;
-        if (!oldGroups) return;
-
-        // Compare fingerprints — if identical, nothing to snapshot
-        var oldFp = this._templateFingerprint(oldGroups);
-        var newFp = this._templateFingerprint(newGroups);
-        if (oldFp === newFp) return;
-
-        var d = String(dayNum);
-        if (!p.templateSnapshots) p.templateSnapshots = {};
-        if (!p.templateSnapshots[d]) p.templateSnapshots[d] = [];
-        if (!p.weekTemplateVersion) p.weekTemplateVersion = {};
-
-        var snapshots = p.templateSnapshots[d];
-        var nextVersion = snapshots.length + 1;
-
-        // Save old template as a new snapshot
-        snapshots.push({
-            version: nextVersion,
-            groups: JSON.parse(JSON.stringify(oldGroups))
-        });
-
-        // Bind past weeks (that don't already have a version) to the old snapshot
-        var currentWeek = AppState.currentWeek || 1;
-        for (var w = 1; w < currentWeek; w++) {
-            if (!p.weekTemplateVersion[w]) p.weekTemplateVersion[w] = {};
-            // Don't overwrite — week already bound to an earlier snapshot
-            if (!p.weekTemplateVersion[w][d]) {
-                p.weekTemplateVersion[w][d] = nextVersion;
-            }
-        }
+        return;
     },
 
     // Check if a week has any logged sets for any exercise in the given groups

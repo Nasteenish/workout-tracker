@@ -55,6 +55,7 @@ export const WorkoutUI = {
                         Storage.initGymFromCurrentEquipment(gymId);
                     }
                 }
+                Storage.snapshotTemplateInLog(week, day);
                 WorkoutTimer.start(week, day);
                 this._updateTimerSection(week, day);
                 this._updateAllEquipmentBadges();
@@ -476,6 +477,7 @@ export const WorkoutUI = {
             var gymId = read(target, EQ.GYM_ID);
             Storage.initGymFromCurrentEquipment(gymId);
             UI.hideGymModal();
+            Storage.snapshotTemplateInLog(week, day);
             WorkoutTimer.start(week, day);
             this._updateTimerSection(week, day);
             return true;
@@ -485,6 +487,7 @@ export const WorkoutUI = {
         if (target.id === 'gym-link-no') {
             var gymId = read(target, EQ.GYM_ID);
             UI.hideGymModal();
+            Storage.snapshotTemplateInLog(week, day);
             WorkoutTimer.start(week, day);
             this._updateTimerSection(week, day);
             return true;
