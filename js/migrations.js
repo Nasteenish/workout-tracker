@@ -1615,7 +1615,7 @@ export const Migrations = {
                     }
                 }
             }
-        }
+        },
         // v22: Re-normalize equipment IDs after sync may have reintroduced eq_TIMESTAMP IDs.
         // Same logic as v19 step 1, but runs again to fix sync-overwritten data.
         {
