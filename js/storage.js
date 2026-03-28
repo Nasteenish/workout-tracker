@@ -830,7 +830,7 @@ export const Storage = {
         var w = String(week), d = String(day);
         if (!data.log[w]) data.log[w] = {};
         if (!data.log[w][d]) data.log[w][d] = {};
-        if (data.log[w][d]._template) return; // idempotent — don't overwrite
+        if ('_template' in data.log[w][d]) return; // idempotent — don't overwrite (respects null tombstone)
 
         // Capture current live template
         var groups = (p.dayTemplates && p.dayTemplates[day])
