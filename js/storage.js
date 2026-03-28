@@ -424,18 +424,12 @@ export const Storage = {
         var data = this._load();
         // Use null as tombstone so sync doesn't resurrect the deleted binding
         data.exerciseEquipment[exerciseId] = null;
-        var sibs = this._getSiblingIds(exerciseId);
-        for (var i = 0; i < sibs.length; i++) {
-            data.exerciseEquipment[sibs[i]] = null;
-        }
-        // Propagate tombstone to gymEquipmentMap so applyGymEquipment won't resurrect
+        // Do NOT propagate to siblings — each exercise manages its own equipment
+        // Propagate tombstone to gymEquipmentMap for THIS exercise only
         if (data.gymEquipmentMap) {
-            var allIds = [exerciseId].concat(sibs);
             for (var gymId in data.gymEquipmentMap) {
                 var map = data.gymEquipmentMap[gymId];
-                for (var k = 0; k < allIds.length; k++) {
-                    if (allIds[k] in map) map[allIds[k]] = null;
-                }
+                if (exerciseId in map) map[exerciseId] = null;
             }
         }
         this._save();
@@ -445,9 +439,6 @@ export const Storage = {
             try {
                 var s = JSON.parse(snap);
                 s.exerciseEquipment[exerciseId] = null;
-                for (var j = 0; j < sibs.length; j++) {
-                    s.exerciseEquipment[sibs[j]] = null;
-                }
                 localStorage.setItem('_wt_eq_snapshot', JSON.stringify(s));
             } catch(e) {}
         }
@@ -500,10 +491,10 @@ export const Storage = {
         var data = this._load();
         data.exerciseEquipment[exerciseId] = equipmentId;
         if (equipmentId) this.linkEquipmentToExercise(exerciseId, equipmentId);
-        // Apply to siblings
+        // Share equipment to sibling OPTIONS (available list) but do NOT override
+        // their current assignment — each exercise instance keeps its own equipment
         var sibs = this._getSiblingIds(exerciseId);
         for (var i = 0; i < sibs.length; i++) {
-            data.exerciseEquipment[sibs[i]] = equipmentId;
             if (equipmentId) this.linkEquipmentToExercise(sibs[i], equipmentId);
         }
         this._save();
@@ -536,16 +527,16 @@ export const Storage = {
 
     unlinkEquipmentFromExercise(exerciseId, equipmentId) {
         var data = this._load();
-        // Unlink from this exercise and all siblings
+        // Remove from equipment OPTIONS for this exercise and all siblings
         var allIds = [exerciseId].concat(this._getSiblingIds(exerciseId));
         for (var a = 0; a < allIds.length; a++) {
-            var id = allIds[a];
-            if (data.exerciseEquipmentOptions[id]) {
-                data.exerciseEquipmentOptions[id] = data.exerciseEquipmentOptions[id].filter(function(eqId) { return eqId !== equipmentId; });
+            if (data.exerciseEquipmentOptions[allIds[a]]) {
+                data.exerciseEquipmentOptions[allIds[a]] = data.exerciseEquipmentOptions[allIds[a]].filter(function(eqId) { return eqId !== equipmentId; });
             }
-            if (data.exerciseEquipment[id] === equipmentId) {
-                data.exerciseEquipment[id] = null;
-            }
+        }
+        // Remove assignment only for THIS exercise (not siblings)
+        if (data.exerciseEquipment[exerciseId] === equipmentId) {
+            data.exerciseEquipment[exerciseId] = null;
         }
         this._save();
     },
@@ -691,10 +682,7 @@ export const Storage = {
         var data = this._load();
         if (!data.gymEquipmentMap[gymId]) data.gymEquipmentMap[gymId] = {};
         data.gymEquipmentMap[gymId][exerciseId] = equipmentId;
-        var sibs = this._getSiblingIds(exerciseId);
-        for (var i = 0; i < sibs.length; i++) {
-            data.gymEquipmentMap[gymId][sibs[i]] = equipmentId;
-        }
+        // Do NOT propagate to siblings — each exercise has its own gym equipment
         this._save();
     },
 

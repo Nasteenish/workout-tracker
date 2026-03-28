@@ -338,9 +338,15 @@ export const Builder = {
         var p = Storage.getProgram();
         if (!p || !p.dayTemplates[dayNum]) return null;
 
-        var groups = p.dayTemplates[dayNum].exerciseGroups;
         var cw = AppState.currentWeek;
         var d = String(dayNum);
+
+        // Use snapshot from log if available — same source as renderDay/resolveWorkout
+        // This ensures inline editor sees phantom exercises from snapshots
+        var logDay = Storage.getLogDay(cw, dayNum);
+        var groups = (logDay && logDay._template)
+            ? JSON.parse(JSON.stringify(logDay._template))
+            : p.dayTemplates[dayNum].exerciseGroups;
 
         // Apply weeklyOverrides (same as resolveWorkout) so editor sees DROP/R-P/etc.
         var dayOverrides = p.weeklyOverrides && p.weeklyOverrides[cw]
@@ -1041,6 +1047,14 @@ export const Builder = {
         p.dayTemplates[ed.dayNum].exerciseGroups = groups;
         this._syncProgressionToOverrides(ed.dayNum);
         Storage.saveProgram(p, false);
+
+        // Also update snapshot in log if it exists — keeps renderDay in sync with editor
+        var cw = AppState.currentWeek;
+        var logDay = Storage.getLogDay(cw, ed.dayNum);
+        if (logDay && logDay._template) {
+            logDay._template = JSON.parse(JSON.stringify(groups));
+            Storage._save();
+        }
     },
 
 
