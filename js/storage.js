@@ -82,7 +82,7 @@ export const Storage = {
                 this._data._programModified = this._data._lastModified;
             }
             // Run migrations only when version changes (not every load)
-            var MIGRATION_VERSION = 18;
+            var MIGRATION_VERSION = 19;
             if ((this._data._migrationVersion || 0) < MIGRATION_VERSION) {
                 if (this._migrateFn) {
                     this._migrateFn(this._data);
@@ -336,14 +336,29 @@ export const Storage = {
         return this._load().equipment || [];
     },
 
-    addEquipment(name, type, imageUrl) {
+    makeEquipmentId(name, catalogId) {
+        if (catalogId) return 'catalog:' + catalogId;
+        return 'custom:' + (name || 'unknown')
+            .toLowerCase()
+            .replace(/[^a-zа-яё0-9]/gi, '_')
+            .replace(/_+/g, '_')
+            .slice(0, 40);
+    },
+
+    addEquipment(name, type, imageUrl, catalogId) {
         var data = this._load();
-        // Prevent duplicates — return existing ID if same name already exists
-        var existing = data.equipment.find(function(e) { return e.name === name; });
-        if (existing) return existing.id;
-        var id = 'eq_' + Date.now();
+        var id = this.makeEquipmentId(name, catalogId);
+        var existing = data.equipment.find(function(e) { return e.id === id; });
+        if (existing) {
+            var updated = false;
+            if (imageUrl && !existing.imageUrl) { existing.imageUrl = imageUrl; updated = true; }
+            if (catalogId && !existing.catalogId) { existing.catalogId = catalogId; updated = true; }
+            if (updated) this._save();
+            return existing.id;
+        }
         var eq = { id: id, name: name, type: type || 'other' };
         if (imageUrl) eq.imageUrl = imageUrl;
+        if (catalogId) eq.catalogId = catalogId;
         data.equipment.push(eq);
         this._save();
         return id;
@@ -391,11 +406,14 @@ export const Storage = {
     getExerciseEquipment(exerciseId) {
         var data = this._load();
         var eq = data.exerciseEquipment[exerciseId];
-        if (eq) return eq;
-        // Check siblings
+        if (eq === null) return null;        // tombstone: explicitly unbound
+        if (eq !== undefined) return eq;     // has a value
+        // Key doesn't exist at all — check siblings
         var sibs = this._getSiblingIds(exerciseId);
         for (var i = 0; i < sibs.length; i++) {
-            if (data.exerciseEquipment[sibs[i]]) return data.exerciseEquipment[sibs[i]];
+            var sibEq = data.exerciseEquipment[sibs[i]];
+            if (sibEq) return sibEq;
+            if (sibEq === null) return null; // sibling tombstone counts too
         }
         return null;
     },
@@ -701,12 +719,21 @@ export const Storage = {
         var data = this._load();
         var map = data.gymEquipmentMap[gymId];
         if (!map) return;
+        // Build valid exercise IDs from current program to filter orphans
+        var validExIds = null;
+        if (this._program) {
+            validExIds = {};
+            var all = getAllProgramExercises(this._program);
+            for (var i = 0; i < all.length; i++) {
+                if (all[i].exercise && all[i].exercise.id) validExIds[all[i].exercise.id] = true;
+            }
+        }
         for (var exerciseId in map) {
+            if (validExIds && !validExIds[exerciseId]) continue; // skip orphan
             var eqId = map[exerciseId];
             if (eqId && this.getEquipmentById(eqId)) {
                 data.exerciseEquipment[exerciseId] = eqId;
             } else if (eqId === null) {
-                // User explicitly cleared equipment for this exercise at this gym
                 data.exerciseEquipment[exerciseId] = null;
             }
         }
@@ -717,7 +744,17 @@ export const Storage = {
         if (!gymId) return;
         var data = this._load();
         if (!data.gymEquipmentMap[gymId]) data.gymEquipmentMap[gymId] = {};
+        // Only copy equipment for exercises that exist in the current program
+        var validExIds = null;
+        if (this._program) {
+            validExIds = {};
+            var all = getAllProgramExercises(this._program);
+            for (var i = 0; i < all.length; i++) {
+                if (all[i].exercise && all[i].exercise.id) validExIds[all[i].exercise.id] = true;
+            }
+        }
         for (var exId in data.exerciseEquipment) {
+            if (validExIds && !validExIds[exId]) continue; // skip orphan
             var eqId = data.exerciseEquipment[exId];
             if (eqId && this.getEquipmentById(eqId)) {
                 data.gymEquipmentMap[gymId][exId] = eqId;

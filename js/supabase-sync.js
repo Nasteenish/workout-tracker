@@ -263,18 +263,21 @@ export const SupaSync = {
                         }
                     }
                 }
-                // Merge exerciseEquipment — union merge, always prefer non-null values.
-                // Equipment assignment is always intentional, so we never want to lose a
-                // binding just because the other side has an older or null value.
+                // Merge exerciseEquipment — respect tombstones (null = explicitly removed).
                 if (other.exerciseEquipment || base.exerciseEquipment) {
                     if (!base.exerciseEquipment) base.exerciseEquipment = {};
                     if (other.exerciseEquipment) {
                         for (var ek in other.exerciseEquipment) {
-                            // If other has a real value and base has no entry — take other's.
-                            // null = tombstone (user explicitly removed) — do NOT overwrite.
-                            if (other.exerciseEquipment[ek] && base.exerciseEquipment[ek] === undefined) {
-                                base.exerciseEquipment[ek] = other.exerciseEquipment[ek];
+                            var otherVal = other.exerciseEquipment[ek];
+                            var baseVal = base.exerciseEquipment[ek];
+                            if (otherVal === null && baseVal === undefined) {
+                                // Tombstone propagates — other side deleted, base has no opinion
+                                base.exerciseEquipment[ek] = null;
+                            } else if (otherVal && baseVal === undefined) {
+                                // Other has a real value and base has no entry — take other's
+                                base.exerciseEquipment[ek] = otherVal;
                             }
+                            // If base already has a value (or tombstone) — don't overwrite
                         }
                     }
                 }

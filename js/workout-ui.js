@@ -537,7 +537,7 @@ export const WorkoutUI = {
             const modal = document.getElementById('equipment-modal');
             const exId = modal ? modal._exerciseId : null;
             const muscleGroup = modal ? modal._muscleGroup : null;
-            const newId = Storage.addEquipment(name);
+            const newId = Storage.addEquipment(name, undefined, undefined, null);
             if (Social && muscleGroup && muscleGroup !== 'all') {
                 Social.addSharedEquipment(name, muscleGroup).catch(function() {});
             }
@@ -557,7 +557,7 @@ export const WorkoutUI = {
             var exId = modal ? modal._exerciseId : null;
             var muscleGroup = modal ? modal._muscleGroup : null;
             var eqImageUrl2 = read(item, EQ.IMAGE) || null;
-            var newId = Storage.addEquipment(eqName, undefined, eqImageUrl2);
+            var newId = Storage.addEquipment(eqName, undefined, eqImageUrl2, catalogId);
             if (Social && muscleGroup && muscleGroup !== 'all') {
                 Social.addSharedEquipment(eqName, muscleGroup).catch(function() {});
             }
@@ -575,9 +575,10 @@ export const WorkoutUI = {
             var eqName = read(item, EQ.NAME);
             if (!eqName) return true;
             var eqImage = read(item, EQ.IMAGE) || null;
+            var gymCatalogId = read(item, EQ.CATALOG_ID) ? readInt(item, EQ.CATALOG_ID) : null;
             var modal = document.getElementById('equipment-modal');
             var exId = modal ? modal._exerciseId : null;
-            var newId = Storage.addEquipment(eqName, undefined, eqImage);
+            var newId = Storage.addEquipment(eqName, undefined, eqImage, gymCatalogId);
             if (exId) {
                 this._bindEquipment(exId, newId, null, week, day);
             } else {
@@ -610,7 +611,7 @@ export const WorkoutUI = {
             var modal = document.getElementById('equipment-modal');
             var exId = modal ? modal._exerciseId : null;
             var eqImageUrl = read(catItem, EQ.IMAGE) || null;
-            var newId = Storage.addEquipment(eqName, undefined, eqImageUrl);
+            var newId = Storage.addEquipment(eqName, undefined, eqImageUrl, catalogId);
             if (exId) {
                 Storage.linkEquipmentToExercise(exId, newId);
                 this._bindEquipment(exId, newId, { name: eqName, catalogId: catalogId }, week, day);

@@ -18,7 +18,7 @@ import { Migrations } from './migrations.js';
 import { ACCOUNTS, BUILTIN_PROGRAMS } from './users.js';
 import { lockBodyScroll, unlockBodyScroll } from './scroll-lock.js';
 import { debounce, formatDateISO, validateProgram, esc, parseWeight, parseReps, deepClone } from './utils.js';
-import { getTotalDays, getTotalWeeks, getProgressWeek } from './program-utils.js';
+import { getTotalDays, getTotalWeeks, getProgressWeek, makeDeterministicExId } from './program-utils.js';
 import { WORKOUT, EQ, SETTINGS, read, readInt } from './data-attrs.js';
 import { AppState } from './app-state.js';
 import { InlineEditor } from './inline-editor.js';
@@ -359,20 +359,6 @@ export const App = {
             if (result === undefined) return; // session was expired, skip post-sync
             Storage.setProgram(Storage.getStoredProgram());
             localStorage.removeItem('_wt_eq_snapshot');
-            // Remove stuck Precor equipment — only local, no immediate push
-            try {
-                Storage._invalidateCache();
-                var dd = Storage._load();
-                if (dd && dd.exerciseEquipment) {
-                    var precorId = 'eq_1773590725238';
-                    for (var k in dd.exerciseEquipment) {
-                        if (dd.exerciseEquipment[k] === precorId) {
-                            delete dd.exerciseEquipment[k];
-                        }
-                    }
-                    Storage._save();
-                }
-            } catch(e) {}
             // Clean orphaned log entries after sync (choose_one phantoms + corrupted _gym)
             Migrations.cleanOrphanedLogEntries();
             // Load shared gyms cache + migrate local gyms
@@ -481,11 +467,14 @@ export const App = {
     _commitAddDay(p, numDays, sourceDayNum) {
         var newDayNum = numDays + 1;
         var groups = [];
+        var idMap = {};
         var titleEn = 'Day ' + newDayNum;
         var titleRu = 'День ' + newDayNum;
         if (sourceDayNum > 0 && p.dayTemplates[sourceDayNum]) {
             var src = p.dayTemplates[sourceDayNum];
-            groups = this._cloneGroupsWithNewIds(src.exerciseGroups || []);
+            var result = this._cloneGroupsWithNewIds(src.exerciseGroups || [], newDayNum);
+            groups = result.groups;
+            idMap = result.idMap;
             titleEn = src.title || titleEn;
             titleRu = src.titleRu || titleRu;
         }
@@ -497,34 +486,57 @@ export const App = {
         var slots = UI._generateDefaultSlots(newDayNum, 7);
         Storage.saveWeekSlots(slots);
         Storage.saveProgram(p, false);
+        // Copy equipment bindings from source day exercises to cloned exercises
+        if (Object.keys(idMap).length > 0) {
+            var data = Storage._load();
+            for (var oldId in idMap) {
+                var eqId = data.exerciseEquipment[oldId];
+                if (eqId) data.exerciseEquipment[idMap[oldId]] = eqId;
+            }
+            Storage._save();
+        }
         this.invalidatePageCache();
         UI.renderWeek(this._currentWeek);
     },
 
-    _cloneGroupsWithNewIds(groups) {
+    _cloneGroupsWithNewIds(groups, newDayNum) {
         var cloned = deepClone(groups);
-        var ts = Date.now().toString(36);
-        var counter = 0;
-        function newId() {
-            counter++;
-            return 'ex_' + ts + '_' + counter + Math.random().toString(36).slice(2, 5);
-        }
+        var idMap = {};
+        var assignedIds = new Set();
         for (var i = 0; i < cloned.length; i++) {
             var g = cloned[i];
             if (g.type === 'single' || g.type === 'warmup') {
-                if (g.exercise) g.exercise.id = newId();
+                if (g.exercise) {
+                    var oldId = g.exercise.id;
+                    var nid = makeDeterministicExId(newDayNum, g.exercise.nameRu || g.exercise.name, assignedIds);
+                    assignedIds.add(nid);
+                    if (oldId) idMap[oldId] = nid;
+                    g.exercise.id = nid;
+                }
             } else if (g.type === 'superset' && g.exercises) {
-                for (var j = 0; j < g.exercises.length; j++) g.exercises[j].id = newId();
+                for (var j = 0; j < g.exercises.length; j++) {
+                    var oldId = g.exercises[j].id;
+                    var nid = makeDeterministicExId(newDayNum, g.exercises[j].nameRu || g.exercises[j].name, assignedIds);
+                    assignedIds.add(nid);
+                    if (oldId) idMap[oldId] = nid;
+                    g.exercises[j].id = nid;
+                }
             } else if (g.type === 'choose_one' && g.options) {
-                g.choiceKey = 'c_' + ts + '_' + counter;
-                for (var j = 0; j < g.options.length; j++) g.options[j].id = newId();
+                g.choiceKey = 'c_D' + newDayNum + '_' + i;
+                for (var j = 0; j < g.options.length; j++) {
+                    var oldId = g.options[j].id;
+                    var nid = makeDeterministicExId(newDayNum, g.options[j].nameRu || g.options[j].name, assignedIds);
+                    assignedIds.add(nid);
+                    if (oldId) idMap[oldId] = nid;
+                    g.options[j].id = nid;
+                }
             }
             // Clear progression — it references week numbers from the source day
             if (g.exercise && g.exercise.progression) g.exercise.progression = [];
             if (g.exercises) g.exercises.forEach(function(e) { if (e.progression) e.progression = []; });
             if (g.options) g.options.forEach(function(e) { if (e.progression) e.progression = []; });
         }
-        return cloned;
+        return { groups: cloned, idMap: idMap };
     },
 
     _removeDayFromCustomProgram() {

@@ -149,8 +149,9 @@ export const EquipmentManager = {
                     var gi = gymItems[i];
                     var giName = typeof gi === 'string' ? gi : gi.name;
                     var giImg = typeof gi === 'string' ? null : gi.imageUrl;
+                    var giCatId = typeof gi === 'string' ? null : (gi.catalogId || gi.catalog_id || null);
                     var imgTag = giImg ? '<img class="ex-thumb eq-badge-thumb" src="' + esc(giImg) + '" loading="lazy" onerror="this.style.display=\'none\'">' : '';
-                    gymHtml += '<div class="eq-gym-item" ' + attr(EQ.NAME, esc(giName)) + (giImg ? ' ' + attr(EQ.IMAGE, esc(giImg)) : '') + '>'
+                    gymHtml += '<div class="eq-gym-item" ' + attr(EQ.NAME, esc(giName)) + (giImg ? ' ' + attr(EQ.IMAGE, esc(giImg)) : '') + (giCatId ? ' ' + attr(EQ.CATALOG_ID, giCatId) : '') + '>'
                         + imgTag
                         + '<span class="eq-shared-name">' + esc(giName) + '</span>'
                         + '</div>';
@@ -451,7 +452,10 @@ export const EquipmentManager = {
                 var k = myEq[i].name.toLowerCase().trim();
                 if (seen[k]) continue;
                 seen[k] = true;
-                html += '<div class="eq-search-item" ' + attr(EQ.NAME, esc(myEq[i].name)) + '>'
+                html += '<div class="eq-search-item" ' + attr(EQ.NAME, esc(myEq[i].name))
+                    + (myEq[i].catalogId ? ' ' + attr(EQ.CATALOG_ID, myEq[i].catalogId) : '')
+                    + (myEq[i].imageUrl ? ' ' + attr(EQ.IMAGE, esc(myEq[i].imageUrl)) : '')
+                    + '>'
                     + '<span class="eq-shared-name">' + esc(myEq[i].name) + '</span></div>';
             }
         }
@@ -483,7 +487,10 @@ export const EquipmentManager = {
                         var lk = myEq[i].name.toLowerCase().trim();
                         if (seen2[lk]) continue;
                         seen2[lk] = true;
-                        html2 += '<div class="eq-search-item" ' + attr(EQ.NAME, esc(myEq[i].name)) + '>'
+                        html2 += '<div class="eq-search-item" ' + attr(EQ.NAME, esc(myEq[i].name))
+                            + (myEq[i].catalogId ? ' ' + attr(EQ.CATALOG_ID, myEq[i].catalogId) : '')
+                            + (myEq[i].imageUrl ? ' ' + attr(EQ.IMAGE, esc(myEq[i].imageUrl)) : '')
+                            + '>'
                             + '<span class="eq-shared-name">' + esc(myEq[i].name) + '</span></div>';
                     }
                 }

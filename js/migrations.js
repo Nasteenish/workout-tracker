@@ -1386,6 +1386,222 @@ export const Migrations = {
                     }
                 }
             }
+        },
+        // v19: Migrate to stable IDs — equipment: catalog:{N}/custom:{slug}, exercise: D{day}:{slug}
+        // Eliminates timestamp-based IDs that cause duplicates on multi-device sync.
+        {
+            key: '_migrate_stable_ids_v1',
+            fn: function() {
+                var keys = Object.keys(localStorage);
+                for (var ki = 0; ki < keys.length; ki++) {
+                    if (keys[ki].indexOf('wt_data_') !== 0) continue;
+                    var dd;
+                    try { dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}'); } catch(e) { continue; }
+                    var changed = false;
+
+                    // --- STEP 1: EQUIPMENT IDs → catalog:{N} / custom:{slug} ---
+                    var eqRemap = {};
+                    var seenEqIds = {};
+                    var newEquipment = [];
+                    var eqs = dd.equipment || [];
+                    for (var i = 0; i < eqs.length; i++) {
+                        var eq = eqs[i];
+                        var newEqId;
+                        if (eq.catalogId) {
+                            newEqId = 'catalog:' + eq.catalogId;
+                        } else {
+                            newEqId = 'custom:' + (eq.name || 'unknown').toLowerCase()
+                                .replace(/[^a-zа-яё0-9]/gi, '_').replace(/_+/g, '_').slice(0, 40);
+                        }
+                        if (seenEqIds[newEqId]) {
+                            // Duplicate — remap to canonical
+                            eqRemap[eq.id] = seenEqIds[newEqId];
+                            changed = true;
+                            continue;
+                        }
+                        seenEqIds[newEqId] = newEqId;
+                        if (eq.id !== newEqId) {
+                            eqRemap[eq.id] = newEqId;
+                            changed = true;
+                        }
+                        eq.id = newEqId;
+                        newEquipment.push(eq);
+                    }
+                    if (newEquipment.length !== eqs.length || Object.keys(eqRemap).length > 0) {
+                        dd.equipment = newEquipment;
+                    }
+
+                    // Remap equipment references everywhere
+                    function remapEqId(id) { return (id && eqRemap[id]) || id; }
+
+                    if (dd.exerciseEquipment) {
+                        for (var ek in dd.exerciseEquipment) {
+                            var v = dd.exerciseEquipment[ek];
+                            if (v && eqRemap[v]) { dd.exerciseEquipment[ek] = eqRemap[v]; changed = true; }
+                        }
+                    }
+                    if (dd.exerciseEquipmentOptions) {
+                        for (var ek2 in dd.exerciseEquipmentOptions) {
+                            var opts = dd.exerciseEquipmentOptions[ek2] || [];
+                            var newOpts = [];
+                            var seenOpt = {};
+                            for (var oi = 0; oi < opts.length; oi++) {
+                                var mapped = remapEqId(opts[oi]);
+                                if (!seenOpt[mapped]) { seenOpt[mapped] = true; newOpts.push(mapped); }
+                            }
+                            dd.exerciseEquipmentOptions[ek2] = newOpts;
+                        }
+                    }
+                    if (dd.gymEquipmentMap) {
+                        for (var gid in dd.gymEquipmentMap) {
+                            var gmap = dd.gymEquipmentMap[gid];
+                            for (var mk in gmap) {
+                                if (gmap[mk] && eqRemap[gmap[mk]]) { gmap[mk] = eqRemap[gmap[mk]]; changed = true; }
+                            }
+                        }
+                    }
+                    if (dd.log) {
+                        for (var w in dd.log) {
+                            for (var d in dd.log[w]) {
+                                var dayLog = dd.log[w][d];
+                                for (var exK in dayLog) {
+                                    if (exK.charAt(0) === '_' || typeof dayLog[exK] !== 'object' || dayLog[exK] === null) continue;
+                                    for (var si in dayLog[exK]) {
+                                        var setData = dayLog[exK][si];
+                                        if (setData && setData.equipmentId && eqRemap[setData.equipmentId]) {
+                                            setData.equipmentId = eqRemap[setData.equipmentId];
+                                            changed = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // --- STEP 2: EXERCISE IDs → D{day}:{slug} ---
+                    if (dd.program && dd.program.dayTemplates) {
+                        var exRemap = {};
+                        var dt = dd.program.dayTemplates;
+                        for (var dayNum in dt) {
+                            var groups = (dt[dayNum] && dt[dayNum].exerciseGroups) || [];
+                            var assignedIds = {};
+                            for (var gi = 0; gi < groups.length; gi++) {
+                                var g = groups[gi];
+                                var exList = [];
+                                if (g.exercise) exList.push(g.exercise);
+                                if (g.exercises) exList = exList.concat(g.exercises);
+                                if (g.options) exList = exList.concat(g.options);
+                                for (var ej = 0; ej < exList.length; ej++) {
+                                    var ex = exList[ej];
+                                    if (!ex || !ex.id) continue;
+                                    // Only migrate ex_ random IDs, leave D{n}E{n} legacy IDs alone
+                                    if (ex.id.indexOf('ex_') !== 0) continue;
+                                    var slug = (ex.nameRu || ex.name || 'exercise').toLowerCase()
+                                        .replace(/[^a-zа-яё0-9]/gi, '_').replace(/_+/g, '_').slice(0, 30);
+                                    var base = 'D' + dayNum + ':' + slug;
+                                    var newId = base;
+                                    var idx = 2;
+                                    while (assignedIds[newId]) { newId = base + '_' + idx; idx++; }
+                                    assignedIds[newId] = true;
+                                    if (ex.id !== newId) {
+                                        exRemap[ex.id] = newId;
+                                        ex.id = newId;
+                                        changed = true;
+                                    }
+                                }
+                            }
+                        }
+
+                        // Remap exercise ID references everywhere
+                        function remapExId(id) { return (id && exRemap[id]) || id; }
+
+                        var exKeyMaps = ['exerciseEquipment', 'exerciseEquipmentOptions', 'exerciseUnits',
+                            'exerciseSubstitutions', 'unilateralMode'];
+                        for (var mi = 0; mi < exKeyMaps.length; mi++) {
+                            var mapKey = exKeyMaps[mi];
+                            if (!dd[mapKey]) continue;
+                            var newObj = {};
+                            for (var ok in dd[mapKey]) { newObj[remapExId(ok)] = dd[mapKey][ok]; }
+                            dd[mapKey] = newObj;
+                        }
+
+                        if (dd.gymEquipmentMap) {
+                            for (var gid2 in dd.gymEquipmentMap) {
+                                var newMap = {};
+                                for (var gmk in dd.gymEquipmentMap[gid2]) {
+                                    newMap[remapExId(gmk)] = dd.gymEquipmentMap[gid2][gmk];
+                                }
+                                dd.gymEquipmentMap[gid2] = newMap;
+                            }
+                        }
+
+                        if (dd.log) {
+                            for (var w2 in dd.log) {
+                                for (var d2 in dd.log[w2]) {
+                                    var newDayLog = {};
+                                    for (var lk in dd.log[w2][d2]) {
+                                        var newKey = lk.charAt(0) === '_' ? lk : remapExId(lk);
+                                        // Handle _uni suffix: ex_abc_uni → D1:slug_uni
+                                        if (newKey === lk && lk.indexOf('ex_') === 0 && lk.indexOf('_uni') > 0) {
+                                            var baseKey = lk.replace(/_uni$/, '');
+                                            if (exRemap[baseKey]) newKey = exRemap[baseKey] + '_uni';
+                                        }
+                                        newDayLog[newKey] = dd.log[w2][d2][lk];
+                                    }
+                                    dd.log[w2][d2] = newDayLog;
+                                }
+                            }
+                        }
+
+                        if (dd.program.weeklyOverrides) {
+                            for (var w3 in dd.program.weeklyOverrides) {
+                                for (var d3 in dd.program.weeklyOverrides[w3]) {
+                                    var newOv = {};
+                                    for (var ovk in dd.program.weeklyOverrides[w3][d3]) {
+                                        newOv[remapExId(ovk)] = dd.program.weeklyOverrides[w3][d3][ovk];
+                                    }
+                                    dd.program.weeklyOverrides[w3][d3] = newOv;
+                                }
+                            }
+                        }
+
+                        // Remap _template snapshots in log
+                        if (dd.log) {
+                            for (var w4 in dd.log) {
+                                for (var d4 in dd.log[w4]) {
+                                    var tmpl = dd.log[w4][d4]._template;
+                                    if (!tmpl || !Array.isArray(tmpl)) continue;
+                                    for (var tgi = 0; tgi < tmpl.length; tgi++) {
+                                        var tg = tmpl[tgi];
+                                        var texs = [];
+                                        if (tg.exercise) texs.push(tg.exercise);
+                                        if (tg.exercises) texs = texs.concat(tg.exercises);
+                                        if (tg.options) texs = texs.concat(tg.options);
+                                        for (var tei = 0; tei < texs.length; tei++) {
+                                            if (texs[tei] && texs[tei].id && exRemap[texs[tei].id]) {
+                                                texs[tei].id = exRemap[texs[tei].id];
+                                                changed = true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (changed) {
+                        dd._lastModified = Date.now();
+                        try {
+                            localStorage.setItem(keys[ki], JSON.stringify(dd));
+                            console.log('v19 stable ID migration:', keys[ki],
+                                'eqRemap:', Object.keys(eqRemap).length,
+                                'exRemap:', Object.keys(exRemap || {}).length);
+                        } catch(e) {
+                            console.error('v19 migration failed for', keys[ki], e);
+                        }
+                    }
+                }
+            }
         }
     ]
 };

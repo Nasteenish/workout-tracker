@@ -2,6 +2,21 @@
 import { Storage } from './storage.js';
 import { deepClone, findExerciseInTemplate, getGroupExercises, parseLocalDate } from './utils.js';
 
+// Deterministic exercise ID: D{dayNum}:{nameSlug}
+// No positional suffix — moveExercise() changes position but ID stays stable
+export function makeDeterministicExId(dayNum, name, assignedIds) {
+    var slug = (name || 'exercise')
+        .toLowerCase()
+        .replace(/[^a-zа-яё0-9]/gi, '_')
+        .replace(/_+/g, '_')
+        .slice(0, 30);
+    var base = 'D' + dayNum + ':' + slug;
+    if (!assignedIds || !assignedIds.has(base)) return base;
+    var i = 2;
+    while (assignedIds.has(base + '_' + i)) i++;
+    return base + '_' + i;
+}
+
 // Exercise display name based on language setting
 export function exName(ex) {
     if (!ex) return '';

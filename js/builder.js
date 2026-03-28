@@ -6,7 +6,7 @@ import { ACCOUNTS } from './users.js';
 import { EXERCISE_DB, EXERCISE_CATEGORIES } from './exercises_db.js';
 import { lockBodyScroll, unlockBodyScroll, blockOverlayScroll } from './scroll-lock.js';
 import { esc, getGroupExercises, exThumbHtml, getExerciseBaseName, groupExercisesByBase, getVariationLabel } from './utils.js';
-import { exName, getTotalDays, getTotalWeeks } from './program-utils.js';
+import { exName, getTotalDays, getTotalWeeks, makeDeterministicExId } from './program-utils.js';
 import { AppState } from './app-state.js';
 import { DEFAULT_PROGRAM } from './data.js';
 import { BUILDER, WORKOUT, SETTINGS, ONBOARDING, attr, read, readInt, write } from './data-attrs.js';
@@ -1009,17 +1009,18 @@ export const Builder = {
         if (!ed || !p) return;
 
         var groups = [];
+        var assignedIds = new Set();
         for (var i = 0; i < ed.items.length; i++) {
             var item = ed.items[i];
             if (item.type === 'single' || item.type === 'warmup') {
-                var g = { type: item.type, exercise: this._serializeExercise(item.exercise, ed.dayNum, i, -1) };
+                var g = { type: item.type, exercise: this._serializeExercise(item.exercise, ed.dayNum, i, -1, assignedIds) };
                 if (item.sectionTitle) g.sectionTitle = item.sectionTitle;
                 if (item.sectionTitleRu) g.sectionTitleRu = item.sectionTitleRu;
                 groups.push(g);
             } else if (item.type === 'superset') {
                 var exs = [];
                 for (var j = 0; j < item.exercises.length; j++) {
-                    exs.push(this._serializeExercise(item.exercises[j], ed.dayNum, i, j));
+                    exs.push(this._serializeExercise(item.exercises[j], ed.dayNum, i, j, assignedIds));
                 }
                 var sg = { type: 'superset', exercises: exs };
                 if (item.sectionTitle) sg.sectionTitle = item.sectionTitle;
@@ -1028,7 +1029,7 @@ export const Builder = {
             } else if (item.type === 'choose_one') {
                 var opts = [];
                 for (var j = 0; j < item.options.length; j++) {
-                    opts.push(this._serializeExercise(item.options[j], ed.dayNum, i, j));
+                    opts.push(this._serializeExercise(item.options[j], ed.dayNum, i, j, assignedIds));
                 }
                 var cg = { type: 'choose_one', choiceKey: item.choiceKey, options: opts };
                 if (item.sectionTitle) cg.sectionTitle = item.sectionTitle;
@@ -1056,11 +1057,12 @@ export const Builder = {
         return false;
     },
 
-    _serializeExercise(ex, dayNum, itemIdx, subIdx) {
+    _serializeExercise(ex, dayNum, itemIdx, subIdx, assignedIds) {
         var sets = ex.sets && ex.sets.length > 0
             ? ex.sets
             : [{ type: 'H', rpe: '8', techniques: [] }, { type: 'H', rpe: '8', techniques: [] }, { type: 'H', rpe: '8', techniques: [] }];
-        var id = ex._id || ('ex_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+        var id = ex._id || makeDeterministicExId(dayNum, ex.nameRu || ex.name, assignedIds);
+        if (assignedIds) assignedIds.add(id);
         var result = {
             id: id,
             name: ex.name || ex.nameRu,
@@ -1580,10 +1582,19 @@ export const Builder = {
         for (var s = 0; s < numSets; s++) {
             setsArr.push({ type: 'H', rpe: '8', techniques: [] });
         }
-        this._editingDay.items.push({
+        var existingIds = new Set();
+        var ed = this._editingDay;
+        for (var ei = 0; ei < ed.items.length; ei++) {
+            var exs = getGroupExercises(ed.items[ei]);
+            for (var ej = 0; ej < exs.length; ej++) {
+                if (exs[ej]._id) existingIds.add(exs[ej]._id);
+                if (exs[ej].id) existingIds.add(exs[ej].id);
+            }
+        }
+        ed.items.push({
             type: 'single',
             exercise: {
-                _id: 'ex_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+                _id: makeDeterministicExId(ed.dayNum, cfg.nameRu || cfg.name, existingIds),
                 nameRu: cfg.nameRu,
                 name: cfg.name,
                 sets: setsArr,

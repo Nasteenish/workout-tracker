@@ -4,7 +4,8 @@ import { Storage } from './storage.js';
 import { AppState } from './app-state.js';
 import { INLINE, attr, read, readInt, write } from './data-attrs.js';
 import { esc } from './utils.js';
-import { exName } from './program-utils.js';
+import { exName, makeDeterministicExId } from './program-utils.js';
+import { getGroupExercises } from './utils.js';
 
 // Global reorder-mode touchmove blocker — capture phase, fires before pull-refresh
 document.addEventListener('touchmove', function(e) {
@@ -744,8 +745,16 @@ export const InlineEditor = {
             var item = freshEd.items[groupIdx];
             if (!item) return;
 
+            var existingIds = new Set();
+            for (var _ei = 0; _ei < freshEd.items.length; _ei++) {
+                var _exs = getGroupExercises(freshEd.items[_ei]);
+                for (var _ej = 0; _ej < _exs.length; _ej++) {
+                    if (_exs[_ej]._id) existingIds.add(_exs[_ej]._id);
+                    if (_exs[_ej].id) existingIds.add(_exs[_ej].id);
+                }
+            }
             var newEx = {
-                _id: 'ex_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+                _id: makeDeterministicExId(dayNum, result.nameRu || result.name, existingIds),
                 nameRu: result.nameRu,
                 name: result.name,
                 reps: '8-12',
@@ -800,10 +809,18 @@ export const InlineEditor = {
                 setsArr.push({ type: 'H', rpe: '8', techniques: [] });
             }
 
+            var existingIds = new Set();
+            for (var _ei = 0; _ei < ed.items.length; _ei++) {
+                var _exs = getGroupExercises(ed.items[_ei]);
+                for (var _ej = 0; _ej < _exs.length; _ej++) {
+                    if (_exs[_ej]._id) existingIds.add(_exs[_ej]._id);
+                    if (_exs[_ej].id) existingIds.add(_exs[_ej].id);
+                }
+            }
             ed.items.push({
                 type: 'single',
                 exercise: {
-                    _id: 'ex_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+                    _id: makeDeterministicExId(dayNum, result.nameRu || result.name, existingIds),
                     nameRu: result.nameRu,
                     name: result.name,
                     sets: setsArr,

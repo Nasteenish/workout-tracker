@@ -114,7 +114,10 @@ tools/                  — Утилиты разработки: SQL, скрип
 | `Storage.removeExerciseEquipment()` | `gymEquipmentMap` (должен записывать null tombstone в map, иначе `applyGymEquipment` воскресит привязку) |
 | `Storage.saveProgram()` | Ставит `_programModified = Date.now()`. Используется sync merge для независимого сравнения program timestamps |
 | `SupaSync.syncOnLogin()` merge | `_programModified` (программа), `_lastModified` = `Math.max(local, remote)` (не Date.now()!), tombstone `null` vs `undefined` в exerciseEquipment |
-| `Storage._load()` callbacks | `_migrateFn` → `Migrations.migrateExerciseNames`. Wired в `App.init()` ДО первого `_load()`. Migration version guard (v18+) — запускается один раз при обновлении |
+| `Storage.addEquipment()` | Принимает `(name, type, imageUrl, catalogId)`. Генерирует stable ID: `catalog:{N}` или `custom:{slug}`. `workout-ui.js` передаёт catalogId во всех 4 вызовах |
+| `Storage.makeEquipmentId()` | Генерирует stable equipment ID. Используется в `addEquipment()` и migration v19 |
+| `makeDeterministicExId()` (program-utils.js) | Генерирует `D{day}:{slug}` exercise ID. Используется в `builder.js`, `inline-editor.js`, `app.js` (5 мест) |
+| `Storage._load()` callbacks | `_migrateFn` → `Migrations.migrateExerciseNames`. Wired в `App.init()` ДО первого `_load()`. Migration version guard (v19+) — запускается один раз при обновлении |
 | `exercises_db.js` (переименование `nameRu`) | Автоматически: `migrateExerciseNames` сверяет по English name → обновляет `nameRu` в программе, снэпшотах, substitutions |
 | `exerciseSubstitutions` (variation picker) | `UI._buildExerciseVM()` резолвит English имя через EXERCISE_DB. data-attrs `EX_NAME`/`EX_NAME_RU` должны содержать resolved имена, не оригинальные из снэпшота |
 | `UI.renderDay()` (PTR async path) | `UI._onPTRSwap` callback → `InlineEditor.attachHandlers()`. Без этого обработчики не подключатся после pull-to-refresh |
@@ -144,8 +147,9 @@ localStorage.setItem('wt_data_xxx', ...);  // обходит кеш и sync
 **Программа:**
 1. Больше нет глобального `let PROGRAM`. Везде `Storage.getProgram()` или передаётся аргументом
 2. `resolveWorkout(week, day)` возвращает deep clone — безопасно мутировать. Приоритет: `log[w][d]._template` → live `dayTemplates`
-3. Exercise ID: `D{day}E{num}` или `D{d}E{n}_opt{n}`
-4. **Изменение exercise ID ломает ВСЕ логи** — `log[week][day][exerciseId]`
+3. Exercise ID: `D{day}:{nameSlug}` (новый формат) или `D{day}E{num}` (legacy, не мигрируется). Генерируется через `makeDeterministicExId(dayNum, name, assignedIds)`
+4. Equipment ID: `catalog:{N}` (из каталога Supabase) или `custom:{slug}` (кастомный). Генерируется через `Storage.makeEquipmentId(name, catalogId)`
+5. **Изменение exercise ID ломает ВСЕ логи** — `log[week][day][exerciseId]`
 
 **Рендеринг:**
 1. Весь рендеринг через `innerHTML` (полная замена DOM). Нет diffing
