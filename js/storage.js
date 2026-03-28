@@ -35,11 +35,13 @@ export const Storage = {
     _buildSiblingCache() {
         this._siblingCache = {};
         if (!this._program) return;
+        var data = this._load();
+        var subs = data.exerciseSubstitutions || {};
         var nameToEntries = {};
         var all = getAllProgramExercises(this._program);
         for (var i = 0; i < all.length; i++) {
             var ex = all[i].exercise;
-            var n = ex.nameRu || ex.name;
+            var n = subs[ex.id] || ex.nameRu || ex.name;
             if (n) { if (!nameToEntries[n]) nameToEntries[n] = []; nameToEntries[n].push({ id: ex.id, day: all[i].day }); }
         }
         var cache = this._siblingCache;
@@ -808,11 +810,13 @@ export const Storage = {
 
     setSubstitution(exerciseId, displayName) {
         this._load().exerciseSubstitutions[exerciseId] = displayName;
+        this._invalidateSiblingCache();
         this._save();
     },
 
     removeSubstitution(exerciseId) {
         delete this._load().exerciseSubstitutions[exerciseId];
+        this._invalidateSiblingCache();
         this._save();
     },
 
