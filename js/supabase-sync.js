@@ -255,28 +255,48 @@ export const SupaSync = {
                 var other = base === remoteData ? localData : remoteData;
                 base.log = mergedLog;
                 // If program was modified independently, use the newer program.
-                // Fall back to _lastModified if _programModified not set on either side.
-                // GUARD: never overwrite local program from cloud during active workout
-                // (prevents exercises from disappearing mid-training)
-                // Also protect recently finished workouts (timer stopped but still viewing)
-                var _workoutActive = false;
-                if (AppState.currentWeek && AppState.currentDay) {
-                    if (WorkoutTimer.isRunning(AppState.currentWeek, AppState.currentDay)) {
-                        _workoutActive = true;
-                    } else {
-                        // Check if current day has recent log entries (finished < 5 min ago)
-                        var _finTs = localData.log && localData.log[AppState.currentWeek] &&
-                            localData.log[AppState.currentWeek][AppState.currentDay] &&
-                            localData.log[AppState.currentWeek][AppState.currentDay]._finishedAt;
-                        if (_finTs && Date.now() - _finTs < 300000) _workoutActive = true;
-                    }
-                }
+                // BEFORE replacing: snapshot-bind ALL weeks with log data so completed
+                // workouts are immune to template changes (frozen forever).
                 var progTimeRemote = remoteData._programModified || remoteTime;
                 var progTimeLocal = localData._programModified || localTime;
-                if (progTimeRemote !== progTimeLocal && !_workoutActive) {
+                if (progTimeRemote !== progTimeLocal) {
                     var progSource = progTimeRemote > progTimeLocal ? remoteData : localData;
                     if (progSource !== base && progSource.program) {
+                        // Freeze weeks with log data before overwriting template
+                        this._freezeLoggedWeeks(base);
                         base.program = JSON.parse(JSON.stringify(progSource.program));
+                        // Restore frozen snapshot bindings into the new program
+                        if (base._frozenWTV) {
+                            if (!base.program.weekTemplateVersion) base.program.weekTemplateVersion = {};
+                            for (var fw in base._frozenWTV) {
+                                if (!base.program.weekTemplateVersion[fw]) base.program.weekTemplateVersion[fw] = {};
+                                for (var fd in base._frozenWTV[fw]) {
+                                    base.program.weekTemplateVersion[fw][fd] = base._frozenWTV[fw][fd];
+                                }
+                            }
+                            // Merge snapshots from old program into new
+                            if (base._frozenSnaps) {
+                                if (!base.program.templateSnapshots) base.program.templateSnapshots = {};
+                                for (var fsd in base._frozenSnaps) {
+                                    if (!base.program.templateSnapshots[fsd]) {
+                                        base.program.templateSnapshots[fsd] = base._frozenSnaps[fsd];
+                                    } else {
+                                        // Append snapshots by version
+                                        var existingVers = {};
+                                        for (var evi = 0; evi < base.program.templateSnapshots[fsd].length; evi++) {
+                                            existingVers[base.program.templateSnapshots[fsd][evi].version] = true;
+                                        }
+                                        for (var fsi = 0; fsi < base._frozenSnaps[fsd].length; fsi++) {
+                                            if (!existingVers[base._frozenSnaps[fsd][fsi].version]) {
+                                                base.program.templateSnapshots[fsd].push(base._frozenSnaps[fsd][fsi]);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            delete base._frozenWTV;
+                            delete base._frozenSnaps;
+                        }
                         base._programModified = Math.max(progTimeRemote, progTimeLocal);
                     }
                 }
@@ -402,9 +422,20 @@ export const SupaSync = {
                             }
                         }
                     }
-                    // Safety: clear any stray bindings for current week
+                    // Safety: clear stray bindings for current week ONLY if no log data
+                    // (if week has logs, _freezeLoggedWeeks already bound it correctly)
                     if (_syncCurrentWeek && baseWTV[_syncCurrentWeek]) {
-                        delete baseWTV[_syncCurrentWeek];
+                        var _cwLog = base.log && base.log[_syncCurrentWeek];
+                        var _cwHasData = false;
+                        if (_cwLog) {
+                            for (var _cwD in _cwLog) {
+                                for (var _cwK in _cwLog[_cwD]) {
+                                    if (_cwK.charAt(0) !== '_') { _cwHasData = true; break; }
+                                }
+                                if (_cwHasData) break;
+                            }
+                        }
+                        if (!_cwHasData) delete baseWTV[_syncCurrentWeek];
                     }
                     base.program.weekTemplateVersion = baseWTV;
                 }
@@ -439,6 +470,54 @@ export const SupaSync = {
             clearTimeout(syncTimeout);
             this._syncing = false;
         }
+    },
+
+    // Before program overwrite: ensure every week with log data has a snapshot binding.
+    // This permanently freezes completed workouts so they never lose exercises.
+    _freezeLoggedWeeks(data) {
+        if (!data || !data.program || !data.log) return;
+        var p = data.program;
+        var dt = p.dayTemplates;
+        if (!dt) return;
+        if (!p.templateSnapshots) p.templateSnapshots = {};
+        if (!p.weekTemplateVersion) p.weekTemplateVersion = {};
+        var totalWeeks = p.totalWeeks || 12;
+        var totalDays = Object.keys(dt).length;
+
+        for (var w = 1; w <= totalWeeks; w++) {
+            var wStr = String(w);
+            if (!data.log[wStr]) continue;
+            for (var d = 1; d <= totalDays; d++) {
+                var dStr = String(d);
+                if (!data.log[wStr][dStr]) continue;
+                // Check if day has real exercise log data (not just _gym/_finishedAt)
+                var hasRealLog = false;
+                for (var lk in data.log[wStr][dStr]) {
+                    if (lk.charAt(0) === '_') continue;
+                    var entry = data.log[wStr][dStr][lk];
+                    if (entry && typeof entry === 'object' && Object.keys(entry).length > 0) {
+                        hasRealLog = true; break;
+                    }
+                }
+                if (!hasRealLog) continue;
+                // Already bound to a snapshot — skip
+                if (p.weekTemplateVersion[wStr] && p.weekTemplateVersion[wStr][dStr]) continue;
+                // Create snapshot from current template for this day
+                var groups = dt[dStr] && dt[dStr].exerciseGroups;
+                if (!groups) continue;
+                if (!p.templateSnapshots[dStr]) p.templateSnapshots[dStr] = [];
+                var nextVer = p.templateSnapshots[dStr].length + 1;
+                p.templateSnapshots[dStr].push({
+                    version: nextVer,
+                    groups: JSON.parse(JSON.stringify(groups))
+                });
+                if (!p.weekTemplateVersion[wStr]) p.weekTemplateVersion[wStr] = {};
+                p.weekTemplateVersion[wStr][dStr] = nextVer;
+            }
+        }
+        // Save bindings to restore after program replacement
+        data._frozenWTV = JSON.parse(JSON.stringify(p.weekTemplateVersion));
+        data._frozenSnaps = JSON.parse(JSON.stringify(p.templateSnapshots));
     },
 
     // Debounced save to Supabase (call after every localStorage write)
