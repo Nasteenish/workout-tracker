@@ -1011,8 +1011,12 @@ export const Storage = {
     },
 
     getPreviousLog(week, day, exerciseId, setIdx, equipmentId, siblings) {
-        // Collect all entries: main exercise + siblings
-        var allEntries = [{ id: exerciseId, day: day }];
+        // exerciseId may have _uni suffix (logExId); extract base for uniform handling
+        var isUni = exerciseId.endsWith('_uni');
+        var baseExId = isUni ? exerciseId.slice(0, -4) : exerciseId;
+
+        // Collect all entries with BASE ids (logId computed below)
+        var allEntries = [{ id: baseExId, day: day }];
         if (siblings && siblings.length > 0) {
             for (var si = 0; si < siblings.length; si++) {
                 allEntries.push({ id: siblings[si].id, day: siblings[si].day });
@@ -1020,42 +1024,30 @@ export const Storage = {
         }
 
         var bestResult = null;
-        var bestFallback = null;
         var bestTime = 0;
-        var bestFallbackTime = 0;
 
         // Single pass: all weeks × all entries, find most recent by timestamp
         for (var w = week; w >= 1; w--) {
             for (var ei = 0; ei < allEntries.length; ei++) {
                 var entry = allEntries[ei];
                 // Skip current session (same week + same day + same exercise)
-                if (w === week && entry.day === day && entry.id === exerciseId) continue;
+                if (w === week && entry.day === day && entry.id === baseExId) continue;
                 // Skip future days in current week
                 if (w === week && entry.day > day) continue;
 
-                var logId = exerciseId.endsWith('_uni') ? entry.id + '_uni' : entry.id;
+                var logId = isUni ? entry.id + '_uni' : entry.id;
                 var log = this.getSetLog(w, entry.day, logId, setIdx);
                 if (!log || !log.completed) continue;
 
                 var ts = log.timestamp || 0;
-                if (equipmentId) {
-                    if (log.equipmentId === equipmentId && ts > bestTime) {
-                        bestResult = log;
-                        bestTime = ts;
-                    } else if (ts > bestFallbackTime) {
-                        bestFallback = log;
-                        bestFallbackTime = ts;
-                    }
-                } else {
-                    if (ts > bestTime) {
-                        bestResult = log;
-                        bestTime = ts;
-                    }
+                if (ts > bestTime) {
+                    bestResult = log;
+                    bestTime = ts;
                 }
             }
         }
 
-        return bestResult || bestFallback || null;
+        return bestResult;
     },
 
     getExerciseHistory(exerciseId) {
