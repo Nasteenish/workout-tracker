@@ -57,17 +57,7 @@ function _flattenChooseOneInData(data) {
             if (ng) dt[dayNum].exerciseGroups = ng;
         }
     }
-    var snaps = data.program.templateSnapshots;
-    if (snaps) {
-        for (var dayKey in snaps) {
-            var daySnaps = snaps[dayKey];
-            if (!Array.isArray(daySnaps)) continue;
-            for (var si = 0; si < daySnaps.length; si++) {
-                var ng2 = flattenGroups(daySnaps[si].groups, data.exerciseChoices);
-                if (ng2) daySnaps[si].groups = ng2;
-            }
-        }
-    }
+    // templateSnapshots flatten removed — snapshots now live in log._template
 }
 
 export const SupaSync = {
@@ -347,43 +337,7 @@ export const SupaSync = {
                     }
                     base.equipment = Object.values(eqById);
                 }
-                // Merge templateSnapshots — append-only, keep all versions from both sides
-                if (base.program && other.program) {
-                    var baseSnaps = base.program.templateSnapshots || {};
-                    var otherSnaps = other.program.templateSnapshots || {};
-                    for (var sd in otherSnaps) {
-                        if (!baseSnaps[sd]) {
-                            baseSnaps[sd] = otherSnaps[sd];
-                        } else {
-                            // Append snapshots from other that base doesn't have (by version)
-                            var baseVersions = {};
-                            for (var si = 0; si < baseSnaps[sd].length; si++) {
-                                baseVersions[baseSnaps[sd][si].version] = true;
-                            }
-                            for (var si = 0; si < otherSnaps[sd].length; si++) {
-                                if (!baseVersions[otherSnaps[sd][si].version]) {
-                                    baseSnaps[sd].push(otherSnaps[sd][si]);
-                                }
-                            }
-                        }
-                    }
-                    base.program.templateSnapshots = baseSnaps;
-                    // Merge weekTemplateVersion — simple union, keep all bindings
-                    var baseWTV = base.program.weekTemplateVersion || {};
-                    var otherWTV = other.program.weekTemplateVersion || {};
-                    for (var wk in otherWTV) {
-                        if (!baseWTV[wk]) {
-                            baseWTV[wk] = otherWTV[wk];
-                        } else {
-                            for (var dk in otherWTV[wk]) {
-                                if (!(dk in baseWTV[wk])) {
-                                    baseWTV[wk][dk] = otherWTV[wk][dk];
-                                }
-                            }
-                        }
-                    }
-                    base.program.weekTemplateVersion = baseWTV;
-                }
+                // templateSnapshots/weekTemplateVersion removed — snapshots now live in log._template
                 // migrateExerciseNames removed from sync — runs in Storage._load() instead
                 // Flatten any choose_one groups that came from a pre-v10 device
                 _flattenChooseOneInData(base);

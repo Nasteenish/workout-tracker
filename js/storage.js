@@ -42,32 +42,6 @@ export const Storage = {
             var n = ex.nameRu || ex.name;
             if (n) { if (!nameToEntries[n]) nameToEntries[n] = []; nameToEntries[n].push({ id: ex.id, day: all[i].day }); }
         }
-        // Also scan templateSnapshots to include historical exercise IDs
-        // (exercises removed from dayTemplates but used in past weeks still need sibling linking)
-        var snaps = this._program.templateSnapshots;
-        if (snaps) {
-            for (var dNum in snaps) {
-                var daySnaps = snaps[dNum];
-                var snapDay = parseInt(dNum);
-                for (var si = 0; si < daySnaps.length; si++) {
-                    var groups = daySnaps[si].groups || [];
-                    for (var g = 0; g < groups.length; g++) {
-                        var snapExs = getGroupExercises(groups[g]);
-                        for (var j = 0; j < snapExs.length; j++) {
-                            var snapEx = snapExs[j];
-                            var snapName = snapEx.nameRu || snapEx.name;
-                            if (!snapName || !snapEx.id) continue;
-                            if (!nameToEntries[snapName]) nameToEntries[snapName] = [];
-                            var alreadyIn = false;
-                            for (var k = 0; k < nameToEntries[snapName].length; k++) {
-                                if (nameToEntries[snapName][k].id === snapEx.id) { alreadyIn = true; break; }
-                            }
-                            if (!alreadyIn) nameToEntries[snapName].push({ id: snapEx.id, day: snapDay });
-                        }
-                    }
-                }
-            }
-        }
         var cache = this._siblingCache;
         for (var name in nameToEntries) {
             var entries = nameToEntries[name];
@@ -115,10 +89,6 @@ export const Storage = {
                 }
                 this._data._migrationVersion = MIGRATION_VERSION;
                 this._save();
-            }
-            // _unbindFn (stale snapshot unbinding) — disabled, see app.js
-            if (this._unbindFn) {
-                this._unbindFn(this._data);
             }
         } catch (e) {
             console.error('Storage load error:', e);
@@ -862,23 +832,9 @@ export const Storage = {
         if (!data.log[w][d]) data.log[w][d] = {};
         if (data.log[w][d]._template) return; // idempotent — don't overwrite
 
-        // Priority 1: legacy binding → snapshot
-        var groups = null;
-        var version = p.weekTemplateVersion && p.weekTemplateVersion[week]
-            && p.weekTemplateVersion[week][String(day)];
-        if (version && p.templateSnapshots && p.templateSnapshots[String(day)]) {
-            var snaps = p.templateSnapshots[String(day)];
-            for (var i = 0; i < snaps.length; i++) {
-                if (snaps[i].version === version && snaps[i].groups) {
-                    groups = snaps[i].groups;
-                    break;
-                }
-            }
-        }
-        // Priority 2: live dayTemplates
-        if (!groups && p.dayTemplates && p.dayTemplates[day]) {
-            groups = p.dayTemplates[day].exerciseGroups;
-        }
+        // Capture current live template
+        var groups = (p.dayTemplates && p.dayTemplates[day])
+            ? p.dayTemplates[day].exerciseGroups : null;
         if (!groups) return;
 
         data.log[w][d]._template = JSON.parse(JSON.stringify(groups));

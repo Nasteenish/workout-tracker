@@ -892,28 +892,6 @@ export const InlineEditor = {
         this._onRenderDay();
     },
 
-    _clearWeeklyOverrides(dayNum) {
-        var p = Storage.getProgram();
-        var cw = AppState.currentWeek;
-        var dayStr = String(dayNum);
-        if (p && p.weeklyOverrides && p.weeklyOverrides[cw] && p.weeklyOverrides[cw][dayStr]) {
-            delete p.weeklyOverrides[cw][dayStr];
-            if (Object.keys(p.weeklyOverrides[cw]).length === 0) {
-                delete p.weeklyOverrides[cw];
-            }
-            Storage.saveProgram(p, false);
-        }
-    },
-
-    _clearCurrentWeekSnapshot(dayNum) {
-        var p = Storage.getProgram();
-        var cw = AppState.currentWeek;
-        var dayStr = String(dayNum);
-        if (p && p.weekTemplateVersion && p.weekTemplateVersion[cw] && p.weekTemplateVersion[cw][dayStr]) {
-            delete p.weekTemplateVersion[cw][dayStr];
-            Storage.saveProgram(p, false);
-        }
-    },
 
     _closeSheet() {
         var overlay = document.getElementById('inline-menu-overlay');

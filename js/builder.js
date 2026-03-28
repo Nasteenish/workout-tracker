@@ -338,17 +338,9 @@ export const Builder = {
         var p = Storage.getProgram();
         if (!p || !p.dayTemplates[dayNum]) return null;
 
-        // Use the same source as resolveWorkout: if current week is bound
-        // to a snapshot, read groups from that snapshot, not from live dayTemplates
         var groups = p.dayTemplates[dayNum].exerciseGroups;
         var cw = AppState.currentWeek;
         var d = String(dayNum);
-        var version = p.weekTemplateVersion && p.weekTemplateVersion[cw]
-            && p.weekTemplateVersion[cw][d];
-        if (version && p.templateSnapshots && p.templateSnapshots[d]) {
-            var snap = p.templateSnapshots[d].find(function(s) { return s.version === version; });
-            if (snap) groups = snap.groups;
-        }
 
         // Apply weeklyOverrides (same as resolveWorkout) so editor sees DROP/R-P/etc.
         var dayOverrides = p.weeklyOverrides && p.weeklyOverrides[cw]
@@ -1045,33 +1037,11 @@ export const Builder = {
             }
         }
 
-        // Snapshot the old template if exerciseGroups changed (new/removed exercises, reorder, etc.)
-        this._snapshotIfChanged(p, ed.dayNum, groups);
-
         p.dayTemplates[ed.dayNum].exerciseGroups = groups;
         this._syncProgressionToOverrides(ed.dayNum);
         Storage.saveProgram(p, false);
     },
 
-    // Strip UI-only fields so opening Builder without real changes doesn't create a snapshot
-    _stripUiFields(groups) {
-        var UI_KEYS = { '_uiState': 1, 'collapsed': 1, '_editing': 1, '_expanded': 1, '_selected': 1 };
-        return JSON.parse(JSON.stringify(groups, function(key, value) {
-            if (UI_KEYS[key]) return undefined;
-            return value;
-        }));
-    },
-
-    // Full content fingerprint to detect any template change (sets, techniques, names, etc.)
-    _templateFingerprint(groups) {
-        return JSON.stringify(this._stripUiFields(groups));
-    },
-
-    // Legacy no-op: snapshots are now created in log at workout start (Phase 2).
-    // Remove together with _templateFingerprint and _stripUiFields in Phase 3.
-    _snapshotIfChanged(p, dayNum, newGroups) {
-        return;
-    },
 
     // Check if a week has any logged sets for any exercise in the given groups
     _weekHasLogs(week, dayNum, groups) {

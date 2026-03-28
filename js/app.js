@@ -126,7 +126,7 @@ export const App = {
         });
 
         // Set AppState from URL hash BEFORE any sync/migrations can fire
-        // (sync and _unbindStaleSnapshots rely on AppState.currentWeek to protect active week)
+        // (sync relies on AppState.currentWeek to protect active week)
         const _initHash = location.hash || '';
         const _initWeekMatch = _initHash.match(/#\/week\/(\d+)/);
         if (_initWeekMatch) {
@@ -141,7 +141,6 @@ export const App = {
 
         // Wire storage callbacks before any data loading
         Storage._migrateFn = (data) => Migrations.migrateExerciseNames(data);
-        Storage._unbindFn = null; // disabled — snapshots protected by full fingerprint
 
         // Run one-time data migrations (see js/migrations.js)
         Migrations.run();
