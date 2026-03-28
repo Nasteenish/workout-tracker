@@ -1042,6 +1042,7 @@ export const Storage = {
                 var logId = isUni ? entry.id + '_uni' : entry.id;
                 var log = this.getSetLog(w, entry.day, logId, setIdx);
                 if (!log || !log.completed) continue;
+                if (equipmentId && log.equipmentId !== equipmentId) continue;
 
                 var ts = log.timestamp || 0;
                 if (ts > bestTime) {

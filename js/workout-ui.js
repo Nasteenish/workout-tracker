@@ -849,7 +849,7 @@ export const WorkoutUI = {
         if (shareInfo) EquipmentManager.shareToGymEquipment(exId, shareInfo, week, day);
         UI.hideEquipmentModal();
         if (this._onInvalidateCache) this._onInvalidateCache('#/week/' + week + '/day/' + day);
-        this._updateEquipmentBadge(exId);
+        UI.renderDay(week, day);
     },
 
     _updateAllEquipmentBadges() {
