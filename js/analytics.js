@@ -371,11 +371,13 @@ export const Analytics = {
     },
 
     // ===== Dashboard: Week-over-week comparison =====
+    // Compares per equipment: same exercise on same machine → one comparison row
     getWeekComparison(weekNum) {
         if (weekNum <= 1) return [];
         const prevWeek = weekNum - 1;
         const totalDays = getTotalDays();
-        const exercises = {}; // exId → { name, current: { weight, reps }, prev: { weight, reps } }
+        // key = exId + '|' + equipmentId → { name, eqName, current, prev }
+        const entries = {};
 
         for (const [wk, label] of [[weekNum, 'current'], [prevWeek, 'prev']]) {
             for (let day = 1; day <= totalDays; day++) {
@@ -385,35 +387,43 @@ export const Analytics = {
                     const exList = getGroupExercises(group);
                     for (const ex of exList) {
                         const logExId = Storage.getLogExerciseId(ex.id);
-                        let bestWeight = 0;
                         const numSets = ex.sets ? ex.sets.length : 0;
+                        // Collect best weight per equipmentId in this week/day
+                        const bestByEq = {}; // eqId → weight
                         for (let s = 0; s < numSets; s++) {
                             const log = Storage.getSetLog(wk, day, logExId, s);
-                            if (log && log.completed && log.weight > bestWeight) {
-                                bestWeight = log.weight;
+                            if (log && log.completed && log.weight > 0) {
+                                const eqId = log.equipmentId || '_none_';
+                                if (!bestByEq[eqId] || log.weight > bestByEq[eqId]) {
+                                    bestByEq[eqId] = log.weight;
+                                }
                             }
                         }
-                        if (bestWeight > 0) {
-                            if (!exercises[ex.id]) {
-                                exercises[ex.id] = { name: exName(ex), current: 0, prev: 0 };
+                        for (const eqId in bestByEq) {
+                            const key = ex.id + '|' + eqId;
+                            if (!entries[key]) {
+                                const eq = eqId !== '_none_' ? Storage.getEquipmentById(eqId) : null;
+                                entries[key] = {
+                                    name: exName(ex),
+                                    eqName: eq ? eq.name : null,
+                                    current: 0,
+                                    prev: 0
+                                };
                             }
-                            if (label === 'current' && bestWeight > exercises[ex.id].current) {
-                                exercises[ex.id].current = bestWeight;
-                            }
-                            if (label === 'prev' && bestWeight > exercises[ex.id].prev) {
-                                exercises[ex.id].prev = bestWeight;
-                            }
+                            const w = bestByEq[eqId];
+                            if (label === 'current' && w > entries[key].current) entries[key].current = w;
+                            if (label === 'prev' && w > entries[key].prev) entries[key].prev = w;
                         }
                     }
                 }
             }
         }
 
-        // Filter: only exercises present in both weeks
-        return Object.values(exercises)
+        // Filter: only entries present in both weeks
+        return Object.values(entries)
             .filter(e => e.current > 0 && e.prev > 0)
             .map(e => ({
-                name: e.name,
+                name: e.eqName ? e.name + ' (' + e.eqName + ')' : e.name,
                 current: e.current,
                 prev: e.prev,
                 diff: e.current - e.prev,
