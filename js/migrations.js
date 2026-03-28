@@ -1241,6 +1241,138 @@ export const Migrations = {
                     console.log('Equipment dedup: remapped', Object.keys(remap).length, 'duplicate IDs');
                 }
             }
+        },
+        // v15: Restore orphaned exercises — for weeks with log data under exercise IDs
+        // that are not in the current dayTemplates or bound snapshot, create a composite
+        // snapshot that includes ALL exercises the user trained with.
+        {
+            key: '_restore_orphaned_exercises_v1',
+            fn: function() {
+                var keys = Object.keys(localStorage);
+                for (var ki = 0; ki < keys.length; ki++) {
+                    if (keys[ki].indexOf('wt_data_') !== 0) continue;
+                    var dd;
+                    try { dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}'); } catch(e) { continue; }
+                    if (!dd.program || !dd.log) continue;
+                    var p = dd.program;
+                    var dt = p.dayTemplates;
+                    if (!dt) continue;
+                    if (!p.templateSnapshots) p.templateSnapshots = {};
+                    if (!p.weekTemplateVersion) p.weekTemplateVersion = {};
+                    var changed = false;
+                    var totalWeeks = p.totalWeeks || 12;
+                    var totalDays = Object.keys(dt).length;
+
+                    // Build exercise lookup from all snapshots + current template
+                    var exLookup = {}; // exerciseId → exercise object
+                    for (var dNum in dt) {
+                        var groups = (dt[dNum].exerciseGroups || []);
+                        for (var gi = 0; gi < groups.length; gi++) {
+                            var g = groups[gi];
+                            if (g.exercise && g.exercise.id) exLookup[g.exercise.id] = { ex: g.exercise, group: g };
+                            if (g.exercises) {
+                                for (var ei = 0; ei < g.exercises.length; ei++) {
+                                    if (g.exercises[ei].id) exLookup[g.exercises[ei].id] = { ex: g.exercises[ei], group: g };
+                                }
+                            }
+                        }
+                    }
+                    for (var sd in p.templateSnapshots) {
+                        var snapArr = p.templateSnapshots[sd];
+                        if (!Array.isArray(snapArr)) continue;
+                        for (var si = 0; si < snapArr.length; si++) {
+                            var sgroups = snapArr[si].groups || [];
+                            for (var sgi = 0; sgi < sgroups.length; sgi++) {
+                                var sg = sgroups[sgi];
+                                if (sg.exercise && sg.exercise.id) exLookup[sg.exercise.id] = { ex: sg.exercise, group: sg };
+                                if (sg.exercises) {
+                                    for (var sei = 0; sei < sg.exercises.length; sei++) {
+                                        if (sg.exercises[sei].id) exLookup[sg.exercises[sei].id] = { ex: sg.exercises[sei], group: sg };
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    for (var w = 1; w <= totalWeeks; w++) {
+                        var wStr = String(w);
+                        if (!dd.log[wStr]) continue;
+                        for (var d = 1; d <= totalDays; d++) {
+                            var dStr = String(d);
+                            var dayLog = dd.log[wStr] && dd.log[wStr][dStr];
+                            if (!dayLog) continue;
+
+                            // Get rendered exercise IDs for this week/day
+                            var renderedIds = {};
+                            var ver = p.weekTemplateVersion[wStr] && p.weekTemplateVersion[wStr][dStr];
+                            var srcGroups;
+                            if (ver && p.templateSnapshots[dStr]) {
+                                for (var ssi = 0; ssi < p.templateSnapshots[dStr].length; ssi++) {
+                                    if (p.templateSnapshots[dStr][ssi].version === ver) {
+                                        srcGroups = p.templateSnapshots[dStr][ssi].groups;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!srcGroups) srcGroups = (dt[dStr] && dt[dStr].exerciseGroups) || [];
+                            for (var rgi = 0; rgi < srcGroups.length; rgi++) {
+                                var rg = srcGroups[rgi];
+                                if (rg.exercise && rg.exercise.id) renderedIds[rg.exercise.id] = true;
+                                if (rg.exercises) {
+                                    for (var rei = 0; rei < rg.exercises.length; rei++) {
+                                        if (rg.exercises[rei].id) renderedIds[rg.exercises[rei].id] = true;
+                                    }
+                                }
+                            }
+
+                            // Find orphaned log entries
+                            var orphans = [];
+                            for (var lk in dayLog) {
+                                if (lk.charAt(0) === '_') continue;
+                                var baseId = lk.replace(/_uni$/, '');
+                                if (renderedIds[baseId] || renderedIds[lk]) continue;
+                                // Check it has completed sets
+                                var hasCompleted = false;
+                                for (var sk in dayLog[lk]) {
+                                    if (dayLog[lk][sk] && dayLog[lk][sk].completed) { hasCompleted = true; break; }
+                                }
+                                if (hasCompleted && !orphans.some(function(o) { return o === baseId; })) {
+                                    orphans.push(baseId);
+                                }
+                            }
+
+                            if (orphans.length === 0) continue;
+
+                            // Build composite snapshot: current rendered groups + orphaned exercises
+                            var compositeGroups = JSON.parse(JSON.stringify(srcGroups));
+                            for (var oi = 0; oi < orphans.length; oi++) {
+                                var orphanId = orphans[oi];
+                                var found = exLookup[orphanId];
+                                if (found) {
+                                    compositeGroups.push({
+                                        type: found.group.type === 'warmup' ? 'warmup' : 'single',
+                                        exercise: JSON.parse(JSON.stringify(found.ex))
+                                    });
+                                }
+                            }
+
+                            // Create snapshot and bind
+                            if (!p.templateSnapshots[dStr]) p.templateSnapshots[dStr] = [];
+                            var nextVer = p.templateSnapshots[dStr].length + 1;
+                            p.templateSnapshots[dStr].push({ version: nextVer, groups: compositeGroups });
+                            if (!p.weekTemplateVersion[wStr]) p.weekTemplateVersion[wStr] = {};
+                            p.weekTemplateVersion[wStr][dStr] = nextVer;
+                            changed = true;
+                            console.log('Restored', orphans.length, 'orphaned exercises for W' + w + 'D' + d);
+                        }
+                    }
+
+                    if (changed) {
+                        dd._lastModified = Date.now();
+                        localStorage.setItem(keys[ki], JSON.stringify(dd));
+                    }
+                }
+            }
         }
     ]
 };
