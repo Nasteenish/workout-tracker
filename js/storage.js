@@ -47,7 +47,7 @@ export const Storage = {
             var entries = nameToEntries[name];
             if (entries.length < 2) { cache[entries[0].id] = []; continue; }
             for (var i = 0; i < entries.length; i++) {
-                cache[entries[i].id] = entries.filter(function(e) { return e.id !== entries[i].id; });
+                cache[entries[i].id] = entries.filter(function(e) { return e.id !== entries[i].id && e.day !== entries[i].day; });
             }
         }
     },
