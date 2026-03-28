@@ -1011,48 +1011,51 @@ export const Storage = {
     },
 
     getPreviousLog(week, day, exerciseId, setIdx, equipmentId, siblings) {
-        // 1. Same exerciseId, same day, previous weeks
-        var sameDayResult = null;
-        var sameDayFallback = null;
-        for (var w = week - 1; w >= 1; w--) {
-            var log = this.getSetLog(w, day, exerciseId, setIdx);
-            if (log && log.completed) {
-                if (equipmentId) {
-                    if (log.equipmentId === equipmentId) { sameDayResult = log; break; }
-                    if (!sameDayFallback) sameDayFallback = log;
-                } else {
-                    sameDayResult = log; break;
-                }
-            }
-        }
-        if (!sameDayResult) sameDayResult = sameDayFallback;
-        // 2. Sibling exercises (same name, different day) — find most recent
-        var sibResult = null;
+        // Collect all entries: main exercise + siblings
+        var allEntries = [{ id: exerciseId, day: day }];
         if (siblings && siblings.length > 0) {
-            var bestTime = 0;
-            for (var w = week; w >= 1; w--) {
-                for (var si = 0; si < siblings.length; si++) {
-                    var sib = siblings[si];
-                    // If main exercise is unilateral, prefer _uni sibling logs
-                    var sibId = exerciseId.endsWith('_uni') ? sib.id + '_uni' : sib.id;
-                    // Skip days in current week that have no completed data yet
-                    if (w === week && sib.day >= day) {
-                        var sibSetLog = this.getSetLog(w, sib.day, sibId, setIdx);
-                        if (!sibSetLog || !sibSetLog.completed) continue;
+            for (var si = 0; si < siblings.length; si++) {
+                allEntries.push({ id: siblings[si].id, day: siblings[si].day });
+            }
+        }
+
+        var bestResult = null;
+        var bestFallback = null;
+        var bestTime = 0;
+        var bestFallbackTime = 0;
+
+        // Single pass: all weeks × all entries, find most recent by timestamp
+        for (var w = week; w >= 1; w--) {
+            for (var ei = 0; ei < allEntries.length; ei++) {
+                var entry = allEntries[ei];
+                // Skip current session (same week + same day + same exercise)
+                if (w === week && entry.day === day && entry.id === exerciseId) continue;
+                // Skip future days in current week
+                if (w === week && entry.day > day) continue;
+
+                var logId = exerciseId.endsWith('_uni') ? entry.id + '_uni' : entry.id;
+                var log = this.getSetLog(w, entry.day, logId, setIdx);
+                if (!log || !log.completed) continue;
+
+                var ts = log.timestamp || 0;
+                if (equipmentId) {
+                    if (log.equipmentId === equipmentId && ts > bestTime) {
+                        bestResult = log;
+                        bestTime = ts;
+                    } else if (ts > bestFallbackTime) {
+                        bestFallback = log;
+                        bestFallbackTime = ts;
                     }
-                    var log = this.getSetLog(w, sib.day, sibId, setIdx);
-                    if (log && log.completed && log.timestamp > bestTime) {
-                        sibResult = log;
-                        bestTime = log.timestamp;
+                } else {
+                    if (ts > bestTime) {
+                        bestResult = log;
+                        bestTime = ts;
                     }
                 }
             }
         }
-        // Return whichever is more recent
-        if (sameDayResult && sibResult) {
-            return (sibResult.timestamp > (sameDayResult.timestamp || 0)) ? sibResult : sameDayResult;
-        }
-        return sameDayResult || sibResult || null;
+
+        return bestResult || bestFallback || null;
     },
 
     getExerciseHistory(exerciseId) {
