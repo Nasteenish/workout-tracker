@@ -817,9 +817,7 @@ export const Storage = {
     getLogDay(week, day) {
         var data = this._load();
         var w = String(week), d = String(day);
-        if (!data.log[w]) data.log[w] = {};
-        if (!data.log[w][d]) data.log[w][d] = {};
-        return data.log[w][d];
+        return (data.log[w] && data.log[w][d]) ? data.log[w][d] : null;
     },
 
     snapshotTemplateInLog(week, day) {
@@ -845,7 +843,7 @@ export const Storage = {
         // Safety net: snapshot template before first set if not yet done
         var w = String(week), d = String(day), s = String(setIdx);
         var data = this._load();
-        if (!data.log[w] || !data.log[w][d] || !data.log[w][d]._template) {
+        if (!data.log[w] || !data.log[w][d] || !('_template' in data.log[w][d])) {
             this.snapshotTemplateInLog(week, day);
             this._data = null; // invalidate cache — snapshotTemplateInLog called _save()
             data = this._load();

@@ -79,6 +79,7 @@ export function resolveSupersetItem(item, week) {
  */
 export function resolveWorkout(week, day) {
     const p = Storage.getProgram();
+    if (!p) return null;
     const template = deepClone(p.dayTemplates[day]);
     if (!template) return null;
 
