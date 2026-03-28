@@ -109,12 +109,12 @@ tools/                  — Утилиты разработки: SQL, скрип
 | Новый маршрут в `App.route()` | `SwipeNav._getSwipeConfig()` |
 | `UI.renderWeek()` | `UI._weekCardsHTML()`, `_weekViewHTML()` — swipe companions |
 | `Builder._editingDay` | `Builder.renderDayEditor()`, `Builder._autoSave()` |
-| `Builder._snapshotIfChanged()` / `templateSnapshots` | `resolveWorkout()` (program-utils.js), `SupaSync.syncOnLogin()` (merge snapshots), `migrations.js` (_frozenGroups → snapshots), `Builder._buildDayEditorVM()` (должен читать из снэпшота, не из dayTemplates напрямую) |
+| `Storage.snapshotTemplateInLog()` | `resolveWorkout()` (program-utils.js) читает `log[w][d]._template`, `WorkoutUI` вызывает при старте тренировки, `saveSetLog` — safety net |
 | `EquipmentManager.*` | `UI.showEquipmentModal()`, `WorkoutUI.handleModalClick` (eq handlers) |
 | `Storage.removeExerciseEquipment()` | `gymEquipmentMap` (должен записывать null tombstone в map, иначе `applyGymEquipment` воскресит привязку) |
 | `Storage.saveProgram()` | Ставит `_programModified = Date.now()`. Используется sync merge для независимого сравнения program timestamps |
 | `SupaSync.syncOnLogin()` merge | `_programModified` (программа), `_lastModified` = `Math.max(local, remote)` (не Date.now()!), tombstone `null` vs `undefined` в exerciseEquipment |
-| `Storage._load()` callbacks | `_migrateFn` → `Migrations.migrateExerciseNames`, `_unbindFn` → `Migrations._unbindStaleSnapshots`. Оба wired в `App.init()` ДО первого `_load()` |
+| `Storage._load()` callbacks | `_migrateFn` → `Migrations.migrateExerciseNames`. Wired в `App.init()` ДО первого `_load()`. Migration version guard (v18+) — запускается один раз при обновлении |
 | `exercises_db.js` (переименование `nameRu`) | Автоматически: `migrateExerciseNames` сверяет по English name → обновляет `nameRu` в программе, снэпшотах, substitutions |
 | `exerciseSubstitutions` (variation picker) | `UI._buildExerciseVM()` резолвит English имя через EXERCISE_DB. data-attrs `EX_NAME`/`EX_NAME_RU` должны содержать resolved имена, не оригинальные из снэпшота |
 | `UI.renderDay()` (PTR async path) | `UI._onPTRSwap` callback → `InlineEditor.attachHandlers()`. Без этого обработчики не подключатся после pull-to-refresh |
@@ -143,7 +143,7 @@ localStorage.setItem('wt_data_xxx', ...);  // обходит кеш и sync
 
 **Программа:**
 1. Больше нет глобального `let PROGRAM`. Везде `Storage.getProgram()` или передаётся аргументом
-2. `resolveWorkout(week, day)` возвращает deep clone — безопасно мутировать
+2. `resolveWorkout(week, day)` возвращает deep clone — безопасно мутировать. Приоритет: `log[w][d]._template` → live `dayTemplates`
 3. Exercise ID: `D{day}E{num}` или `D{d}E{n}_opt{n}`
 4. **Изменение exercise ID ломает ВСЕ логи** — `log[week][day][exerciseId]`
 
@@ -300,18 +300,20 @@ Data: No storage changes
 
 16. **Substitution ломает оборудование и вариации**: `exerciseSubstitutions` хранит только русское имя. Если рендер передаёт в data-attrs оригинальное английское имя из снэпшота (например "Hip Thrust (Barbell)") — модалка оборудования видит "(Barbell)" → `isFreeWeight = true` → пустой список. **Решение**: `_buildExerciseVM` резолвит substitution через EXERCISE_DB → передаёт resolved `_attrName` / `_attrNameRu` в data-attrs. Все data-attrs `EX_NAME`/`EX_NAME_RU` должны содержать resolved имена.
 
-17. **`_buildDayEditorVM` должен читать из снэпшота, не из dayTemplates**: Inline editor (три точки) должен видеть те же упражнения что `resolveWorkout()`. Если читать из `dayTemplates` напрямую — editor работает с другим набором упражнений, `_snapshotIfChanged` видит разницу → unbind недели → галочки слетают. Всегда проверяй `weekTemplateVersion[week][day]` → `templateSnapshots[day][version].groups`.
+17. **Снэпшоты шаблонов — только в `log._template`**: Legacy система (`templateSnapshots`, `weekTemplateVersion`, `_snapshotIfChanged`) полностью удалена. Снэпшот создаётся при старте тренировки (`Storage.snapshotTemplateInLog`) и живёт в `log[w][d]._template`. `_deepMergeLogs` даёт приоритет локальному для `_`-полей → sync не теряет снэпшот. Tombstone `null` в `_template` = битый снэпшот, `resolveWorkout` падает на live template. `snapshotTemplateInLog` проверяет `'_template' in` (не truthy) → не перезаписывает tombstone.
 
-18. **Нельзя переназначать снэпшоты на версии с бо́льшим числом упражнений**: При data repair — если пользователь удалил упражнения из программы, orphaned log entries для этих упражнений **нормальны**. Переназначение на старый снэпшот (где упражнения ещё были) **воскрешает** удалённые упражнения. Orphaned логи безопасно игнорировать.
-
-19. **Tombstone `null` vs `undefined` — критичное различие в merge**: В `exerciseEquipment` и `gymEquipmentMap`: `null` = пользователь явно удалил привязку (tombstone, не трогать). `undefined` = записи нет (можно заполнить из другого источника). Используй `=== undefined` для проверки отсутствия, НЕ `!value` (falsy включает null).
+18. **Tombstone `null` vs `undefined` — критичное различие в merge**: В `exerciseEquipment`, `gymEquipmentMap` и `log._template`: `null` = пользователь явно удалил (tombstone, не трогать). `undefined` = записи нет (можно заполнить из другого источника). `_deepMergeLogs` для `_`-полей: `ld[ex] !== undefined ? ld[ex] : rd[ex]` → tombstone `null` побеждает remote. Используй `=== undefined` для проверки отсутствия, НЕ `!value` (falsy включает null).
 
 20. **Data repair — НЕ патчить облако напрямую, писать миграцию в коде**: `schedulePush` делает слепой push каждые 3 секунды. Если патчить облако через Supabase API — телефон перезапишет патч своими данными за секунды. Правильный подход: написать миграцию в `Storage._load()`, которая выполнится на самом устройстве при загрузке. Тогда устройство — автор и получатель, гонки нет.
 
-21. **Инварианты данных — ТОЛЬКО в `Storage._load()`, не после sync**: Если инвариант нужно гарантировать всегда (например "будущие недели не привязаны к устаревшим снэпшотам"), ставь проверку в `_load()` через callback (`_unbindFn`, `_migrateFn`). Одноразовая миграция (`migrations.js`) или post-sync cleanup (`cleanOrphanedLogEntries`) — **ненадёжно**: sync может перезаписать данные облачными ПОСЛЕ миграции, но ДО рендера. `_load()` — единственная точка через которую проходят ВСЕ чтения данных, включая те что после sync.
+21. **Инварианты данных — ТОЛЬКО в `Storage._load()`, не после sync**: Если инвариант нужно гарантировать всегда, ставь проверку в `_load()` через `_migrateFn` + MIGRATION_VERSION guard. Одноразовая миграция (`migrations.js`) или post-sync cleanup (`cleanOrphanedLogEntries`) — **ненадёжно**: sync может перезаписать данные облачными ПОСЛЕ миграции, но ДО рендера. `_load()` — единственная точка через которую проходят ВСЕ чтения данных.
 
-22. **Sync + миграция — порядок выполнения**: App init → `_load()` (с миграциями) → `syncOnLogin` → `Storage._invalidateCache()` → следующий `_load()` (миграции снова) → рендер. Миграции в `_load()` запускаются **дважды**: до и после sync. Это правильно — после sync данные могут измениться, и инварианты нужно восстановить.
+22. **Sync + миграция — порядок выполнения**: App init → `_load()` (миграция по MIGRATION_VERSION) → `syncOnLogin` → `Storage._invalidateCache()` → `setProgram(getStoredProgram())` → рендер. `_migrateFn` запускается только при бампе MIGRATION_VERSION, не при каждом `_load()`. После sync `_program` обновляется через `setProgram` в 3 местах app.js. `_autoSave` в Builder блокируется пока `_syncing = true`.
 
 23. **`_lastModified` в sync merge — НИКОГДА `Date.now()`**: После merge ставить `Math.max(localTime, remoteTime)`. Если ставить `Date.now()` — облако всегда будет "новее" локальных данных при следующем sync, и все локальные изменения (settings, choices, substitutions) будут проигрывать.
 
-24. **Переименование упражнений — автоматическая миграция**: `migrateExerciseNames()` шаг 5 сверяет `nameRu` с EXERCISE_DB по стабильному English name. Переименовал `nameRu` в `exercises_db.js` → push → при загрузке программа автообновится. `_NAME_MAP` нужен только при смене English name.
+24. **`onLocalSave` и `_autoSave` блокируются во время sync**: `SupaSync.onLocalSave()` проверяет `_syncing` → не пушит частично-merged данные. `Builder._autoSave()` проверяет `SupaSync._syncing` → не перезаписывает результат sync старым `_program`. После sync `Storage.setProgram(Storage.getStoredProgram())` обновляет in-memory кеш.
+
+25. **WorkoutTimer guard при sync**: `SupaSync._isWorkoutActiveFn` callback проверяет активную тренировку. Если тренировка идёт — sync не заменяет `program` (чтобы не сменить упражнения на середине).
+
+26. **Переименование упражнений — автоматическая миграция**: `migrateExerciseNames()` шаг 5 сверяет `nameRu` с EXERCISE_DB по стабильному English name. Переименовал `nameRu` в `exercises_db.js` → push → при загрузке программа автообновится. `_NAME_MAP` нужен только при смене English name.

@@ -283,14 +283,20 @@ PullRefresh → App.route(true)
 ```
 Login: SupaSync.syncOnLogin()
   → pullData()
-  → _deepMergeLogs(local, remote) [per-set, latest timestamp wins]
+  → _deepMergeLogs(local, remote) [per-set, latest timestamp wins; _-fields: local priority]
   → merge exerciseChoices (union, no overwrite)
   → merge exerciseEquipment (null = tombstone, undefined = absent)
-  → merge program (by _programModified, fallback to _lastModified)
+  → merge program (by _programModified; skipped if WorkoutTimer active via _isWorkoutActiveFn)
   → _flattenChooseOneInData() — normalize choose_one→single after merge
   → pushData()
+  → _onSyncComplete → Storage.setProgram(getStoredProgram()) — обновить in-memory кеш
 
-Continuous: Storage._save() → SupaSync.schedulePush() [debounced 3s, blind push]
+Guards:
+  → onLocalSave() checks _syncing — не пушить частично-merged данные
+  → Builder._autoSave() checks SupaSync._syncing — не перезаписывать результат sync
+  → _isWorkoutActiveFn — не заменять program во время активной тренировки
+
+Continuous: Storage._save() → SupaSync.onLocalSave() → schedulePush() [debounced 3s]
 
 Background triggers:
   → window 'online' event → syncOnLogin (reconnect after offline)
@@ -300,6 +306,12 @@ Background triggers:
 Timestamps:
   → _lastModified — updated on every _save(), used for overall blob comparison
   → _programModified — updated only in saveProgram(), used for independent program merge
+  → After merge: _lastModified = Math.max(local, remote) — NEVER Date.now()
+
+Template snapshots:
+  → log[w][d]._template — created at workout start by snapshotTemplateInLog()
+  → _deepMergeLogs: _-fields use local priority (ld !== undefined ? ld : rd)
+  → null tombstone = corrupted snapshot, resolveWorkout falls back to live template
 ```
 
 ---
@@ -311,15 +323,13 @@ Timestamps:
 ```javascript
 { version, title, coach, athlete, totalWeeks,
   dayTemplates: { 1: { title, titleRu, exerciseGroups: [...] } },
-  weeklyOverrides: { 3: { 1: { "D1E2": { sets: { 0: { rpe: "10" } } } } } },
-  templateSnapshots: { "1": [{ version: 1, groups: [...] }, { version: 2, groups: [...] }] },
-  weekTemplateVersion: { "1": { "1": 1, "2": 1 }, "5": { "1": 3 } }
+  weeklyOverrides: { 3: { 1: { "D1E2": { sets: { 0: { rpe: "10" } } } } } }
 }
 ```
 
-**Инвариант снэпшотов**: `resolveWorkout(week, day)` проверяет `weekTemplateVersion[week][day]`. Если версия есть — берёт `templateSnapshots[day][version].groups`. Если нет — берёт `dayTemplates[day].exerciseGroups`. Все модули (UI, Builder, InlineEditor) должны читать из **того же источника** что resolveWorkout.
+**Снэпшоты шаблонов** хранятся в `log[week][day]._template` (не в program). Создаются при старте тренировки (`Storage.snapshotTemplateInLog`). `resolveWorkout(week, day)` приоритет: `_template` из лога → live `dayTemplates`. `_deepMergeLogs` даёт приоритет локальному для `_`-полей → sync не теряет снэпшот. Tombstone `null` = битый снэпшот (не перезаписывается, `resolveWorkout` падает на live template).
 
-**`_snapshotIfChanged()`** (builder.js): создаёт новый снэпшот при изменении fingerprint (структуры упражнений). Мелкие правки (сеты, повторения) не меняют fingerprint → `_clearCurrentWeekSnapshot` отвязывает неделю чтобы она пошла в dayTemplates с обновлёнными данными.
+**Legacy:** `templateSnapshots` и `weekTemplateVersion` могут присутствовать в старых данных, но не используются активным кодом (удалены в Phase 3). Старые миграции (v5, v12) в migrations.js ссылаются на них — не трогать.
 
 ### ExerciseGroup (4 типа)
 
