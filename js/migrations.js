@@ -1419,7 +1419,7 @@ export const Migrations = {
         // from other days (e.g. D2E* in day 3). Migration v17 faithfully copied them.
         // This migration detects and removes such _template entries.
         {
-            key: 'wt_migration_v18',
+            key: 'wt_migration_v18b',
             fn: function() {
                 var keys = Object.keys(localStorage);
                 for (var ki = 0; ki < keys.length; ki++) {
@@ -1457,7 +1457,7 @@ export const Migrations = {
                             }
 
                             if (hasContamination) {
-                                delete dayLog._template;
+                                dayLog._template = null; // tombstone — sync won't overwrite
                                 changed = true;
                             }
                         }
