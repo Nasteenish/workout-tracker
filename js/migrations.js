@@ -1242,10 +1242,9 @@ export const Migrations = {
                 }
             }
         },
-        // v15: DISABLED — was buggy (mixed exercises from different days into snapshots)
+        // v15: DISABLED — was buggy. Key preserved so it never re-runs.
         { key: '_restore_orphaned_exercises_v1', fn: function() {} },
-        // v16: Undo v15 damage — remove ALL snapshot bindings where the snapshot contains
-        // exercises from a DIFFERENT day (detected by D{n}E prefix mismatch)
+        // v16: Clean up v15 damage — remove snapshots with exercises from wrong days
         {
             key: '_undo_v15_cross_day_snapshots',
             fn: function() {
@@ -1256,51 +1255,45 @@ export const Migrations = {
                     try { dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}'); } catch(e) { continue; }
                     if (!dd.program) continue;
                     var p = dd.program;
-                    var wtv = p.weekTemplateVersion;
                     var snaps = p.templateSnapshots;
-                    if (!wtv || !snaps) continue;
+                    var wtv = p.weekTemplateVersion;
+                    if (!snaps) continue;
+                    if (!wtv) wtv = p.weekTemplateVersion = {};
                     var changed = false;
-
                     for (var dStr in snaps) {
                         var daySnaps = snaps[dStr];
                         if (!Array.isArray(daySnaps)) continue;
-                        // Find bad snapshots: contain D{x}E exercises where x != dStr
-                        var badVersions = {};
+                        var bad = {};
                         for (var si = 0; si < daySnaps.length; si++) {
                             var groups = daySnaps[si].groups || [];
-                            var hasForeign = false;
-                            for (var gi = 0; gi < groups.length && !hasForeign; gi++) {
+                            for (var gi = 0; gi < groups.length; gi++) {
                                 var exs = [];
                                 if (groups[gi].exercise) exs.push(groups[gi].exercise);
                                 if (groups[gi].exercises) exs = exs.concat(groups[gi].exercises);
+                                var found = false;
                                 for (var ei = 0; ei < exs.length; ei++) {
                                     var eid = exs[ei] && exs[ei].id;
                                     if (!eid) continue;
                                     var m = eid.match(/^D(\d+)E/);
-                                    if (m && m[1] !== dStr) { hasForeign = true; break; }
+                                    if (m && m[1] !== dStr) { found = true; break; }
                                 }
+                                if (found) { bad[daySnaps[si].version] = true; break; }
                             }
-                            if (hasForeign) badVersions[daySnaps[si].version] = true;
                         }
-                        if (Object.keys(badVersions).length === 0) continue;
-
-                        // Remove bindings pointing to bad snapshots
+                        if (!Object.keys(bad).length) continue;
                         for (var wk in wtv) {
-                            if (wtv[wk][dStr] && badVersions[wtv[wk][dStr]]) {
+                            if (wtv[wk][dStr] && bad[wtv[wk][dStr]]) {
                                 delete wtv[wk][dStr];
-                                if (Object.keys(wtv[wk]).length === 0) delete wtv[wk];
+                                if (!Object.keys(wtv[wk]).length) delete wtv[wk];
                                 changed = true;
                             }
                         }
-                        // Remove bad snapshots
-                        snaps[dStr] = daySnaps.filter(function(s) { return !badVersions[s.version]; });
+                        snaps[dStr] = daySnaps.filter(function(s) { return !bad[s.version]; });
                         changed = true;
                     }
-
                     if (changed) {
                         dd._lastModified = Date.now();
                         localStorage.setItem(keys[ki], JSON.stringify(dd));
-                        console.log('Cleaned up cross-day snapshot corruption from v15');
                     }
                 }
             }
