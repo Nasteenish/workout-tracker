@@ -919,7 +919,15 @@ export const Storage = {
         var existing = this.getSetLog(week, day, exerciseId, setIdx);
         if (existing && existing.completed) {
             var data = this._load();
-            delete data.log[String(week)][String(day)][exerciseId][String(setIdx)];
+            var w = String(week), d = String(day), s = String(setIdx);
+            // Keep as tombstone with completed:false + fresh timestamp so sync doesn't resurrect it
+            data.log[w][d][exerciseId][s] = {
+                weight: existing.weight || 0,
+                reps: existing.reps || 0,
+                completed: false,
+                timestamp: Date.now()
+            };
+            if (existing.equipmentId) data.log[w][d][exerciseId][s].equipmentId = existing.equipmentId;
             this._save();
             return false;
         } else {
