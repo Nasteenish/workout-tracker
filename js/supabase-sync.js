@@ -1,7 +1,7 @@
 // supabase-sync.js — Supabase Auth + Cloud Sync
 import { Storage } from './storage.js';
 import { Migrations } from './migrations.js';
-import { AppState } from './app-state.js';
+// AppState removed — sync should not depend on UI state
 
 export const SUPABASE_URL = 'https://mqyfdbfdeuwojgexhwpy.supabase.co';
 export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xeWZkYmZkZXV3b2pnZXhod3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NzE1OTYsImV4cCI6MjA4NzQ0NzU5Nn0.5okpQM-UffmYatsVjbzjafsHhY3taCqhDYkiyEjiSvg';
@@ -367,14 +367,10 @@ export const SupaSync = {
                         }
                     }
                     base.program.templateSnapshots = baseSnaps;
-                    // Merge weekTemplateVersion — keep bindings from both sides,
-                    // but NEVER bind current week to snapshots (it must use live template)
+                    // Merge weekTemplateVersion — simple union, keep all bindings
                     var baseWTV = base.program.weekTemplateVersion || {};
                     var otherWTV = other.program.weekTemplateVersion || {};
-                    var _syncCurrentWeek = AppState.currentWeek ? String(AppState.currentWeek) : null;
                     for (var wk in otherWTV) {
-                        // Current week always uses live template — skip
-                        if (_syncCurrentWeek && wk === _syncCurrentWeek) continue;
                         if (!baseWTV[wk]) {
                             baseWTV[wk] = otherWTV[wk];
                         } else {
@@ -384,10 +380,6 @@ export const SupaSync = {
                                 }
                             }
                         }
-                    }
-                    // Safety: clear stray bindings for current week
-                    if (_syncCurrentWeek && baseWTV[_syncCurrentWeek]) {
-                        delete baseWTV[_syncCurrentWeek];
                     }
                     base.program.weekTemplateVersion = baseWTV;
                 }

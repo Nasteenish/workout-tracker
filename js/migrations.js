@@ -1246,7 +1246,7 @@ export const Migrations = {
         { key: '_restore_orphaned_exercises_v1', fn: function() {} },
         // v16: Full repair — remove cross-day snapshots + re-bind each week to best match
         {
-            key: '_fix_snapshots_full_repair_v1',
+            key: '_fix_snapshots_full_repair_v2',
             fn: function() {
                 var keys = Object.keys(localStorage);
                 for (var ki = 0; ki < keys.length; ki++) {
