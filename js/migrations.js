@@ -1263,35 +1263,38 @@ export const Migrations = {
                     var totalWeeks = p.totalWeeks || 12;
                     var totalDays = Object.keys(dt).length;
 
-                    // Build exercise lookup from all snapshots + current template
-                    var exLookup = {}; // exerciseId → exercise object
-                    for (var dNum in dt) {
-                        var groups = (dt[dNum].exerciseGroups || []);
-                        for (var gi = 0; gi < groups.length; gi++) {
-                            var g = groups[gi];
-                            if (g.exercise && g.exercise.id) exLookup[g.exercise.id] = { ex: g.exercise, group: g };
+                    // Build per-day exercise lookup from that day's snapshots + template ONLY
+                    // (prevents exercises from other days leaking into snapshots)
+                    function buildDayExLookup(dayNum) {
+                        var lookup = {};
+                        // Current template for this day
+                        var tgroups = (dt[dayNum] && dt[dayNum].exerciseGroups) || [];
+                        for (var gi = 0; gi < tgroups.length; gi++) {
+                            var g = tgroups[gi];
+                            if (g.exercise && g.exercise.id) lookup[g.exercise.id] = { ex: g.exercise, group: g };
                             if (g.exercises) {
                                 for (var ei = 0; ei < g.exercises.length; ei++) {
-                                    if (g.exercises[ei].id) exLookup[g.exercises[ei].id] = { ex: g.exercises[ei], group: g };
+                                    if (g.exercises[ei].id) lookup[g.exercises[ei].id] = { ex: g.exercises[ei], group: g };
                                 }
                             }
                         }
-                    }
-                    for (var sd in p.templateSnapshots) {
-                        var snapArr = p.templateSnapshots[sd];
-                        if (!Array.isArray(snapArr)) continue;
-                        for (var si = 0; si < snapArr.length; si++) {
-                            var sgroups = snapArr[si].groups || [];
-                            for (var sgi = 0; sgi < sgroups.length; sgi++) {
-                                var sg = sgroups[sgi];
-                                if (sg.exercise && sg.exercise.id) exLookup[sg.exercise.id] = { ex: sg.exercise, group: sg };
-                                if (sg.exercises) {
-                                    for (var sei = 0; sei < sg.exercises.length; sei++) {
-                                        if (sg.exercises[sei].id) exLookup[sg.exercises[sei].id] = { ex: sg.exercises[sei], group: sg };
+                        // Snapshots for this day ONLY
+                        var daySnaps = p.templateSnapshots[dayNum];
+                        if (Array.isArray(daySnaps)) {
+                            for (var si = 0; si < daySnaps.length; si++) {
+                                var sgroups = daySnaps[si].groups || [];
+                                for (var sgi = 0; sgi < sgroups.length; sgi++) {
+                                    var sg = sgroups[sgi];
+                                    if (sg.exercise && sg.exercise.id) lookup[sg.exercise.id] = { ex: sg.exercise, group: sg };
+                                    if (sg.exercises) {
+                                        for (var sei = 0; sei < sg.exercises.length; sei++) {
+                                            if (sg.exercises[sei].id) lookup[sg.exercises[sei].id] = { ex: sg.exercises[sei], group: sg };
+                                        }
                                     }
                                 }
                             }
                         }
+                        return lookup;
                     }
 
                     for (var w = 1; w <= totalWeeks; w++) {
@@ -1344,10 +1347,11 @@ export const Migrations = {
                             if (orphans.length === 0) continue;
 
                             // Build composite snapshot: current rendered groups + orphaned exercises
+                            var dayExLookup = buildDayExLookup(dStr);
                             var compositeGroups = JSON.parse(JSON.stringify(srcGroups));
                             for (var oi = 0; oi < orphans.length; oi++) {
                                 var orphanId = orphans[oi];
-                                var found = exLookup[orphanId];
+                                var found = dayExLookup[orphanId];
                                 if (found) {
                                     compositeGroups.push({
                                         type: found.group.type === 'warmup' ? 'warmup' : 'single',
@@ -1364,6 +1368,74 @@ export const Migrations = {
                             p.weekTemplateVersion[wStr][dStr] = nextVer;
                             changed = true;
                             console.log('Restored', orphans.length, 'orphaned exercises for W' + w + 'D' + d);
+                        }
+                    }
+
+                    if (changed) {
+                        dd._lastModified = Date.now();
+                        localStorage.setItem(keys[ki], JSON.stringify(dd));
+                    }
+                }
+            }
+        },
+        // v16: Fix corrupted snapshot bindings — v15 and _freezeLoggedWeeks could bind
+        // weeks to snapshots that contain exercises from OTHER days (D2 exercises in Day 3
+        // snapshot, D5 exercises in Day 3 snapshot). Unbind any snapshot where more than
+        // half the exercises have ZERO completed sets in the log for that week.
+        {
+            key: '_fix_corrupted_snapshot_bindings_v1',
+            fn: function() {
+                var keys = Object.keys(localStorage);
+                for (var ki = 0; ki < keys.length; ki++) {
+                    if (keys[ki].indexOf('wt_data_') !== 0) continue;
+                    var dd;
+                    try { dd = JSON.parse(localStorage.getItem(keys[ki]) || '{}'); } catch(e) { continue; }
+                    if (!dd.program || !dd.log) continue;
+                    var p = dd.program;
+                    var wtv = p.weekTemplateVersion;
+                    if (!wtv) continue;
+                    var changed = false;
+
+                    for (var w in wtv) {
+                        for (var d in wtv[w]) {
+                            var ver = wtv[w][d];
+                            if (!ver) continue;
+                            // Find the snapshot
+                            var snapArr = (p.templateSnapshots && p.templateSnapshots[d]) || [];
+                            var snap = null;
+                            for (var si = 0; si < snapArr.length; si++) {
+                                if (snapArr[si].version === ver) { snap = snapArr[si]; break; }
+                            }
+                            if (!snap || !snap.groups) continue;
+
+                            // Count exercises in snapshot vs exercises with log data
+                            var snapExIds = [];
+                            for (var gi = 0; gi < snap.groups.length; gi++) {
+                                var g = snap.groups[gi];
+                                if (g.exercise && g.exercise.id) snapExIds.push(g.exercise.id);
+                                if (g.exercises) {
+                                    for (var ei = 0; ei < g.exercises.length; ei++) {
+                                        if (g.exercises[ei].id) snapExIds.push(g.exercises[ei].id);
+                                    }
+                                }
+                            }
+
+                            // Count how many snapshot exercises have log data
+                            var dayLog = (dd.log[w] && dd.log[w][d]) || {};
+                            var withLog = 0;
+                            for (var xi = 0; xi < snapExIds.length; xi++) {
+                                var xid = snapExIds[xi];
+                                if (dayLog[xid] || dayLog[xid + '_uni']) withLog++;
+                            }
+
+                            // If less than half have log data, snapshot is corrupted — unbind
+                            if (snapExIds.length > 0 && withLog < snapExIds.length / 2) {
+                                delete wtv[w][d];
+                                if (Object.keys(wtv[w]).length === 0) delete wtv[w];
+                                changed = true;
+                                console.log('Unbound corrupted snapshot: W' + w + 'D' + d + ' v' + ver +
+                                    ' (' + withLog + '/' + snapExIds.length + ' exercises had log data)');
+                            }
                         }
                     }
 
