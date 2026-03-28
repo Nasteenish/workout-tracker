@@ -230,15 +230,15 @@ Storage._data = {
     }
   },
   exerciseChoices: { "D1_deadlift": "D1E1_opt3" },
-  exerciseEquipment: { "D1E2": "eq_123" },     // null = tombstone
-  exerciseEquipmentOptions: { "D1E2": ["eq_123", "eq_456"] },
+  exerciseEquipment: { "D1:bench_press": "catalog:88" },  // null = tombstone; NO sibling propagation
+  exerciseEquipmentOptions: { "D1:bench_press": ["catalog:88", "custom:my_bar"] },  // siblings share options
   exerciseUnits: { "D3E5": "lb" },
   exerciseSubstitutions: { "D1E4": "Выпады с гантелями" },
   equipment: [{ id: "eq_123", name: "Cybex Eagle NX", type: "machine", imageUrl: "..." }],
   gyms: [],                    // legacy локальные залы (в _defaultData)
   myGymIds: ["uuid-1"],        // dynamic — не в _defaultData()
   gymLastUsed: { "uuid-1": 1710000000 },  // dynamic
-  gymEquipmentMap: { "uuid-1": { "D1E2": "eq_123" } },
+  gymEquipmentMap: { "uuid-1": { "D1:bench_press": "catalog:88" } },  // NO sibling propagation
   weekSlots: [{ type: "day", dayNum: 1 }, { type: "rest" }, ...],  // dynamic
   _lastModified: 1710000000000,      // updated on every _save()
   _programModified: 1710000000000    // updated only in saveProgram()
@@ -288,6 +288,7 @@ Login: SupaSync.syncOnLogin()
   → merge exerciseEquipment (null = tombstone, undefined = absent)
   → merge program (by _programModified; skipped if WorkoutTimer active via _isWorkoutActiveFn)
   → _flattenChooseOneInData() — normalize choose_one→single after merge
+  → _normalizeEquipmentIds() — convert eq_* → custom:*/catalog:* (post-sync permanent fix)
   → pushData()
   → _onSyncComplete → Storage.setProgram(getStoredProgram()) — обновить in-memory кеш
 
@@ -312,6 +313,16 @@ Template snapshots:
   → log[w][d]._template — created at workout start by snapshotTemplateInLog()
   → _deepMergeLogs: _-fields use local priority (ld !== undefined ? ld : rd)
   → null tombstone = corrupted snapshot, resolveWorkout falls back to live template
+  → Builder._buildDayEditorVM reads from snapshot (inline editor sees same data as renderDay)
+  → Builder._autoSave updates snapshot after saving to live program
+
+Equipment per-instance (NO sibling propagation):
+  → setExerciseEquipment: sets ONLY for this exerciseId, adds to sibling OPTIONS
+  → removeExerciseEquipment: tombstone ONLY for this exerciseId
+  → setGymExerciseEquipment: ONLY for this exerciseId
+  → getExerciseEquipment: fallback to siblings if this exercise has no assignment
+  → getPreviousLog: filters by equipmentId; if no match → fallback to any log (no filter)
+  → Analytics.getWeekComparison: groups by exerciseId + equipmentId
 ```
 
 ---

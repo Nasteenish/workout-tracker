@@ -111,7 +111,12 @@ tools/                  — Утилиты разработки: SQL, скрип
 | `Builder._editingDay` | `Builder.renderDayEditor()`, `Builder._autoSave()` |
 | `Storage.snapshotTemplateInLog()` | `resolveWorkout()` (program-utils.js) читает `log[w][d]._template`, `WorkoutUI` вызывает при старте тренировки, `saveSetLog` — safety net |
 | `EquipmentManager.*` | `UI.showEquipmentModal()`, `WorkoutUI.handleModalClick` (eq handlers) |
-| `Storage.removeExerciseEquipment()` | `gymEquipmentMap` (должен записывать null tombstone в map, иначе `applyGymEquipment` воскресит привязку) |
+| `Storage.removeExerciseEquipment()` | `gymEquipmentMap` (записывает null tombstone ТОЛЬКО для этого упражнения, не для siblings) |
+| `Storage.setExerciseEquipment()` | НЕ пропагирует на siblings (каждое упражнение хранит свой тренажёр). Siblings получают тренажёр только в OPTIONS (список доступных) |
+| `Storage.getPreviousLog()` | Fallback: если equipmentId не совпадает ни с одним логом — возвращает последний лог без фильтра по оборудованию |
+| `SupaSync._normalizeEquipmentIds()` | Запускается после каждого sync merge. Конвертирует `eq_*` → `custom:*`/`catalog:*` во всех данных |
+| `Builder._buildDayEditorVM()` | Читает из log snapshot (если есть), не только из live программы. `_autoSave()` обновляет snapshot в логе |
+| `Analytics.getWeekComparison()` | Сравнивает per-equipment: ключ = exerciseId + equipmentId. Разные тренажёры = разные строки |
 | `Storage.saveProgram()` | Ставит `_programModified = Date.now()`. Используется sync merge для независимого сравнения program timestamps |
 | `SupaSync.syncOnLogin()` merge | `_programModified` (программа), `_lastModified` = `Math.max(local, remote)` (не Date.now()!), tombstone `null` vs `undefined` в exerciseEquipment |
 | `Storage.addEquipment()` | Принимает `(name, type, imageUrl, catalogId)`. Генерирует stable ID: `catalog:{N}` или `custom:{slug}`. `workout-ui.js` передаёт catalogId во всех 4 вызовах |
@@ -310,7 +315,7 @@ Data: No storage changes
 
 20. **Data repair — НЕ патчить облако напрямую, писать миграцию в коде**: `schedulePush` делает слепой push каждые 3 секунды. Если патчить облако через Supabase API — телефон перезапишет патч своими данными за секунды. Правильный подход: написать миграцию в `Storage._load()`, которая выполнится на самом устройстве при загрузке. Тогда устройство — автор и получатель, гонки нет.
 
-21. **Инварианты данных — ТОЛЬКО в `Storage._load()`, не после sync**: Если инвариант нужно гарантировать всегда, ставь проверку в `_load()` через `_migrateFn` + MIGRATION_VERSION guard. Одноразовая миграция (`migrations.js`) или post-sync cleanup (`cleanOrphanedLogEntries`) — **ненадёжно**: sync может перезаписать данные облачными ПОСЛЕ миграции, но ДО рендера. `_load()` — единственная точка через которую проходят ВСЕ чтения данных.
+21. **Инварианты данных — `Storage._load()` + post-sync нормализация**: Миграции в `_load()` через `_migrateFn` + MIGRATION_VERSION — для разовых фиксов. Но sync может перезаписать мигрированные данные. Для **постоянных** инвариантов (например, формат equipment ID) — ставь нормализацию в `SupaSync.syncOnLogin()` после merge. Пример: `_normalizeEquipmentIds` запускается после каждого merge и конвертирует `eq_*` → stable ID.
 
 22. **Sync + миграция — порядок выполнения**: App init → `_load()` (миграция по MIGRATION_VERSION) → `syncOnLogin` → `Storage._invalidateCache()` → `setProgram(getStoredProgram())` → рендер. `_migrateFn` запускается только при бампе MIGRATION_VERSION, не при каждом `_load()`. После sync `_program` обновляется через `setProgram` в 3 местах app.js. `_autoSave` в Builder блокируется пока `_syncing = true`.
 
@@ -321,3 +326,13 @@ Data: No storage changes
 25. **WorkoutTimer guard при sync**: `SupaSync._isWorkoutActiveFn` callback проверяет активную тренировку. Если тренировка идёт — sync не заменяет `program` (чтобы не сменить упражнения на середине).
 
 26. **Переименование упражнений — автоматическая миграция**: `migrateExerciseNames()` шаг 5 сверяет `nameRu` с EXERCISE_DB по стабильному English name. Переименовал `nameRu` в `exercises_db.js` → push → при загрузке программа автообновится. `_NAME_MAP` нужен только при смене English name.
+
+27. **Equipment — НЕ пропагировать на siblings**: `setExerciseEquipment`, `removeExerciseEquipment`, `setGymExerciseEquipment`, `unlinkEquipmentFromExercise` — все работают ТОЛЬКО с конкретным exerciseId. Siblings получают тренажёр только в `exerciseEquipmentOptions` (список доступных). `getExerciseEquipment` по-прежнему fallback-ит к siblings если у упражнения нет своего тренажёра (дефолт для новых). Это позволяет одинаковым упражнениям на разных днях иметь разные тренажёры с разной историей весов.
+
+28. **Sync нормализация equipment ID**: `SupaSync._normalizeEquipmentIds(data)` запускается после каждого `syncOnLogin` merge. Конвертирует `eq_TIMESTAMP` → `custom:slug`/`catalog:N` во всех полях: equipment[], exerciseEquipment, exerciseEquipmentOptions, gymEquipmentMap, log[].equipmentId. Это защита от sync который может вернуть старые ID из облака. Миграция — разовый фикс, sync — постоянный; нормализация после sync — постоянная защита.
+
+29. **getPreviousLog fallback**: Если фильтр по equipmentId не нашёл совпадений (старый баг sibling propagation изменил exerciseEquipment, а логи хранят оригинальный ID) — fallback возвращает последний лог без фильтра. Приоритет: точное совпадение по тренажёру > любой лог.
+
+30. **Inline editor работает с snapshot**: `Builder._buildDayEditorVM` читает из `log[w][d]._template` (если есть), а не только из live программы. `_autoSave` обновляет snapshot в логе после сохранения. Это позволяет удалять/заменять упражнения из snapshot (фантомные упражнения).
+
+31. **Analytics per-equipment**: `getWeekComparison` группирует по `exerciseId + equipmentId`. Одинаковое упражнение на разных тренажёрах = отдельные строки сравнения. `checkPR` и `isAllTimeBest` уже фильтруют по оборудованию через `_matchesEquipment`.
